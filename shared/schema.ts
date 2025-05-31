@@ -11,6 +11,7 @@ export const notes = pgTable("notes", {
   transcription: text("transcription"),
   aiEnhanced: boolean("ai_enhanced").default(false),
   aiSuggestion: text("ai_suggestion"),
+  aiContext: text("ai_context"),
   collectionId: integer("collection_id"),
 });
 

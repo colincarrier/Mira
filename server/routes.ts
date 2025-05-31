@@ -33,6 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const updates: any = {
               aiEnhanced: true,
               aiSuggestion: analysis.suggestion,
+              aiContext: analysis.context,
             };
             
             if (analysis.enhancedContent) {
@@ -137,6 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const updates: any = {
             aiEnhanced: true,
             aiSuggestion: analysis.suggestion,
+            aiContext: analysis.context,
           };
           
           if (analysis.enhancedContent) {

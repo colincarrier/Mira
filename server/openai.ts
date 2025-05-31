@@ -8,6 +8,7 @@ const openai = new OpenAI({
 export interface AIAnalysisResult {
   enhancedContent?: string;
   suggestion?: string;
+  context?: string;
   todos: string[];
   collectionSuggestion?: {
     name: string;
@@ -31,15 +32,19 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
 1. Enhanced/formatted version of the content (optional - only if it improves clarity)
 2. A helpful AI suggestion or follow-up action
 3. Extract any actionable to-dos
-4. Suggest a collection category if this note would fit into a themed group
-5. IMPORTANT: If the note contains multiple unrelated tasks/topics, split them into separate notes
+4. Generate valuable context that would help when browsing this note later
+5. Suggest a collection category if this note would fit into a themed group
+6. IMPORTANT: If the note contains multiple unrelated tasks/topics, split them into separate notes
 
 Note content: "${content}"
+
+For context, provide helpful background information, key details, or related concepts that would be valuable when browsing notes later. This should be concise but informative.
 
 Respond with JSON in this exact format:
 {
   "enhancedContent": "improved version or null",
   "suggestion": "helpful AI suggestion",
+  "context": "helpful context for browsing",
   "todos": ["todo 1", "todo 2"],
   "collectionSuggestion": {
     "name": "collection name",
