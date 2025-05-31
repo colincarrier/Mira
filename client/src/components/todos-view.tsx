@@ -45,10 +45,10 @@ export default function TodosView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">To-Dos</h2>
-          <span className="text-sm text-[hsl(var(--ios-gray))]">0 active</span>
+          <span className="text-sm text-[hsl(var(--muted-foreground))]">0 active</span>
         </div>
         <div className="text-center py-8">
-          <p className="text-[hsl(var(--ios-gray))]">No to-dos yet. They'll appear here when AI extracts them from your notes!</p>
+          <p className="text-[hsl(var(--muted-foreground))]">No to-dos yet. They'll appear here when AI extracts them from your notes!</p>
         </div>
       </div>
     );
@@ -76,19 +76,19 @@ export default function TodosView() {
                 onClick={() => handleToggleTodo(todo)}
                 className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mt-0.5 transition-colors ${
                   todo.completed 
-                    ? "border-[hsl(var(--ios-green))] bg-[hsl(var(--ios-green))]"
-                    : "border-[hsl(var(--ios-gray))]"
+                    ? "border-[hsl(var(--sea-green))] bg-[hsl(var(--sea-green))]"
+                    : "border-[hsl(var(--muted-foreground))]"
                 }`}
               >
                 {todo.completed && <Check className="w-3 h-3 text-white" />}
               </button>
               <div className="flex-1">
-                <p className={`text-base ${todo.completed ? "line-through text-[hsl(var(--ios-gray))]" : ""}`}>
+                <p className={`text-base ${todo.completed ? "line-through text-[hsl(var(--muted-foreground))]" : ""}`}>
                   {todo.title}
                 </p>
                 <div className="flex items-center space-x-2 mt-2">
-                  <span className="text-xs text-[hsl(var(--ios-gray))]">From note</span>
-                  <ExternalLink className="w-3 h-3 text-[hsl(var(--ios-gray))]" />
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">From note</span>
+                  <ExternalLink className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
                 </div>
               </div>
             </div>
@@ -98,24 +98,24 @@ export default function TodosView() {
         {completedTodos.length > 0 && (
           <>
             <div className="mt-8 mb-4">
-              <h3 className="text-lg font-semibold text-[hsl(var(--ios-gray))]">Completed</h3>
+              <h3 className="text-lg font-semibold text-[hsl(var(--muted-foreground))]">Completed</h3>
             </div>
             {completedTodos.map((todo) => (
               <div key={todo.id} className="note-card opacity-60">
                 <div className="flex items-start space-x-3">
                   <button 
                     onClick={() => handleToggleTodo(todo)}
-                    className="w-6 h-6 rounded-full border-2 border-[hsl(var(--ios-green))] bg-[hsl(var(--ios-green))] flex items-center justify-center mt-0.5"
+                    className="w-6 h-6 rounded-full border-2 border-[hsl(var(--sea-green))] bg-[hsl(var(--sea-green))] flex items-center justify-center mt-0.5"
                   >
                     <Check className="w-3 h-3 text-white" />
                   </button>
                   <div className="flex-1">
-                    <p className="text-base line-through text-[hsl(var(--ios-gray))]">
+                    <p className="text-base line-through text-[hsl(var(--muted-foreground))]">
                       {todo.title}
                     </p>
                     <div className="flex items-center space-x-2 mt-2">
-                      <span className="text-xs text-[hsl(var(--ios-gray))]">From note</span>
-                      <ExternalLink className="w-3 h-3 text-[hsl(var(--ios-gray))]" />
+                      <span className="text-xs text-[hsl(var(--muted-foreground))]">From note</span>
+                      <ExternalLink className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
                     </div>
                   </div>
                 </div>

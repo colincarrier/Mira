@@ -33,7 +33,7 @@ export default function ActivityFeed() {
           <h2 className="text-lg font-semibold">Recent Activity</h2>
         </div>
         <div className="text-center py-8">
-          <p className="text-[hsl(var(--ios-gray))]">No notes yet. Start by capturing your first thought!</p>
+          <p className="text-[hsl(var(--muted-foreground))]">No notes yet. Start by capturing your first thought!</p>
         </div>
       </div>
     );

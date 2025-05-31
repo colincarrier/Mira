@@ -3,22 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --background: 45 50% 98%; /* Warm sand white */
-  --foreground: 210 20% 25%; /* Deep ocean blue-gray */
-  --muted: 45 35% 95%; /* Light sand */
-  --muted-foreground: 195 15% 55%; /* Muted sea blue */
-  --popover: 45 50% 98%;
-  --popover-foreground: 210 20% 25%;
-  --card: 45 50% 98%;
-  --card-foreground: 210 20% 25%;
-  --border: 45 25% 88%; /* Soft sand border */
-  --input: 45 25% 88%;
+  --background: 45 35% 96%; /* Light sand background */
+  --foreground: 30 15% 30%; /* Warm dark sand text */
+  --muted: 45 25% 92%; /* Slightly darker sand */
+  --muted-foreground: 30 10% 50%; /* Muted sand text */
+  --popover: 45 35% 96%;
+  --popover-foreground: 30 15% 30%;
+  --card: 45 30% 94%; /* Card sand */
+  --card-foreground: 30 15% 30%;
+  --border: 45 20% 85%; /* Soft sand border */
+  --input: 45 20% 85%;
   --primary: 195 85% 55%; /* Ocean blue */
   --primary-foreground: 0 0% 100%;
-  --secondary: 45 35% 95%;
-  --secondary-foreground: 210 20% 25%;
-  --accent: 165 45% 85%;
-  --accent-foreground: 210 20% 25%;
+  --secondary: 45 25% 92%;
+  --secondary-foreground: 30 15% 30%;
+  --accent: 45 15% 88%; /* Tertiary sand */
+  --accent-foreground: 30 15% 30%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
   --ring: 195 85% 55%;
@@ -30,7 +30,7 @@
   --sage-green: 150 25% 65%; /* #90B8A8 */
   --sand-beige: 45 45% 75%; /* #C4B59A */
   --warm-sand: 35 35% 85%; /* #D4C5B0 */
-  --soft-gray: 195 15% 65%; /* #9EADB8 */
+  --tertiary-sand: 45 15% 88%; /* Darker sand for subtle elements */
   --light-sand: 45 35% 95%; /* #F5F2EC */
   --deep-teal: 180 55% 35%; /* #2A7A7A */
   --coral-accent: 15 75% 65%; /* #E89A7B */
@@ -83,7 +83,7 @@
   }
   
   .ios-button-secondary {
-    @apply bg-[hsl(var(--light-sand))] text-[hsl(var(--soft-gray))] rounded-full w-10 h-10 flex items-center justify-center hover:bg-[hsl(var(--warm-sand))] transition-colors;
+    @apply bg-[hsl(var(--tertiary-sand))] text-[hsl(var(--muted-foreground))] rounded-full w-10 h-10 flex items-center justify-center hover:bg-[hsl(var(--muted))] transition-colors;
   }
   
   .note-card {
@@ -91,7 +91,7 @@
   }
   
   .tab-button {
-    @apply flex-1 py-3 flex flex-col items-center space-y-1 text-[hsl(var(--soft-gray))] transition-colors;
+    @apply flex-1 py-3 flex flex-col items-center space-y-1 text-[hsl(var(--muted-foreground))] transition-colors;
   }
   
   .tab-button.active {
