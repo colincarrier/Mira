@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter } from "lucide-react";
+import { getCollectionColor } from "@/lib/collection-colors";
 
 interface CollectionWithCount {
   id: number;
@@ -44,20 +45,7 @@ const getIconComponent = (iconName: string) => {
   }
 };
 
-const getColorClass = (color: string) => {
-  switch (color) {
-    case "orange":
-      return "bg-[hsl(var(--coral-accent))]";
-    case "purple":
-      return "bg-[hsl(var(--sage-green))]";
-    case "green":
-      return "bg-[hsl(var(--sea-green))]";
-    case "blue":
-      return "bg-[hsl(var(--ocean-blue))]";
-    default:
-      return "bg-[hsl(var(--soft-gray))]";
-  }
-};
+
 
 export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,12 +151,12 @@ export default function CollectionsView() {
       <div className="grid grid-cols-3 gap-2">
         {filteredAndSortedCollections.map((collection) => {
           const IconComponent = getIconComponent(collection.icon);
-          const colorClass = getColorClass(collection.color);
+          const colors = getCollectionColor(collection.color);
           
           return (
             <div key={collection.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className={`w-8 h-8 ${colorClass} rounded-lg flex items-center justify-center`}>
+                <div className={`w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center`}>
                   <IconComponent className="w-4 h-4 text-white" />
                 </div>
                 <div className="space-y-0.5">

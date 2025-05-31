@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
 import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
 
@@ -204,6 +205,9 @@ export default function TodosView() {
                     : 'text-[hsl(var(--foreground))]'
                 }`}>
                   {todo.title}
+                </p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                  Added {formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true })}
                 </p>
               </div>
               

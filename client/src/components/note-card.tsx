@@ -1,6 +1,6 @@
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -99,6 +99,62 @@ export default function NoteCard({ note }: NoteCardProps) {
 
   const handleCardClick = () => {
     setLocation(`/note/${note.id}`);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const shareText = formatNoteForSharing(note);
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}`,
+        text: shareText,
+      }).catch(console.error);
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          description: "Note copied to clipboard!",
+        });
+      }).catch(() => {
+        toast({
+          description: "Failed to copy note",
+          variant: "destructive",
+        });
+      });
+    }
+  };
+
+  const formatNoteForSharing = (note: NoteWithTodos) => {
+    let shareText = `📝 Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}\n\n`;
+    
+    shareText += `${note.content}\n\n`;
+    
+    if (note.aiContext) {
+      shareText += `💡 Context:\n${note.aiContext}\n\n`;
+    }
+    
+    if (note.aiSuggestion) {
+      shareText += `🤔 Follow-up:\n${note.aiSuggestion}\n\n`;
+    }
+    
+    if (note.todos && note.todos.length > 0) {
+      shareText += `✅ Action Items:\n`;
+      note.todos.forEach((todo, index) => {
+        const status = todo.completed ? '✓' : '○';
+        shareText += `${status} ${todo.title}\n`;
+      });
+      shareText += '\n';
+    }
+    
+    if (note.collection) {
+      shareText += `📁 Collection: ${note.collection.name}\n\n`;
+    }
+    
+    shareText += `Shared from Mira`;
+    
+    return shareText;
   };
 
   return (
