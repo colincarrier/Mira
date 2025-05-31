@@ -206,9 +206,11 @@ export default function TodosView() {
                 }`}>
                   {todo.title}
                 </p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                  Added {formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true })}
-                </p>
+              </div>
+              
+              {/* Right side indicators */}
+              <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace(' ago', '')}</span>
               </div>
               
               {/* Priority indicator */}
