@@ -65,6 +65,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Update note with collection
               await storage.updateNote(note.id, { collectionId });
             }
+            
+            // Create split notes if AI detected unrelated topics
+            if (analysis.splitNotes && analysis.splitNotes.length > 0) {
+              for (const splitNote of analysis.splitNotes) {
+                const newNote = await storage.createNote({
+                  content: splitNote.content,
+                  mode: noteData.mode
+                });
+                
+                // Add todos for split note
+                for (const todoTitle of splitNote.todos || []) {
+                  await storage.createTodo({
+                    title: todoTitle,
+                    noteId: newNote.id,
+                  });
+                }
+                
+                // Create collection for split note if suggested
+                if (splitNote.collectionSuggestion) {
+                  const collections = await storage.getCollections();
+                  const existingCollection = collections.find(
+                    c => c.name.toLowerCase() === splitNote.collectionSuggestion!.name.toLowerCase()
+                  );
+                  
+                  let collectionId = existingCollection?.id;
+                  if (!existingCollection) {
+                    const newCollection = await storage.createCollection(splitNote.collectionSuggestion);
+                    collectionId = newCollection.id;
+                  }
+                  
+                  await storage.updateNote(newNote.id, { collectionId });
+                }
+              }
+            }
           })
           .catch(error => {
             console.error("AI analysis failed:", error);

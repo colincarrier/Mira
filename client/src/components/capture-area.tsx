@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Camera, Mic } from "lucide-react";
+import { Camera, Mic, Type, Upload, File, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface CaptureAreaProps {
   onVoiceCapture: () => void;
 }
 
 export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [text, setText] = useState("");
+  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

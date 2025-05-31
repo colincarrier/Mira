@@ -14,6 +14,15 @@ export interface AIAnalysisResult {
     icon: string;
     color: string;
   };
+  splitNotes?: {
+    content: string;
+    todos: string[];
+    collectionSuggestion?: {
+      name: string;
+      icon: string;
+      color: string;
+    };
+  }[];
 }
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
@@ -23,6 +32,7 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
 2. A helpful AI suggestion or follow-up action
 3. Extract any actionable to-dos
 4. Suggest a collection category if this note would fit into a themed group
+5. IMPORTANT: If the note contains multiple unrelated tasks/topics, split them into separate notes
 
 Note content: "${content}"
 
@@ -35,8 +45,17 @@ Respond with JSON in this exact format:
     "name": "collection name",
     "icon": "icon name (coffee, lightbulb, book, etc)",
     "color": "orange, purple, green, blue"
-  }
-}`;
+  },
+  "splitNotes": [
+    {
+      "content": "separate note content",
+      "todos": ["separate todo"],
+      "collectionSuggestion": {"name": "collection", "icon": "icon", "color": "color"}
+    }
+  ]
+}
+
+Only use splitNotes if there are truly unrelated topics that would be better as separate notes.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -60,6 +79,7 @@ Respond with JSON in this exact format:
       suggestion: result.suggestion,
       todos: result.todos || [],
       collectionSuggestion: result.collectionSuggestion,
+      splitNotes: result.splitNotes || []
     };
   } catch (error) {
     console.error("OpenAI analysis failed:", error);
