@@ -30,6 +30,8 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setText("");
+      setIsTextDialogOpen(false);
+      setIsExpanded(false);
       toast({
         title: "Note captured",
         description: "Your note has been saved and is being enhanced by AI.",
@@ -58,41 +60,100 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
     });
   };
 
+  const quickActions = [
+    {
+      icon: Type,
+      label: "Text",
+      color: "soft-sky-blue",
+      action: () => setIsTextDialogOpen(true)
+    },
+    {
+      icon: Mic,
+      label: "Voice",
+      color: "seafoam-green", 
+      action: onVoiceCapture
+    },
+    {
+      icon: Camera,
+      label: "Photo",
+      color: "dusty-teal",
+      action: () => toast({ title: "Coming soon", description: "Photo capture will be available soon." })
+    },
+    {
+      icon: Upload,
+      label: "Upload",
+      color: "pale-sage",
+      action: () => toast({ title: "Coming soon", description: "File upload will be available soon." })
+    },
+    {
+      icon: File,
+      label: "File",
+      color: "sand-taupe",
+      action: () => toast({ title: "Coming soon", description: "File attachment will be available soon." })
+    }
+  ];
+
   return (
-    <div className="px-4 py-6 bg-[hsl(var(--background))]">
-      <div className="relative">
-        <textarea 
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="What's on your mind?"
-          className="w-full h-24 p-4 border border-[hsl(var(--border))] rounded-2xl resize-none text-base placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--ocean-blue))] transition-colors bg-[hsl(var(--card))]"
-          style={{ fontFamily: 'inherit' }}
-        />
-        
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex space-x-3">
-            <button 
-              onClick={handleImageCapture}
-              className="ios-button-secondary"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={onVoiceCapture}
-              className="w-10 h-10 rounded-full bg-[hsl(var(--ocean-blue))] hover:bg-[hsl(var(--deep-teal))] flex items-center justify-center transition-colors"
-            >
-              <Mic className="w-4 h-4 text-white" />
-            </button>
-          </div>
-          <button 
-            onClick={handleSubmit}
-            disabled={!text.trim() || createNoteMutation.isPending}
-            className="ios-button disabled:opacity-50"
-          >
-            {createNoteMutation.isPending ? "Capturing..." : "Capture"}
-          </button>
+    <>
+      {/* Floating iOS-style Capture Button */}
+      <div className="fixed bottom-8 right-6 z-50">
+        <div className={`transition-all duration-300 ${isExpanded ? 'mb-4' : ''}`}>
+          {isExpanded && (
+            <div className="flex flex-col space-y-3 mb-4 animate-slideUp">
+              {quickActions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={action.action}
+                  className={`w-12 h-12 rounded-full bg-[hsl(var(--${action.color}))] text-[hsl(var(--foreground))] shadow-lg hover:scale-105 transition-transform flex items-center justify-center`}
+                  title={action.label}
+                >
+                  <action.icon className="w-5 h-5" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+        
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-14 h-14 rounded-full bg-[hsl(var(--soft-sky-blue))] text-[hsl(var(--foreground))] shadow-lg hover:scale-105 transition-all flex items-center justify-center ${isExpanded ? 'rotate-45' : ''}`}
+        >
+          {isExpanded ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+        </button>
       </div>
-    </div>
+
+      {/* Text Input Dialog */}
+      <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>New Note</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="What's on your mind?"
+              className="min-h-[120px] resize-none border-[hsl(var(--border))] focus:ring-[hsl(var(--soft-sky-blue))]"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsTextDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!text.trim() || createNoteMutation.isPending}
+                className="bg-[hsl(var(--soft-sky-blue))] hover:bg-[hsl(var(--dusty-teal))] text-[hsl(var(--foreground))]"
+              >
+                {createNoteMutation.isPending ? "Saving..." : "Capture"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
