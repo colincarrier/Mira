@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --background: 45 35% 96%; /* Light sand background */
-  --foreground: 30 15% 30%; /* Warm dark sand text */
-  --muted: 45 25% 92%; /* Slightly darker sand */
-  --muted-foreground: 30 10% 50%; /* Muted sand text */
-  --popover: 45 35% 96%;
-  --popover-foreground: 30 15% 30%;
-  --card: 45 30% 94%; /* Card sand */
-  --card-foreground: 30 15% 30%;
-  --border: 45 20% 85%; /* Soft sand border */
-  --input: 45 20% 85%;
-  --primary: 195 85% 55%; /* Ocean blue */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 45 25% 92%;
-  --secondary-foreground: 30 15% 30%;
-  --accent: 45 15% 88%; /* Tertiary sand */
-  --accent-foreground: 30 15% 30%;
+  --background: 0 0% 96%; /* #F5F5F5 - Warm White */
+  --foreground: 30 15% 15%; /* Dark text */
+  --muted: 35 15% 84%; /* #D6D3CE - Stone Gray */
+  --muted-foreground: 30 15% 45%; /* Muted text */
+  --popover: 40 25% 93%; /* #EDE6DA - Soft Beige */
+  --popover-foreground: 30 15% 15%;
+  --card: 40 25% 93%; /* #EDE6DA - Soft Beige */
+  --card-foreground: 30 15% 15%;
+  --border: 35 15% 84%; /* #D6D3CE - Stone Gray */
+  --input: 35 15% 84%;
+  --primary: 195 45% 75%; /* #B2D8E4 - Soft Sky Blue */
+  --primary-foreground: 30 15% 15%;
+  --secondary: 45 35% 76%; /* #CBBFA3 - Sand Taupe */
+  --secondary-foreground: 30 15% 15%;
+  --accent: 45 35% 76%; /* #CBBFA3 - Sand Taupe */
+  --accent-foreground: 30 15% 15%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --ring: 195 85% 55%;
+  --ring: 195 45% 75%;
   --radius: 1rem;
   
-  /* Natural colors */
-  --ocean-blue: 195 85% 55%; /* #3BA3D9 */
-  --sea-green: 165 65% 50%; /* #2DB88A */
-  --sage-green: 150 25% 65%; /* #90B8A8 */
-  --sand-beige: 45 45% 75%; /* #C4B59A */
-  --warm-sand: 35 35% 85%; /* #D4C5B0 */
-  --tertiary-sand: 45 15% 88%; /* Darker sand for subtle elements */
-  --light-sand: 45 35% 95%; /* #F5F2EC */
-  --deep-teal: 180 55% 35%; /* #2A7A7A */
-  --coral-accent: 15 75% 65%; /* #E89A7B */
+  /* Natural colors from your palette */
+  --warm-white: 0 0% 96%; /* #F5F5F5 */
+  --soft-beige: 40 25% 93%; /* #EDE6DA */
+  --stone-gray: 35 15% 84%; /* #D6D3CE */
+  --sand-taupe: 45 35% 76%; /* #CBBFA3 */
+  --clay-brown: 30 20% 65%; /* #A89F91 */
+  --soft-sky-blue: 195 45% 75%; /* #B2D8E4 */
+  --seafoam-green: 150 40% 80%; /* #C9E4D6 */
+  --dusty-teal: 180 30% 75%; /* #A3C6C4 */
+  --pale-sage: 80 35% 85%; /* #DDEAD1 */
 }
 
 .dark {
@@ -79,11 +79,11 @@
 
 @layer components {
   .ios-button {
-    @apply bg-[hsl(var(--ocean-blue))] text-white rounded-full px-6 py-2 text-sm font-medium hover:bg-[hsl(var(--deep-teal))] transition-colors;
+    @apply bg-[hsl(var(--soft-sky-blue))] text-[hsl(var(--foreground))] rounded-full px-6 py-2 text-sm font-medium hover:bg-[hsl(var(--dusty-teal))] transition-colors;
   }
   
   .ios-button-secondary {
-    @apply bg-[hsl(var(--tertiary-sand))] text-[hsl(var(--muted-foreground))] rounded-full w-10 h-10 flex items-center justify-center hover:bg-[hsl(var(--muted))] transition-colors;
+    @apply bg-[hsl(var(--stone-gray))] text-[hsl(var(--muted-foreground))] rounded-full w-10 h-10 flex items-center justify-center hover:bg-[hsl(var(--sand-taupe))] transition-colors;
   }
   
   .note-card {
@@ -95,7 +95,7 @@
   }
   
   .tab-button.active {
-    @apply text-[hsl(var(--ocean-blue))];
+    @apply text-[hsl(var(--soft-sky-blue))];
   }
 }
 
