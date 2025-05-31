@@ -100,11 +100,11 @@ export default function CollectionsView() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium">{collection.name}</h3>
-                  <p className="text-sm text-[hsl(var(--ios-gray))]">
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">
                     {collection.noteCount} note{collection.noteCount !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[hsl(var(--ios-gray))]" />
+                <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
               </div>
             </div>
           );
