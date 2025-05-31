@@ -31,40 +31,61 @@ const getModeColor = (mode: string) => {
   }
 };
 
-// Helper function to detect contextual actions based on note content
-const getContextualActions = (content: string, todos: any[]) => {
-  const actions = [];
+// Helper function to generate intelligent follow-up questions
+const getFollowUpQuestions = (content: string, todos: any[]) => {
+  const questions = [];
   const lowerContent = content.toLowerCase();
   
-  // Phone/contact related
-  if (lowerContent.includes('call') || lowerContent.includes('phone') || lowerContent.includes('contact')) {
-    actions.push({ icon: Phone, label: 'Call', color: 'soft-sky-blue' });
+  // Restaurant/food related
+  if (lowerContent.includes('restaurant') || lowerContent.includes('food') || lowerContent.includes('dinner') || lowerContent.includes('lunch')) {
+    questions.push("What's the price range?");
+    questions.push("Any dietary restrictions to note?");
+    questions.push("What's the atmosphere like?");
   }
   
-  // Shopping/buying related
-  if (lowerContent.includes('buy') || lowerContent.includes('shop') || lowerContent.includes('grocery') || lowerContent.includes('purchase')) {
-    actions.push({ icon: ShoppingCart, label: 'Shop', color: 'seafoam-green' });
+  // Book/movie related
+  else if (lowerContent.includes('book') || lowerContent.includes('read') || lowerContent.includes('movie') || lowerContent.includes('watch')) {
+    questions.push("What genre is this?");
+    questions.push("Who recommended this?");
+    questions.push("When do you want to finish it?");
   }
   
-  // Calendar/scheduling related
-  if (lowerContent.includes('schedule') || lowerContent.includes('appointment') || lowerContent.includes('meeting') || lowerContent.includes('date')) {
-    actions.push({ icon: Calendar, label: 'Schedule', color: 'dusty-teal' });
+  // Travel/location related
+  else if (lowerContent.includes('travel') || lowerContent.includes('trip') || lowerContent.includes('vacation') || lowerContent.includes('visit')) {
+    questions.push("What's your budget range?");
+    questions.push("Best time of year to visit?");
+    questions.push("How many days needed?");
   }
   
-  // Location related
-  if (lowerContent.includes('address') || lowerContent.includes('location') || lowerContent.includes('place') || lowerContent.includes('restaurant')) {
-    actions.push({ icon: MapPin, label: 'Navigate', color: 'pale-sage' });
+  // School/education related
+  else if (lowerContent.includes('school') || lowerContent.includes('preschool') || lowerContent.includes('teacher') || lowerContent.includes('education')) {
+    questions.push("What are the enrollment requirements?");
+    questions.push("What's the student-teacher ratio?");
+    questions.push("Are there waiting lists?");
   }
   
-  // Always show copy action
-  actions.push({ icon: Copy, label: 'Copy', color: 'stone-gray' });
-  
-  // Show share if there are todos or it's enhanced
-  if (todos.length > 0) {
-    actions.push({ icon: Share2, label: 'Share', color: 'soft-sky-blue' });
+  // Shopping/purchase related
+  else if (lowerContent.includes('buy') || lowerContent.includes('purchase') || lowerContent.includes('shop')) {
+    questions.push("What's your budget limit?");
+    questions.push("Where can you find the best price?");
+    questions.push("When do you need this by?");
   }
   
-  return actions.slice(0, 4); // Limit to 4 actions max
+  // Appointment/scheduling related
+  else if (lowerContent.includes('appointment') || lowerContent.includes('schedule') || lowerContent.includes('meeting')) {
+    questions.push("What documents do you need?");
+    questions.push("How long will this take?");
+    questions.push("Any prep work required?");
+  }
+  
+  // General fallback questions
+  else {
+    questions.push("What's the next step?");
+    questions.push("Who else should know about this?");
+    questions.push("When is the deadline?");
+  }
+  
+  return questions.slice(0, 3); // Limit to 3 questions max
 };
 
 export default function NoteCard({ note }: NoteCardProps) {
@@ -72,58 +93,7 @@ export default function NoteCard({ note }: NoteCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const contextualActions = getContextualActions(note.content, note.todos);
-  
-  const handleAction = (actionLabel: string) => {
-    switch (actionLabel) {
-      case 'Copy':
-        navigator.clipboard.writeText(note.content);
-        toast({
-          title: "Copied to clipboard",
-          description: "Note content has been copied.",
-        });
-        break;
-      case 'Share':
-        if (navigator.share) {
-          navigator.share({
-            title: 'Note from Mira',
-            text: note.content,
-          });
-        } else {
-          navigator.clipboard.writeText(note.content);
-          toast({
-            title: "Copied to clipboard",
-            description: "Note content ready to share.",
-          });
-        }
-        break;
-      case 'Call':
-        // Extract phone number if present, or show suggestion
-        toast({
-          title: "Call reminder",
-          description: "Don't forget to make that call!",
-        });
-        break;
-      case 'Shop':
-        toast({
-          title: "Shopping reminder",
-          description: "Added to your mental shopping list!",
-        });
-        break;
-      case 'Schedule':
-        toast({
-          title: "Schedule reminder",
-          description: "Don't forget to book that appointment!",
-        });
-        break;
-      case 'Navigate':
-        toast({
-          title: "Location noted",
-          description: "Ready to help you get there!",
-        });
-        break;
-    }
-  };
+  const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
   return (
     <div className="note-card animate-fadeIn">
@@ -131,7 +101,7 @@ export default function NoteCard({ note }: NoteCardProps) {
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
           <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-            {note.aiEnhanced ? "AI Enhanced" : getModeLabel(note.mode)}
+            {getModeLabel(note.mode)}
           </span>
         </div>
         <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
@@ -162,19 +132,18 @@ export default function NoteCard({ note }: NoteCardProps) {
         </div>
       )}
       
-      {/* Contextual Quick Actions */}
-      {contextualActions.length > 0 && (
-        <div className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))]">
-          <div className="flex items-center space-x-2">
-            {contextualActions.map((action, index) => (
-              <button
+      {/* Follow-up Questions */}
+      {followUpQuestions.length > 0 && (
+        <div className="pt-3 border-t border-[hsl(var(--border))]">
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">Follow-up questions:</p>
+            {followUpQuestions.map((question, index) => (
+              <div
                 key={index}
-                onClick={() => handleAction(action.label)}
-                className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors bg-[hsl(var(--${action.color}))] text-[hsl(var(--foreground))] hover:opacity-80`}
+                className="text-xs text-[hsl(var(--muted-foreground))] px-2 py-1 bg-[hsl(var(--muted))] rounded-md"
               >
-                <action.icon className="w-3 h-3" />
-                <span>{action.label}</span>
-              </button>
+                {question}
+              </div>
             ))}
           </div>
         </div>
