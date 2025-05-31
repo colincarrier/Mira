@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Coffee, Lightbulb, Book, Folder, ChevronRight } from "lucide-react";
+import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag } from "lucide-react";
 
 interface CollectionWithCount {
   id: number;
@@ -18,6 +18,26 @@ const getIconComponent = (iconName: string) => {
       return Lightbulb;
     case "book":
       return Book;
+    case "heart":
+      return Heart;
+    case "star":
+      return Star;
+    case "briefcase":
+      return Briefcase;
+    case "home":
+      return Home;
+    case "car":
+      return Car;
+    case "plane":
+      return Plane;
+    case "checklist":
+      return CheckSquare;
+    case "calendar":
+      return Calendar;
+    case "location":
+      return MapPin;
+    case "shopping":
+      return ShoppingBag;
     default:
       return Folder;
   }

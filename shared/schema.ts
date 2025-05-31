@@ -18,6 +18,9 @@ export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   completed: boolean("completed").default(false),
+  pinned: boolean("pinned").default(false),
+  archived: boolean("archived").default(false),
+  priority: text("priority").default("normal"), // "urgent", "normal", "low"
   noteId: integer("note_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
