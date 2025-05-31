@@ -1,4 +1,6 @@
 import { notes, todos, collections, type Note, type Todo, type Collection, type InsertNote, type InsertTodo, type InsertCollection, type NoteWithTodos } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Notes
@@ -20,136 +22,142 @@ export interface IStorage {
   getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]>;
 }
 
-export class MemStorage implements IStorage {
-  private notes: Map<number, Note>;
-  private todos: Map<number, Todo>;
-  private collections: Map<number, Collection>;
-  private currentNoteId: number;
-  private currentTodoId: number;
-  private currentCollectionId: number;
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<any | undefined> {
+    // User functionality not implemented yet
+    return undefined;
+  }
 
-  constructor() {
-    this.notes = new Map();
-    this.todos = new Map();
-    this.collections = new Map();
-    this.currentNoteId = 1;
-    this.currentTodoId = 1;
-    this.currentCollectionId = 1;
-    
-    // Initialize with some default collections
-    this.createCollection({ name: "Coffee & Food Spots", icon: "coffee", color: "orange" });
-    this.createCollection({ name: "Project Ideas", icon: "lightbulb", color: "purple" });
-    this.createCollection({ name: "Reading List", icon: "book", color: "green" });
+  async getUserByUsername(username: string): Promise<any | undefined> {
+    // User functionality not implemented yet
+    return undefined;
+  }
+
+  async createUser(insertUser: any): Promise<any> {
+    // User functionality not implemented yet
+    throw new Error("User functionality not implemented");
   }
 
   async createNote(insertNote: InsertNote): Promise<Note> {
-    const id = this.currentNoteId++;
-    const note: Note = { 
-      ...insertNote, 
-      id, 
-      createdAt: new Date(),
-      aiEnhanced: false,
-      audioUrl: null,
-      transcription: null,
-      aiSuggestion: null,
-      collectionId: null,
-    };
-    this.notes.set(id, note);
+    const [note] = await db
+      .insert(notes)
+      .values(insertNote)
+      .returning();
     return note;
   }
 
   async getNotes(): Promise<NoteWithTodos[]> {
-    const allNotes = Array.from(this.notes.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const allNotes = await db
+      .select()
+      .from(notes)
+      .orderBy(notes.createdAt);
     
-    return Promise.all(allNotes.map(async note => {
-      const noteTodos = await this.getTodosByNoteId(note.id);
-      const collection = note.collectionId ? await this.getCollection(note.collectionId) : undefined;
-      return { ...note, todos: noteTodos, collection };
-    }));
+    const notesWithTodos = await Promise.all(
+      allNotes.map(async (note) => {
+        const noteTodos = await this.getTodosByNoteId(note.id);
+        const collection = note.collectionId 
+          ? await this.getCollection(note.collectionId) 
+          : undefined;
+        return { ...note, todos: noteTodos, collection };
+      })
+    );
+    
+    return notesWithTodos.reverse(); // Most recent first
   }
 
   async getNote(id: number): Promise<NoteWithTodos | undefined> {
-    const note = this.notes.get(id);
+    const [note] = await db.select().from(notes).where(eq(notes.id, id));
     if (!note) return undefined;
     
     const noteTodos = await this.getTodosByNoteId(id);
-    const collection = note.collectionId ? await this.getCollection(note.collectionId) : undefined;
+    const collection = note.collectionId 
+      ? await this.getCollection(note.collectionId) 
+      : undefined;
     return { ...note, todos: noteTodos, collection };
   }
 
   async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
-    const note = this.notes.get(id);
-    if (!note) throw new Error("Note not found");
+    const [note] = await db
+      .update(notes)
+      .set(updates)
+      .where(eq(notes.id, id))
+      .returning();
     
-    const updatedNote = { ...note, ...updates };
-    this.notes.set(id, updatedNote);
-    return updatedNote;
+    if (!note) throw new Error("Note not found");
+    return note;
   }
 
   async createTodo(insertTodo: InsertTodo): Promise<Todo> {
-    const id = this.currentTodoId++;
-    const todo: Todo = { 
-      ...insertTodo, 
-      id, 
-      createdAt: new Date(),
-      completed: false,
-    };
-    this.todos.set(id, todo);
+    const [todo] = await db
+      .insert(todos)
+      .values(insertTodo)
+      .returning();
     return todo;
   }
 
   async getTodos(): Promise<Todo[]> {
-    return Array.from(this.todos.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db
+      .select()
+      .from(todos)
+      .orderBy(todos.createdAt);
   }
 
   async getTodosByNoteId(noteId: number): Promise<Todo[]> {
-    return Array.from(this.todos.values())
-      .filter(todo => todo.noteId === noteId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db
+      .select()
+      .from(todos)
+      .where(eq(todos.noteId, noteId))
+      .orderBy(todos.createdAt);
   }
 
   async updateTodo(id: number, updates: Partial<Todo>): Promise<Todo> {
-    const todo = this.todos.get(id);
-    if (!todo) throw new Error("Todo not found");
+    const [todo] = await db
+      .update(todos)
+      .set(updates)
+      .where(eq(todos.id, id))
+      .returning();
     
-    const updatedTodo = { ...todo, ...updates };
-    this.todos.set(id, updatedTodo);
-    return updatedTodo;
+    if (!todo) throw new Error("Todo not found");
+    return todo;
   }
 
   async createCollection(insertCollection: InsertCollection): Promise<Collection> {
-    const id = this.currentCollectionId++;
-    const collection: Collection = { 
-      ...insertCollection, 
-      id, 
-      createdAt: new Date(),
-    };
-    this.collections.set(id, collection);
+    const [collection] = await db
+      .insert(collections)
+      .values(insertCollection)
+      .returning();
     return collection;
   }
 
   async getCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db
+      .select()
+      .from(collections)
+      .orderBy(collections.createdAt);
   }
 
   async getCollection(id: number): Promise<Collection | undefined> {
-    return this.collections.get(id);
+    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
+    return collection || undefined;
   }
 
   async getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]> {
-    const collectionNotes = Array.from(this.notes.values())
-      .filter(note => note.collectionId === collectionId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const collectionNotes = await db
+      .select()
+      .from(notes)
+      .where(eq(notes.collectionId, collectionId))
+      .orderBy(notes.createdAt);
     
-    return Promise.all(collectionNotes.map(async note => {
-      const noteTodos = await this.getTodosByNoteId(note.id);
-      const collection = await this.getCollection(collectionId);
-      return { ...note, todos: noteTodos, collection };
-    }));
+    const notesWithTodos = await Promise.all(
+      collectionNotes.map(async (note) => {
+        const noteTodos = await this.getTodosByNoteId(note.id);
+        const collection = await this.getCollection(collectionId);
+        return { ...note, todos: noteTodos, collection };
+      })
+    );
+    
+    return notesWithTodos.reverse(); // Most recent first
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
