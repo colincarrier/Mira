@@ -107,24 +107,23 @@ export default function CollectionsView() {
         <button className="text-sm text-[hsl(var(--ios-blue))] font-medium">New</button>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
         {collections.map((collection) => {
           const IconComponent = getIconComponent(collection.icon);
           const colorClass = getColorClass(collection.color);
           
           return (
             <div key={collection.id} className="note-card">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 ${colorClass} rounded-xl flex items-center justify-center`}>
-                  <IconComponent className="w-5 h-5 text-white" />
+              <div className="flex flex-col items-center text-center space-y-3 p-2">
+                <div className={`w-12 h-12 ${colorClass} rounded-xl flex items-center justify-center shadow-sm`}>
+                  <IconComponent className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{collection.name}</h3>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                <div className="space-y-1">
+                  <h3 className="font-medium text-sm leading-tight">{collection.name}</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">
                     {collection.noteCount} note{collection.noteCount !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
               </div>
             </div>
           );
