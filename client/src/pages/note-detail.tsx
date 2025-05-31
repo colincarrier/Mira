@@ -1,17 +1,74 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2 } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function NoteDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   const { data: note, isLoading } = useQuery<NoteWithTodos>({
     queryKey: ["/api/notes", id],
     enabled: !!id,
   });
+
+  const handleShare = () => {
+    if (!note) return;
+    
+    const shareText = formatNoteForSharing(note);
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}`,
+        text: shareText,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          description: "Note copied to clipboard!",
+        });
+      }).catch(() => {
+        toast({
+          description: "Failed to copy note",
+          variant: "destructive",
+        });
+      });
+    }
+  };
+
+  const formatNoteForSharing = (note: NoteWithTodos) => {
+    let shareText = `📝 Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}\n\n`;
+    
+    shareText += `${note.content}\n\n`;
+    
+    if (note.aiContext) {
+      shareText += `💡 Context:\n${note.aiContext}\n\n`;
+    }
+    
+    if (note.aiSuggestion) {
+      shareText += `🤔 Follow-up:\n${note.aiSuggestion}\n\n`;
+    }
+    
+    if (note.todos && note.todos.length > 0) {
+      shareText += `✅ Action Items:\n`;
+      note.todos.forEach((todo) => {
+        const status = todo.completed ? '✓' : '○';
+        shareText += `${status} ${todo.title}\n`;
+      });
+      shareText += '\n';
+    }
+    
+    if (note.collection) {
+      shareText += `📁 Collection: ${note.collection.name}\n\n`;
+    }
+    
+    shareText += `Shared from Mira`;
+    
+    return shareText;
+  };
 
   if (isLoading) {
     return (
@@ -54,14 +111,23 @@ export default function NoteDetail() {
     <div className="min-h-screen bg-[hsl(var(--background))] p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLocation("/")}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h1 className="text-lg font-semibold">Note Details</h1>
+          </div>
           <button
-            onClick={() => setLocation("/")}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))]"
+            onClick={handleShare}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--ocean-blue))] text-white"
+            title="Share note"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Share2 className="w-4 h-4" />
           </button>
-          <h1 className="text-lg font-semibold">Note Details</h1>
         </div>
 
         {/* Note Content */}

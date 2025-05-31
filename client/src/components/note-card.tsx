@@ -167,6 +167,13 @@ export default function NoteCard({ note }: NoteCardProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+            title="Share note"
+          >
+            <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+          </button>
           <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
           <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
         </div>
