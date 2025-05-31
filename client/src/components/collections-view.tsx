@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag } from "lucide-react";
+import { useState } from "react";
+import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter } from "lucide-react";
 
 interface CollectionWithCount {
   id: number;
@@ -59,9 +60,27 @@ const getColorClass = (color: string) => {
 };
 
 export default function CollectionsView() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
+  
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
   });
+
+  const filteredAndSortedCollections = collections?.filter(collection =>
+    collection.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "recent":
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "count":
+        return b.noteCount - a.noteCount;
+      default:
+        return 0;
+    }
+  }) || [];
 
   if (isLoading) {
     return (
@@ -107,27 +126,78 @@ export default function CollectionsView() {
         <button className="text-sm text-[hsl(var(--ios-blue))] font-medium">New</button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {collections.map((collection) => {
+      {/* Filter Pills */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setSortBy("recent")}
+          className={`px-3 py-1.5 text-xs rounded-full ${
+            sortBy === "recent" 
+              ? "bg-[hsl(var(--ocean-blue))] text-white" 
+              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+          }`}
+        >
+          Recent
+        </button>
+        <button
+          onClick={() => setSortBy("count")}
+          className={`px-3 py-1.5 text-xs rounded-full ${
+            sortBy === "count" 
+              ? "bg-[hsl(var(--ocean-blue))] text-white" 
+              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+          }`}
+        >
+          Most Notes
+        </button>
+        <button
+          onClick={() => setSortBy("name")}
+          className={`px-3 py-1.5 text-xs rounded-full ${
+            sortBy === "name" 
+              ? "bg-[hsl(var(--ocean-blue))] text-white" 
+              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+          }`}
+        >
+          A-Z
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {filteredAndSortedCollections.map((collection) => {
           const IconComponent = getIconComponent(collection.icon);
           const colorClass = getColorClass(collection.color);
           
           return (
-            <div key={collection.id} className="note-card">
-              <div className="flex flex-col items-center text-center space-y-3 p-2">
-                <div className={`w-12 h-12 ${colorClass} rounded-xl flex items-center justify-center shadow-sm`}>
-                  <IconComponent className="w-6 h-6 text-white" />
+            <div key={collection.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className={`w-8 h-8 ${colorClass} rounded-lg flex items-center justify-center`}>
+                  <IconComponent className="w-4 h-4 text-white" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium text-sm leading-tight">{collection.name}</h3>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {collection.noteCount} note{collection.noteCount !== 1 ? "s" : ""}
+                <div className="space-y-0.5">
+                  <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    {collection.noteCount}
                   </p>
                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Search Bar */}
+      <div className="mt-4 relative">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <input
+            type="text"
+            placeholder="Search collections..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm"
+          />
+          <button className="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-[hsl(var(--ocean-blue))] rounded-full flex items-center justify-center">
+            <Mic className="w-3 h-3 text-white" />
+          </button>
+        </div>
       </div>
     </div>
   );

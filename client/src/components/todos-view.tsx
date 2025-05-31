@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
-import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle } from "lucide-react";
+import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic } from "lucide-react";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
 
