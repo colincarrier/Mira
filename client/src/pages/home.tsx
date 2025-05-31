@@ -27,18 +27,18 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-sm mx-auto bg-white min-h-screen relative overflow-hidden">
+    <div className="max-w-sm mx-auto bg-[hsl(var(--background))] min-h-screen relative overflow-hidden">
       {/* Status Bar */}
-      <div className="safe-area-top bg-white"></div>
+      <div className="safe-area-top bg-[hsl(var(--background))]"></div>
       
       {/* Main Content */}
       <div className="pb-20">
         {/* Header */}
-        <header className="bg-white px-4 py-3 border-b border-gray-100">
+        <header className="bg-[hsl(var(--background))] px-4 py-3 border-b border-[hsl(var(--border))]">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-black">Mira</h1>
-              <p className="text-sm text-[hsl(var(--ios-gray))]">Your trusted memory</p>
+              <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Mira</h1>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">Your trusted memory</p>
             </div>
             <button 
               onClick={() => setIsSettingsModalOpen(true)}

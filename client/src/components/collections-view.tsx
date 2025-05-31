@@ -26,15 +26,15 @@ const getIconComponent = (iconName: string) => {
 const getColorClass = (color: string) => {
   switch (color) {
     case "orange":
-      return "bg-[hsl(var(--ios-orange))]";
+      return "bg-[hsl(var(--coral-accent))]";
     case "purple":
-      return "bg-[hsl(var(--ios-purple))]";
+      return "bg-[hsl(var(--sage-green))]";
     case "green":
-      return "bg-[hsl(var(--ios-green))]";
+      return "bg-[hsl(var(--sea-green))]";
     case "blue":
-      return "bg-[hsl(var(--ios-blue))]";
+      return "bg-[hsl(var(--ocean-blue))]";
     default:
-      return "bg-[hsl(var(--ios-gray))]";
+      return "bg-[hsl(var(--soft-gray))]";
   }
 };
 
@@ -71,10 +71,10 @@ export default function CollectionsView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Collections</h2>
-          <button className="text-sm text-[hsl(var(--ios-blue))] font-medium">New</button>
+          <button className="text-sm text-[hsl(var(--ocean-blue))] font-medium">New</button>
         </div>
         <div className="text-center py-8">
-          <p className="text-[hsl(var(--ios-gray))]">No collections yet. AI will create them automatically as you add notes!</p>
+          <p className="text-[hsl(var(--muted-foreground))]">No collections yet. AI will create them automatically as you add notes!</p>
         </div>
       </div>
     );

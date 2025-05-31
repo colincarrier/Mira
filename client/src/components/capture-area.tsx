@@ -54,13 +54,13 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
   };
 
   return (
-    <div className="px-4 py-6 bg-white">
+    <div className="px-4 py-6 bg-[hsl(var(--background))]">
       <div className="relative">
         <textarea 
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="What's on your mind?"
-          className="w-full h-24 p-4 border border-gray-200 rounded-2xl resize-none text-base placeholder-[hsl(var(--ios-gray))] focus:outline-none focus:border-[hsl(var(--ios-blue))] transition-colors"
+          className="w-full h-24 p-4 border border-[hsl(var(--border))] rounded-2xl resize-none text-base placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--ocean-blue))] transition-colors bg-[hsl(var(--card))]"
           style={{ fontFamily: 'inherit' }}
         />
         
@@ -74,7 +74,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
             </button>
             <button 
               onClick={onVoiceCapture}
-              className="w-10 h-10 rounded-full bg-[hsl(var(--ios-blue))] flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-[hsl(var(--ocean-blue))] hover:bg-[hsl(var(--deep-teal))] flex items-center justify-center transition-colors"
             >
               <Mic className="w-4 h-4 text-white" />
             </button>

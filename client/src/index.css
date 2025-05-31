@@ -3,35 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 0%;
-  --muted: 210 40% 98%; /* #F2F2F7 */
-  --muted-foreground: 215 16% 47%; /* #8E8E93 */
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 0%;
-  --border: 220 13% 91%; /* #E5E5E7 */
-  --input: 220 13% 91%;
-  --primary: 221 83% 53%; /* #007AFF */
+  --background: 45 50% 98%; /* Warm sand white */
+  --foreground: 210 20% 25%; /* Deep ocean blue-gray */
+  --muted: 45 35% 95%; /* Light sand */
+  --muted-foreground: 195 15% 55%; /* Muted sea blue */
+  --popover: 45 50% 98%;
+  --popover-foreground: 210 20% 25%;
+  --card: 45 50% 98%;
+  --card-foreground: 210 20% 25%;
+  --border: 45 25% 88%; /* Soft sand border */
+  --input: 45 25% 88%;
+  --primary: 195 85% 55%; /* Ocean blue */
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 98%;
-  --secondary-foreground: 0 0% 0%;
-  --accent: 210 40% 98%;
-  --accent-foreground: 0 0% 0%;
+  --secondary: 45 35% 95%;
+  --secondary-foreground: 210 20% 25%;
+  --accent: 165 45% 85%;
+  --accent-foreground: 210 20% 25%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --ring: 221 83% 53%;
+  --ring: 195 85% 55%;
   --radius: 1rem;
   
-  /* iOS colors */
-  --ios-blue: 221 83% 53%; /* #007AFF */
-  --ios-purple: 250 69% 57%; /* #5856D6 */
-  --ios-gray: 215 16% 47%; /* #8E8E93 */
-  --ios-light-gray: 210 40% 98%; /* #F2F2F7 */
-  --ios-dark: 240 6% 10%; /* #1C1C1E */
-  --ios-green: 122 73% 51%; /* #34C759 */
-  --ios-orange: 28 100% 50%; /* #FF9500 */
+  /* Natural colors */
+  --ocean-blue: 195 85% 55%; /* #3BA3D9 */
+  --sea-green: 165 65% 50%; /* #2DB88A */
+  --sage-green: 150 25% 65%; /* #90B8A8 */
+  --sand-beige: 45 45% 75%; /* #C4B59A */
+  --warm-sand: 35 35% 85%; /* #D4C5B0 */
+  --soft-gray: 195 15% 65%; /* #9EADB8 */
+  --light-sand: 45 35% 95%; /* #F5F2EC */
+  --deep-teal: 180 55% 35%; /* #2A7A7A */
+  --coral-accent: 15 75% 65%; /* #E89A7B */
 }
 
 .dark {
@@ -77,23 +79,23 @@
 
 @layer components {
   .ios-button {
-    @apply bg-[hsl(var(--ios-blue))] text-white rounded-full px-6 py-2 text-sm font-medium;
+    @apply bg-[hsl(var(--ocean-blue))] text-white rounded-full px-6 py-2 text-sm font-medium hover:bg-[hsl(var(--deep-teal))] transition-colors;
   }
   
   .ios-button-secondary {
-    @apply bg-[hsl(var(--ios-light-gray))] text-[hsl(var(--ios-gray))] rounded-full w-10 h-10 flex items-center justify-center;
+    @apply bg-[hsl(var(--light-sand))] text-[hsl(var(--soft-gray))] rounded-full w-10 h-10 flex items-center justify-center hover:bg-[hsl(var(--warm-sand))] transition-colors;
   }
   
   .note-card {
-    @apply bg-white rounded-2xl p-4 shadow-sm border border-gray-100;
+    @apply bg-[hsl(var(--card))] rounded-2xl p-4 shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-shadow;
   }
   
   .tab-button {
-    @apply flex-1 py-3 flex flex-col items-center space-y-1 text-[hsl(var(--ios-gray))] transition-colors;
+    @apply flex-1 py-3 flex flex-col items-center space-y-1 text-[hsl(var(--soft-gray))] transition-colors;
   }
   
   .tab-button.active {
-    @apply text-[hsl(var(--ios-blue))];
+    @apply text-[hsl(var(--ocean-blue))];
   }
 }
 
