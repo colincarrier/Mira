@@ -1,7 +1,8 @@
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,11 +93,16 @@ export default function NoteCard({ note }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
+  const handleCardClick = () => {
+    setLocation(`/note/${note.id}`);
+  };
+
   return (
-    <div className="note-card animate-fadeIn">
+    <div className="note-card animate-fadeIn cursor-pointer hover:shadow-md transition-shadow" onClick={handleCardClick}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
@@ -104,10 +110,13 @@ export default function NoteCard({ note }: NoteCardProps) {
             {getModeLabel(note.mode)}
           </span>
         </div>
-        <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
+          <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+        </div>
       </div>
       
-      <p className="text-base mb-3">{note.content}</p>
+      <p className="text-base mb-3 line-clamp-3">{note.content}</p>
       
       {note.mode === "voice" && note.transcription && (
         <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">

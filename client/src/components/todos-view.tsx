@@ -8,6 +8,7 @@ type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archive
 
 export default function TodosView() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const queryClient = useQueryClient();
   
@@ -50,27 +51,32 @@ export default function TodosView() {
     
     let filtered = todos;
     
+    // Apply search filter first
+    if (searchTerm) {
+      filtered = filtered.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    
     switch (activeFilter) {
       case 'pinned':
-        filtered = todos.filter(t => t.pinned && !t.completed && !t.archived);
+        filtered = filtered.filter(t => t.pinned && !t.completed && !t.archived);
         break;
       case 'urgent':
-        filtered = todos.filter(t => t.priority === 'urgent' && !t.completed && !t.archived);
+        filtered = filtered.filter(t => t.priority === 'urgent' && !t.completed && !t.archived);
         break;
       case 'today':
         // Simple heuristic: recently created todos
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        filtered = todos.filter(t => new Date(t.createdAt) >= today && !t.completed && !t.archived);
+        filtered = filtered.filter(t => new Date(t.createdAt) >= today && !t.completed && !t.archived);
         break;
       case 'completed':
-        filtered = todos.filter(t => t.completed && !t.archived);
+        filtered = filtered.filter(t => t.completed && !t.archived);
         break;
       case 'archived':
-        filtered = todos.filter(t => t.archived);
+        filtered = filtered.filter(t => t.archived);
         break;
       default:
-        filtered = todos.filter(t => !t.archived);
+        filtered = filtered.filter(t => !t.archived);
     }
     
     // Always show pinned items at top (unless filtering specifically)
@@ -261,6 +267,23 @@ export default function TodosView() {
           </div>
         </div>
       )}
+
+      {/* Search Bar */}
+      <div className="mt-4 relative">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <input
+            type="text"
+            placeholder="Search todos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm"
+          />
+          <button className="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-[hsl(var(--ocean-blue))] rounded-full flex items-center justify-center">
+            <Mic className="w-3 h-3 text-white" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
