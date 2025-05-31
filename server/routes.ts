@@ -18,6 +18,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/notes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const note = await storage.getNote(id);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      res.json(note);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch note" });
+    }
+  });
+
   app.post("/api/notes", async (req, res) => {
     try {
       const noteData = insertNoteSchema.parse(req.body);

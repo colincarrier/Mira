@@ -82,6 +82,7 @@ Only use splitNotes if there are truly unrelated topics that would be better as 
     return {
       enhancedContent: result.enhancedContent === "null" ? undefined : result.enhancedContent,
       suggestion: result.suggestion,
+      context: result.context,
       todos: result.todos || [],
       collectionSuggestion: result.collectionSuggestion,
       splitNotes: result.splitNotes || []
