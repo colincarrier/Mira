@@ -477,14 +477,14 @@ export default function NoteDetail() {
         {showUpdateArea && (
           <div className="fixed bottom-4 left-4 right-4 z-50">
             <div className="max-w-2xl mx-auto">
-              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-lg overflow-hidden">
-                <div className="flex items-center justify-center">
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-lg overflow-hidden min-h-[60px]">
+                <div className="flex items-center h-full px-2 py-2">
                   {/* Add Media Button */}
                   <button
                     onClick={() => {
                       toast({ description: "Media capture coming soon!" });
                     }}
-                    className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 ml-1 bg-[#f1efe8]"
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-[hsl(var(--soft-sky-blue))] hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0"
                     title="Add media"
                   >
                     <span className="font-medium text-[40px] text-[#7d7d7d]">+</span>
