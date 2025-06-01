@@ -1,19 +1,65 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2 } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function NoteDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+  const [contextInput, setContextInput] = useState('');
+  const [showContextDialog, setShowContextDialog] = useState(false);
   
   const { data: note, isLoading } = useQuery<NoteWithTodos>({
     queryKey: ["/api/notes", id],
     enabled: !!id,
   });
+
+  // Mutation to update note with AI enhancement
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ content, newContext }: { content: string; newContext?: string }) => {
+      const response = await apiRequest("PATCH", `/api/notes/${id}`, {
+        content,
+        ...(newContext && { contextUpdate: newContext })
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      setIsEditing(false);
+      setContextInput('');
+      toast({
+        description: "Note updated successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        description: "Failed to update note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Initialize editing content when note loads
+  useEffect(() => {
+    if (note && !editedContent) {
+      setEditedContent(note.content || '');
+    }
+  }, [note, editedContent]);
+
+  // Auto-show context dialog for urgent questions
+  useEffect(() => {
+    if (note?.aiSuggestion?.includes('🚨') && !showContextDialog) {
+      setShowContextDialog(true);
+    }
+  }, [note?.aiSuggestion, showContextDialog]);
 
   const handleShare = () => {
     if (!note) return;
@@ -121,13 +167,38 @@ export default function NoteDetail() {
             </button>
             <h1 className="text-lg font-semibold">Note Details</h1>
           </div>
-          <button
-            onClick={handleShare}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--ocean-blue))] text-white"
-            title="Share note"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setIsEditing(!isEditing);
+                if (!isEditing && note) {
+                  setEditedContent(note.content || '');
+                }
+              }}
+              className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                isEditing ? 'bg-[hsl(var(--sage-green))] text-white' : 'bg-[hsl(var(--card))] border border-[hsl(var(--border))]'
+              }`}
+              title={isEditing ? "Stop editing" : "Edit note"}
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowContextDialog(!showContextDialog)}
+              className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                showContextDialog ? 'bg-[hsl(var(--sage-green))] text-white' : 'bg-[hsl(var(--card))] border border-[hsl(var(--border))]'
+              }`}
+              title="Add context"
+            >
+              <Bot className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleShare}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--ocean-blue))] text-white"
+              title="Share note"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Note Content */}
@@ -135,9 +206,41 @@ export default function NoteDetail() {
           <div className="space-y-4">
             {/* Main Content */}
             <div>
-              <p className="text-[hsl(var(--foreground))] leading-relaxed">
-                {note.content}
-              </p>
+              {isEditing ? (
+                <textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="w-full min-h-[120px] p-3 border border-[hsl(var(--border))] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
+                  placeholder="Edit your note..."
+                />
+              ) : (
+                <p className="text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap">
+                  {note.content}
+                </p>
+              )}
+              
+              {isEditing && (
+                <div className="flex justify-end gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditedContent(note?.content || '');
+                    }}
+                    className="px-3 py-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateNoteMutation.mutate({ content: editedContent });
+                    }}
+                    disabled={updateNoteMutation.isPending}
+                    className="px-3 py-1 text-sm bg-[hsl(var(--sage-green))] text-white rounded-md hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50"
+                  >
+                    {updateNoteMutation.isPending ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Metadata */}
@@ -253,6 +356,65 @@ export default function NoteDetail() {
                 <p className="text-sm text-[hsl(var(--muted-foreground))]">
                   {note.collection.name}
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Persistent Context Dialog */}
+        {showContextDialog && (
+          <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-lg p-4 z-50">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Add Context</h4>
+                {note?.aiSuggestion?.includes('🚨') && (
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">
+                    Mira needs more information to help with urgent planning
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={contextInput}
+                    onChange={(e) => setContextInput(e.target.value)}
+                    placeholder="e.g., March 15th, or any additional details..."
+                    className="flex-1 px-3 py-2 text-sm border border-[hsl(var(--border))] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (contextInput.trim()) {
+                          updateNoteMutation.mutate({ 
+                            content: editedContent || note?.content || '', 
+                            newContext: contextInput 
+                          });
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (contextInput.trim()) {
+                        updateNoteMutation.mutate({ 
+                          content: editedContent || note?.content || '', 
+                          newContext: contextInput 
+                        });
+                      }
+                    }}
+                    disabled={updateNoteMutation.isPending || !contextInput.trim()}
+                    className="px-3 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 flex items-center justify-center"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowContextDialog(false)}
+                  className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] mt-2"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
