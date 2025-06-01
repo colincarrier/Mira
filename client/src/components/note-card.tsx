@@ -105,7 +105,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
     .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
     .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
-    .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w');
+    .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')
+    .replace('less than a minute', 'less than a min')
+    .replace('less than am', 'less than a min');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
