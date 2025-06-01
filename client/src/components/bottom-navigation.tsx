@@ -9,7 +9,7 @@ interface BottomNavigationProps {
 
 export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings }: BottomNavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom z-40">
       <div className="flex">
         <button 
           onClick={() => onTabChange("activity")}
