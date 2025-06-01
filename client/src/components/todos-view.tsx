@@ -374,7 +374,7 @@ export default function TodosView() {
                   <Pin className="w-3 h-3" />
                   Pinned
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {filteredTodos.filter(t => t.pinned && !t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
@@ -389,7 +389,7 @@ export default function TodosView() {
                   <AlertCircle className="w-3 h-3" />
                   Urgent
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {filteredTodos.filter(t => t.priority === 'urgent' && !t.pinned && !t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
@@ -401,7 +401,7 @@ export default function TodosView() {
             {activeFilter === 'all' && filteredTodos.some(t => !t.pinned && t.priority !== 'urgent' && !t.completed) && (
               <div>
                 <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2">Tasks</h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {filteredTodos.filter(t => !t.pinned && t.priority !== 'urgent' && !t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
@@ -416,7 +416,7 @@ export default function TodosView() {
                   <Check className="w-3 h-3" />
                   Completed
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {filteredTodos.filter(t => t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
@@ -426,7 +426,7 @@ export default function TodosView() {
 
             {/* Other Filters */}
             {activeFilter !== 'all' && (
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {filteredTodos.map((todo) => (
                   <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                 ))}
