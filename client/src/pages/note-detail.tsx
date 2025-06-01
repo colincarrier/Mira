@@ -478,7 +478,7 @@ export default function NoteDetail() {
           <div className="fixed bottom-4 left-4 right-4 z-50">
             <div className="max-w-2xl mx-auto">
               <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-lg overflow-hidden">
-                <div className="flex items-center">
+                <div className="flex items-center justify-center">
                   {/* Add Media Button */}
                   <button
                     onClick={() => {
@@ -495,7 +495,7 @@ export default function NoteDetail() {
                     value={updateInput}
                     onChange={(e) => setUpdateInput(e.target.value)}
                     placeholder="update anything here..."
-                    className="flex-1 min-h-[44px] max-h-[120px] px-3 py-3 text-sm resize-none focus:outline-none bg-transparent text-center placeholder:text-center"
+                    className="flex-1 min-h-[44px] max-h-[120px] px-3 py-3 text-sm resize-none focus:outline-none bg-transparent"
                     style={{ lineHeight: '1.4' }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey && updateInput.trim()) {
