@@ -132,11 +132,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         {/* Checkbox */}
         <button
           onClick={() => onToggle(todo)}
-          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
-            todo.completed
-              ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
-              : 'border-[hsl(var(--muted-foreground))] active:border-[hsl(var(--seafoam-green))]'
-          }`}
+          className="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors border-[hsl(var(--muted-foreground))] active:border-[hsl(var(--seafoam-green))] text-[#2c2621ad] ml-[4px] mr-[4px]"
         >
           {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
         </button>
