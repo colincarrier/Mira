@@ -560,7 +560,7 @@ export default function NoteDetail() {
           <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-lg p-4 z-50">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
-                <MiraIcon className="w-4 h-4 text-white" />
+                <span className="text-white font-bold italic text-sm">M</span>
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Add Context</h4>

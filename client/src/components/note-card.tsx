@@ -355,9 +355,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
       {note.aiSuggestion && (
         <div className="rounded-xl p-3 mb-3 bg-[#f6f7f282]">
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="text-sm font-medium text-[hsl(var(--sea-green))]">from Mira:</span>
-          </div>
           <p className="text-sm text-[hsl(var(--foreground))]">{note.aiSuggestion}</p>
         </div>
       )}
