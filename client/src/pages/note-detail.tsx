@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -192,26 +192,29 @@ export default function NoteDetail() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--ocean-blue))] text-white"
+              className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
               title="Share note"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
             </button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition-colors"
+                  className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
                   title="More options"
                 >
-                  <MoreHorizontal className="w-4 h-4" />
+                  <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-
                 <DropdownMenuItem>
                   <Star className="w-4 h-4 mr-2" />
                   Star Note
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Duplicate
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Archive className="w-4 h-4 mr-2" />
@@ -481,10 +484,10 @@ export default function NoteDetail() {
                     onClick={() => {
                       toast({ description: "Media capture coming soon!" });
                     }}
-                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[hsl(var(--accent))] transition-colors flex-shrink-0 ml-1"
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-[hsl(var(--soft-sky-blue))] hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 ml-1"
                     title="Add media"
                   >
-                    <span className="text-lg font-medium text-[hsl(var(--muted-foreground))]">+</span>
+                    <span className="text-xl font-medium text-white">+</span>
                   </button>
                   
                   {/* Text Input */}
@@ -508,10 +511,10 @@ export default function NoteDetail() {
                       onClick={() => {
                         toast({ description: "Voice recording coming soon!" });
                       }}
-                      className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[hsl(var(--accent))] transition-colors"
+                      className="w-12 h-12 flex items-center justify-center rounded-full bg-[hsl(var(--sage-green))] hover:bg-[hsl(var(--dusty-teal))] transition-colors"
                       title="Voice note"
                     >
-                      <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                      <Mic className="w-5 h-5 text-white" />
                     </button>
                     
                     {/* Send Button - only show when there's content */}
