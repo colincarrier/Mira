@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -154,6 +154,37 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   };
 
   const formattedContent = formatContent(note.content);
+
+  // Calculate todo progress
+  const todoProgress = () => {
+    if (note.todos.length === 0) return null;
+    
+    const completed = note.todos.filter(todo => todo.completed).length;
+    const total = note.todos.length;
+    const percentage = (completed / total) * 100;
+    
+    let color = '';
+    let icon = CheckCircle;
+    
+    if (percentage === 100) {
+      color = 'text-green-600 bg-green-50';
+      icon = CheckCircle2;
+    } else if (percentage >= 51) {
+      color = 'text-yellow-600 bg-yellow-50';
+    } else {
+      color = 'text-red-600 bg-red-50';
+    }
+    
+    return {
+      completed,
+      total,
+      percentage,
+      color,
+      icon
+    };
+  };
+
+  const progress = todoProgress();
 
   const handleCardClick = () => {
     setLocation(`/note/${note.id}`);
@@ -330,7 +361,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center space-x-4 text-[12px]">
-          {note.todos.length > 0 && (
+          {progress && (
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -338,9 +369,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               }}
               className="flex items-center space-x-2 hover:bg-[hsl(var(--muted))] rounded p-1 -m-1 transition-colors"
             >
-              <CheckCircle className="w-4 h-4 text-[hsl(var(--seafoam-green))]" />
-              <span className="text-[hsl(var(--muted-foreground))] text-[12px]">
-                {note.todos.length} to-do{note.todos.length !== 1 ? "s" : ""}
+              <progress.icon className={`w-4 h-4 ${progress.color.split(' ')[0]}`} />
+              <span className={`text-[12px] px-2 py-1 rounded-full ${progress.color}`}>
+                {progress.completed}/{progress.total} to-do{progress.total !== 1 ? "s" : ""}
               </span>
             </button>
           )}
