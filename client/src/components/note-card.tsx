@@ -230,7 +230,7 @@ export default function NoteCard({ note }: NoteCardProps) {
           {note.collection && (
             <div className="flex items-center space-x-2">
               <Folder className="w-4 h-4 text-[hsl(var(--sand-taupe))]" />
-              <span className="text-sm text-[hsl(var(--muted-foreground))]">{note.collection.name}</span>
+              <span className="text-[hsl(var(--muted-foreground))] text-[12px]">{note.collection.name}</span>
             </div>
           )}
         </div>
