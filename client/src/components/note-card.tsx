@@ -208,7 +208,7 @@ export default function NoteCard({ note }: NoteCardProps) {
             {followUpQuestions.map((question, index) => (
               <div
                 key={index}
-                className="text-xs text-[hsl(var(--muted-foreground))] px-2 py-1 bg-[hsl(var(--muted))] rounded-md"
+                className="text-xs px-2 py-1 bg-[hsl(var(--muted))] rounded-md text-[#4f453b]"
               >
                 {question}
               </div>
