@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
+import TodoDetail from "@/pages/todo-detail";
 
 function Router() {
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
+      <Route path="/todo/:id" component={TodoDetail} />
       <Route component={NotFound} />
     </Switch>
   );
