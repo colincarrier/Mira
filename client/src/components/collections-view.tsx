@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter } from "lucide-react";
 import { getCollectionColor } from "@/lib/collection-colors";
+import { useLocation } from "wouter";
 
 interface CollectionWithCount {
   id: number;
@@ -50,6 +51,7 @@ const getIconComponent = (iconName: string) => {
 export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
+  const [, setLocation] = useLocation();
   
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
@@ -154,7 +156,11 @@ export default function CollectionsView() {
           const colors = getCollectionColor(collection.color);
           
           return (
-            <div key={collection.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+            <div 
+              key={collection.id} 
+              onClick={() => setLocation(`/collection/${collection.id}`)}
+              className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer touch-manipulation"
+            >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-8 h-8 flex items-center justify-center">
                   <IconComponent className={`w-6 h-6 ${colors.text}`} />
