@@ -190,6 +190,24 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     setLocation(`/note/${note.id}`);
   };
 
+  const toggleTodoMutation = useMutation({
+    mutationFn: async ({ todoId, completed }: { todoId: number; completed: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/todos/${todoId}`, { completed });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+    },
+  });
+
+  const handleTodoToggle = (todo: any) => {
+    toggleTodoMutation.mutate({ 
+      todoId: todo.id, 
+      completed: !todo.completed 
+    });
+  };
+
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
@@ -399,13 +417,20 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {note.todos.map((todo, index) => (
               <div key={index} className="flex items-start space-x-3 p-2 bg-[hsl(var(--muted))] rounded-lg">
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                  todo.completed 
-                    ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
-                    : 'border-[hsl(var(--muted-foreground))]'
-                }`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTodoToggle(todo);
+                  }}
+                  disabled={toggleTodoMutation.isPending}
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-0.5 cursor-pointer hover:scale-110 transition-transform ${
+                    todo.completed 
+                      ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
+                      : 'border-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--seafoam-green))]'
+                  }`}
+                >
                   {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
-                </div>
+                </button>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm ${
                     todo.completed 
