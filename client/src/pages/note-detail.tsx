@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import MiraIcon from "@/components/mira-icon";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -558,7 +559,7 @@ export default function NoteDetail() {
           <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-lg p-4 z-50">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
-                <Eye className="w-4 h-4 text-white" />
+                <MiraIcon className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Add Context</h4>
