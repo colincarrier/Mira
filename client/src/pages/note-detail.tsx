@@ -1,11 +1,12 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -15,6 +16,9 @@ export default function NoteDetail() {
   const [editedContent, setEditedContent] = useState('');
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
+  const [updateInput, setUpdateInput] = useState('');
+  const [showUpdateArea, setShowUpdateArea] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: ["/api/notes", id],
@@ -29,10 +33,11 @@ export default function NoteDetail() {
 
   // Mutation to update note with AI enhancement
   const updateNoteMutation = useMutation({
-    mutationFn: async ({ content, newContext }: { content: string; newContext?: string }) => {
+    mutationFn: async ({ content, newContext, updateInstruction }: { content: string; newContext?: string; updateInstruction?: string }) => {
       const response = await apiRequest("PATCH", `/api/notes/${id}`, {
         content,
-        ...(newContext && { contextUpdate: newContext })
+        ...(newContext && { contextUpdate: newContext }),
+        ...(updateInstruction && { updateInstruction })
       });
       return response.json();
     },
@@ -41,6 +46,8 @@ export default function NoteDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setIsEditing(false);
       setContextInput('');
+      setUpdateInput('');
+      setShowUpdateArea(false);
       toast({
         description: "Note updated successfully!",
       });
@@ -52,6 +59,15 @@ export default function NoteDetail() {
       });
     },
   });
+
+  const handleUpdateNote = () => {
+    if (!updateInput.trim() || !note) return;
+    
+    updateNoteMutation.mutate({
+      content: note.content,
+      updateInstruction: updateInput
+    });
+  };
 
   // Initialize editing content when note loads
   useEffect(() => {
@@ -175,35 +191,41 @@ export default function NoteDetail() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                setIsEditing(!isEditing);
-                if (!isEditing && note) {
-                  setEditedContent(note.content || '');
-                }
-              }}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                isEditing ? 'bg-[hsl(var(--sage-green))] text-white' : 'bg-[hsl(var(--card))] border border-[hsl(var(--border))]'
-              }`}
-              title={isEditing ? "Stop editing" : "Edit note"}
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowContextDialog(!showContextDialog)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                showContextDialog ? 'bg-[hsl(var(--sage-green))] text-white' : 'bg-[hsl(var(--card))] border border-[hsl(var(--border))]'
-              }`}
-              title="Add context"
-            >
-              <Bot className="w-4 h-4" />
-            </button>
-            <button
               onClick={handleShare}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--ocean-blue))] text-white"
               title="Share note"
             >
               <Share2 className="w-4 h-4" />
             </button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition-colors"
+                  title="More options"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setShowUpdateArea(true)}>
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Add Update
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Star className="w-4 h-4 mr-2" />
+                  Star Note
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Archive className="w-4 h-4 mr-2" />
+                  Archive
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -451,7 +473,108 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* Persistent Context Dialog */}
+        {/* iOS Notes-style Persistent Update Area */}
+        {showUpdateArea && (
+          <div className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] p-4 safe-area-bottom z-50">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-1">
+                  <textarea
+                    value={updateInput}
+                    onChange={(e) => setUpdateInput(e.target.value)}
+                    placeholder="Add to this note... AI will understand if you want to add, edit, remove, or improve content"
+                    className="w-full min-h-[60px] max-h-[120px] px-3 py-2 text-sm border border-[hsl(var(--border))] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.metaKey && updateInput.trim()) {
+                        e.preventDefault();
+                        handleUpdateNote();
+                      }
+                    }}
+                  />
+                  
+                  {/* Media Buttons Row */}
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          // Voice capture functionality
+                          toast({ description: "Voice recording coming soon!" });
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
+                        title="Voice note"
+                      >
+                        <Mic className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          // Camera functionality
+                          toast({ description: "Camera capture coming soon!" });
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
+                        title="Camera"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
+                        title="Attach file"
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                      
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            toast({ description: `File "${file.name}" selected. Upload functionality coming soon!` });
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setShowUpdateArea(false);
+                          setUpdateInput('');
+                        }}
+                        className="px-3 py-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleUpdateNote}
+                        disabled={updateNoteMutation.isPending || !updateInput.trim()}
+                        className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white text-sm rounded-lg hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {updateNoteMutation.isPending ? (
+                          <>
+                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            Update
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Context Dialog (kept for backward compatibility) */}
         {showContextDialog && (
           <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-lg p-4 z-50">
             <div className="flex items-start gap-3">
