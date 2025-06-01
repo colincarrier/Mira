@@ -18,7 +18,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
+  const { transcript, isListening, startListening, stopListening, confidence } = useSpeechRecognition();
 
   const createVoiceNoteMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
@@ -190,7 +190,18 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
         {/* Live Transcript */}
         {transcript && (
           <div className="mb-6 p-3 bg-[hsl(var(--muted))] rounded-xl">
-            <p className="text-sm text-[hsl(var(--foreground))]">{transcript}</p>
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-sm text-[hsl(var(--foreground))] flex-1">{transcript}</p>
+              {confidence > 0 && (
+                <div className="ml-2 flex items-center space-x-1">
+                  <div className={`w-2 h-2 rounded-full ${confidence > 0.8 ? 'bg-green-500' : confidence > 0.6 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{Math.round(confidence * 100)}%</span>
+                </div>
+              )}
+            </div>
+            {isListening && (
+              <div className="text-xs text-[hsl(var(--muted-foreground))] animate-pulse">Listening...</div>
+            )}
           </div>
         )}
 
