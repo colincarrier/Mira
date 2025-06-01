@@ -46,6 +46,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
+                    <p className="font-medium">Emoji in titles</p>
+                    <p className="text-sm text-[hsl(var(--ios-gray))]">Add emojis to note titles for visual clarity</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
                     <p className="font-medium">Voice transcription</p>
                     <p className="text-sm text-[hsl(var(--ios-gray))]">Convert speech to text</p>
                   </div>
