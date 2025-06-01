@@ -112,7 +112,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
     <div className="relative">
       {/* Main todo item */}
       <div
-        className={`flex items-center space-x-2 p-1.5 rounded-lg active:bg-[hsl(var(--muted))] transition-all duration-200 ${
+        className={`flex items-center space-x-2 p-1 rounded-lg active:bg-[hsl(var(--muted))] transition-all duration-200 ${
           todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
         } ${
           todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''

@@ -155,35 +155,43 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* AI Context */}
-        {note.aiContext && (
+        {/* Enhanced AI Analysis Section */}
+        {(note.aiContext || note.aiSuggestion) && (
           <div className="note-card mb-6">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium mb-2">Context & Background</h3>
-                <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                  {note.aiContext}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* AI Suggestion */}
-        {note.aiSuggestion && (
-          <div className="note-card mb-6">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-[hsl(var(--ocean-blue))] rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium mb-2">Follow-up Question</h3>
-                <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                  {note.aiSuggestion}
-                </p>
+                <h3 className="font-medium mb-3 text-[hsl(var(--sage-green))]">from Mira:</h3>
+                
+                {/* AI Context */}
+                {note.aiContext && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
+                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
+                      {note.aiContext}
+                    </p>
+                  </div>
+                )}
+                
+                {/* AI Suggestions */}
+                {note.aiSuggestion && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
+                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
+                      {note.aiSuggestion}
+                    </p>
+                  </div>
+                )}
+                
+                {/* General helpful suggestions */}
+                <div className="bg-[#d9ded3] rounded-lg p-3">
+                  <h5 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Helpful Resources:</h5>
+                  <p className="text-sm text-[hsl(var(--foreground))]">
+                    💡 This might connect well with your other notes - consider organizing related items together.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
