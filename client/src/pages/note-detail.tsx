@@ -16,10 +16,13 @@ export default function NoteDetail() {
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
   
-  const { data: note, isLoading } = useQuery<NoteWithTodos>({
+  const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: ["/api/notes", id],
     enabled: !!id,
   });
+
+  // Debug logging
+  console.log('Note Detail Debug:', { id, note, isLoading, error });
 
   // Mutation to update note with AI enhancement
   const updateNoteMutation = useMutation({
