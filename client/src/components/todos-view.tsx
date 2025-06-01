@@ -125,7 +125,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         } : {}}
       >
         {/* Drag Handle */}
-        <div className="flex-shrink-0 w-4 h-4 cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+        <div className="flex-shrink-0 w-4 h-4 cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))] opacity-20 hover:opacity-60">
           <GripVertical className="w-4 h-4" />
         </div>
 
