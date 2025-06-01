@@ -487,7 +487,7 @@ export default function NoteDetail() {
                     className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 bg-[#f1efe8]"
                     title="Add media"
                   >
-                    <span className="text-xl font-medium text-[#7d7d7d] leading-none">+</span>
+                    <span className="text-[#7d7d7d] text-[30px] font-light">+</span>
                   </button>
                   
                   {/* Text Input */}
