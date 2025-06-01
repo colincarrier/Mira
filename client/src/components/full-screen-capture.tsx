@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Camera, Mic, Type, Upload, FileText } from "lucide-react";
+import { X, Camera, Mic, Type, Upload, FileText, Square, Play } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useSpeechRecognition } from "@/hooks/use-speech";
 
 interface FullScreenCaptureProps {
   isOpen: boolean;
