@@ -158,7 +158,7 @@ export default function NoteCard({ note }: NoteCardProps) {
   };
 
   return (
-    <div className="note-card animate-fadeIn cursor-pointer hover:shadow-md transition-shadow bg-[#f7f4ed]" onClick={handleCardClick}>
+    <div className="note-card animate-fadeIn cursor-pointer hover:shadow-md transition-shadow bg-[#99917712]" onClick={handleCardClick}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
