@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 interface NoteCardProps {
   note: NoteWithTodos;
+  onTodoModalClose?: () => void;
 }
 
 const getModeLabel = (mode: string) => {
@@ -91,7 +92,7 @@ const getFollowUpQuestions = (content: string, todos: any[]) => {
   return questions.slice(0, 3); // Limit to 3 questions max
 };
 
-export default function NoteCard({ note }: NoteCardProps) {
+export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -246,7 +247,12 @@ export default function NoteCard({ note }: NoteCardProps) {
       </div>
 
       {/* Todos Modal */}
-      <Dialog open={showTodosModal} onOpenChange={setShowTodosModal}>
+      <Dialog open={showTodosModal} onOpenChange={(open) => {
+        setShowTodosModal(open);
+        if (!open && onTodoModalClose) {
+          onTodoModalClose();
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>To-Dos from this note</DialogTitle>

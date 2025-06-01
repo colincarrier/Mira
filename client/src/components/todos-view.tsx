@@ -17,11 +17,13 @@ interface TodoItemProps {
   isDragging?: boolean;
 }
 
-function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
+function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, isDragging: isExternalDragging }: TodoItemProps) {
   const [showSwipeMenu, setShowSwipeMenu] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
+  const [isLongPress, setIsLongPress] = useState(false);
+  const longPressTimer = useState<NodeJS.Timeout | null>(null);
 
   const handleDuplicate = () => {
     // TODO: Implement duplicate functionality
@@ -122,6 +124,11 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
           zIndex: 50
         } : {}}
       >
+        {/* Drag Handle */}
+        <div className="flex-shrink-0 w-4 h-4 cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+          <GripVertical className="w-4 h-4" />
+        </div>
+
         {/* Checkbox */}
         <button
           onClick={() => onToggle(todo)}
