@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -356,7 +356,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       {note.aiSuggestion && (
         <div className="rounded-xl p-3 mb-3 bg-[#f6f7f282]">
           <div className="flex items-center space-x-2 mb-1">
-            <Bot className="w-4 h-4 text-[hsl(var(--sea-green))]" />
             <span className="text-sm font-medium text-[hsl(var(--sea-green))]">from Mira:</span>
           </div>
           <p className="text-sm text-[hsl(var(--foreground))]">{note.aiSuggestion}</p>

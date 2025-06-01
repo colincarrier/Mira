@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import MiraIcon from "@/components/mira-icon";
+
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -283,12 +283,7 @@ export default function NoteDetail() {
                   <span className="capitalize">{note.mode} note</span>
                 </div>
               )}
-              {note.aiEnhanced && (
-                <div className="flex items-center gap-1">
-                  <MiraIcon className="w-4 h-4" />
-                  <span>Enhanced by Mira</span>
-                </div>
-              )}
+
             </div>
           </div>
         </div>
