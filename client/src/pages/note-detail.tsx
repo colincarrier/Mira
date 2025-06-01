@@ -473,102 +473,99 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* iOS Notes-style Persistent Update Area */}
+        {/* Chat-style Update Bar */}
         {showUpdateArea && (
-          <div className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] p-4 safe-area-bottom z-50">
+          <div className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] px-4 py-3 safe-area-bottom z-50 shadow-lg">
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="flex-1">
-                  <textarea
-                    value={updateInput}
-                    onChange={(e) => setUpdateInput(e.target.value)}
-                    placeholder="Add to this note... AI will understand if you want to add, edit, remove, or improve content"
-                    className="w-full min-h-[60px] max-h-[120px] px-3 py-2 text-sm border border-[hsl(var(--border))] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.metaKey && updateInput.trim()) {
-                        e.preventDefault();
-                        handleUpdateNote();
-                      }
-                    }}
-                  />
-                  
-                  {/* Media Buttons Row */}
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-2">
+              <div className="flex items-end gap-3">
+                {/* Media Add Button */}
+                <button
+                  onClick={() => {
+                    // Open full capture screen within note context
+                    toast({ description: "Media capture coming soon!" });
+                  }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors flex-shrink-0"
+                  title="Add media"
+                >
+                  <span className="text-lg font-medium text-[hsl(var(--foreground))]">+</span>
+                </button>
+                
+                {/* Chat Input Container */}
+                <div className="flex-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl overflow-hidden">
+                  <div className="flex items-end">
+                    <textarea
+                      value={updateInput}
+                      onChange={(e) => setUpdateInput(e.target.value)}
+                      placeholder="Add to this note..."
+                      className="flex-1 min-h-[44px] max-h-[120px] px-4 py-3 text-sm resize-none focus:outline-none bg-transparent"
+                      style={{ lineHeight: '1.4' }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && updateInput.trim()) {
+                          e.preventDefault();
+                          handleUpdateNote();
+                        }
+                      }}
+                    />
+                    
+                    {/* Inline Media Buttons */}
+                    <div className="flex items-center px-2 pb-2">
                       <button
                         onClick={() => {
                           // Voice capture functionality
                           toast({ description: "Voice recording coming soon!" });
                         }}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[hsl(var(--accent))] transition-colors"
                         title="Voice note"
                       >
-                        <Mic className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          // Camera functionality
-                          toast({ description: "Camera capture coming soon!" });
-                        }}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
-                        title="Camera"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] transition-colors"
-                        title="Attach file"
-                      >
-                        <Paperclip className="w-4 h-4" />
-                      </button>
-                      
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            toast({ description: `File "${file.name}" selected. Upload functionality coming soon!` });
-                          }
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setShowUpdateArea(false);
-                          setUpdateInput('');
-                        }}
-                        className="px-3 py-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleUpdateNote}
-                        disabled={updateNoteMutation.isPending || !updateInput.trim()}
-                        className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white text-sm rounded-lg hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {updateNoteMutation.isPending ? (
-                          <>
-                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                            Updating...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4" />
-                            Update
-                          </>
-                        )}
+                        <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                       </button>
                     </div>
                   </div>
                 </div>
+                
+                {/* Send Button */}
+                <button
+                  onClick={handleUpdateNote}
+                  disabled={updateNoteMutation.isPending || !updateInput.trim()}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
+                    updateInput.trim() 
+                      ? 'bg-[hsl(var(--sage-green))] text-white hover:bg-[hsl(var(--sage-green))]/90' 
+                      : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
+                  } ${updateNoteMutation.isPending ? 'animate-pulse' : ''}`}
+                  title="Send update"
+                >
+                  {updateNoteMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    toast({ description: `File "${file.name}" selected. Upload functionality coming soon!` });
+                  }
+                }}
+              />
+              
+              {/* Quick dismiss area */}
+              <div className="flex justify-center mt-2">
+                <button
+                  onClick={() => {
+                    setShowUpdateArea(false);
+                    setUpdateInput('');
+                  }}
+                  className="w-12 h-1 bg-[hsl(var(--border))] rounded-full hover:bg-[hsl(var(--muted-foreground))] transition-colors"
+                  title="Close"
+                />
               </div>
             </div>
           </div>
