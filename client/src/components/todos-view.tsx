@@ -7,6 +7,81 @@ import { formatDistanceToNow } from "date-fns";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
 
+interface TodoItemProps {
+  todo: Todo;
+  onToggle: (todo: Todo) => void;
+  onPin: (todo: Todo) => void;
+  onArchive: (todo: Todo) => void;
+}
+
+function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
+  return (
+    <div
+      className={`flex items-center space-x-2 p-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors group ${
+        todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
+      } ${
+        todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
+      }`}
+    >
+      <button
+        onClick={() => onToggle(todo)}
+        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+          todo.completed
+            ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
+            : 'border-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--seafoam-green))]'
+        }`}
+      >
+        {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
+      </button>
+      
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm truncate ${
+          todo.completed 
+            ? 'line-through text-[hsl(var(--muted-foreground))]' 
+            : 'text-[hsl(var(--foreground))]'
+        }`}>
+          {todo.title}
+        </p>
+      </div>
+      
+      {/* Right side indicators */}
+      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '')}</span>
+      </div>
+      
+      {/* Priority indicator */}
+      {todo.priority === 'urgent' && !todo.completed && (
+        <AlertCircle className="w-3 h-3 text-[#8B2635]" />
+      )}
+      
+      {/* Action buttons - show on hover */}
+      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!todo.completed && !todo.archived && (
+          <button
+            onClick={() => onPin(todo)}
+            className={`p-1 rounded hover:bg-[hsl(var(--background))] ${
+              todo.pinned ? 'text-[hsl(var(--soft-sky-blue))]' : 'text-[hsl(var(--muted-foreground))]'
+            }`}
+            title={todo.pinned ? 'Unpin' : 'Pin'}
+          >
+            <Pin className="w-3 h-3" />
+          </button>
+        )}
+        
+        {!todo.archived && (
+          <button
+            onClick={() => onArchive(todo)}
+            className="p-1 rounded hover:bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))]"
+            title="Archive"
+          >
+            <Archive className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TodosView() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState("");
@@ -241,9 +316,13 @@ export default function TodosView() {
             )}
 
             {/* Other Filters */}
-            {activeFilter !== 'all' && filteredTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
-            ))}
+            {activeFilter !== 'all' && (
+              <div className="space-y-1">
+                {filteredTodos.map((todo) => (
+                  <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
