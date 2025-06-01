@@ -484,7 +484,7 @@ export default function NoteDetail() {
                     onClick={() => {
                       toast({ description: "Media capture coming soon!" });
                     }}
-                    className="w-12 h-12 flex items-center justify-center rounded-full bg-[hsl(var(--soft-sky-blue))] hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 ml-1"
+                    className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 ml-1 bg-[#f1efe8]"
                     title="Add media"
                   >
                     <span className="text-xl font-medium text-white">+</span>
