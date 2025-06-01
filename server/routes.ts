@@ -231,6 +231,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/collections/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const collection = await storage.getCollection(id);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      res.json(collection);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch collection" });
+    }
+  });
+
   app.get("/api/collections/:id/notes", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -238,6 +251,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(notes);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch collection notes" });
+    }
+  });
+
+  app.post("/api/collections/:id/super-note", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const collection = await storage.getCollection(id);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      
+      const notes = await storage.getNotesByCollectionId(id);
+      if (notes.length === 0) {
+        return res.status(400).json({ message: "No notes in collection" });
+      }
+
+      // Generate super note using AI
+      const allContent = notes.map(note => note.content).join('\n\n');
+      const prompt = `Create an intelligent super note that aggregates and synthesizes the following collection of notes about "${collection.name}". 
+
+Provide:
+1. A comprehensive summary that combines all information
+2. Key insights and connections between items
+3. Actionable recommendations or next steps
+4. Any patterns or themes you notice
+
+Notes to aggregate:
+${allContent}
+
+Respond with a detailed, well-structured summary that acts as a "super note" - a master document that contains the essence and value of all individual notes combined.`;
+
+      const aiResult = await analyzeNote(prompt, "super-note");
+      
+      const superNoteData = {
+        collection,
+        aggregatedContent: aiResult.enhancedContent || allContent,
+        insights: [
+          aiResult.suggestion,
+          aiResult.context,
+          ...aiResult.todos.map(todo => `Action item: ${todo}`)
+        ].filter(Boolean),
+        notes,
+        itemCount: notes.length
+      };
+
+      res.json(superNoteData);
+    } catch (error) {
+      console.error("Super note generation error:", error);
+      res.status(500).json({ message: "Failed to generate super note" });
     }
   });
 

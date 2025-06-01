@@ -42,15 +42,18 @@ export default function CollectionDetail() {
   const { data: collection } = useQuery<Collection>({
     queryKey: ["/api/collections", id],
     queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!id,
   });
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/collections", id, "notes"],
     queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!id,
   });
 
   const generateSuperNoteMutation = useMutation({
     mutationFn: async () => {
+      if (!id) throw new Error("No collection ID");
       const response = await apiRequest("POST", `/api/collections/${id}/super-note`);
       return response.json();
     },
@@ -69,7 +72,7 @@ export default function CollectionDetail() {
     generateSuperNoteMutation.mutate();
   };
 
-  if (!collection || !notes) {
+  if (!collection || !notes || !id) {
     return (
       <div className="mx-auto max-w-sm w-full h-full flex flex-col">
         <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
@@ -154,9 +157,9 @@ export default function CollectionDetail() {
                 <h3 className="font-semibold text-blue-900">Super Note</h3>
               </div>
               <div className="prose prose-sm max-w-none text-gray-800">
-                {superNote.aggregatedContent.split('\n').map((paragraph, idx) => (
+                {superNote.aggregatedContent ? superNote.aggregatedContent.split('\n').map((paragraph, idx) => (
                   <p key={idx} className="mb-2 leading-relaxed">{paragraph}</p>
-                ))}
+                )) : <p>No content available</p>}
               </div>
             </div>
 
