@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
 import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic, Copy, Trash2, MoreHorizontal, X, GripVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useLocation } from "wouter";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
 
@@ -15,9 +16,10 @@ interface TodoItemProps {
   onDragStart?: (todo: Todo) => void;
   onDragEnd?: () => void;
   isDragging?: boolean;
+  onClick?: (todo: Todo) => void;
 }
 
-function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, isDragging: isExternalDragging }: TodoItemProps) {
+function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, isDragging: isExternalDragging, onClick }: TodoItemProps) {
   const [showSwipeMenu, setShowSwipeMenu] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
@@ -138,7 +140,10 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         </button>
         
         {/* Todo text - takes remaining space */}
-        <div className="flex-1 min-w-0">
+        <div 
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => onClick?.(todo)}
+        >
           <p className={`text-sm truncate ${
             todo.completed 
               ? 'line-through text-[hsl(var(--muted-foreground))]' 
@@ -201,6 +206,7 @@ export default function TodosView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   const { data: todos, isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
@@ -300,6 +306,10 @@ export default function TodosView() {
       id: todo.id,
       archived: !todo.archived,
     });
+  };
+
+  const handleTodoClick = (todo: Todo) => {
+    setLocation(`/todo/${todo.id}`);
   };
 
   if (isLoading) {

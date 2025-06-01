@@ -245,12 +245,12 @@ export default function TodoDetail() {
                   className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow touch-manipulation"
                 >
                   <div className="flex items-center space-x-3">
-                    {relatedTodo.isCompleted ? (
+                    {relatedTodo.completed ? (
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
                     ) : (
                       <Circle className="w-5 h-5 text-gray-400" />
                     )}
-                    <span className={`text-sm ${relatedTodo.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                    <span className={`text-sm ${relatedTodo.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                       {relatedTodo.title}
                     </span>
                   </div>
