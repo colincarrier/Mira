@@ -1,10 +1,12 @@
+import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface NoteCardProps {
   note: NoteWithTodos;
@@ -94,6 +96,7 @@ export default function NoteCard({ note }: NoteCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [showTodosModal, setShowTodosModal] = useState(false);
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
@@ -219,12 +222,18 @@ export default function NoteCard({ note }: NoteCardProps) {
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center space-x-4 text-[12px]">
           {note.todos.length > 0 && (
-            <div className="flex items-center space-x-2">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTodosModal(true);
+              }}
+              className="flex items-center space-x-2 hover:bg-[hsl(var(--muted))] rounded p-1 -m-1 transition-colors"
+            >
               <CheckCircle className="w-4 h-4 text-[hsl(var(--seafoam-green))]" />
               <span className="text-[hsl(var(--muted-foreground))] text-[12px]">
                 {note.todos.length} to-do{note.todos.length !== 1 ? "s" : ""}
               </span>
-            </div>
+            </button>
           )}
           
           {note.collection && (
@@ -235,6 +244,40 @@ export default function NoteCard({ note }: NoteCardProps) {
           )}
         </div>
       </div>
+
+      {/* Todos Modal */}
+      <Dialog open={showTodosModal} onOpenChange={setShowTodosModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>To-Dos from this note</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {note.todos.map((todo, index) => (
+              <div key={index} className="flex items-start space-x-3 p-2 bg-[hsl(var(--muted))] rounded-lg">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                  todo.completed 
+                    ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
+                    : 'border-[hsl(var(--muted-foreground))]'
+                }`}>
+                  {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm ${
+                    todo.completed 
+                      ? 'line-through text-[hsl(var(--muted-foreground))]' 
+                      : 'text-[hsl(var(--foreground))]'
+                  }`}>
+                    {todo.title}
+                  </p>
+                  {todo.priority === 'urgent' && (
+                    <span className="text-xs text-[#8B2635] font-medium">Urgent</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
