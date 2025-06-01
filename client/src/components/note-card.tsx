@@ -217,7 +217,7 @@ export default function NoteCard({ note }: NoteCardProps) {
         </div>
       )}
       <div className="flex items-center justify-between mt-3">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 text-[12px]">
           {note.todos.length > 0 && (
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-4 h-4 text-[hsl(var(--seafoam-green))]" />
