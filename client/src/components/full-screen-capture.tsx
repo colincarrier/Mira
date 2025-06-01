@@ -17,10 +17,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [noteText, setNoteText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
 
   // Initialize camera when component opens
   useEffect(() => {
@@ -91,6 +95,28 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     }
   });
 
+  const uploadFileMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/notes/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Upload failed");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({ title: "File uploaded successfully!" });
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Failed to upload file",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleSave = () => {
     if (!noteText.trim()) {
       toast({
@@ -106,6 +132,27 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     });
   };
 
+  const handleFileUpload = (file: File, type: 'image' | 'file') => {
+    const formData = new FormData();
+    formData.append(type, file);
+    formData.append('mode', type === 'image' ? 'image' : 'file');
+    uploadFileMutation.mutate(formData);
+  };
+
+  const handleVoiceCapture = () => {
+    if (isListening) {
+      stopListening();
+      if (transcript.trim()) {
+        createNoteMutation.mutate({
+          content: transcript,
+          mode: 'voice'
+        });
+      }
+    } else {
+      startListening();
+    }
+  };
+
   const handleCaptureModeChange = (mode: CaptureMode) => {
     setCaptureMode(mode);
     if (mode === 'text') {
@@ -116,6 +163,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           textareaRef.current.click();
         }
       }, 100);
+    } else if (mode === 'upload-image') {
+      imageInputRef.current?.click();
+    } else if (mode === 'upload-file') {
+      fileInputRef.current?.click();
     }
   };
 
@@ -200,8 +251,43 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             </div>
           )}
 
-          {/* Other capture modes */}
-          {captureMode !== 'text' && captureMode !== 'camera' && (
+          {/* Voice capture mode */}
+          {captureMode === 'voice' && (
+            <div className="mx-4 mb-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-2xl text-center">
+                <div className="mb-4">
+                  <button
+                    onClick={handleVoiceCapture}
+                    className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+                      isListening 
+                        ? 'bg-red-500 animate-pulse' 
+                        : 'bg-[hsl(var(--seafoam-green))]'
+                    }`}
+                  >
+                    {isListening ? (
+                      <Square className="w-8 h-8 text-white" />
+                    ) : (
+                      <Mic className="w-8 h-8 text-white" />
+                    )}
+                  </button>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {isListening ? 'Listening...' : 'Voice Capture'}
+                </h3>
+                {transcript && (
+                  <div className="bg-gray-100 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-gray-700">{transcript}</p>
+                  </div>
+                )}
+                <p className="text-gray-600 text-sm mt-2">
+                  {isListening ? 'Tap to stop recording' : 'Tap to start recording'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Other upload modes */}
+          {(captureMode === 'upload-image' || captureMode === 'upload-file') && (
             <div className="mx-4 mb-4">
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-2xl text-center">
                 <div className="mb-4">
@@ -211,10 +297,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   })()}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">
-                  {captureModes.find(m => m.mode === captureMode)?.label} Capture
+                  {captureModes.find(m => m.mode === captureMode)?.label}
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  This feature will be available soon!
+                  Select files to upload and create notes
                 </p>
               </div>
             </div>
@@ -243,6 +329,31 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
         </div>
       </div>
+
+      {/* Hidden file inputs */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleFileUpload(file, 'image');
+          }
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleFileUpload(file, 'file');
+          }
+        }}
+      />
     </div>
   );
 }
