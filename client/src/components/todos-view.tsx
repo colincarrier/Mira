@@ -17,25 +17,32 @@ interface TodoItemProps {
 function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
   return (
     <div
-      className={`flex items-center space-x-2 p-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors group ${
+      className={`flex items-center space-x-3 p-3 rounded-lg active:bg-[hsl(var(--muted))] transition-colors ${
         todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
       } ${
         todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
       }`}
     >
+      {/* Timestamp - leftmost */}
+      <div className="text-[10px] text-[hsl(var(--muted-foreground))] min-w-[40px]">
+        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' hours', 'h').replace(' hour', 'h').replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</span>
+      </div>
+
+      {/* Checkbox */}
       <button
         onClick={() => onToggle(todo)}
-        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
           todo.completed
             ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
-            : 'border-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--seafoam-green))]'
+            : 'border-[hsl(var(--muted-foreground))] active:border-[hsl(var(--seafoam-green))]'
         }`}
       >
-        {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
+        {todo.completed && <Check className="w-3 h-3 text-white" />}
       </button>
       
+      {/* Todo text - takes remaining space */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm truncate ${
+        <p className={`text-sm ${
           todo.completed 
             ? 'line-through text-[hsl(var(--muted-foreground))]' 
             : 'text-[hsl(var(--foreground))]'
@@ -44,40 +51,28 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
         </p>
       </div>
       
-      {/* Right side indicators */}
-      <div className="flex items-center gap-2 text-[10px] text-[hsl(var(--muted-foreground))] text-right ml-auto">
-        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' hours', 'h').replace(' hour', 'h').replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</span>
-      </div>
-      
       {/* Priority indicator */}
       {todo.priority === 'urgent' && !todo.completed && (
-        <AlertCircle className="w-3 h-3 text-[#8B2635]" />
+        <AlertCircle className="w-4 h-4 text-[#8B2635]" />
+      )}
+
+      {/* Pin indicator */}
+      {todo.pinned && !todo.completed && (
+        <Pin className="w-3 h-3 text-[hsl(var(--soft-sky-blue))]" />
       )}
       
-      {/* Action buttons - show on hover */}
-      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!todo.completed && !todo.archived && (
-          <button
-            onClick={() => onPin(todo)}
-            className={`p-1 rounded hover:bg-[hsl(var(--background))] ${
-              todo.pinned ? 'text-[hsl(var(--soft-sky-blue))]' : 'text-[hsl(var(--muted-foreground))]'
-            }`}
-            title={todo.pinned ? 'Unpin' : 'Pin'}
-          >
-            <Pin className="w-3 h-3" />
-          </button>
-        )}
-        
-        {!todo.archived && (
-          <button
-            onClick={() => onArchive(todo)}
-            className="p-1 rounded hover:bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))]"
-            title="Archive"
-          >
-            <Archive className="w-3 h-3" />
-          </button>
-        )}
-      </div>
+      {/* Quick action button for mobile - tap to reveal options */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          // For now, just cycle through pin action as primary mobile action
+          onPin(todo);
+        }}
+        className="w-8 h-8 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+        title="Quick actions"
+      >
+        <Pin className={`w-3 h-3 ${todo.pinned ? 'text-[hsl(var(--soft-sky-blue))]' : 'text-[hsl(var(--muted-foreground))]'}`} />
+      </button>
     </div>
   );
 }
