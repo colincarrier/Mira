@@ -143,20 +143,35 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       {/* Content area */}
       <div className="absolute inset-0 flex flex-col">
         {/* Main capture area */}
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-lg">
-            {/* Text input area */}
-            {captureMode === 'text' && (
+        <div className="flex-1 flex flex-col justify-end pb-4">
+          {/* Camera capture button for photo/video modes */}
+          {(captureMode === 'camera') && (
+            <div className="flex justify-center mb-8">
+              <button
+                className="w-20 h-20 rounded-full bg-white/20 border-4 border-white flex items-center justify-center backdrop-blur-sm"
+                onTouchStart={() => {
+                  // Handle photo capture on tap, video recording on hold
+                  console.log('Capture button pressed');
+                }}
+              >
+                <div className="w-16 h-16 rounded-full bg-white"></div>
+              </button>
+            </div>
+          )}
+          
+          {/* Text input area - positioned above keyboard */}
+          {captureMode === 'text' && (
+            <div className="mx-4 mb-4">
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-2xl">
                 <textarea
                   ref={textareaRef}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="What's on your mind?"
-                  className="w-full h-32 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
+                  className="w-full h-24 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
                   autoFocus
                 />
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-center mt-3">
                   <span className="text-sm text-gray-500">
                     {noteText.length} characters
                   </span>
@@ -169,43 +184,49 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Other capture modes placeholder */}
-            {captureMode !== 'text' && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
-                <div className="text-6xl mb-4">
-                  {captureModes.find(m => m.mode === captureMode)?.icon && 
-                    captureModes.find(m => m.mode === captureMode)!.icon({ className: "w-16 h-16 mx-auto text-gray-600" })
-                  }
+          {/* Other capture modes */}
+          {captureMode !== 'text' && captureMode !== 'camera' && (
+            <div className="mx-4 mb-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-2xl text-center">
+                <div className="mb-4">
+                  {(() => {
+                    const IconComponent = captureModes.find(m => m.mode === captureMode)?.icon;
+                    return IconComponent ? <IconComponent className="w-12 h-12 mx-auto text-gray-600" /> : null;
+                  })()}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-lg font-semibold mb-2">
                   {captureModes.find(m => m.mode === captureMode)?.label} Capture
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm">
                   This feature will be available soon!
                 </p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Capture mode buttons above keyboard area */}
         <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200">
           <div className="flex justify-center space-x-4 py-4 px-6">
-            {captureModes.map((mode) => (
-              <button
-                key={mode.mode}
-                onClick={() => handleCaptureModeChange(mode.mode)}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
-                  captureMode === mode.mode
-                    ? `${mode.color} text-white shadow-lg scale-110`
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <mode.icon className="w-6 h-6" />
-              </button>
-            ))}
+            {captureModes.map((mode) => {
+              const IconComponent = mode.icon;
+              return (
+                <button
+                  key={mode.mode}
+                  onClick={() => handleCaptureModeChange(mode.mode)}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+                    captureMode === mode.mode
+                      ? `${mode.color} text-white shadow-lg scale-110`
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <IconComponent className="w-6 h-6" />
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
