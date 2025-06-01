@@ -283,6 +283,12 @@ export default function NoteDetail() {
                   <span className="capitalize">{note.mode} note</span>
                 </div>
               )}
+              {note.aiEnhanced && (
+                <div className="flex items-center gap-1">
+                  <MiraIcon className="w-4 h-4" />
+                  <span>Enhanced by Mira</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
