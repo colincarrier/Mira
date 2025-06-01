@@ -40,6 +40,7 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
+    console.log("OpenAI analyzeNote called with content length:", content.length, "mode:", mode);
     const prompt = `You are an intelligent personal assistant analyzing user input. Your role is to interpret, organize, and provide rich contextual information like Google's AI-powered results.
 
 CORE PHILOSOPHY: Everything saved here is intentional and meaningful. Provide actionable intelligence with rich context, real information, and organized insights.
@@ -93,6 +94,7 @@ Respond with JSON in this exact format:
   }
 }`;
 
+    console.log("Making OpenAI API call...");
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -109,7 +111,9 @@ Respond with JSON in this exact format:
       temperature: 0.7,
     });
 
+    console.log("OpenAI API response received, parsing JSON...");
     const analysis = JSON.parse(response.choices[0].message.content || '{}');
+    console.log("AI analysis result:", JSON.stringify(analysis, null, 2));
     
     return {
       enhancedContent: analysis.enhancedContent || undefined,
