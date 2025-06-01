@@ -40,8 +40,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Analyze with AI in the background
       if (noteData.content) {
+        console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
         analyzeNote(noteData.content, noteData.mode)
           .then(async (analysis) => {
+            console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
             // Update note with AI analysis
             const updates: any = {
               aiEnhanced: true,
@@ -55,6 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             await storage.updateNote(note.id, updates);
+            console.log("Note updated with AI analysis:", note.id);
             
             // Create todos if found
             for (const todoTitle of analysis.todos) {
@@ -116,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           })
           .catch(error => {
-            console.error("AI analysis failed:", error);
+            console.error("AI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
           });
       }
       
