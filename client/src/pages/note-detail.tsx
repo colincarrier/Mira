@@ -258,94 +258,39 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* Enhanced AI Analysis Section - Always show in detail view */}
-        <div className="note-card mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium mb-3 text-[hsl(var(--sage-green))]">from Mira:</h3>
-              
-              {/* AI Context */}
-              {note.aiContext ? (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
-                  <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                    {note.aiContext}
-                  </p>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">AI Analysis</h4>
-                  <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                    I can help provide context and suggestions for this note. Use the context dialog below to add more information, and I'll enhance this note with intelligent insights.
-                  </p>
-                </div>
-              )}
-              
-              {/* AI Suggestions */}
-              {note.aiSuggestion ? (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
-                  <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                    {note.aiSuggestion}
-                  </p>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Smart Suggestions</h4>
-                  <div className="bg-[hsl(var(--muted))] rounded-lg p-3">
-                    <h5 className="text-sm font-medium mb-2">Consider these approaches:</h5>
-                    <ul className="text-sm text-[hsl(var(--muted-foreground))] space-y-1">
-                      {note.content?.toLowerCase().includes('restaurant') || note.content?.toLowerCase().includes('food') ? (
-                        <>
-                          <li>• Check recent reviews and current menu offerings</li>
-                          <li>• Consider making a reservation if it's popular</li>
-                          <li>• Note any dietary restrictions or preferences</li>
-                        </>
-                      ) : note.content?.toLowerCase().includes('book') || note.content?.toLowerCase().includes('read') ? (
-                        <>
-                          <li>• Check your local library or bookstore availability</li>
-                          <li>• Consider audiobook version for multitasking</li>
-                          <li>• Set a realistic reading timeline</li>
-                        </>
-                      ) : note.content?.toLowerCase().includes('appointment') || note.content?.toLowerCase().includes('meeting') ? (
-                        <>
-                          <li>• Confirm location and any required documents</li>
-                          <li>• Set reminders 24 hours and 1 hour before</li>
-                          <li>• Plan for travel time and potential delays</li>
-                        </>
-                      ) : (
-                        <>
-                          <li>• Break this down into smaller, manageable steps</li>
-                          <li>• Consider any dependencies or prerequisites</li>
-                          <li>• Set a realistic timeline for completion</li>
-                        </>
-                      )}
-                    </ul>
+        {/* AI Analysis Section - Only show if AI data exists */}
+        {(note.aiContext || note.aiSuggestion) && (
+          <div className="note-card mb-6">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium mb-3 text-[hsl(var(--sage-green))]">from Mira:</h3>
+                
+                {/* AI Context */}
+                {note.aiContext && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
+                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
+                      {note.aiContext}
+                    </p>
                   </div>
-                </div>
-              )}
-              
-              {/* Enhanced contextual suggestions */}
-              <div className="bg-[#d9ded3] rounded-lg p-3">
-                <h5 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Helpful Resources:</h5>
-                <div className="text-sm text-[hsl(var(--foreground))] space-y-1">
-                  {note.content?.toLowerCase().includes('party') || note.content?.toLowerCase().includes('birthday') ? (
-                    <p>🎉 Consider creating a shared planning document and setting up calendar reminders for key milestones.</p>
-                  ) : note.content?.toLowerCase().includes('travel') || note.content?.toLowerCase().includes('trip') ? (
-                    <p>✈️ Start a travel checklist covering bookings, documents, packing, and local research.</p>
-                  ) : note.content?.toLowerCase().includes('project') || note.content?.toLowerCase().includes('work') ? (
-                    <p>📋 Consider setting up a project timeline with key deliverables and stakeholder check-ins.</p>
-                  ) : (
-                    <p>💡 This might connect well with your other notes - consider organizing related items together.</p>
-                  )}
-                </div>
+                )}
+                
+                {/* AI Suggestions */}
+                {note.aiSuggestion && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
+                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
+                      {note.aiSuggestion}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Todos */}
         {note.todos && note.todos.length > 0 && (
