@@ -12,6 +12,7 @@ export const notes = pgTable("notes", {
   aiEnhanced: boolean("ai_enhanced").default(false),
   aiSuggestion: text("ai_suggestion"),
   aiContext: text("ai_context"),
+  richContext: text("rich_context"), // JSON string containing Google-style organized information
   collectionId: integer("collection_id"),
 });
 

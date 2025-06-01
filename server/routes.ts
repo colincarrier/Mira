@@ -47,6 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               aiEnhanced: true,
               aiSuggestion: analysis.suggestion,
               aiContext: analysis.context,
+              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
             };
             
             if (analysis.enhancedContent) {

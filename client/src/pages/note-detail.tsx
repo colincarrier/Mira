@@ -264,33 +264,125 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* AI Analysis Section - Only show if AI data exists */}
-        {(note.aiContext || note.aiSuggestion) && (
+        {/* Rich Contextual Information Section */}
+        {(note.aiContext || note.aiSuggestion || note.richContext) && (
           <div className="note-card mb-6">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium mb-3 text-[hsl(var(--sage-green))]">from Mira:</h3>
+                <h3 className="font-medium mb-4 text-[hsl(var(--sage-green))]">Contextual Intelligence</h3>
                 
-                {/* AI Context */}
-                {note.aiContext && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
-                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                      {note.aiContext}
-                    </p>
-                  </div>
-                )}
+                {/* Rich Context - Google-style organized information */}
+                {note.richContext && (() => {
+                  try {
+                    const richData = JSON.parse(note.richContext);
+                    return (
+                      <div className="space-y-4">
+                        {/* AI Summary */}
+                        {richData.summary && (
+                          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                            <h4 className="text-sm font-medium text-blue-900 mb-1">Quick Summary</h4>
+                            <p className="text-sm text-blue-800">{richData.summary}</p>
+                          </div>
+                        )}
+                        
+                        {/* Key Insights */}
+                        {richData.keyInsights && richData.keyInsights.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Key Insights</h4>
+                            <ul className="space-y-1">
+                              {richData.keyInsights.map((insight: string, index: number) => (
+                                <li key={index} className="text-sm text-[hsl(var(--muted-foreground))] flex items-start gap-2">
+                                  <span className="text-green-600 font-medium">•</span>
+                                  {insight}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {/* Actionable Information */}
+                        {richData.actionableInfo && richData.actionableInfo.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Actionable Information</h4>
+                            <div className="bg-green-50 rounded-lg p-3">
+                              <ul className="space-y-1">
+                                {richData.actionableInfo.map((info: string, index: number) => (
+                                  <li key={index} className="text-sm text-green-800 flex items-start gap-2">
+                                    <span className="text-green-600">✓</span>
+                                    {info}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Deep Dive Areas */}
+                        {richData.deepDiveAreas && richData.deepDiveAreas.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Explore Further</h4>
+                            <div className="space-y-3">
+                              {richData.deepDiveAreas.map((area: any, index: number) => (
+                                <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3">
+                                  <h5 className="font-medium text-sm mb-1">{area.title}</h5>
+                                  <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{area.description}</p>
+                                  <ul className="space-y-1">
+                                    {area.keyPoints.map((point: string, pointIndex: number) => (
+                                      <li key={pointIndex} className="text-xs text-[hsl(var(--muted-foreground))] flex items-start gap-1">
+                                        <span className="text-blue-500">→</span>
+                                        {point}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Related Topics */}
+                        {richData.relatedTopics && richData.relatedTopics.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Related Topics</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {richData.relatedTopics.map((topic: string, index: number) => (
+                                <span key={index} className="px-2 py-1 bg-[hsl(var(--muted))] text-xs rounded-full text-[hsl(var(--muted-foreground))]">
+                                  {topic}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } catch (e) {
+                    return null;
+                  }
+                })()}
                 
-                {/* AI Suggestions */}
-                {note.aiSuggestion && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
-                    <p className="text-[hsl(var(--muted-foreground))] leading-relaxed">
-                      {note.aiSuggestion}
-                    </p>
+                {/* Fallback to basic AI Context and Suggestions if no rich context */}
+                {!note.richContext && (
+                  <div className="space-y-4">
+                    {note.aiContext && (
+                      <div>
+                        <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
+                        <p className="text-[hsl(var(--muted-foreground))] leading-relaxed text-sm">
+                          {note.aiContext}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {note.aiSuggestion && (
+                      <div>
+                        <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
+                        <p className="text-[hsl(var(--muted-foreground))] leading-relaxed text-sm">
+                          {note.aiSuggestion}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
