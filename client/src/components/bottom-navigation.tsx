@@ -16,7 +16,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           className={`tab-button ${activeTab === "activity" ? "active" : ""}`}
         >
           <Home className="w-5 h-5" />
-          <span className="text-xs">Activity</span>
+          <span className="text-xs">Notes</span>
         </button>
         
         <button 
