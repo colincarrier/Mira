@@ -494,8 +494,8 @@ export default function NoteDetail() {
                   <textarea
                     value={updateInput}
                     onChange={(e) => setUpdateInput(e.target.value)}
-                    placeholder="Add to this note..."
-                    className="flex-1 min-h-[44px] max-h-[120px] px-3 py-3 text-sm resize-none focus:outline-none bg-transparent"
+                    placeholder="update anything here..."
+                    className="flex-1 min-h-[44px] max-h-[120px] px-3 py-3 text-sm resize-none focus:outline-none bg-transparent text-center placeholder:text-center"
                     style={{ lineHeight: '1.4' }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey && updateInput.trim()) {
