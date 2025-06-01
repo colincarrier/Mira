@@ -169,7 +169,7 @@ export default function NoteCard({ note }: NoteCardProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
             title="Share note"
           >
             <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />

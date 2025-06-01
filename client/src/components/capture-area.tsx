@@ -104,7 +104,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
                 <button
                   key={index}
                   onClick={action.action}
-                  className={`w-12 h-12 rounded-full bg-[hsl(var(--${action.color}))] text-[hsl(var(--foreground))] shadow-lg hover:scale-105 transition-transform flex items-center justify-center`}
+                  className={`w-12 h-12 rounded-full bg-[hsl(var(--${action.color}))] text-[hsl(var(--foreground))] shadow-lg active:scale-95 transition-transform flex items-center justify-center`}
                   title={action.label}
                 >
                   <action.icon className="w-5 h-5" />
@@ -116,7 +116,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
         
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-14 h-14 rounded-full bg-[hsl(var(--soft-sky-blue))] text-[hsl(var(--foreground))] shadow-lg hover:scale-105 transition-all flex items-center justify-center ${isExpanded ? 'rotate-45' : ''}`}
+          className={`w-14 h-14 rounded-full bg-[hsl(var(--soft-sky-blue))] text-[hsl(var(--foreground))] shadow-lg active:scale-95 transition-all flex items-center justify-center ${isExpanded ? 'rotate-45' : ''}`}
         >
           {isExpanded ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
         </button>
