@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 interface NoteCardProps {
   note: NoteWithTodos;
@@ -35,61 +36,69 @@ const getModeColor = (mode: string) => {
   }
 };
 
-// Helper function to generate intelligent follow-up questions
+// Helper function to generate intelligent follow-up questions with time-sensitivity detection
 const getFollowUpQuestions = (content: string, todos: any[]) => {
   const questions = [];
   const lowerContent = content.toLowerCase();
   
-  // Restaurant/food related
-  if (lowerContent.includes('restaurant') || lowerContent.includes('food') || lowerContent.includes('dinner') || lowerContent.includes('lunch')) {
-    questions.push("What's the price range?");
-    questions.push("Any dietary restrictions to note?");
-    questions.push("What's the atmosphere like?");
+  // Check for time-sensitive events first
+  const timeSensitiveTerms = [
+    'birthday', 'party', 'anniversary', 'wedding', 'graduation', 'deadline',
+    'appointment', 'meeting', 'interview', 'flight', 'reservation', 'event',
+    'surprise', 'gift', 'holiday', 'vacation', 'trip'
+  ];
+  
+  const hasTimeSensitive = timeSensitiveTerms.some(term => lowerContent.includes(term));
+  
+  if (hasTimeSensitive) {
+    // For time-sensitive items, prioritize date/timing questions
+    if (lowerContent.includes('party') || lowerContent.includes('surprise') || lowerContent.includes('birthday')) {
+      questions.push("🚨 When is this happening? (Date needed for planning)");
+      questions.push("Who else needs to know about this?");
+      return questions;
+    }
+    if (lowerContent.includes('appointment') || lowerContent.includes('meeting') || lowerContent.includes('interview')) {
+      questions.push("🚨 What's the exact date and time?");
+      questions.push("Where is this taking place?");
+      return questions;
+    }
+    if (lowerContent.includes('flight') || lowerContent.includes('trip') || lowerContent.includes('vacation')) {
+      questions.push("🚨 What are your travel dates?");
+      questions.push("Have you booked accommodations?");
+      return questions;
+    }
   }
   
-  // Book/movie related
-  else if (lowerContent.includes('book') || lowerContent.includes('read') || lowerContent.includes('movie') || lowerContent.includes('watch')) {
-    questions.push("What genre is this?");
-    questions.push("Who recommended this?");
-    questions.push("When do you want to finish it?");
+  // For non-time-sensitive items, be more helpful and less annoying
+  
+  // Simple tasks that don't need AI overkill
+  const simpleTaskPatterns = [
+    /pick up .+ at \d+/,
+    /buy .+/,
+    /call .+/,
+    /email .+/,
+    /text .+/
+  ];
+  
+  if (simpleTaskPatterns.some(pattern => pattern.test(lowerContent))) {
+    // Don't add follow-up questions for obvious simple tasks
+    return [];
   }
   
-  // Travel/location related
-  else if (lowerContent.includes('travel') || lowerContent.includes('trip') || lowerContent.includes('vacation') || lowerContent.includes('visit')) {
-    questions.push("What's your budget range?");
-    questions.push("Best time of year to visit?");
-    questions.push("How many days needed?");
+  // Restaurant/food related - focus on helpful info
+  if (lowerContent.includes('restaurant') || lowerContent.includes('food')) {
+    questions.push("What type of cuisine or atmosphere?");
+    questions.push("Price range preference?");
   }
   
-  // School/education related
-  else if (lowerContent.includes('school') || lowerContent.includes('preschool') || lowerContent.includes('teacher') || lowerContent.includes('education')) {
-    questions.push("What are the enrollment requirements?");
-    questions.push("What's the student-teacher ratio?");
-    questions.push("Are there waiting lists?");
+  // Book/movie/entertainment - focus on preferences
+  else if (lowerContent.includes('book') || lowerContent.includes('movie') || lowerContent.includes('show')) {
+    questions.push("What genre interests you?");
+    questions.push("Any specific recommendations?");
   }
   
-  // Shopping/purchase related
-  else if (lowerContent.includes('buy') || lowerContent.includes('purchase') || lowerContent.includes('shop')) {
-    questions.push("What's your budget limit?");
-    questions.push("Where can you find the best price?");
-    questions.push("When do you need this by?");
-  }
-  
-  // Appointment/scheduling related
-  else if (lowerContent.includes('appointment') || lowerContent.includes('schedule') || lowerContent.includes('meeting')) {
-    questions.push("What documents do you need?");
-    questions.push("How long will this take?");
-    questions.push("Any prep work required?");
-  }
-  
-  // General fallback questions
-  else {
-    questions.push("What's the next step?");
-    questions.push("Who else should know about this?");
-    questions.push("When is the deadline?");
-  }
-  
-  return questions.slice(0, 3); // Limit to 3 questions max
+  // Only return questions if they add real value
+  return questions.slice(0, 2);
 };
 
 export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
@@ -104,27 +113,42 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
-  // Helper to format content with bullet points
+  // Helper to format content with better title/description separation
   const formatContent = (content: string) => {
-    const lines = content.split('\n');
+    const lines = content.split('\n').filter(line => line.trim().length > 0);
     const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
     
+    // Extract a meaningful title (first 50 chars or first sentence)
+    const firstLine = lines[0] || '';
+    const title = firstLine.length > 50 
+      ? firstLine.substring(0, 47) + '...'
+      : firstLine;
+    
     if (bullets.length >= 2) {
-      // Show first line + first few bullets
-      const firstLine = lines.find(line => !line.trim().match(/^[-•*]\s+/) && line.trim().length > 0);
       const displayBullets = bullets.slice(0, 3).map(b => b.replace(/^[-•*]\s+/, '').trim());
-      
       return {
         hasStructure: true,
-        firstLine: firstLine || '',
+        title,
+        description: '',
         bullets: displayBullets
+      };
+    }
+    
+    // For longer content, split into title and description
+    if (lines.length > 1) {
+      const description = lines.slice(1).join(' ').substring(0, 120);
+      return {
+        hasStructure: false,
+        title,
+        description: description + (description.length >= 120 ? '...' : ''),
+        bullets: []
       };
     }
     
     return {
       hasStructure: false,
-      content: content,
-      firstLine: '',
+      title,
+      description: '',
       bullets: []
     };
   };
@@ -206,29 +230,66 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           >
             <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
           </button>
-          <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+                title="More options"
+              >
+                <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem>
+                <Star className="w-4 h-4 mr-2" />
+                Star Note
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Plus className="w-4 h-4 mr-2" />
+                Add to Collection
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Archive className="w-4 h-4 mr-2" />
+                Archive
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
-      {/* Content with smart formatting */}
-      <div className="text-base mb-3">
+      {/* Content with iOS Notes-style formatting */}
+      <div className="mb-3">
+        {/* Title - bigger and bolder like iOS Notes */}
+        <h3 className="text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))]">
+          {formattedContent.title}
+        </h3>
+        
+        {/* Description or bullets - smaller, single-spaced */}
         {formattedContent.hasStructure ? (
-          <div>
-            {formattedContent.firstLine && (
-              <p className="mb-2">{formattedContent.firstLine}</p>
-            )}
-            <ul className="space-y-1">
-              {formattedContent.bullets.map((bullet, idx) => (
-                <li key={idx} className="flex items-start">
-                  <span className="text-[hsl(var(--muted-foreground))] mr-2 mt-1.5 flex-shrink-0">•</span>
-                  <span className="line-clamp-1">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p className="line-clamp-3">{formattedContent.content}</p>
-        )}
+          <ul className="space-y-0.5 text-sm leading-tight text-[hsl(var(--muted-foreground))]">
+            {formattedContent.bullets.map((bullet, idx) => (
+              <li key={idx} className="flex items-start">
+                <span className="mr-2 mt-0.5 flex-shrink-0">•</span>
+                <span className="line-clamp-1">{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        ) : formattedContent.description ? (
+          <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
+            {formattedContent.description}
+          </p>
+        ) : null}
       </div>
       {note.mode === "voice" && note.transcription && (
         <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">
