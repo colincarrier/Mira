@@ -391,7 +391,7 @@ export default function TodosView() {
                 </h3>
                 <div className="space-y-0">
                   {filteredTodos.filter(t => t.pinned && !t.completed).map((todo) => (
-                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} onClick={handleTodoClick} />
                   ))}
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function TodosView() {
                 </h3>
                 <div className="space-y-0">
                   {filteredTodos.filter(t => t.priority === 'urgent' && !t.pinned && !t.completed).map((todo) => (
-                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} onClick={handleTodoClick} />
                   ))}
                 </div>
               </div>
@@ -418,7 +418,7 @@ export default function TodosView() {
                 <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2">Tasks</h3>
                 <div className="space-y-0.5">
                   {filteredTodos.filter(t => !t.pinned && t.priority !== 'urgent' && !t.completed).map((todo) => (
-                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} onClick={handleTodoClick} />
                   ))}
                 </div>
               </div>

@@ -215,6 +215,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/todos/:id/context", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const todos = await storage.getTodos();
+      const todo = todos.find(t => t.id === id);
+      
+      if (!todo) {
+        return res.status(404).json({ message: "Todo not found" });
+      }
+
+      // Get the source note for this todo
+      const sourceNote = await storage.getNote(todo.noteId);
+      
+      // Get related todos from the same note
+      const relatedTodos = todos.filter(t => t.noteId === todo.noteId && t.id !== todo.id);
+
+      // Generate AI context for this specific todo
+      const prompt = `Provide intelligent context and insights for this todo item: "${todo.title}"
+
+Source context: ${sourceNote?.content || 'No source context available'}
+
+Focus on:
+1. Why this task is important based on the source context
+2. Any helpful tips or considerations for completing this task
+3. Connections to related information from the source
+
+Provide a concise, actionable response that adds value beyond just the task title.`;
+
+      try {
+        const aiResult = await analyzeNote(prompt, "todo-context");
+        
+        const todoContext = {
+          todo,
+          sourceNote,
+          aiContext: aiResult.enhancedContent || aiResult.suggestion,
+          insights: [
+            aiResult.context,
+            ...aiResult.todos.filter(t => t !== todo.title).map(t => `Related: ${t}`)
+          ].filter(Boolean),
+          relatedTodos
+        };
+
+        res.json(todoContext);
+      } catch (aiError) {
+        // Fallback response without AI context if AI fails
+        const todoContext = {
+          todo,
+          sourceNote,
+          aiContext: undefined,
+          insights: [],
+          relatedTodos
+        };
+        res.json(todoContext);
+      }
+    } catch (error) {
+      console.error("Todo context error:", error);
+      res.status(500).json({ message: "Failed to fetch todo context" });
+    }
+  });
+
   // Collections endpoints
   app.get("/api/collections", async (req, res) => {
     try {
