@@ -15,6 +15,18 @@ export interface AIAnalysisResult {
     icon: string;
     color: string;
   };
+  richContext?: {
+    summary: string;
+    keyInsights: string[];
+    relatedTopics: string[];
+    actionableInfo: string[];
+    imagePrompts?: string[];
+    deepDiveAreas: {
+      title: string;
+      description: string;
+      keyPoints: string[];
+    }[];
+  };
   splitNotes?: {
     content: string;
     todos: string[];
@@ -28,96 +40,106 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = `You are an intelligent personal assistant analyzing user input. Your role is to interpret, organize, and provide value-added insights.
+    const prompt = `You are an intelligent personal assistant analyzing user input. Your role is to interpret, organize, and provide rich contextual information like Google's AI-powered results.
 
-CORE PHILOSOPHY: Everything saved here is intentional and meaningful. Provide actionable intelligence, not generic questions.
+CORE PHILOSOPHY: Everything saved here is intentional and meaningful. Provide actionable intelligence with rich context, real information, and organized insights.
 
 Analyze this ${mode} input: "${content}"
 
-DECISION FRAMEWORK:
-- If input has clear context/intent → Provide value-added information, insights, or fetched knowledge
-- If input lacks context → Ask focused clarifying questions
-- Always extract actionable todos
-- Always suggest intelligent organization
-- Be EXTREMELY concise - no superfluous language
+RESPONSE STRUCTURE - Provide rich contextual information:
+1. RICH CONTEXT: Create Google-style organized information including:
+   - Quick AI summary of most pertinent information
+   - Key insights and actionable information
+   - Related topics for deeper exploration
+   - Deep dive areas with structured sections
+   - Relevant image concepts (for visual context)
 
-RESPONSE PRIORITIES:
-1. Extract all actionable items as todos
-2. Enhance content only if it adds genuine clarity
-3. Provide valuable context/insights that act like a knowledgeable assistant
-4. Suggest smart categorization
-5. Split unrelated topics into separate notes
+2. ACTIONABLE TODOS: Extract specific, actionable items
+3. SMART CATEGORIZATION: Suggest intelligent organization
+4. CONTENT ENHANCEMENT: Only if it adds genuine clarity
+
+RICH CONTEXT REQUIREMENTS:
+- Provide factual, useful information about the topic
+- Organize information into clear sections for exploration
+- Include practical insights and actionable information
+- Suggest related areas worth investigating
+- Be specific and avoid generic advice
 
 Respond with JSON in this exact format:
 {
   "enhancedContent": "improved version or null",
-  "suggestion": "intelligent insight, valuable information, or focused question if context unclear",
-  "context": "valuable knowledge/background that acts like an assistant who knows you well",
-  "todos": ["specific actionable items"],
-  "collectionSuggestion": {
-    "name": "smart category name",
-    "icon": "icon name (coffee, lightbulb, book, heart, star, briefcase, home, car, plane, checklist, calendar, location, shopping)",
-    "color": "color name (orange, purple, green, blue, red, yellow, pink, indigo, teal, gray, cyan)"
+  "suggestion": "actionable next steps",
+  "context": "brief contextual summary",
+  "todos": ["specific actionable item 1", "specific actionable item 2"],
+  "richContext": {
+    "summary": "Quick AI summary of most pertinent information about this topic",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "relatedTopics": ["related topic 1", "related topic 2"],
+    "actionableInfo": ["practical tip 1", "practical tip 2"],
+    "imagePrompts": ["relevant image concept 1", "relevant image concept 2"],
+    "deepDiveAreas": [
+      {
+        "title": "Area for deeper exploration",
+        "description": "What this area covers",
+        "keyPoints": ["point 1", "point 2", "point 3"]
+      }
+    ]
   },
-  "splitNotes": null or [{"content": "separate topic", "todos": [], "collectionSuggestion": {...}}]
-}
-
-EXAMPLES OF VALUE-ADDED RESPONSES:
-- Restaurant mention → Cuisine type, price range, neighborhood context
-- Product mention → Key specs, alternatives, typical price range
-- Person mention → Relationship context, relevant details
-- Task mention → Deadline implications, related dependencies
-- Event mention → Timing context, preparation checklist
-
-Only use splitNotes if there are truly unrelated topics that would be better as separate notes.`;
+  "collectionSuggestion": {
+    "name": "collection name",
+    "icon": "relevant icon",
+    "color": "appropriate color"
+  }
+}`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",
-          content: "You are Mira, an intelligent personal assistant. You know the user deeply and provide value-added insights, not generic responses. Be extremely concise and actionable."
+          content: "You are an intelligent personal assistant that provides rich, contextual information like Google's AI-powered results. Always respond with valid JSON."
         },
         {
           role: "user",
-          content: prompt,
-        },
+          content: prompt
+        }
       ],
       response_format: { type: "json_object" },
+      temperature: 0.7,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const analysis = JSON.parse(response.choices[0].message.content || '{}');
     
     return {
-      enhancedContent: result.enhancedContent === "null" ? undefined : result.enhancedContent,
-      suggestion: result.suggestion,
-      context: result.context,
-      todos: result.todos || [],
-      collectionSuggestion: result.collectionSuggestion,
-      splitNotes: result.splitNotes || []
+      enhancedContent: analysis.enhancedContent || undefined,
+      suggestion: analysis.suggestion || undefined,
+      context: analysis.context || undefined,
+      todos: analysis.todos || [],
+      richContext: analysis.richContext || undefined,
+      collectionSuggestion: analysis.collectionSuggestion || undefined,
+      splitNotes: analysis.splitNotes || undefined,
     };
   } catch (error) {
-    console.error("OpenAI analysis failed:", error);
+    console.error("Error analyzing note:", error);
     return {
-      suggestion: "Note captured successfully",
       todos: [],
+      suggestion: "Unable to analyze note at this time. Please try again.",
     };
   }
 }
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   try {
-    // Create a temporary file-like object for OpenAI
-    const audioFile = new File([audioBuffer], "audio.webm", { type: "audio/webm" });
+    const file = new File([audioBuffer], "audio.webm", { type: "audio/webm" });
     
     const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file: file,
       model: "whisper-1",
     });
 
     return transcription.text;
   } catch (error) {
-    console.error("Audio transcription failed:", error);
+    console.error("Error transcribing audio:", error);
     throw new Error("Failed to transcribe audio");
   }
 }
