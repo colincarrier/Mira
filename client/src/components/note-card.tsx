@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check } from "lucide-react";
+import { Play, Bot, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -93,13 +93,43 @@ const getFollowUpQuestions = (content: string, todos: any[]) => {
 };
 
 export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true });
+  const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
+    .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
+    .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
+    .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [showTodosModal, setShowTodosModal] = useState(false);
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
+
+  // Helper to format content with bullet points
+  const formatContent = (content: string) => {
+    const lines = content.split('\n');
+    const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
+    
+    if (bullets.length >= 2) {
+      // Show first line + first few bullets
+      const firstLine = lines.find(line => !line.trim().match(/^[-•*]\s+/) && line.trim().length > 0);
+      const displayBullets = bullets.slice(0, 3).map(b => b.replace(/^[-•*]\s+/, '').trim());
+      
+      return {
+        hasStructure: true,
+        firstLine: firstLine || '',
+        bullets: displayBullets
+      };
+    }
+    
+    return {
+      hasStructure: false,
+      content: content,
+      firstLine: '',
+      bullets: []
+    };
+  };
+
+  const formattedContent = formatContent(note.content);
 
   const handleCardClick = () => {
     setLocation(`/note/${note.id}`);
@@ -165,10 +195,8 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     <div className="note-card animate-fadeIn cursor-pointer hover:shadow-md transition-shadow bg-[#99917712]" onClick={handleCardClick}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
-          <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-            {getModeLabel(note.mode)}
-          </span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -176,13 +204,32 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
             title="Share note"
           >
-            <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
           </button>
-          <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
           <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
         </div>
       </div>
-      <p className="text-base mb-3 line-clamp-3">{note.content}</p>
+      
+      {/* Content with smart formatting */}
+      <div className="text-base mb-3">
+        {formattedContent.hasStructure ? (
+          <div>
+            {formattedContent.firstLine && (
+              <p className="mb-2">{formattedContent.firstLine}</p>
+            )}
+            <ul className="space-y-1">
+              {formattedContent.bullets.map((bullet, idx) => (
+                <li key={idx} className="flex items-start">
+                  <span className="text-[hsl(var(--muted-foreground))] mr-2 mt-1.5 flex-shrink-0">•</span>
+                  <span className="line-clamp-1">{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="line-clamp-3">{formattedContent.content}</p>
+        )}
+      </div>
       {note.mode === "voice" && note.transcription && (
         <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">
           <button className="w-8 h-8 rounded-full bg-[hsl(var(--ocean-blue))] flex items-center justify-center">
@@ -197,9 +244,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
       {note.aiSuggestion && (
         <div className="rounded-xl p-3 mb-3 bg-[#d9ded3]">
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center space-x-2 mb-1">
             <Bot className="w-4 h-4 text-[hsl(var(--sea-green))]" />
-            <span className="text-sm font-medium text-[hsl(var(--sea-green))]">AI Suggestion</span>
+            <span className="text-sm font-medium text-[hsl(var(--sea-green))]">from Mira:</span>
           </div>
           <p className="text-sm text-[hsl(var(--foreground))]">{note.aiSuggestion}</p>
         </div>
