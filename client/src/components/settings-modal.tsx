@@ -7,12 +7,13 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  if (!isOpen) return null;
-
   return (
     <div className={`fixed inset-0 bg-white z-50 transform transition-transform duration-300 ${
       isOpen ? "translate-x-0" : "translate-x-full"
-    }`} style={{ willChange: 'transform' }}>
+    }`} style={{ 
+      willChange: 'transform',
+      visibility: isOpen ? 'visible' : 'hidden'
+    }}>
       {/* Mobile app container with max width */}
       <div className="mx-auto max-w-sm w-full h-full flex flex-col">
         <div className="safe-area-top"></div>

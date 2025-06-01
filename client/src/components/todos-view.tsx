@@ -252,50 +252,141 @@ export default function TodosView() {
     },
   });
 
-  // AI-powered urgency detection
-  const categorizeByUrgency = (todos: Todo[]) => {
-    const urgent: Todo[] = [];
-    const needsAttention: Todo[] = [];
-    const regular: Todo[] = [];
+  // AI-powered todo grouping and urgency detection
+  const groupAndCategorizetodos = (todos: Todo[]) => {
+    // Step 1: Find related todos by extracting key terms
+    const extractKeyTerms = (title: string) => {
+      const cleaned = title.toLowerCase().replace(/[^\w\s]/g, ' ');
+      const words = cleaned.split(/\s+/).filter(w => w.length > 2);
+      
+      // Focus on nouns and important terms
+      const importantTerms = words.filter(word => 
+        !['the', 'and', 'for', 'with', 'buy', 'get', 'make', 'do', 'have', 'need'].includes(word)
+      );
+      
+      return importantTerms;
+    };
+
+    // Step 2: Group todos by similarity
+    const groups: { [key: string]: Todo[] } = {};
+    const processed = new Set<number>();
 
     todos.forEach(todo => {
-      const title = todo.title.toLowerCase();
+      if (processed.has(todo.id)) return;
       
-      // Clear urgent indicators
-      const urgentKeywords = [
-        'urgent', 'asap', 'emergency', 'deadline', 'due today', 'overdue',
-        'appointment', 'meeting', 'interview', 'flight', 'reservation',
-        'doctor', 'dentist', 'medical', 'prescription', 'medication',
-        'bills', 'payment', 'rent', 'mortgage', 'insurance',
-        'birthday', 'anniversary', 'party', 'event', 'wedding'
-      ];
-
-      // Attention-needed indicators (time-sensitive but unclear urgency)
-      const attentionKeywords = [
-        'call', 'email', 'contact', 'schedule', 'book', 'confirm',
-        'register', 'apply', 'submit', 'order', 'purchase', 'buy',
-        'pick up', 'drop off', 'return', 'renew', 'update'
-      ];
-
-      // Check if already marked as urgent
-      if (todo.priority === 'urgent') {
-        urgent.push(todo);
+      const terms = extractKeyTerms(todo.title);
+      let groupKey = terms[0] || 'misc';
+      
+      // Check if this todo belongs to an existing group
+      for (const [existingKey, existingTodos] of Object.entries(groups)) {
+        const existingTerms = extractKeyTerms(existingTodos[0].title);
+        
+        // Check for term overlap or semantic similarity
+        const overlap = terms.filter(term => 
+          existingTerms.some(existingTerm => 
+            term.includes(existingTerm) || 
+            existingTerm.includes(term) ||
+            // Semantic groupings
+            (term === 'window' && existingTerm === 'blind') ||
+            (term === 'blind' && existingTerm === 'window') ||
+            (term === 'kitchen' && existingTerm === 'cook') ||
+            (term === 'grocery' && existingTerm === 'food')
+          )
+        ).length;
+        
+        if (overlap > 0 || terms.length > 0 && existingTerms.includes(terms[0])) {
+          groupKey = existingKey;
+          break;
+        }
       }
-      // Check for urgent keywords
-      else if (urgentKeywords.some(keyword => title.includes(keyword))) {
-        urgent.push(todo);
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
       }
-      // Check for attention keywords
-      else if (attentionKeywords.some(keyword => title.includes(keyword))) {
-        needsAttention.push(todo);
-      }
-      // Everything else is regular
-      else {
-        regular.push(todo);
-      }
+      
+      groups[groupKey].push(todo);
+      processed.add(todo.id);
     });
 
-    return { urgent, needsAttention, regular };
+    // Step 3: Categorize by urgency within each group
+    const categorizeGroup = (groupTodos: Todo[]) => {
+      const urgent: Todo[] = [];
+      const needsAttention: Todo[] = [];
+      const regular: Todo[] = [];
+
+      groupTodos.forEach(todo => {
+        const title = todo.title.toLowerCase();
+        
+        const urgentKeywords = [
+          'urgent', 'asap', 'emergency', 'deadline', 'due today', 'overdue',
+          'appointment', 'meeting', 'interview', 'flight', 'reservation',
+          'doctor', 'dentist', 'medical', 'prescription', 'medication',
+          'bills', 'payment', 'rent', 'mortgage', 'insurance',
+          'birthday', 'anniversary', 'party', 'event', 'wedding'
+        ];
+
+        const attentionKeywords = [
+          'call', 'email', 'contact', 'schedule', 'book', 'confirm',
+          'register', 'apply', 'submit', 'order', 'purchase', 'buy',
+          'pick up', 'drop off', 'return', 'renew', 'update'
+        ];
+
+        if (todo.priority === 'urgent' || urgentKeywords.some(keyword => title.includes(keyword))) {
+          urgent.push(todo);
+        } else if (attentionKeywords.some(keyword => title.includes(keyword))) {
+          needsAttention.push(todo);
+        } else {
+          regular.push(todo);
+        }
+      });
+
+      return { urgent, needsAttention, regular };
+    };
+
+    // Step 4: Process groups and flatten with priorities
+    const finalUrgent: Array<{todo: Todo, group?: string, isGrouped?: boolean}> = [];
+    const finalNeedsAttention: Array<{todo: Todo, group?: string, isGrouped?: boolean}> = [];
+    const finalRegular: Array<{todo: Todo, group?: string, isGrouped?: boolean}> = [];
+
+    Object.entries(groups).forEach(([groupKey, groupTodos]) => {
+      const { urgent, needsAttention, regular } = categorizeGroup(groupTodos);
+      
+      const isMultiItem = groupTodos.length > 1;
+      const groupName = isMultiItem ? groupKey : undefined;
+      
+      // Add urgent todos from this group
+      urgent.forEach((todo, index) => {
+        finalUrgent.push({
+          todo,
+          group: groupName,
+          isGrouped: isMultiItem && index > 0
+        });
+      });
+      
+      // Add attention todos from this group
+      needsAttention.forEach((todo, index) => {
+        finalNeedsAttention.push({
+          todo,
+          group: groupName,
+          isGrouped: isMultiItem && index > 0
+        });
+      });
+      
+      // Add regular todos from this group
+      regular.forEach((todo, index) => {
+        finalRegular.push({
+          todo,
+          group: groupName,
+          isGrouped: isMultiItem && index > 0
+        });
+      });
+    });
+
+    return {
+      urgent: finalUrgent,
+      needsAttention: finalNeedsAttention,
+      regular: finalRegular
+    };
   };
 
   const getFilteredTodos = () => {
@@ -388,8 +479,8 @@ export default function TodosView() {
   const pinnedCount = todos?.filter(t => t.pinned && !t.completed && !t.archived).length || 0;
   const urgentCount = todos?.filter(t => t.priority === 'urgent' && !t.completed && !t.archived).length || 0;
   
-  // Get categorized todos for smart display
-  const { urgent, needsAttention, regular } = categorizeByUrgency(activeTodos);
+  // Get grouped and categorized todos for smart display
+  const { urgent, needsAttention, regular } = groupAndCategorizetodos(activeTodos);
 
   const filterButtons = [
     { key: 'all', label: 'All', count: activeTodos.length, icon: null },
