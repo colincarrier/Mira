@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
-import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic } from "lucide-react";
+import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic, Copy, Trash2, MoreHorizontal, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
@@ -15,64 +15,143 @@ interface TodoItemProps {
 }
 
 function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
+  const [showSwipeMenu, setShowSwipeMenu] = useState(false);
+
+  const handleDuplicate = () => {
+    // TODO: Implement duplicate functionality
+    console.log('Duplicate todo:', todo.id);
+    setShowSwipeMenu(false);
+  };
+
+  const handleDelete = () => {
+    // TODO: Implement delete functionality
+    console.log('Delete todo:', todo.id);
+    setShowSwipeMenu(false);
+  };
+
+  const swipeActions = [
+    {
+      label: 'Pin',
+      icon: Pin,
+      color: 'bg-[hsl(var(--soft-sky-blue))]',
+      action: () => {
+        onPin(todo);
+        setShowSwipeMenu(false);
+      }
+    },
+    {
+      label: 'Archive',
+      icon: Archive,
+      color: 'bg-[hsl(var(--sand-taupe))]',
+      action: () => {
+        onArchive(todo);
+        setShowSwipeMenu(false);
+      }
+    },
+    {
+      label: 'Duplicate',
+      icon: Copy,
+      color: 'bg-[hsl(var(--dusty-teal))]',
+      action: handleDuplicate
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      color: 'bg-red-500',
+      action: handleDelete
+    }
+  ];
+
   return (
-    <div
-      className={`flex items-center space-x-3 p-3 rounded-lg active:bg-[hsl(var(--muted))] transition-colors ${
-        todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
-      } ${
-        todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
-      }`}
-    >
-      {/* Timestamp - leftmost */}
-      <div className="text-[10px] text-[hsl(var(--muted-foreground))] min-w-[40px]">
-        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' hours', 'h').replace(' hour', 'h').replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</span>
-      </div>
-
-      {/* Checkbox */}
-      <button
-        onClick={() => onToggle(todo)}
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-          todo.completed
-            ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
-            : 'border-[hsl(var(--muted-foreground))] active:border-[hsl(var(--seafoam-green))]'
+    <div className="relative">
+      {/* Main todo item */}
+      <div
+        className={`flex items-center space-x-3 p-2 rounded-lg active:bg-[hsl(var(--muted))] transition-colors ${
+          todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
+        } ${
+          todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
         }`}
-      >
-        {todo.completed && <Check className="w-3 h-3 text-white" />}
-      </button>
-      
-      {/* Todo text - takes remaining space */}
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm ${
-          todo.completed 
-            ? 'line-through text-[hsl(var(--muted-foreground))]' 
-            : 'text-[hsl(var(--foreground))]'
-        }`}>
-          {todo.title}
-        </p>
-      </div>
-      
-      {/* Priority indicator */}
-      {todo.priority === 'urgent' && !todo.completed && (
-        <AlertCircle className="w-4 h-4 text-[#8B2635]" />
-      )}
-
-      {/* Pin indicator */}
-      {todo.pinned && !todo.completed && (
-        <Pin className="w-3 h-3 text-[hsl(var(--soft-sky-blue))]" />
-      )}
-      
-      {/* Quick action button for mobile - tap to reveal options */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          // For now, just cycle through pin action as primary mobile action
-          onPin(todo);
+        onTouchStart={(e) => {
+          // Simple touch handler - for now just show menu on long press
+          const touchTimer = setTimeout(() => {
+            setShowSwipeMenu(true);
+          }, 500);
+          
+          const handleTouchEnd = () => {
+            clearTimeout(touchTimer);
+          };
+          
+          e.currentTarget.addEventListener('touchend', handleTouchEnd, { once: true });
         }}
-        className="w-8 h-8 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-        title="Quick actions"
       >
-        <Pin className={`w-3 h-3 ${todo.pinned ? 'text-[hsl(var(--soft-sky-blue))]' : 'text-[hsl(var(--muted-foreground))]'}`} />
-      </button>
+        {/* Checkbox */}
+        <button
+          onClick={() => onToggle(todo)}
+          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+            todo.completed
+              ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
+              : 'border-[hsl(var(--muted-foreground))] active:border-[hsl(var(--seafoam-green))]'
+          }`}
+        >
+          {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
+        </button>
+        
+        {/* Todo text - takes remaining space */}
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm truncate ${
+            todo.completed 
+              ? 'line-through text-[hsl(var(--muted-foreground))]' 
+              : 'text-[hsl(var(--foreground))]'
+          }`}>
+            {todo.title}
+          </p>
+        </div>
+        
+        {/* Priority indicator */}
+        {todo.priority === 'urgent' && !todo.completed && (
+          <AlertCircle className="w-3 h-3 text-[#8B2635]" />
+        )}
+
+        {/* Pin indicator */}
+        {todo.pinned && !todo.completed && (
+          <Pin className="w-3 h-3 text-[hsl(var(--soft-sky-blue))]" />
+        )}
+        
+        {/* Timestamp - rightmost */}
+        <div className="text-[10px] text-[hsl(var(--muted-foreground))] text-right">
+          <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' hours', 'h').replace(' hour', 'h').replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</span>
+        </div>
+        
+        {/* Menu trigger */}
+        <button
+          onClick={() => setShowSwipeMenu(!showSwipeMenu)}
+          className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+        >
+          <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+        </button>
+      </div>
+
+      {/* Swipe menu overlay */}
+      {showSwipeMenu && (
+        <div className="absolute inset-0 bg-[hsl(var(--background))] rounded-lg flex items-center justify-end space-x-1 p-2 z-10 shadow-lg border border-[hsl(var(--border))]">
+          {swipeActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.action}
+              className={`w-10 h-10 rounded-full ${action.color} text-white flex items-center justify-center transition-transform active:scale-95`}
+              title={action.label}
+            >
+              <action.icon className="w-4 h-4" />
+            </button>
+          ))}
+          <button
+            onClick={() => setShowSwipeMenu(false)}
+            className="w-8 h-8 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center ml-2"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -222,7 +222,7 @@ export default function NoteCard({ note }: NoteCardProps) {
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-4 h-4 text-[hsl(var(--seafoam-green))]" />
               <span className="text-[hsl(var(--muted-foreground))] text-[12px]">
-                {note.todos.length} to-do{note.todos.length !== 1 ? "s" : ""} extracted
+                {note.todos.length} to-do{note.todos.length !== 1 ? "s" : ""}
               </span>
             </div>
           )}
