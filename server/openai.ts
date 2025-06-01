@@ -56,7 +56,8 @@ RESPONSE STRUCTURE - Provide rich contextual information:
 
 2. ACTIONABLE TODOS: Extract specific, actionable items
 3. SMART CATEGORIZATION: Suggest intelligent organization
-4. CONTENT ENHANCEMENT: Only if it adds genuine clarity
+4. CONTENT ENHANCEMENT: Create a SHORT, scannable title (2-4 words max) that captures the essence. Avoid fluff words like "Consider", "Implement", "Review". Use specific nouns and key concepts.
+   Examples: "Crow Business Idea" not "Consider refining your business plan", "Marketing Strategy" not "Review marketing approach"
 
 RICH CONTEXT REQUIREMENTS:
 - Provide factual, useful information about the topic
@@ -67,7 +68,7 @@ RICH CONTEXT REQUIREMENTS:
 
 Respond with JSON in this exact format:
 {
-  "enhancedContent": "improved version or null",
+  "enhancedContent": "SHORT scannable title (2-4 words, no fluff words)",
   "suggestion": "actionable next steps",
   "context": "brief contextual summary",
   "todos": ["specific actionable item 1", "specific actionable item 2"],
