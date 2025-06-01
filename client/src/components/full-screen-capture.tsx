@@ -25,10 +25,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   useEffect(() => {
     if (isOpen) {
       startCamera();
-      // Focus textarea after a brief delay
+      // Focus textarea after a brief delay to ensure keyboard appears on mobile
       setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
+        if (captureMode === 'text' && textareaRef.current) {
+          textareaRef.current.focus();
+          // Force keyboard on mobile devices
+          textareaRef.current.click();
+        }
+      }, 300);
     } else {
       stopCamera();
     }
@@ -36,7 +40,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => {
       stopCamera();
     };
-  }, [isOpen]);
+  }, [isOpen, captureMode]);
 
   const startCamera = async () => {
     try {
@@ -104,7 +108,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const handleCaptureModeChange = (mode: CaptureMode) => {
     setCaptureMode(mode);
     if (mode === 'text') {
-      textareaRef.current?.focus();
+      // Ensure keyboard appears when switching to text mode
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.click();
+        }
+      }, 100);
     }
   };
 
@@ -170,6 +180,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   placeholder="What's on your mind?"
                   className="w-full h-24 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
                   autoFocus
+                  inputMode="text"
+                  enterKeyHint="done"
                 />
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-sm text-gray-500">
