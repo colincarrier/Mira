@@ -80,11 +80,13 @@ export default function TodosView() {
         filtered = filtered.filter(t => !t.archived);
     }
     
-    // Always show pinned items at top (unless filtering specifically)
+    // Organize todos with pinned at top, then urgent, then others
     if (activeFilter === 'all') {
       const pinned = filtered.filter(t => t.pinned && !t.completed);
-      const unpinned = filtered.filter(t => !t.pinned);
-      return [...pinned, ...unpinned];
+      const urgent = filtered.filter(t => t.priority === 'urgent' && !t.pinned && !t.completed);
+      const regular = filtered.filter(t => !t.pinned && t.priority !== 'urgent' && !t.completed);
+      const completed = filtered.filter(t => t.completed);
+      return [...pinned, ...urgent, ...regular, ...completed];
     }
     
     return filtered;
@@ -185,6 +187,8 @@ export default function TodosView() {
               key={todo.id}
               className={`flex items-center space-x-2 p-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors group ${
                 todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
+              } ${
+                todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
               }`}
             >
               <button
@@ -210,7 +214,7 @@ export default function TodosView() {
               
               {/* Right side indicators */}
               <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-                <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace(' ago', '')}</span>
+                <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' ago', ' ago')}</span>
               </div>
               
               {/* Priority indicator */}
