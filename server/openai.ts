@@ -28,37 +28,46 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = `Analyze the following ${mode} note and provide:
-1. Enhanced/formatted version of the content (optional - only if it improves clarity)
-2. A helpful AI suggestion or follow-up action
-3. Extract any actionable to-dos
-4. Generate valuable context that would help when browsing this note later
-5. Suggest a collection category if this note would fit into a themed group
-6. IMPORTANT: If the note contains multiple unrelated tasks/topics, split them into separate notes
+    const prompt = `You are an intelligent personal assistant analyzing user input. Your role is to interpret, organize, and provide value-added insights.
 
-Note content: "${content}"
+CORE PHILOSOPHY: Everything saved here is intentional and meaningful. Provide actionable intelligence, not generic questions.
 
-For context, provide helpful background information, key details, or related concepts that would be valuable when browsing notes later. This should be concise but informative.
+Analyze this ${mode} input: "${content}"
+
+DECISION FRAMEWORK:
+- If input has clear context/intent → Provide value-added information, insights, or fetched knowledge
+- If input lacks context → Ask focused clarifying questions
+- Always extract actionable todos
+- Always suggest intelligent organization
+- Be EXTREMELY concise - no superfluous language
+
+RESPONSE PRIORITIES:
+1. Extract all actionable items as todos
+2. Enhance content only if it adds genuine clarity
+3. Provide valuable context/insights that act like a knowledgeable assistant
+4. Suggest smart categorization
+5. Split unrelated topics into separate notes
 
 Respond with JSON in this exact format:
 {
   "enhancedContent": "improved version or null",
-  "suggestion": "helpful AI suggestion",
-  "context": "helpful context for browsing",
-  "todos": ["todo 1", "todo 2"],
+  "suggestion": "intelligent insight, valuable information, or focused question if context unclear",
+  "context": "valuable knowledge/background that acts like an assistant who knows you well",
+  "todos": ["specific actionable items"],
   "collectionSuggestion": {
-    "name": "collection name",
-    "icon": "icon name (coffee, lightbulb, book, etc)",
-    "color": "orange, purple, green, blue"
+    "name": "smart category name",
+    "icon": "icon name (coffee, lightbulb, book, heart, star, briefcase, home, car, plane, checklist, calendar, location, shopping)",
+    "color": "color name (orange, purple, green, blue, red, yellow, pink, indigo, teal, gray, cyan)"
   },
-  "splitNotes": [
-    {
-      "content": "separate note content",
-      "todos": ["separate todo"],
-      "collectionSuggestion": {"name": "collection", "icon": "icon", "color": "color"}
-    }
-  ]
+  "splitNotes": null or [{"content": "separate topic", "todos": [], "collectionSuggestion": {...}}]
 }
+
+EXAMPLES OF VALUE-ADDED RESPONSES:
+- Restaurant mention → Cuisine type, price range, neighborhood context
+- Product mention → Key specs, alternatives, typical price range
+- Person mention → Relationship context, relevant details
+- Task mention → Deadline implications, related dependencies
+- Event mention → Timing context, preparation checklist
 
 Only use splitNotes if there are truly unrelated topics that would be better as separate notes.`;
 
@@ -67,7 +76,7 @@ Only use splitNotes if there are truly unrelated topics that would be better as 
       messages: [
         {
           role: "system",
-          content: "You are Mira, an intelligent memory assistant. Analyze notes and provide helpful enhancements, suggestions, and organization."
+          content: "You are Mira, an intelligent personal assistant. You know the user deeply and provide value-added insights, not generic responses. Be extremely concise and actionable."
         },
         {
           role: "user",

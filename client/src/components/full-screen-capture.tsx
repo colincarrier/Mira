@@ -76,13 +76,17 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const createNoteMutation = useMutation({
     mutationFn: async (noteData: { content: string; mode: string }) => {
-      const response = await apiRequest("POST", "/api/notes", noteData);
+      const response = await apiRequest("POST", "/api/notes", {
+        ...noteData,
+        useAI: true // Always process through AI for intelligent analysis
+      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       toast({
-        title: "Note created successfully!",
+        title: "Note saved and analyzed",
       });
       onClose();
       setNoteText('');
@@ -97,6 +101,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const uploadFileMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      formData.append('useAI', 'true'); // Ensure all uploads are processed through AI
       const response = await fetch("/api/notes/upload", {
         method: "POST",
         body: formData,
@@ -106,7 +111,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      toast({ title: "File uploaded successfully!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      toast({ title: "File uploaded and analyzed" });
       onClose();
     },
     onError: () => {
