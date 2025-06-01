@@ -178,9 +178,7 @@ export default function NoteCard({ note }: NoteCardProps) {
           <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
         </div>
       </div>
-      
       <p className="text-base mb-3 line-clamp-3">{note.content}</p>
-      
       {note.mode === "voice" && note.transcription && (
         <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">
           <button className="w-8 h-8 rounded-full bg-[hsl(var(--ocean-blue))] flex items-center justify-center">
@@ -193,9 +191,8 @@ export default function NoteCard({ note }: NoteCardProps) {
           <span className="text-xs text-[hsl(var(--muted-foreground))]">0:45</span>
         </div>
       )}
-      
       {note.aiSuggestion && (
-        <div className="bg-[hsl(var(--accent))] rounded-xl p-3 mb-3">
+        <div className="rounded-xl p-3 mb-3 bg-[#d9ded3]">
           <div className="flex items-center space-x-2 mb-2">
             <Bot className="w-4 h-4 text-[hsl(var(--sea-green))]" />
             <span className="text-sm font-medium text-[hsl(var(--sea-green))]">AI Suggestion</span>
@@ -203,7 +200,6 @@ export default function NoteCard({ note }: NoteCardProps) {
           <p className="text-sm text-[hsl(var(--foreground))]">{note.aiSuggestion}</p>
         </div>
       )}
-      
       {/* Follow-up Questions */}
       {followUpQuestions.length > 0 && (
         <div className="pt-3 border-t border-[hsl(var(--border))]">
@@ -220,7 +216,6 @@ export default function NoteCard({ note }: NoteCardProps) {
           </div>
         </div>
       )}
-      
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center space-x-4">
           {note.todos.length > 0 && (
