@@ -159,7 +159,7 @@ export default function NoteDetail() {
   if (!note) {
     return (
       <div className="min-h-screen bg-[hsl(var(--background))] p-4">
-        <div className="max-w-2xl mx-auto text-center py-12">
+        <div className="max-w-md mx-auto text-center py-12">
           <h1 className="text-xl font-semibold mb-2">Note not found</h1>
           <p className="text-[hsl(var(--muted-foreground))] mb-4">
             The note you're looking for doesn't exist or has been deleted.
@@ -177,7 +177,7 @@ export default function NoteDetail() {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -476,7 +476,7 @@ export default function NoteDetail() {
         {/* Floating Chat Bubble */}
         {showUpdateArea && (
           <div className="fixed bottom-4 left-4 right-4 z-50">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-md mx-auto">
               <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-lg overflow-hidden min-h-[60px]">
                 <div className="flex items-center h-full px-2 py-2 bg-[#ffffffdb]">
                   {/* Add Media Button */}
