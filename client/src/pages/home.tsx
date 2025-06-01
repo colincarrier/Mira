@@ -18,13 +18,13 @@ export default function Home() {
   const renderTabContent = () => {
     switch (activeTab) {
       case "activity":
-        return <ActivityFeed />;
+        return <ActivityFeed onTodoModalClose={() => setActiveTab("activity")} />;
       case "todos":
         return <TodosView />;
       case "collections":
         return <CollectionsView />;
       default:
-        return <ActivityFeed />;
+        return <ActivityFeed onTodoModalClose={() => setActiveTab("activity")} />;
     }
   };
 

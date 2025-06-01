@@ -5,7 +5,11 @@ import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
 import { formatDistanceToNow } from "date-fns";
 
-export default function ActivityFeed() {
+interface ActivityFeedProps {
+  onTodoModalClose?: () => void;
+}
+
+export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState<"all" | "voice" | "text" | "hasAI" | "todos">("all");
   
@@ -122,7 +126,7 @@ export default function ActivityFeed() {
 
       <div className="space-y-4">
         {filteredNotes.map((note) => (
-          <NoteCard key={note.id} note={note} />
+          <NoteCard key={note.id} note={note} onTodoModalClose={onTodoModalClose} />
         ))}
       </div>
 
