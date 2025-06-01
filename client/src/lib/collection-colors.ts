@@ -77,6 +77,92 @@ export const getCollectionColor = (color: string) => {
   return colorMap[color as keyof typeof colorMap] || colorMap.gray;
 };
 
+export const getUniqueCollectionIcon = (collectionName: string) => {
+  const name = collectionName.toLowerCase();
+  
+  // Smart icon mapping based on collection name
+  if (name.includes('coffee') || name.includes('food') || name.includes('restaurant')) {
+    return { icon: 'coffee', color: 'orange' };
+  }
+  if (name.includes('book') || name.includes('reading') || name.includes('library')) {
+    return { icon: 'book-open', color: 'blue' };
+  }
+  if (name.includes('travel') || name.includes('trip') || name.includes('vacation')) {
+    return { icon: 'plane', color: 'cyan' };
+  }
+  if (name.includes('work') || name.includes('project') || name.includes('business')) {
+    return { icon: 'briefcase', color: 'gray' };
+  }
+  if (name.includes('home') || name.includes('house') || name.includes('apartment')) {
+    return { icon: 'home', color: 'green' };
+  }
+  if (name.includes('health') || name.includes('medical') || name.includes('doctor')) {
+    return { icon: 'heart', color: 'red' };
+  }
+  if (name.includes('shopping') || name.includes('buy') || name.includes('purchase')) {
+    return { icon: 'shopping-cart', color: 'emerald' };
+  }
+  if (name.includes('idea') || name.includes('thought') || name.includes('brainstorm')) {
+    return { icon: 'lightbulb', color: 'yellow' };
+  }
+  if (name.includes('goal') || name.includes('target') || name.includes('achievement')) {
+    return { icon: 'target', color: 'purple' };
+  }
+  if (name.includes('finance') || name.includes('money') || name.includes('budget')) {
+    return { icon: 'dollar-sign', color: 'green' };
+  }
+  if (name.includes('recipe') || name.includes('cooking') || name.includes('kitchen')) {
+    return { icon: 'chef-hat', color: 'orange' };
+  }
+  if (name.includes('car') || name.includes('vehicle') || name.includes('driving')) {
+    return { icon: 'car', color: 'red' };
+  }
+  if (name.includes('music') || name.includes('song') || name.includes('playlist')) {
+    return { icon: 'music', color: 'purple' };
+  }
+  if (name.includes('exercise') || name.includes('workout') || name.includes('fitness')) {
+    return { icon: 'dumbbell', color: 'red' };
+  }
+  if (name.includes('school') || name.includes('education') || name.includes('learn')) {
+    return { icon: 'graduation-cap', color: 'blue' };
+  }
+  if (name.includes('movie') || name.includes('film') || name.includes('entertainment')) {
+    return { icon: 'film', color: 'pink' };
+  }
+  if (name.includes('gift') || name.includes('present') || name.includes('birthday')) {
+    return { icon: 'gift', color: 'pink' };
+  }
+  if (name.includes('event') || name.includes('party') || name.includes('celebration')) {
+    return { icon: 'calendar', color: 'indigo' };
+  }
+  if (name.includes('photo') || name.includes('picture') || name.includes('memory')) {
+    return { icon: 'camera', color: 'gray' };
+  }
+  if (name.includes('pet') || name.includes('dog') || name.includes('cat')) {
+    return { icon: 'heart', color: 'pink' };
+  }
+  
+  // Default fallback icons for common collection types
+  const fallbackIcons = [
+    { icon: 'folder', color: 'blue' },
+    { icon: 'star', color: 'yellow' },
+    { icon: 'bookmark', color: 'purple' },
+    { icon: 'tag', color: 'green' },
+    { icon: 'archive', color: 'gray' },
+    { icon: 'layers', color: 'teal' },
+    { icon: 'paperclip', color: 'indigo' },
+    { icon: 'flag', color: 'red' }
+  ];
+  
+  // Use hash of collection name to get consistent icon
+  const hash = name.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  return fallbackIcons[Math.abs(hash) % fallbackIcons.length];
+};
+
 export const getIconColorByType = (iconName: string) => {
   const iconColorMap = {
     coffee: "orange",
