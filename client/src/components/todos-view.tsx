@@ -45,8 +45,8 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
       </div>
       
       {/* Right side indicators */}
-      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '')}</span>
+      <div className="flex items-center gap-2 text-[10px] text-[hsl(var(--muted-foreground))] text-right ml-auto">
+        <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' hours', 'h').replace(' hour', 'h').replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</span>
       </div>
       
       {/* Priority indicator */}
