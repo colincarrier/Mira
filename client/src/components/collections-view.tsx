@@ -156,8 +156,8 @@ export default function CollectionsView() {
           return (
             <div key={collection.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className={`w-8 h-8 ${colors.bg} rounded-lg flex items-center justify-center`}>
-                  <IconComponent className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <IconComponent className={`w-6 h-6 ${colors.text}`} />
                 </div>
                 <div className="space-y-0.5">
                   <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
