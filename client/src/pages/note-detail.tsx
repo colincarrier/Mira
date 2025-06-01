@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Bot, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -192,16 +192,16 @@ export default function NoteDetail() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+              className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
               title="Share note"
             >
-              <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+              <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
             </button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+                  className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
                   title="More options"
                 >
                   <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
