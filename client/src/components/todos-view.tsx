@@ -16,6 +16,9 @@ interface TodoItemProps {
 
 function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
   const [showSwipeMenu, setShowSwipeMenu] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
 
   const handleDuplicate = () => {
     // TODO: Implement duplicate functionality
@@ -27,6 +30,42 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
     // TODO: Implement delete functionality
     console.log('Delete todo:', todo.id);
     setShowSwipeMenu(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setDragStartY(touch.clientY);
+    setCurrentY(touch.clientY);
+    
+    // Start drag after 500ms hold
+    const dragTimer = setTimeout(() => {
+      setIsDragging(true);
+    }, 500);
+    
+    const handleTouchEnd = () => {
+      clearTimeout(dragTimer);
+      if (isDragging) {
+        setIsDragging(false);
+        // TODO: Implement reorder logic based on final position
+      } else {
+        // If not dragging, show swipe menu
+        setShowSwipeMenu(true);
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        setCurrentY(touch.clientY);
+      }
+    };
+    
+    document.addEventListener('touchend', handleTouchEnd, { once: true });
+    document.addEventListener('touchmove', handleTouchMove);
+    
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
   };
 
   const swipeActions = [
@@ -66,23 +105,19 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
     <div className="relative">
       {/* Main todo item */}
       <div
-        className={`flex items-center space-x-3 p-2 rounded-lg active:bg-[hsl(var(--muted))] transition-colors ${
+        className={`flex items-center space-x-3 p-2 rounded-lg active:bg-[hsl(var(--muted))] transition-all duration-200 ${
           todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
         } ${
           todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
+        } ${
+          isDragging ? 'scale-105 shadow-lg z-50 bg-[hsl(var(--card))] border border-[hsl(var(--border))]' : ''
         }`}
-        onTouchStart={(e) => {
-          // Simple touch handler - for now just show menu on long press
-          const touchTimer = setTimeout(() => {
-            setShowSwipeMenu(true);
-          }, 500);
-          
-          const handleTouchEnd = () => {
-            clearTimeout(touchTimer);
-          };
-          
-          e.currentTarget.addEventListener('touchend', handleTouchEnd, { once: true });
-        }}
+        onTouchStart={handleTouchStart}
+        style={isDragging ? {
+          transform: `translateY(${currentY - dragStartY}px)`,
+          position: 'relative',
+          zIndex: 50
+        } : {}}
       >
         {/* Checkbox */}
         <button
