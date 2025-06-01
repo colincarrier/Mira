@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
-import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic, Copy, Trash2, MoreHorizontal, X } from "lucide-react";
+import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic, Copy, Trash2, MoreHorizontal, X, GripVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
@@ -12,6 +12,9 @@ interface TodoItemProps {
   onToggle: (todo: Todo) => void;
   onPin: (todo: Todo) => void;
   onArchive: (todo: Todo) => void;
+  onDragStart?: (todo: Todo) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
 }
 
 function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
@@ -105,7 +108,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive }: TodoItemProps) {
     <div className="relative">
       {/* Main todo item */}
       <div
-        className={`flex items-center space-x-3 p-2 rounded-lg active:bg-[hsl(var(--muted))] transition-all duration-200 ${
+        className={`flex items-center space-x-2 p-1.5 rounded-lg active:bg-[hsl(var(--muted))] transition-all duration-200 ${
           todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
         } ${
           todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
@@ -360,7 +363,7 @@ export default function TodosView() {
       </div>
 
       {/* Compact Todo List */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filteredTodos.length === 0 ? (
           <div className="text-center py-4 text-[hsl(var(--muted-foreground))] text-sm">
             {activeFilter === 'all' ? 'No tasks yet' : `No ${activeFilter} tasks`}
@@ -374,7 +377,7 @@ export default function TodosView() {
                   <Pin className="w-3 h-3" />
                   Pinned
                 </h3>
-                <div className="space-y-0.5">
+                <div className="space-y-0">
                   {filteredTodos.filter(t => t.pinned && !t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
@@ -389,7 +392,7 @@ export default function TodosView() {
                   <AlertCircle className="w-3 h-3" />
                   Urgent
                 </h3>
-                <div className="space-y-0.5">
+                <div className="space-y-0">
                   {filteredTodos.filter(t => t.priority === 'urgent' && !t.pinned && !t.completed).map((todo) => (
                     <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
                   ))}
