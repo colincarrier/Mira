@@ -176,78 +176,75 @@ export default function TodosView() {
       </div>
 
       {/* Compact Todo List */}
-      <div className="space-y-1">
+      <div className="space-y-3">
         {filteredTodos.length === 0 ? (
           <div className="text-center py-4 text-[hsl(var(--muted-foreground))] text-sm">
             {activeFilter === 'all' ? 'No tasks yet' : `No ${activeFilter} tasks`}
           </div>
         ) : (
-          filteredTodos.map((todo) => (
-            <div
-              key={todo.id}
-              className={`flex items-center space-x-2 p-2 rounded-lg hover:bg-[hsl(var(--muted))] transition-colors group ${
-                todo.pinned ? 'bg-[hsl(var(--pale-sage))]' : ''
-              } ${
-                todo.priority === 'urgent' && !todo.completed ? 'border-l-4 border-[#8B2635]' : ''
-              }`}
-            >
-              <button
-                onClick={() => handleToggleTodo(todo)}
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  todo.completed
-                    ? 'bg-[hsl(var(--seafoam-green))] border-[hsl(var(--seafoam-green))]'
-                    : 'border-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--seafoam-green))]'
-                }`}
-              >
-                {todo.completed && <Check className="w-2.5 h-2.5 text-white" />}
-              </button>
-              
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm truncate ${
-                  todo.completed 
-                    ? 'line-through text-[hsl(var(--muted-foreground))]' 
-                    : 'text-[hsl(var(--foreground))]'
-                }`}>
-                  {todo.title}
-                </p>
+          <>
+            {/* Pinned Section */}
+            {activeFilter === 'all' && filteredTodos.some(t => t.pinned && !t.completed) && (
+              <div>
+                <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2 flex items-center gap-1">
+                  <Pin className="w-3 h-3" />
+                  Pinned
+                </h3>
+                <div className="space-y-1">
+                  {filteredTodos.filter(t => t.pinned && !t.completed).map((todo) => (
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                  ))}
+                </div>
               </div>
-              
-              {/* Right side indicators */}
-              <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-                <span>{formatDistanceToNow(new Date(todo.createdAt), { addSuffix: true }).replace('about ', '').replace(' ago', ' ago')}</span>
+            )}
+
+            {/* Urgent Section */}
+            {activeFilter === 'all' && filteredTodos.some(t => t.priority === 'urgent' && !t.pinned && !t.completed) && (
+              <div>
+                <h3 className="text-xs font-semibold text-[#8B2635] mb-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Urgent
+                </h3>
+                <div className="space-y-1">
+                  {filteredTodos.filter(t => t.priority === 'urgent' && !t.pinned && !t.completed).map((todo) => (
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                  ))}
+                </div>
               </div>
-              
-              {/* Priority indicator */}
-              {todo.priority === 'urgent' && !todo.completed && (
-                <AlertCircle className="w-3 h-3 text-red-500" />
-              )}
-              
-              {/* Action buttons - show on hover */}
-              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {!todo.completed && !todo.archived && (
-                  <button
-                    onClick={() => handlePinTodo(todo)}
-                    className={`p-1 rounded hover:bg-[hsl(var(--background))] ${
-                      todo.pinned ? 'text-[hsl(var(--soft-sky-blue))]' : 'text-[hsl(var(--muted-foreground))]'
-                    }`}
-                    title={todo.pinned ? 'Unpin' : 'Pin'}
-                  >
-                    <Pin className="w-3 h-3" />
-                  </button>
-                )}
-                
-                {!todo.archived && (
-                  <button
-                    onClick={() => handleArchiveTodo(todo)}
-                    className="p-1 rounded hover:bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))]"
-                    title="Archive"
-                  >
-                    <Archive className="w-3 h-3" />
-                  </button>
-                )}
+            )}
+
+            {/* Regular Tasks */}
+            {activeFilter === 'all' && filteredTodos.some(t => !t.pinned && t.priority !== 'urgent' && !t.completed) && (
+              <div>
+                <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2">Tasks</h3>
+                <div className="space-y-1">
+                  {filteredTodos.filter(t => !t.pinned && t.priority !== 'urgent' && !t.completed).map((todo) => (
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            )}
+
+            {/* Completed Tasks */}
+            {activeFilter === 'all' && filteredTodos.some(t => t.completed) && (
+              <div>
+                <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Completed
+                </h3>
+                <div className="space-y-1">
+                  {filteredTodos.filter(t => t.completed).map((todo) => (
+                    <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other Filters */}
+            {activeFilter !== 'all' && filteredTodos.map((todo) => (
+              <TodoItem key={todo.id} todo={todo} onToggle={handleToggleTodo} onPin={handlePinTodo} onArchive={handleArchiveTodo} />
+            ))}
+          </>
         )}
       </div>
 

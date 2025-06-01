@@ -33,21 +33,7 @@ export default function Home() {
       
       {/* Main Content */}
       <div className="pb-20">
-        {/* Header */}
-        <header className="bg-[hsl(var(--background))] px-4 py-3 border-b border-[hsl(var(--border))]">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Mira</h1>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Your trusted memory</p>
-            </div>
-            <button 
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="ios-button-secondary"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+
 
         {/* Quick Capture */}
         <CaptureArea onVoiceCapture={() => setIsVoiceModalOpen(true)} />
@@ -59,7 +45,12 @@ export default function Home() {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNavigation 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onNewNote={() => setIsVoiceModalOpen(true)}
+        onSettings={() => setIsSettingsModalOpen(true)}
+      />
 
       {/* Modals */}
       <VoiceModal 
