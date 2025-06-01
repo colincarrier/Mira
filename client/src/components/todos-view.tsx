@@ -166,7 +166,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         {/* Menu trigger */}
         <button
           onClick={() => setShowSwipeMenu(!showSwipeMenu)}
-          className="w-6 h-6 rounded-full active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors bg-[#d8ceb23b]"
+          className="w-6 h-6 rounded-full active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors bg-[#d7cdad21]"
         >
           <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
         </button>
