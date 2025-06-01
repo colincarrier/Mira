@@ -316,7 +316,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </DropdownMenu>
         </div>
       </div>
-      
       {/* Content with iOS Notes-style formatting */}
       <div className="mb-3">
         {/* Title - bigger and bolder like iOS Notes */}
@@ -353,7 +352,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         </div>
       )}
       {note.aiSuggestion && (
-        <div className="rounded-xl p-3 mb-3 bg-[#d9ded3]">
+        <div className="rounded-xl p-3 mb-3 bg-[#f6f7f282]">
           <div className="flex items-center space-x-2 mb-1">
             <Bot className="w-4 h-4 text-[hsl(var(--sea-green))]" />
             <span className="text-sm font-medium text-[hsl(var(--sea-green))]">from Mira:</span>
@@ -402,7 +401,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           )}
         </div>
       </div>
-
       {/* Todos Modal */}
       <Dialog open={showTodosModal} onOpenChange={(open) => {
         setShowTodosModal(open);
