@@ -22,7 +22,7 @@ export default function NoteDetail() {
     
     if (navigator.share) {
       navigator.share({
-        title: `Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}`,
+        title: `Note from ${note.createdAt ? formatDistanceToNow(new Date(note.createdAt), { addSuffix: true }) : 'recently'}`,
         text: shareText,
       }).catch(console.error);
     } else {
@@ -144,7 +144,7 @@ export default function NoteDetail() {
             <div className="flex items-center gap-4 text-sm text-[hsl(var(--muted-foreground))] pt-3 border-t border-[hsl(var(--border))]">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a")}</span>
+                <span>{note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</span>
               </div>
               {note.mode && (
                 <div className="flex items-center gap-1">
