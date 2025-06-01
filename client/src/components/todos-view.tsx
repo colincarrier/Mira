@@ -242,6 +242,62 @@ export default function TodosView() {
     },
   });
 
+  const updatePriorityMutation = useMutation({
+    mutationFn: async ({ id, priority }: { id: number; priority: string }) => {
+      const response = await apiRequest("PATCH", `/api/todos/${id}`, { priority });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+    },
+  });
+
+  // AI-powered urgency detection
+  const categorizeByUrgency = (todos: Todo[]) => {
+    const urgent: Todo[] = [];
+    const needsAttention: Todo[] = [];
+    const regular: Todo[] = [];
+
+    todos.forEach(todo => {
+      const title = todo.title.toLowerCase();
+      
+      // Clear urgent indicators
+      const urgentKeywords = [
+        'urgent', 'asap', 'emergency', 'deadline', 'due today', 'overdue',
+        'appointment', 'meeting', 'interview', 'flight', 'reservation',
+        'doctor', 'dentist', 'medical', 'prescription', 'medication',
+        'bills', 'payment', 'rent', 'mortgage', 'insurance',
+        'birthday', 'anniversary', 'party', 'event', 'wedding'
+      ];
+
+      // Attention-needed indicators (time-sensitive but unclear urgency)
+      const attentionKeywords = [
+        'call', 'email', 'contact', 'schedule', 'book', 'confirm',
+        'register', 'apply', 'submit', 'order', 'purchase', 'buy',
+        'pick up', 'drop off', 'return', 'renew', 'update'
+      ];
+
+      // Check if already marked as urgent
+      if (todo.priority === 'urgent') {
+        urgent.push(todo);
+      }
+      // Check for urgent keywords
+      else if (urgentKeywords.some(keyword => title.includes(keyword))) {
+        urgent.push(todo);
+      }
+      // Check for attention keywords
+      else if (attentionKeywords.some(keyword => title.includes(keyword))) {
+        needsAttention.push(todo);
+      }
+      // Everything else is regular
+      else {
+        regular.push(todo);
+      }
+    });
+
+    return { urgent, needsAttention, regular };
+  };
+
   const getFilteredTodos = () => {
     if (!todos) return [];
     
@@ -331,6 +387,9 @@ export default function TodosView() {
   const activeTodos = todos?.filter(t => !t.completed && !t.archived) || [];
   const pinnedCount = todos?.filter(t => t.pinned && !t.completed && !t.archived).length || 0;
   const urgentCount = todos?.filter(t => t.priority === 'urgent' && !t.completed && !t.archived).length || 0;
+  
+  // Get categorized todos for smart display
+  const { urgent, needsAttention, regular } = categorizeByUrgency(activeTodos);
 
   const filterButtons = [
     { key: 'all', label: 'All', count: activeTodos.length, icon: null },
