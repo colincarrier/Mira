@@ -175,11 +175,11 @@ export default function CollectionDetail() {
                         <td className="px-4 py-4">
                           <div className="flex flex-col">
                             <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
-                              {note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '').substring(0, 60)}
-                              {note.content.length > 60 && '...'}
+                              {note.content ? note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '').substring(0, 60) : 'Untitled Note'}
+                              {note.content && note.content.length > 60 && '...'}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {note.content.length} characters
+                              {note.content ? note.content.length : 0} characters
                             </div>
                           </div>
                         </td>
