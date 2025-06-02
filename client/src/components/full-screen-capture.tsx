@@ -102,10 +102,58 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 z-60 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+        className="absolute top-6 left-6 z-60 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center"
       >
         <X className="w-6 h-6" />
       </button>
+
+      {/* Mode selection buttons - floating on the right */}
+      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-60">
+        <button
+          onClick={() => setCaptureMode('text')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+            captureMode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+          }`}
+        >
+          <Type className="w-6 h-6" />
+        </button>
+        
+        <button
+          onClick={() => setCaptureMode('camera')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+            captureMode === 'camera' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+          }`}
+        >
+          <Camera className="w-6 h-6" />
+        </button>
+        
+        <button
+          onClick={() => setCaptureMode('voice')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+            captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+          }`}
+        >
+          <Mic className="w-6 h-6" />
+        </button>
+        
+        <button
+          onClick={() => setCaptureMode('upload-image')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+            captureMode === 'upload-image' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+          }`}
+        >
+          <Upload className="w-6 h-6" />
+        </button>
+        
+        <button
+          onClick={() => setCaptureMode('upload-file')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+            captureMode === 'upload-file' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+          }`}
+        >
+          <FileText className="w-6 h-6" />
+        </button>
+      </div>
 
       <div className="absolute inset-0 flex flex-col">
         <div className="flex-1 flex flex-col justify-end pb-4">
