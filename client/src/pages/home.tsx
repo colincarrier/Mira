@@ -40,7 +40,7 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-[hsl(var(--background))] min-h-screen relative overflow-hidden">
+    <div className="w-full bg-[hsl(var(--background))] min-h-screen relative overflow-hidden">
       {/* Status Bar */}
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
       
