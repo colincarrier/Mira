@@ -217,7 +217,7 @@ export default function TodosView() {
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 px-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">

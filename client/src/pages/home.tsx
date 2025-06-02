@@ -51,7 +51,7 @@ export default function Home() {
         {/* Quick Capture - removed for now */}
 
         {/* Tab Content */}
-        <div className="px-4">
+        <div>
           {renderTabContent()}
         </div>
       </div>

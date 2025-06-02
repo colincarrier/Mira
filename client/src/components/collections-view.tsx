@@ -74,7 +74,7 @@ export default function CollectionsView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Collections</h2>
         </div>
@@ -97,7 +97,7 @@ export default function CollectionsView() {
 
   if (!collections || collections.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Collections</h2>
           <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export default function CollectionsView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Collections</h2>
         <div className="flex items-center gap-2">
