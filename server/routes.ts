@@ -44,8 +44,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
         analyzeWithOpenAI(noteData.content, noteData.mode)
           .then(async (analysis) => {
-            console.log("OpenAI analysis completed for note:", openAINote.id, "analysis:", JSON.stringify(analysis, null, 2));
-            // Update OpenAI note with analysis
+            console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
+            // Update note with AI analysis
             const updates: any = {
               aiEnhanced: true,
               aiSuggestion: analysis.suggestion,
@@ -54,10 +54,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             if (analysis.enhancedContent) {
-              updates.content = `[OpenAI Result] ${analysis.enhancedContent}`;
+              updates.content = analysis.enhancedContent;
             }
             
-            await storage.updateNote(openAINote.id, updates);
+            await storage.updateNote(note.id, updates);
             console.log("Note updated with AI analysis:", note.id);
             
             // Create todos if found
@@ -127,6 +127,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(note);
     } catch (error) {
       res.status(400).json({ message: "Invalid note data" });
+    }
+  });
+
+  // Dual AI comparison endpoint
+  app.post("/api/compare-ai", async (req, res) => {
+    try {
+      const { content, mode = 'quick' } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ message: "Content required for AI comparison" });
+      }
+
+      console.log("Starting dual AI comparison for content:", content.substring(0, 100));
+
+      // Process with both AI services in parallel
+      const [openAIResult, claudeResult] = await Promise.allSettled([
+        analyzeWithOpenAI(content, mode),
+        analyzeWithClaude(content, mode)
+      ]);
+
+      const response = {
+        original: content,
+        openAI: {
+          success: openAIResult.status === 'fulfilled',
+          result: openAIResult.status === 'fulfilled' ? openAIResult.value : null,
+          error: openAIResult.status === 'rejected' ? openAIResult.reason?.message : null
+        },
+        claude: {
+          success: claudeResult.status === 'fulfilled',
+          result: claudeResult.status === 'fulfilled' ? claudeResult.value : null,
+          error: claudeResult.status === 'rejected' ? claudeResult.reason?.message : null
+        }
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("Dual AI comparison error:", error);
+      res.status(500).json({ message: "Failed to compare AI results" });
     }
   });
 
