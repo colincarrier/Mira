@@ -22,7 +22,7 @@ export default function NoteDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
-    queryKey: ["/api/notes", id],
+    queryKey: [`/api/notes/${id}`],
     enabled: !!id,
   });
 
@@ -43,7 +43,7 @@ export default function NoteDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setIsEditing(false);
       setContextInput('');
