@@ -331,23 +331,43 @@ Provide a concise, actionable response that adds value beyond just the task titl
         return res.status(400).json({ message: "No notes in collection" });
       }
 
-      // Generate super note using AI
+      // Extract and aggregate all items from notes
+      const allTodos = notes.flatMap(note => note.todos || []);
       const allContent = notes.map(note => note.content).join('\n\n');
-      const prompt = `Create an intelligent super note that aggregates and synthesizes the following collection of notes about "${collection.name}". 
+      
+      // Create structured aggregation
+      const itemExtraction = `Analyze the following collection of notes about "${collection.name}" and extract all individual items, tasks, facts, recommendations, and actionable elements.
 
-Provide:
-1. A comprehensive summary that combines all information
-2. Key insights and connections between items
-3. Actionable recommendations or next steps
-4. Any patterns or themes you notice
+Create a structured list that includes:
+1. All tasks and action items (deduplicated)
+2. Key facts and information points
+3. Important recommendations or insights
+4. Any specific details, numbers, or data points
+5. Resources, links, or references mentioned
 
-Notes to aggregate:
+Notes content:
 ${allContent}
 
-Respond with a detailed, well-structured summary that acts as a "super note" - a master document that contains the essence and value of all individual notes combined.`;
+Existing todos:
+${allTodos.map(todo => `- ${todo.title}`).join('\n')}
 
-      const aiResult = await analyzeNote(prompt, "super-note");
+Provide a comprehensive, organized list that serves as a master reference for this collection. Group similar items together and remove duplicates.`;
+
+      const aiResult = await analyzeNote(itemExtraction, "collection-aggregation");
       
+      // Parse rich context if available for better structure
+      let structuredItems = {};
+      if (aiResult.richContext) {
+        try {
+          const richContext = typeof aiResult.richContext === 'string' 
+            ? JSON.parse(aiResult.richContext) 
+            : aiResult.richContext;
+          structuredItems = richContext;
+        } catch (e) {
+          console.log("Could not parse rich context");
+        }
+      }
+
       const superNoteData = {
         collection,
         aggregatedContent: aiResult.enhancedContent || allContent,
@@ -356,8 +376,11 @@ Respond with a detailed, well-structured summary that acts as a "super note" - a
           aiResult.context,
           ...aiResult.todos.map(todo => `Action item: ${todo}`)
         ].filter(Boolean),
+        structuredItems,
+        allTodos: allTodos,
         notes,
-        itemCount: notes.length
+        itemCount: notes.length,
+        todoCount: allTodos.length
       };
 
       res.json(superNoteData);

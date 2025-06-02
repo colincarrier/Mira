@@ -30,8 +30,11 @@ interface SuperNoteData {
   collection: Collection;
   aggregatedContent: string;
   insights: string[];
+  structuredItems?: any;
+  allTodos?: any[];
   notes: NoteWithTodos[];
   itemCount: number;
+  todoCount?: number;
 }
 
 export default function CollectionDetail() {
@@ -150,11 +153,16 @@ export default function CollectionDetail() {
       <div className="flex-1 overflow-y-auto">
         {superNote ? (
           <div className="p-4 space-y-6">
-            {/* Super Note Content */}
+            {/* Collection Summary */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-              <div className="flex items-center space-x-2 mb-3">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">Super Note</h3>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900">Collection Summary</h3>
+                </div>
+                <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                  {superNote.itemCount} notes • {superNote.todoCount || 0} tasks
+                </div>
               </div>
               <div className="prose prose-sm max-w-none text-gray-800">
                 {superNote.aggregatedContent ? superNote.aggregatedContent.split('\n').map((paragraph, idx) => (
@@ -163,10 +171,40 @@ export default function CollectionDetail() {
               </div>
             </div>
 
-            {/* AI Insights */}
+            {/* All Tasks */}
+            {superNote.allTodos && superNote.allTodos.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 flex items-center">
+                  <Icons.CheckSquare className="w-4 h-4 mr-2 text-green-600" />
+                  All Tasks ({superNote.allTodos.length})
+                </h3>
+                <div className="space-y-2">
+                  {superNote.allTodos.map((todo: any, idx: number) => (
+                    <div key={idx} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center space-x-3">
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                        todo.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                      }`}>
+                        {todo.completed && <Icons.Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className={`text-sm flex-1 ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                        {todo.title}
+                      </span>
+                      {todo.priority === 'urgent' && (
+                        <Icons.AlertCircle className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Insights */}
             {superNote.insights && superNote.insights.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-gray-900">AI Insights</h3>
+                <h3 className="font-semibold text-gray-900 flex items-center">
+                  <Icons.Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
+                  Key Insights
+                </h3>
                 {superNote.insights.map((insight, idx) => (
                   <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                     <p className="text-sm text-amber-800">{insight}</p>
