@@ -359,7 +359,7 @@ Focus on:
 Provide a concise, actionable response that adds value beyond just the task title.`;
 
       try {
-        const aiResult = await analyzeNote(prompt, "todo-context");
+        const aiResult = await analyzeWithOpenAI(prompt, "todo-context");
         
         const todoContext = {
           todo,
@@ -464,7 +464,7 @@ ${allTodos.map(todo => `- ${todo.title}`).join('\n')}
 
 Provide a comprehensive, organized list that serves as a master reference for this collection. Group similar items together and remove duplicates.`;
 
-      const aiResult = await analyzeNote(itemExtraction, "collection-aggregation");
+      const aiResult = await analyzeWithOpenAI(itemExtraction, "collection-aggregation");
       
       // Parse rich context if available for better structure
       let structuredItems = {};
