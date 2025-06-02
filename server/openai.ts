@@ -70,6 +70,18 @@ Focus on providing:
 
 Do NOT just restate what the user said. Provide new intelligence and research.
 
+For collectionSuggestion, use one of these 10 standard categories:
+1. "To-dos" (icon: "checklist", color: "blue")
+2. "Personal" (icon: "heart", color: "pink") 
+3. "Home" (icon: "home", color: "green")
+4. "Work" (icon: "briefcase", color: "purple")
+5. "Family" (icon: "star", color: "yellow")
+6. "Books" (icon: "book", color: "orange")
+7. "Movies & TV" (icon: "play", color: "red")
+8. "Restaurants" (icon: "utensils", color: "teal")
+9. "Travel" (icon: "plane", color: "blue")
+10. "Undefined" (icon: "help-circle", color: "gray") - for anything that doesn't clearly fit the other 9
+
 Respond with JSON in this exact format:
 {
   "enhancedContent": "clean, well-formatted version",
