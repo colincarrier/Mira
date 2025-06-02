@@ -191,10 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               let collectionId = existingCollection?.id;
               if (!existingCollection) {
-                const newCollection = await storage.createCollection({
-                  ...analysis.collectionSuggestion,
-                  name: `[Claude] ${analysis.collectionSuggestion.name}`
-                });
+                const newCollection = await storage.createCollection(analysis.collectionSuggestion);
                 collectionId = newCollection.id;
               }
               
