@@ -46,13 +46,12 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
   return (
     <div className="relative">
       <div 
-        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 cursor-pointer
+        className={`flex items-center gap-3 py-3 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer
           ${todo.completed 
-            ? 'bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400' 
-            : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'text-gray-500 dark:text-gray-400' 
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
           }
-          ${isDragging || isExternalDragging ? 'shadow-lg scale-105' : 'shadow-sm'}
-          ${todo.pinned ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''}
+          ${todo.pinned ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
         `}
         onClick={handleClick}
       >
@@ -217,8 +216,8 @@ export default function TodosView() {
   ];
 
   return (
-    <div className="space-y-3 px-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Tasks
@@ -234,7 +233,7 @@ export default function TodosView() {
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 px-4">
         {filterButtons.map(({ key, label, count, icon: Icon }) => (
           <button
             key={key}

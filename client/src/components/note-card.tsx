@@ -293,7 +293,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   };
 
   return (
-    <div className="note-card animate-fadeIn cursor-pointer hover:shadow-md transition-shadow bg-[#99917712]" onClick={handleCardClick}>
+    <div className="note-card animate-fadeIn cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-800 py-4 px-4" onClick={handleCardClick}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
           <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
