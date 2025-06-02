@@ -24,6 +24,11 @@ export default function NoteDetail() {
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
+    refetchInterval: (data) => {
+      // Auto-refresh every 2 seconds if AI hasn't enhanced the note yet
+      const note = Array.isArray(data) ? data[0] : data;
+      return note && !note.aiEnhanced ? 2000 : false;
+    },
   });
 
   // Handle both single object and array responses
@@ -188,7 +193,15 @@ export default function NoteDetail() {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-lg font-semibold">Note Details</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">Note Details</h1>
+              {!note.aiEnhanced && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-500">AI processing...</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
