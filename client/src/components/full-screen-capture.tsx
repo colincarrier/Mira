@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type } from "lucide-react";
+import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type, Send } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     setIsTextFocused(true);
     stopCamera();
     // Don't show full editor immediately, just focus the text area
+  };
+
+  const handleSendNote = () => {
+    if (noteText.trim()) {
+      // Process the note through AI
+      setShowFullEditor(true);
+    }
   };
 
   const handleCameraCapture = () => {
@@ -210,14 +217,23 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                     enterKeyHint="done"
                     autoFocus={captureMode === 'text'}
                   />
-                  <button
-                    onClick={() => setCaptureMode('voice')}
-                    className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                      captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
+                  {noteText.trim() ? (
+                    <button
+                      onClick={handleSendNote}
+                      className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setCaptureMode('voice')}
+                      className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                        captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
