@@ -261,7 +261,10 @@ export default function CollectionDetail() {
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-blue-900 flex-1">
-                        {note.aiEnhanced && note.aiSuggestion ? note.aiSuggestion : note.content.split('\n')[0].substring(0, 50) + (note.content.length > 50 ? '...' : '')}
+                        {note.aiEnhanced && note.aiSuggestion ? note.aiSuggestion : 
+                         (note.content && typeof note.content === 'string' ? 
+                          note.content.split('\n')[0].substring(0, 50) + (note.content.length > 50 ? '...' : '') : 
+                          'Untitled Note')}
                       </h4>
                       <span className="text-xs text-blue-600 ml-2">
                         {new Date(note.createdAt).toLocaleDateString()}
@@ -270,7 +273,7 @@ export default function CollectionDetail() {
                   </div>
                   
                   {/* Note content summary */}
-                  {note.content.length > 100 && (
+                  {note.content && typeof note.content === 'string' && note.content.length > 100 && (
                     <div className="ml-4 pl-3 border-l-2 border-gray-200">
                       <p className="text-sm text-gray-600 line-clamp-3">
                         {note.content.substring(0, 200)}...
