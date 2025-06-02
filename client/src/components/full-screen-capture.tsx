@@ -13,7 +13,7 @@ interface FullScreenCaptureProps {
 type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
 
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
-  const [captureMode, setCaptureMode] = useState<CaptureMode>('text');
+  const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null); // No initial selection
   const [noteText, setNoteText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -26,13 +26,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const queryClient = useQueryClient();
   const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
 
-  // Initialize camera when component opens
+  // Initialize camera and focus text input when component opens
   useEffect(() => {
     if (isOpen) {
       startCamera();
-      // Focus textarea after a brief delay to ensure keyboard appears on mobile
+      // Always focus textarea to show keyboard on mobile
       setTimeout(() => {
-        if (captureMode === 'text' && textareaRef.current) {
+        if (textareaRef.current) {
           textareaRef.current.focus();
           // Force keyboard on mobile devices
           textareaRef.current.click();
@@ -45,7 +45,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => {
       stopCamera();
     };
-  }, [isOpen, captureMode]);
+  }, [isOpen]);
 
   const startCamera = async () => {
     try {

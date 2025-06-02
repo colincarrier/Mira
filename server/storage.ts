@@ -96,10 +96,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodos(): Promise<Todo[]> {
-    return await db
-      .select()
+    const todosWithNotes = await db
+      .select({
+        id: todos.id,
+        title: todos.title,
+        completed: todos.completed,
+        pinned: todos.pinned,
+        archived: todos.archived,
+        priority: todos.priority,
+        noteId: todos.noteId,
+        createdAt: todos.createdAt,
+        noteTitle: notes.content,
+        noteAiEnhanced: notes.aiEnhanced
+      })
       .from(todos)
+      .leftJoin(notes, eq(todos.noteId, notes.id))
       .orderBy(todos.createdAt);
+    
+    return todosWithNotes as any;
   }
 
   async getTodosByNoteId(noteId: number): Promise<Todo[]> {

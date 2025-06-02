@@ -252,32 +252,31 @@ export default function TodosView() {
     },
   });
 
-  // AI-powered todo grouping and urgency detection
-  const groupAndCategorizetodos = (todos: Todo[]) => {
-    // Step 1: Find related todos by extracting key terms
-    const extractKeyTerms = (title: string) => {
-      const cleaned = title.toLowerCase().replace(/[^\w\s]/g, ' ');
-      const words = cleaned.split(/\s+/).filter(w => w.length > 2);
-      
-      // Focus on nouns and important terms
-      const importantTerms = words.filter(word => 
-        !['the', 'and', 'for', 'with', 'buy', 'get', 'make', 'do', 'have', 'need'].includes(word)
-      );
-      
-      return importantTerms;
-    };
-
-    // Step 2: Group todos by similarity
-    const groups: { [key: string]: Todo[] } = {};
-    const processed = new Set<number>();
-
+  // Group todos by their related notes/projects
+  const groupTodosByNote = (todos: Todo[]) => {
+    const grouped: { [key: string]: { noteTitle: string; todos: Todo[] } } = {};
+    
     todos.forEach(todo => {
-      if (processed.has(todo.id)) return;
+      // Use note title or create a default group for orphaned todos
+      const noteTitle = (todo as any).noteTitle || 'Other Tasks';
+      const groupKey = `note_${todo.noteId || 'orphaned'}`;
       
-      const terms = extractKeyTerms(todo.title);
-      let groupKey = terms[0] || 'misc';
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = {
+          noteTitle: noteTitle,
+          todos: []
+        };
+      }
       
-      // Check if this todo belongs to an existing group
+      grouped[groupKey].todos.push(todo);
+    });
+    
+    return grouped;
+  };
+
+  // AI-powered todo urgency detection
+  const categorizeTodos = (todos: Todo[]) => {
+    // Check if this todo belongs to an existing group
       for (const [existingKey, existingTodos] of Object.entries(groups)) {
         const existingTerms = extractKeyTerms(existingTodos[0].title);
         
