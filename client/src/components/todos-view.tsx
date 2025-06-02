@@ -262,27 +262,28 @@ export default function TodosView() {
         ))}
       </div>
 
-      <div className="space-y-4">
-        {Object.entries(groupedTodos).map(([groupKey, group]) => (
-          <div key={groupKey} className="space-y-2">
-            {Object.keys(groupedTodos).length > 1 && (
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 px-1">
-                {group.noteTitle}
-              </h3>
+      <div className="space-y-2">
+        {Object.entries(groupedTodos).map(([groupKey, group], groupIndex) => (
+          <div key={groupKey}>
+            {group.todos.map((todo, todoIndex) => (
+              <div key={todo.id} className="relative">
+                {/* Faint gray connecting line for grouped items */}
+                {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
+                  <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
+                )}
+                <TodoItem
+                  todo={todo}
+                  onToggle={handleToggleTodo}
+                  onPin={handlePinTodo}
+                  onArchive={handleArchiveTodo}
+                  onClick={handleTodoClick}
+                />
+              </div>
+            ))}
+            {/* Add spacing between groups */}
+            {Object.keys(groupedTodos).length > 1 && groupIndex < Object.keys(groupedTodos).length - 1 && (
+              <div className="h-2"></div>
             )}
-            <div className="space-y-2">
-              {group.todos.map(todo => (
-                <div key={todo.id} className={Object.keys(groupedTodos).length > 1 ? 'ml-4' : ''}>
-                  <TodoItem
-                    todo={todo}
-                    onToggle={handleToggleTodo}
-                    onPin={handlePinTodo}
-                    onArchive={handleArchiveTodo}
-                    onClick={handleTodoClick}
-                  />
-                </div>
-              ))}
-            </div>
           </div>
         ))}
       </div>

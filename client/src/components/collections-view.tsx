@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter } from "lucide-react";
+import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter, Plus } from "lucide-react";
 import { getCollectionColor } from "@/lib/collection-colors";
 import { useLocation } from "wouter";
 
@@ -100,7 +100,14 @@ export default function CollectionsView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Collections</h2>
-          <button className="text-sm text-[hsl(var(--ocean-blue))] font-medium">New</button>
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+              <Search size={18} />
+            </button>
+            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
         <div className="text-center py-8">
           <p className="text-[hsl(var(--muted-foreground))]">No collections yet. AI will create them automatically as you add notes!</p>
@@ -113,7 +120,14 @@ export default function CollectionsView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Collections</h2>
-        <button className="text-sm text-[hsl(var(--ios-blue))] font-medium">New</button>
+        <div className="flex items-center gap-2">
+          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            <Search size={18} />
+          </button>
+          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            <Plus size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Filter Pills */}
