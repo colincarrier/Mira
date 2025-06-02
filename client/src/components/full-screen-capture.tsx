@@ -83,7 +83,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-[100] bg-black">
       <video
         ref={videoRef}
         autoPlay
