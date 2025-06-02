@@ -192,6 +192,32 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     setLocation(`/note/${note.id}`);
   };
 
+  // Mutation to delete note
+  const deleteNoteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/notes/${note.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({
+        description: "Note deleted successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        description: "Failed to delete note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteNote = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (confirm("Are you sure you want to delete this note? This action cannot be undone.")) {
+      deleteNoteMutation.mutate();
+    }
+  };
+
   const toggleTodoMutation = useMutation({
     mutationFn: async ({ todoId, completed }: { todoId: number; completed: boolean }) => {
       const response = await apiRequest("PATCH", `/api/todos/${todoId}`, { completed });
@@ -310,9 +336,13 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                 <Archive className="w-4 h-4 mr-2" />
                 Archive
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={handleDeleteNote}
+                disabled={deleteNoteMutation.isPending}
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                {deleteNoteMutation.isPending ? 'Deleting...' : 'Delete'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
