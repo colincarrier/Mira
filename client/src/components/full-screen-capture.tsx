@@ -167,10 +167,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log("Close button clicked, calling onClose");
           onClose();
         }}
-        className="absolute top-6 left-6 z-60 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+        className="absolute top-6 left-6 z-[200] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+        style={{ pointerEvents: 'auto' }}
       >
         <X className="w-6 h-6" />
       </button>
