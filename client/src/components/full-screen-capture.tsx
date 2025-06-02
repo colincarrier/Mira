@@ -83,13 +83,19 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div className="fixed inset-0 z-[100] bg-black w-screen h-screen overflow-hidden">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
+        style={{ 
+          width: '100vw', 
+          height: '100vh',
+          objectFit: 'cover',
+          objectPosition: 'center'
+        }}
       />
 
       <div className="absolute inset-0 bg-black/30" />
