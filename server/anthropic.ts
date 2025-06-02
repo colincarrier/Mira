@@ -102,11 +102,9 @@ Focus on being helpful, insightful, and actionable while maintaining the user's 
           color: "blue"
         },
         richContext: {
-          summary: "Content processed by Claude",
-          keyInsights: [],
-          relatedTopics: [],
-          actionableInfo: [],
-          deepDiveAreas: []
+          recommendedActions: [],
+          researchResults: [],
+          quickInsights: []
         }
       };
     }
@@ -124,11 +122,9 @@ Focus on being helpful, insightful, and actionable while maintaining the user's 
         color: "blue"
       },
       richContext: {
-        summary: "Basic note content",
-        keyInsights: [],
-        relatedTopics: [],
-        actionableInfo: [],
-        deepDiveAreas: []
+        recommendedActions: [],
+        researchResults: [],
+        quickInsights: []
       }
     };
   }

@@ -16,16 +16,19 @@ export interface AIAnalysisResult {
     color: string;
   };
   richContext?: {
-    summary: string;
-    keyInsights: string[];
-    relatedTopics: string[];
-    actionableInfo: string[];
-    imagePrompts?: string[];
-    deepDiveAreas: {
+    recommendedActions: {
       title: string;
       description: string;
-      keyPoints: string[];
+      links?: { title: string; url: string }[];
     }[];
+    researchResults: {
+      title: string;
+      description: string;
+      rating?: string;
+      keyPoints: string[];
+      contact?: string;
+    }[];
+    quickInsights: string[];
   };
   splitNotes?: {
     content: string;
@@ -41,51 +44,42 @@ export interface AIAnalysisResult {
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
     console.log("OpenAI analyzeNote called with content length:", content.length, "mode:", mode);
-    const prompt = `You are an intelligent personal assistant analyzing user input. Your role is to interpret, organize, and provide rich contextual information like Google's AI-powered results.
+    const prompt = `You are Mira, an intelligent research assistant that provides actionable solutions and real research insights. Act like Google search results - provide practical, actionable intelligence rather than just summarizing what the user already told you.
 
-CORE PHILOSOPHY: Everything saved here is intentional and meaningful. Provide actionable intelligence with rich context, real information, and organized insights.
+User's note: "${content}"
+Mode: ${mode}
 
-Analyze this ${mode} input: "${content}"
+Your job is to research and provide solutions, not just digest the input. Think 2 steps ahead and provide real value.
 
-RESPONSE STRUCTURE - Provide rich contextual information:
-1. RICH CONTEXT: Create Google-style organized information including:
-   - Quick AI summary of most pertinent information
-   - Key insights and actionable information
-   - Related topics for deeper exploration
-   - Deep dive areas with structured sections
-   - Relevant image concepts (for visual context)
+Please respond with a JSON object containing:
+1. enhancedContent: A clean, well-formatted version with better structure
+2. todos: Specific actionable tasks extracted from the content
+3. collectionSuggestion: {name, icon, color} - suggest appropriate collection
+4. richContext: {
+   recommendedActions: [{title, description, links}] - Specific next steps with real resources/websites
+   researchResults: [{title, description, rating, keyPoints, contact}] - Actual options, programs, services with details
+   quickInsights: [string] - Brief, actionable bullets (not lengthy prose)
+}
 
-2. ACTIONABLE TODOS: Extract specific, actionable items
-3. SMART CATEGORIZATION: Suggest intelligent organization
-4. CONTENT ENHANCEMENT: Create a SHORT, scannable title (2-4 words max) that MUST start with a relevant emoji followed by the essence. Avoid fluff words like "Consider", "Implement", "Review". Use specific nouns and key concepts.
-   Examples: "🐦 Crow Business Idea" not "Consider refining your business plan", "📈 Marketing Strategy" not "Review marketing approach", "🏃 Fitness Planning" not "workout routine planning", "🍕 Pizza Recipe" not "cooking instructions"
+Focus on providing:
+- Specific websites, services, and resources
+- Contact information when relevant
+- Real program names and options
+- Actionable next steps with links
+- Research-backed recommendations
 
-RICH CONTEXT REQUIREMENTS:
-- Provide factual, useful information about the topic
-- Organize information into clear sections for exploration
-- Include practical insights and actionable information
-- Suggest related areas worth investigating
-- Be specific and avoid generic advice
+Do NOT just restate what the user said. Provide new intelligence and research.
 
 Respond with JSON in this exact format:
 {
-  "enhancedContent": "MUST start with emoji + SHORT scannable title (2-4 words, no fluff words)",
+  "enhancedContent": "clean, well-formatted version",
   "suggestion": "actionable next steps",
   "context": "brief contextual summary",
   "todos": ["specific actionable item 1", "specific actionable item 2"],
   "richContext": {
-    "summary": "Quick AI summary of most pertinent information about this topic",
-    "keyInsights": ["insight 1", "insight 2", "insight 3"],
-    "relatedTopics": ["related topic 1", "related topic 2"],
-    "actionableInfo": ["practical tip 1", "practical tip 2"],
-    "imagePrompts": ["relevant image concept 1", "relevant image concept 2"],
-    "deepDiveAreas": [
-      {
-        "title": "Area for deeper exploration",
-        "description": "What this area covers",
-        "keyPoints": ["point 1", "point 2", "point 3"]
-      }
-    ]
+    "recommendedActions": [{"title": "action name", "description": "what to do", "links": [{"title": "resource name", "url": "website"}]}],
+    "researchResults": [{"title": "option name", "description": "details", "rating": "4.5/5", "keyPoints": ["benefit1", "benefit2"], "contact": "contact info"}],
+    "quickInsights": ["brief actionable point 1", "brief actionable point 2"]
   },
   "collectionSuggestion": {
     "name": "collection name",

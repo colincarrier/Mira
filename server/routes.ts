@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Analyze with AI in the background
-      analyzeNote(transcription, "voice")
+      analyzeWithOpenAI(transcription, "voice")
         .then(async (analysis) => {
           const updates: any = {
             aiEnhanced: true,
