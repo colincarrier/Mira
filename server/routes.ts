@@ -39,9 +39,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the note first
       const note = await storage.createNote(noteData);
       
-      // Analyze with OpenAI in the background (default behavior)
+      // Create dual AI processing for comparison
       if (noteData.content) {
-        console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
+        console.log("Starting dual AI analysis for note:", note.id, "content length:", noteData.content.length);
+        
+        // Create a second note for Claude processing
+        const claudeNote = await storage.createNote({
+          ...noteData,
+          content: `[Claude] ${noteData.content}`
+        });
+        
+        // Process original note with OpenAI
         analyzeWithOpenAI(noteData.content, noteData.mode)
           .then(async (analysis) => {
             console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
@@ -120,7 +128,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           })
           .catch(error => {
-            console.error("AI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
+            console.error("OpenAI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
+          });
+        
+        // Process Claude note with Claude AI
+        analyzeWithClaude(noteData.content, noteData.mode)
+          .then(async (analysis) => {
+            console.log("Claude analysis completed for note:", claudeNote.id, "analysis:", JSON.stringify(analysis, null, 2));
+            // Update Claude note with AI analysis
+            const updates: any = {
+              aiEnhanced: true,
+              aiSuggestion: analysis.suggestion,
+              aiContext: analysis.context,
+              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            };
+            
+            if (analysis.enhancedContent) {
+              updates.content = `[Claude] ${analysis.enhancedContent}`;
+            }
+            
+            await storage.updateNote(claudeNote.id, updates);
+            console.log("Claude note updated with AI analysis:", claudeNote.id);
+            
+            // Create todos for Claude note if found
+            for (const todoTitle of analysis.todos) {
+              await storage.createTodo({
+                title: todoTitle,
+                noteId: claudeNote.id,
+              });
+            }
+            
+            // Create collection for Claude note if suggested
+            if (analysis.collectionSuggestion) {
+              const collections = await storage.getCollections();
+              const existingCollection = collections.find(
+                c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+              );
+              
+              let collectionId = existingCollection?.id;
+              if (!existingCollection) {
+                const newCollection = await storage.createCollection({
+                  ...analysis.collectionSuggestion,
+                  name: `[Claude] ${analysis.collectionSuggestion.name}`
+                });
+                collectionId = newCollection.id;
+              }
+              
+              await storage.updateNote(claudeNote.id, { collectionId });
+            }
+          })
+          .catch(error => {
+            console.error("Claude analysis failed for note:", claudeNote.id, "error:", error.message, "stack:", error.stack);
           });
       }
       
