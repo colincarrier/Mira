@@ -173,15 +173,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         </button>
         
         <button
-          onClick={() => setCaptureMode('voice')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
-            captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
-          }`}
-        >
-          <Mic className="w-6 h-6" />
-        </button>
-        
-        <button
           onClick={() => setCaptureMode('upload-image')}
           className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
             captureMode === 'upload-image' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
@@ -207,17 +198,27 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {captureMode !== 'camera' && (
             <div className="mx-4 mb-4">
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-2xl max-w-md mx-auto">
-                <textarea
-                  ref={textareaRef}
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  onFocus={handleTextFocus}
-                  placeholder="Add new note"
-                  className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500"
-                  inputMode="text"
-                  enterKeyHint="done"
-                  autoFocus={captureMode === 'text'}
-                />
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    onFocus={handleTextFocus}
+                    placeholder="Add new note"
+                    className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 pr-10"
+                    inputMode="text"
+                    enterKeyHint="done"
+                    autoFocus={captureMode === 'text'}
+                  />
+                  <button
+                    onClick={() => setCaptureMode('voice')}
+                    className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                      captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
