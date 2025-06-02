@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import CaptureArea from "@/components/capture-area";
 import ActivityFeed from "@/components/activity-feed";
 import TodosView from "@/components/todos-view";
@@ -10,7 +11,17 @@ import FullScreenCapture from "@/components/full-screen-capture";
 import { Settings } from "lucide-react";
 
 export default function Home() {
+  const [location] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections">("activity");
+
+  // Check URL parameters to set initial tab
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab === 'collections' || tab === 'todos' || tab === 'activity') {
+      setActiveTab(tab as "activity" | "todos" | "collections");
+    }
+  }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
