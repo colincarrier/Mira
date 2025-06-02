@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Camera, Mic, Type, Upload, FileText } from "lucide-react";
+import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,8 +41,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const handleTextFocus = () => {
     setIsTextFocused(true);
-    setShowFullEditor(true);
     stopCamera();
+    // Don't show full editor immediately, just focus the text area
   };
 
   const handleCameraCapture = () => {
@@ -160,7 +160,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             captureMode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
           }`}
         >
-          <Type className="w-6 h-6" />
+          <MessageCircle className="w-6 h-6" />
         </button>
         
         <button
@@ -187,7 +187,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             captureMode === 'upload-image' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
           }`}
         >
-          <Upload className="w-6 h-6" />
+          <Image className="w-6 h-6" />
         </button>
         
         <button
@@ -203,31 +203,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       <div className="absolute inset-0 flex flex-col">
         <div className="flex-1 flex flex-col justify-end pb-4">
           
-          {/* Shorter text input area */}
-          <div className="mx-4 mb-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-2xl max-w-md mx-auto">
-              <div className="relative">
+          {/* Shorter text input area - only show when not in camera mode */}
+          {captureMode !== 'camera' && (
+            <div className="mx-4 mb-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-2xl max-w-md mx-auto">
                 <textarea
                   ref={textareaRef}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   onFocus={handleTextFocus}
                   placeholder="Add new note"
-                  className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 pr-10"
+                  className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500"
                   inputMode="text"
                   enterKeyHint="done"
+                  autoFocus={captureMode === 'text'}
                 />
-                <button
-                  onClick={() => setCaptureMode('voice')}
-                  className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Camera capture button - only show in camera mode */}
           {captureMode === 'camera' && (
