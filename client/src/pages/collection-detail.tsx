@@ -105,7 +105,7 @@ export default function CollectionDetail() {
   const colors = getCollectionColor(collection.color);
 
   return (
-    <div className="mx-auto max-w-sm w-full h-full flex flex-col bg-white">
+    <div className="w-full h-full flex flex-col bg-white">
       {/* Header */}
       <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -153,73 +153,55 @@ export default function CollectionDetail() {
       <div className="flex-1 overflow-y-auto">
         {notes.length > 0 ? (
           <div className="p-4">
-            {/* Notes Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Note</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {notes.map((note, index) => (
-                      <tr 
-                        key={note.id} 
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setLocation(`/notes/${note.id}`)}
-                      >
-                        <td className="px-4 py-4">
-                          <div className="flex flex-col">
-                            <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
-                              {note.content ? note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '').substring(0, 60) : 'Untitled Note'}
-                              {note.content && note.content.length > 60 && '...'}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {note.content ? note.content.length : 0} characters
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center">
-                            {note.todos && note.todos.length > 0 ? (
-                              <div className="flex items-center space-x-1">
-                                <Icons.CheckSquare className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm text-gray-600">
-                                  {note.todos.filter(t => t.completed).length}/{note.todos.length}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-400">No tasks</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-sm text-gray-500">
-                            {new Date(note.createdAt).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center">
-                            {note.mode === 'standard' && <Icons.MessageSquare className="w-4 h-4 text-gray-400" />}
-                            {note.mode === 'voice' && <Icons.Mic className="w-4 h-4 text-blue-500" />}
-                            {note.mode === 'camera' && <Icons.Camera className="w-4 h-4 text-green-500" />}
-                            {note.mode === 'file' && <Icons.File className="w-4 h-4 text-purple-500" />}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {/* Notes List - Compact */}
+            <div className="space-y-2">
+              {notes.map((note, index) => {
+                const timeAgo = (() => {
+                  const now = new Date();
+                  const noteDate = new Date(note.createdAt);
+                  const diffInSeconds = Math.floor((now.getTime() - noteDate.getTime()) / 1000);
+                  
+                  if (diffInSeconds < 60) return 'now';
+                  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                })();
+
+                return (
+                  <div 
+                    key={note.id} 
+                    className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                    onClick={() => setLocation(`/notes/${note.id}`)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-gray-900 truncate">
+                        {note.content ? note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '').substring(0, 80) : 'Untitled Note'}
+                        {note.content && note.content.length > 80 && '...'}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 ml-3 flex-shrink-0">
+                      {note.todos && note.todos.length > 0 && (
+                        <div className="flex items-center space-x-1">
+                          <Icons.CheckSquare className="w-3 h-3 text-blue-500" />
+                          <span className="text-xs text-gray-600">
+                            {note.todos.filter(t => t.completed).length}/{note.todos.length}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center space-x-1">
+                        {note.mode === 'standard' && <Icons.MessageSquare className="w-3 h-3 text-gray-400" />}
+                        {note.mode === 'voice' && <Icons.Mic className="w-3 h-3 text-blue-500" />}
+                        {note.mode === 'camera' && <Icons.Camera className="w-3 h-3 text-green-500" />}
+                        {note.mode === 'file' && <Icons.File className="w-3 h-3 text-purple-500" />}
+                      </div>
+                      
+                      <span className="text-xs text-gray-500 min-w-0">{timeAgo}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (

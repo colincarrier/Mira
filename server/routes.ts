@@ -247,6 +247,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/reprocess-notes", async (req, res) => {
+    try {
+      const { reprocessAllNotes } = await import("./reprocess-notes");
+      await reprocessAllNotes();
+      res.json({ success: true, message: "All notes reprocessed successfully" });
+    } catch (error) {
+      console.error("Error reprocessing notes:", error);
+      res.status(500).json({ error: "Failed to reprocess notes" });
+    }
+  });
+
   app.post("/api/notes/voice", upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
