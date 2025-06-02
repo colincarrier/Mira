@@ -26,18 +26,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const queryClient = useQueryClient();
   const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
 
-  // Initialize camera and focus text input when component opens
+  // Initialize camera when component opens - don't auto-focus text
   useEffect(() => {
     if (isOpen) {
       startCamera();
-      // Always focus textarea to show keyboard on mobile
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          // Force keyboard on mobile devices
-          textareaRef.current.click();
-        }
-      }, 300);
+      setCaptureMode(null); // No initial selection
+      setNoteText('');
     } else {
       stopCamera();
     }
@@ -218,35 +212,26 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         <div className="absolute inset-0 flex flex-col">
           {/* Main capture area */}
           <div className="flex-1 flex flex-col justify-end pb-4">
-            {/* Camera capture button for photo/video modes */}
-            {(captureMode === 'camera') && (
-              <div className="flex justify-center mb-8">
-                <button
-                  className="w-20 h-20 rounded-full bg-white/20 border-4 border-white flex items-center justify-center backdrop-blur-sm"
-                  onTouchStart={() => {
-                    // Handle photo capture on tap, video recording on hold
-                    console.log('Capture button pressed');
-                  }}
-                >
-                  <div className="w-16 h-16 rounded-full bg-white"></div>
-                </button>
-              </div>
-            )}
             
-            {/* Text input area - positioned above keyboard */}
-            {captureMode === 'text' && (
-              <div className="mx-4 mb-4">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-2xl max-w-md mx-auto">
-                  <textarea
-                    ref={textareaRef}
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="What's on your mind?"
-                    className="w-full h-24 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
-                    autoFocus
-                    inputMode="text"
-                    enterKeyHint="done"
-                  />
+            {/* Text input area - always visible above camera controls */}
+            <div className="mx-4 mb-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-2xl max-w-md mx-auto">
+                <textarea
+                  ref={textareaRef}
+                  value={noteText}
+                  onChange={(e) => {
+                    setNoteText(e.target.value);
+                    if (!captureMode) setCaptureMode('text'); // Set mode when user starts typing
+                  }}
+                  onFocus={() => {
+                    if (!captureMode) setCaptureMode('text'); // Set mode when focused
+                  }}
+                  placeholder="Add new note"
+                  className="w-full h-16 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
+                  inputMode="text"
+                  enterKeyHint="done"
+                />
+                {noteText.length > 0 && (
                   <div className="flex justify-between items-center mt-3">
                     <span className="text-sm text-gray-500">
                       {noteText.length} characters
@@ -256,6 +241,29 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                       disabled={createNoteMutation.isPending}
                       className="px-6 py-2 bg-[hsl(var(--soft-sky-blue))] text-white rounded-full font-medium disabled:opacity-50"
                     >
+                      {createNoteMutation.isPending ? 'Saving...' : 'Save Note'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Camera capture button */}
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={() => {
+                  setCaptureMode('camera');
+                  console.log('Camera capture');
+                }}
+                className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center backdrop-blur-sm transition-all ${
+                  captureMode === 'camera' 
+                    ? 'bg-white/40 scale-110' 
+                    : 'bg-white/20 hover:bg-white/30'
+                }`}
+              >
+                <div className="w-16 h-16 rounded-full bg-white"></div>
+              </button>
+            </div>
                       {createNoteMutation.isPending ? 'Saving...' : 'Save Note'}
                     </button>
                   </div>
