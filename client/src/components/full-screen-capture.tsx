@@ -161,15 +161,25 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Text input area - always visible above camera controls */}
           <div className="mx-4 mb-4">
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-2xl max-w-md mx-auto">
-              <textarea
-                ref={textareaRef}
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Add new note"
-                className="w-full h-16 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500"
-                inputMode="text"
-                enterKeyHint="done"
-              />
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add new note"
+                  className="w-full h-16 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500 pr-12"
+                  inputMode="text"
+                  enterKeyHint="done"
+                />
+                <button
+                  onClick={() => setCaptureMode('voice')}
+                  className={`absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              </div>
               {noteText.length > 0 && (
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-sm text-gray-500">
