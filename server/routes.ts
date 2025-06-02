@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
-import { analyzeNote, transcribeAudio } from "./openai";
+import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
+import { analyzeNote as analyzeWithClaude } from "./anthropic";
 import multer from "multer";
 
 const upload = multer();
@@ -38,13 +39,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the note first
       const note = await storage.createNote(noteData);
       
-      // Analyze with AI in the background
+      // Analyze with OpenAI in the background (default behavior)
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
-        analyzeNote(noteData.content, noteData.mode)
+        analyzeWithOpenAI(noteData.content, noteData.mode)
           .then(async (analysis) => {
-            console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
-            // Update note with AI analysis
+            console.log("OpenAI analysis completed for note:", openAINote.id, "analysis:", JSON.stringify(analysis, null, 2));
+            // Update OpenAI note with analysis
             const updates: any = {
               aiEnhanced: true,
               aiSuggestion: analysis.suggestion,
@@ -53,10 +54,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             if (analysis.enhancedContent) {
-              updates.content = analysis.enhancedContent;
+              updates.content = `[OpenAI Result] ${analysis.enhancedContent}`;
             }
             
-            await storage.updateNote(note.id, updates);
+            await storage.updateNote(openAINote.id, updates);
             console.log("Note updated with AI analysis:", note.id);
             
             // Create todos if found
