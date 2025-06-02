@@ -48,8 +48,7 @@ export default function Home() {
       <div className="pb-20">
 
 
-        {/* Quick Capture */}
-        <CaptureArea onVoiceCapture={() => setIsVoiceModalOpen(true)} />
+        {/* Quick Capture - removed for now */}
 
         {/* Tab Content */}
         <div className="px-4">
