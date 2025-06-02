@@ -8,6 +8,7 @@ export interface IStorage {
   getNotes(): Promise<NoteWithTodos[]>;
   getNote(id: number): Promise<NoteWithTodos | undefined>;
   updateNote(id: number, updates: Partial<Note>): Promise<Note>;
+  deleteNote(id: number): Promise<void>;
   
   // Todos
   createTodo(todo: InsertTodo): Promise<Todo>;
@@ -85,6 +86,13 @@ export class DatabaseStorage implements IStorage {
     
     if (!note) throw new Error("Note not found");
     return note;
+  }
+
+  async deleteNote(id: number): Promise<void> {
+    // First delete all associated todos
+    await db.delete(todos).where(eq(todos.noteId, id));
+    // Then delete the note
+    await db.delete(notes).where(eq(notes.id, id));
   }
 
   async createTodo(insertTodo: InsertTodo): Promise<Todo> {
