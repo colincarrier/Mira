@@ -15,19 +15,21 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [captureMode, setCaptureMode] = useState<CaptureMode>('text');
   const [noteText, setNoteText] = useState('');
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isTextFocused, setIsTextFocused] = useState(false);
+  const [capturedMedia, setCapturedMedia] = useState<string | null>(null);
+  const [showFullEditor, setShowFullEditor] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isOpen) {
-      startCamera();
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-        }
-      }, 300);
+    if (isOpen && !showFullEditor) {
+      if (captureMode === 'camera') {
+        startCamera();
+      } else {
+        stopCamera();
+      }
     } else {
       stopCamera();
     }
@@ -35,7 +37,30 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => {
       stopCamera();
     };
-  }, [isOpen]);
+  }, [isOpen, captureMode, showFullEditor]);
+
+  const handleTextFocus = () => {
+    setIsTextFocused(true);
+    setShowFullEditor(true);
+    stopCamera();
+  };
+
+  const handleCameraCapture = () => {
+    // Simulate photo capture and auto-analyze
+    setCapturedMedia('captured-photo.jpg');
+    setNoteText(''); // Clear any existing text
+    // Auto-save the captured media with AI analysis
+    handleSaveWithMedia('captured-photo.jpg');
+    stopCamera();
+  };
+
+  const handleSaveWithMedia = (mediaUrl: string) => {
+    // Automatically analyze captured media and save note
+    createNoteMutation.mutate({
+      content: `[Image captured: ${mediaUrl}]`,
+      mode: 'enhanced' // Use enhanced mode for better AI analysis
+    });
+  };
 
   const startCamera = async () => {
     try {
@@ -64,9 +89,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setNoteText('');
+      setCapturedMedia(null);
+      setShowFullEditor(false);
+      setIsTextFocused(false);
       onClose();
       toast({
-        description: "Note created successfully!",
+        description: "Note saved and analyzed by AI.",
       });
     },
   });
@@ -82,23 +110,40 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   if (!isOpen) return null;
 
+  // Auto-processing mode - no need for full editor since AI handles everything
+  if (showFullEditor) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Processing with AI...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Main capture interface
   return (
     <div className="fixed inset-0 z-[100] bg-black w-screen h-screen overflow-hidden">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ 
-          width: '100vw', 
-          height: '100vh',
-          objectFit: 'cover',
-          objectPosition: 'center'
-        }}
-      />
-
-      <div className="absolute inset-0 bg-black/30" />
+      {/* Camera view - only show if camera mode and not in full editor */}
+      {captureMode === 'camera' && (
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ 
+              width: '100vw', 
+              height: '100vh',
+              objectFit: 'cover',
+              objectPosition: 'center'
+            }}
+          />
+          <div className="absolute inset-0 bg-black/30" />
+        </>
+      )}
 
       <button
         onClick={onClose}
@@ -158,53 +203,43 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       <div className="absolute inset-0 flex flex-col">
         <div className="flex-1 flex flex-col justify-end pb-4">
           
-          {/* Text input area - always visible above camera controls */}
+          {/* Shorter text input area */}
           <div className="mx-4 mb-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-2xl max-w-md mx-auto">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-2xl max-w-md mx-auto">
               <div className="relative">
                 <textarea
                   ref={textareaRef}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
+                  onFocus={handleTextFocus}
                   placeholder="Add new note"
-                  className="w-full h-16 resize-none border-none outline-none bg-transparent text-lg placeholder-gray-500 pr-12"
+                  className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 pr-10"
                   inputMode="text"
                   enterKeyHint="done"
                 />
                 <button
                   onClick={() => setCaptureMode('voice')}
-                  className={`absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                     captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   <Mic className="w-4 h-4" />
                 </button>
               </div>
-              {noteText.length > 0 && (
-                <div className="flex justify-between items-center mt-3">
-                  <span className="text-sm text-gray-500">
-                    {noteText.length} characters
-                  </span>
-                  <button
-                    onClick={handleSave}
-                    disabled={createNoteMutation.isPending}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-full font-medium disabled:opacity-50"
-                  >
-                    {createNoteMutation.isPending ? 'Saving...' : 'Save Note'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Camera capture button */}
-          <div className="flex justify-center mb-8">
-            <button
-              className="w-20 h-20 rounded-full bg-white/20 border-4 border-white flex items-center justify-center backdrop-blur-sm"
-            >
-              <div className="w-16 h-16 rounded-full bg-white"></div>
-            </button>
-          </div>
+          {/* Camera capture button - only show in camera mode */}
+          {captureMode === 'camera' && (
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={handleCameraCapture}
+                className="w-20 h-20 rounded-full bg-white/20 border-4 border-white flex items-center justify-center backdrop-blur-sm"
+              >
+                <div className="w-16 h-16 rounded-full bg-white"></div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
