@@ -105,6 +105,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // Update note with collection
               await storage.updateNote(note.id, { collectionId });
+              
+              // Create classification todo if assigned to "Undefined"
+              if (analysis.collectionSuggestion.name.toLowerCase() === "undefined") {
+                await storage.createTodo({
+                  title: "Classify and organize your note - consider creating custom categories",
+                  noteId: note.id,
+                  completed: false,
+                  pinned: true
+                });
+              }
             }
             
             // Create split notes if AI detected unrelated topics
