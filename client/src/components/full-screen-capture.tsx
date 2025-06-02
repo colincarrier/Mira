@@ -45,10 +45,31 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     // Don't show full editor immediately, just focus the text area
   };
 
-  const handleSendNote = () => {
+  const handleSendNote = async () => {
     if (noteText.trim()) {
-      // Process the note through AI
-      setShowFullEditor(true);
+      try {
+        // Create note immediately with original text
+        const response = await apiRequest("POST", "/api/notes", {
+          content: noteText.trim(),
+          mode: "standard"
+        });
+        const newNote = await response.json();
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+        
+        // Close this modal and navigate to the new note
+        onClose();
+        
+        // Navigate to the new note detail page
+        window.location.href = `/note/${newNote.id}`;
+      } catch (error) {
+        console.error("Error creating note:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create note. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -117,17 +138,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   if (!isOpen) return null;
 
-  // Auto-processing mode - no need for full editor since AI handles everything
-  if (showFullEditor) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Processing with AI...</p>
-        </div>
-      </div>
-    );
-  }
+  // No more loading screen - notes are created immediately
 
   // Main capture interface
   return (
