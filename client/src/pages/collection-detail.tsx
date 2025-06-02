@@ -110,7 +110,7 @@ export default function CollectionDetail() {
       <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/?tab=collections")}
             className="flex items-center text-[hsl(var(--ios-blue))] touch-manipulation"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
@@ -249,26 +249,52 @@ export default function CollectionDetail() {
               </p>
             </div>
 
-            {/* Preview of individual notes */}
+            {/* Individual note titles and content */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900">Notes in Collection ({notes.length})</h3>
+              <h3 className="font-semibold text-gray-900">All Items ({notes.length} notes)</h3>
               {notes.map((note) => (
-                <div 
-                  key={note.id} 
-                  onClick={() => setLocation(`/note/${note.id}`)}
-                  className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow touch-manipulation"
-                >
-                  <p className="text-sm text-gray-800 line-clamp-2">{note.content}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500">
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </span>
-                    {note.todos && note.todos.length > 0 && (
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        {note.todos.length} todo{note.todos.length !== 1 ? 's' : ''}
+                <div key={note.id} className="space-y-2">
+                  {/* Note title/header */}
+                  <div 
+                    onClick={() => setLocation(`/note/${note.id}`)}
+                    className="bg-blue-50 border border-blue-200 rounded-lg p-3 cursor-pointer hover:bg-blue-100 transition-colors touch-manipulation"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-blue-900 flex-1">
+                        {note.aiEnhanced && note.aiSuggestion ? note.aiSuggestion : note.content.split('\n')[0].substring(0, 50) + (note.content.length > 50 ? '...' : '')}
+                      </h4>
+                      <span className="text-xs text-blue-600 ml-2">
+                        {new Date(note.createdAt).toLocaleDateString()}
                       </span>
-                    )}
+                    </div>
                   </div>
+                  
+                  {/* Note content summary */}
+                  {note.content.length > 100 && (
+                    <div className="ml-4 pl-3 border-l-2 border-gray-200">
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {note.content.substring(0, 200)}...
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Note todos */}
+                  {note.todos && note.todos.length > 0 && (
+                    <div className="ml-4 space-y-1">
+                      {note.todos.map((todo, idx) => (
+                        <div key={idx} className="flex items-center space-x-2 text-sm">
+                          <div className={`w-3 h-3 rounded border ${
+                            todo.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                          }`}>
+                            {todo.completed && <Icons.Check className="w-2 h-2 text-white" />}
+                          </div>
+                          <span className={todo.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
+                            {todo.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
