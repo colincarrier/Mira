@@ -335,129 +335,116 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* Rich Contextual Information Section */}
-        {(note.aiContext || note.aiSuggestion || note.richContext) && (
-          <div className="note-card mb-6">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium mb-4 text-[hsl(var(--sage-green))]">Contextual Intelligence</h3>
-                
-                {/* Rich Context - Google-style organized information */}
-                {note.richContext && (() => {
-                  try {
-                    const richData = JSON.parse(note.richContext);
-                    return (
-                      <div className="space-y-4">
-                        {/* AI Summary */}
-                        {richData.summary && (
-                          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
-                            <h4 className="text-sm font-medium text-blue-900 mb-1">Quick Summary</h4>
-                            <p className="text-sm text-blue-800">{richData.summary}</p>
+        {/* AI Research Results - Google-style */}
+        {note.richContext && (
+          <div className="space-y-4">
+            {(() => {
+              try {
+                const richData = JSON.parse(note.richContext);
+                return (
+                  <>
+                    {/* Recommended Actions */}
+                    {richData.recommendedActions && richData.recommendedActions.length > 0 && (
+                      <div className="note-card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">1</span>
                           </div>
-                        )}
-                        
-                        {/* Key Insights */}
-                        {richData.keyInsights && richData.keyInsights.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Key Insights</h4>
-                            <ul className="space-y-1">
-                              {richData.keyInsights.map((insight: string, index: number) => (
-                                <li key={index} className="text-sm text-[hsl(var(--muted-foreground))] flex items-start gap-2">
-                                  <span className="text-green-600 font-medium">•</span>
-                                  {insight}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        {/* Actionable Information */}
-                        {richData.actionableInfo && richData.actionableInfo.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Actionable Information</h4>
-                            <div className="bg-green-50 rounded-lg p-3">
-                              <ul className="space-y-1">
-                                {richData.actionableInfo.map((info: string, index: number) => (
-                                  <li key={index} className="text-sm text-green-800 flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    {info}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Deep Dive Areas */}
-                        {richData.deepDiveAreas && richData.deepDiveAreas.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Explore Further</h4>
-                            <div className="space-y-3">
-                              {richData.deepDiveAreas.map((area: any, index: number) => (
-                                <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3">
-                                  <h5 className="font-medium text-sm mb-1">{area.title}</h5>
-                                  <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{area.description}</p>
-                                  <ul className="space-y-1">
-                                    {area.keyPoints.map((point: string, pointIndex: number) => (
-                                      <li key={pointIndex} className="text-xs text-[hsl(var(--muted-foreground))] flex items-start gap-1">
-                                        <span className="text-blue-500">→</span>
-                                        {point}
-                                      </li>
-                                    ))}
-                                  </ul>
+                          <h3 className="font-medium text-[hsl(var(--foreground))]">Recommended Next Steps</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {richData.recommendedActions.map((action: any, index: number) => (
+                            <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
+                              <div className="text-sm text-blue-800 mb-2">{action.description}</div>
+                              {action.links && action.links.length > 0 && (
+                                <div className="space-y-1">
+                                  {action.links.map((link: any, linkIndex: number) => (
+                                    <a 
+                                      key={linkIndex} 
+                                      href={link.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {link.title}
+                                    </a>
+                                  ))}
                                 </div>
-                              ))}
+                              )}
                             </div>
-                          </div>
-                        )}
-                        
-                        {/* Related Topics */}
-                        {richData.relatedTopics && richData.relatedTopics.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Related Topics</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {richData.relatedTopics.map((topic: string, index: number) => (
-                                <span key={index} className="px-2 py-1 bg-[hsl(var(--muted))] text-xs rounded-full text-[hsl(var(--muted-foreground))]">
-                                  {topic}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  } catch (e) {
-                    return null;
-                  }
-                })()}
-                
-                {/* Fallback to basic AI Context and Suggestions if no rich context */}
-                {!note.richContext && (
-                  <div className="space-y-4">
-                    {note.aiContext && (
-                      <div>
-                        <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Understanding & Context</h4>
-                        <p className="text-[hsl(var(--muted-foreground))] leading-relaxed text-sm">
-                          {note.aiContext}
-                        </p>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    
-                    {note.aiSuggestion && (
-                      <div>
-                        <h4 className="text-sm font-medium text-[hsl(var(--foreground))] mb-2">Thoughtful Insights & Next Steps</h4>
-                        <p className="text-[hsl(var(--muted-foreground))] leading-relaxed text-sm">
-                          {note.aiSuggestion}
-                        </p>
+
+                    {/* Research Results */}
+                    {richData.researchResults && richData.researchResults.length > 0 && (
+                      <div className="note-card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">2</span>
+                          </div>
+                          <h3 className="font-medium text-[hsl(var(--foreground))]">Research & Options</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {richData.researchResults.map((result: any, index: number) => (
+                            <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3">
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-medium text-sm">{result.title}</h4>
+                                {result.rating && (
+                                  <div className="text-xs text-yellow-600 flex items-center gap-1">
+                                    <span>★</span>
+                                    <span>{result.rating}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-sm text-[hsl(var(--muted-foreground))] mb-2">{result.description}</p>
+                              {result.keyPoints && (
+                                <ul className="space-y-1 mb-2">
+                                  {result.keyPoints.map((point: string, pointIndex: number) => (
+                                    <li key={pointIndex} className="text-xs text-[hsl(var(--muted-foreground))] flex items-start gap-1">
+                                      <span className="text-green-500">•</span>
+                                      {point}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                              {result.contact && (
+                                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                                  Contact: {result.contact}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
-            </div>
+
+                    {/* Quick Insights */}
+                    {richData.quickInsights && richData.quickInsights.length > 0 && (
+                      <div className="note-card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">3</span>
+                          </div>
+                          <h3 className="font-medium text-[hsl(var(--foreground))]">Key Considerations</h3>
+                        </div>
+                        <div className="grid gap-2">
+                          {richData.quickInsights.map((insight: string, index: number) => (
+                            <div key={index} className="text-sm p-2 bg-purple-50 border-l-2 border-purple-400 rounded-r">
+                              {insight}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              } catch (e) {
+                return null;
+              }
+            })()}
           </div>
         )}
 

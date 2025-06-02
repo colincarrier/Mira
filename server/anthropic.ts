@@ -16,16 +16,19 @@ export interface AIAnalysisResult {
     color: string;
   };
   richContext?: {
-    summary: string;
-    keyInsights: string[];
-    relatedTopics: string[];
-    actionableInfo: string[];
-    imagePrompts?: string[];
-    deepDiveAreas: {
+    recommendedActions: {
       title: string;
       description: string;
-      keyPoints: string[];
+      links?: { title: string; url: string }[];
     }[];
+    researchResults: {
+      title: string;
+      description: string;
+      rating?: string;
+      keyPoints: string[];
+      contact?: string;
+    }[];
+    quickInsights: string[];
   };
   splitNotes?: {
     content: string;
@@ -40,24 +43,31 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = `You are Mira, an intelligent personal assistant that helps users capture, organize, and enhance their thoughts and tasks.
+    const prompt = `You are Mira, an intelligent research assistant that provides actionable solutions and real research insights. Act like Google search results - provide practical, actionable intelligence rather than just summarizing what the user already told you.
 
-Analyze this note content and provide structured insights:
-
-Content: "${content}"
+User's note: "${content}"
 Mode: ${mode}
 
+Your job is to research and provide solutions, not just digest the input. Think 2 steps ahead and provide real value.
+
 Please respond with a JSON object containing:
-1. enhancedContent: A polished, well-formatted version of the content with proper structure and clarity
-2. todos: Array of actionable tasks extracted from the content
-3. collectionSuggestion: {name, icon, color} - suggest an appropriate collection for organizing this note
+1. enhancedContent: A clean, well-formatted version with better structure
+2. todos: Specific actionable tasks extracted from the content
+3. collectionSuggestion: {name, icon, color} - suggest appropriate collection
 4. richContext: {
-   summary: Brief overview of the content
-   keyInsights: Important points or insights
-   relatedTopics: Related subjects the user might be interested in
-   actionableInfo: Specific actions or next steps
-   deepDiveAreas: [{title, description, keyPoints}] - areas for further exploration
+   recommendedActions: [{title, description, links}] - Specific next steps with real resources/websites
+   researchResults: [{title, description, rating, keyPoints, contact}] - Actual options, programs, services with details
+   quickInsights: [string] - Brief, actionable bullets (not lengthy prose)
 }
+
+Focus on providing:
+- Specific websites, services, and resources
+- Contact information when relevant
+- Real program names and options
+- Actionable next steps with links
+- Research-backed recommendations
+
+Do NOT just restate what the user said. Provide new intelligence and research.
 
 Available icons: coffee, lightbulb, book, heart, star, briefcase, home, car, plane, checklist, calendar, location, shopping
 Available colors: blue, green, purple, orange, red, pink, yellow, teal
