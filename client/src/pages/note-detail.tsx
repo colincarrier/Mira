@@ -87,8 +87,12 @@ export default function NoteDetail() {
   });
 
   const handleDeleteNote = () => {
+    console.log("Delete note clicked for note:", id);
     if (confirm("Are you sure you want to delete this note? This action cannot be undone.")) {
+      console.log("User confirmed deletion, calling delete mutation");
       deleteNoteMutation.mutate();
+    } else {
+      console.log("User cancelled deletion");
     }
   };
 
