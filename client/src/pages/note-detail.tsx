@@ -327,10 +327,12 @@ export default function NoteDetail() {
               </div>
               {note.mode && (
                 <div className="flex items-center gap-1">
-                  <span className="capitalize">{note.mode} note</span>
+                  {note.mode === 'standard' && <MessageSquare className="w-4 h-4" title="Text input" />}
+                  {note.mode === 'voice' && <Mic className="w-4 h-4" title="Voice input" />}
+                  {note.mode === 'camera' && <Camera className="w-4 h-4" title="Camera input" />}
+                  {note.mode === 'file' && <File className="w-4 h-4" title="File upload" />}
                 </div>
               )}
-
             </div>
           </div>
         </div>
