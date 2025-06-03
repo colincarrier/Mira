@@ -2,10 +2,14 @@ import { ChevronLeft, Brain } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import AIComparison from "./ai-comparison";
+import BottomNavigation from "./bottom-navigation";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  activeTab: "activity" | "todos" | "collections";
+  onTabChange: (tab: "activity" | "todos" | "collections") => void;
+  onNewNote: () => void;
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
