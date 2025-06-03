@@ -628,7 +628,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
             <div 
-              className="absolute left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)] transition-all duration-300"
+              className="absolute left-1/2 transform -translate-x-1/2 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300"
               style={{ bottom: `${keyboardHeight > 0 ? keyboardHeight + 160 : 128}px` }}
             >
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl mx-auto">
@@ -654,7 +654,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                       onClick={() => {
                         setCaptureMode('voice');
                       }}
-                      className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-[hsl(var(--soft-sky-blue))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--soft-sky-blue))]/80"
                     >
                       <Mic className="w-4 h-4" />
                     </button>
