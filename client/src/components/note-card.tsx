@@ -427,24 +427,8 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center justify-between mt-3 relative">
         <div className="flex items-center space-x-4 text-[12px]">
-          {/* AI Partner Logo */}
-          {aiPartner && (
-            <div className="flex items-center">
-              {aiPartner === 'claude' && (
-                <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-red-500 rounded-sm flex items-center justify-center" title="Enhanced by Claude">
-                  <span className="text-white text-[8px] font-bold">C</span>
-                </div>
-              )}
-              {aiPartner === 'openai' && (
-                <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-sm flex items-center justify-center" title="Enhanced by OpenAI">
-                  <span className="text-white text-[8px] font-bold">AI</span>
-                </div>
-              )}
-            </div>
-          )}
-          
           {progress && (
             <button 
               onClick={(e) => {
@@ -467,6 +451,22 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             </div>
           )}
         </div>
+
+        {/* AI Partner Logo - Subtle, bottom right */}
+        {aiPartner && (
+          <div className="absolute bottom-0 right-0">
+            {aiPartner === 'claude' && (
+              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-40 hover:opacity-70 transition-opacity" title="Enhanced by Claude">
+                <span className="text-gray-700 dark:text-gray-300 text-[6px] font-medium">C</span>
+              </div>
+            )}
+            {aiPartner === 'openai' && (
+              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-40 hover:opacity-70 transition-opacity" title="Enhanced by OpenAI">
+                <span className="text-gray-700 dark:text-gray-300 text-[6px] font-medium">AI</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {/* Todos Modal */}
       <Dialog open={showTodosModal} onOpenChange={(open) => {
