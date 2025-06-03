@@ -60,7 +60,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
             e.stopPropagation();
             onToggle(todo);
           }}
-          className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
+          className={`flex-shrink-0 min-w-[44px] min-h-[44px] w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
             ${todo.completed 
               ? 'bg-green-500 border-green-500 text-white' 
               : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
@@ -106,7 +106,29 @@ export default function TodosView() {
       const response = await apiRequest("PATCH", `/api/todos/${id}`, { completed });
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async ({ id, completed }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/todos"] });
+      
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData<Todo[]>(["/api/todos"], (old) =>
+        old?.map(todo => 
+          todo.id === id ? { ...todo, completed } : todo
+        ) || []
+      );
+      
+      return { previousTodos };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/todos"], context.previousTodos);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
     },
   });
