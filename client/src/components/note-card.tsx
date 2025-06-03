@@ -115,15 +115,18 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
-  // Helper to format content with better title/description separation
+  // Helper to format content with proper title length limits
   const formatContent = (content: string) => {
     const lines = content.split('\n').filter(line => line.trim().length > 0);
     const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
     
-    // Extract a meaningful title (first 50 chars or first sentence)
     const firstLine = lines[0] || '';
-    const title = firstLine.length > 50 
-      ? firstLine.substring(0, 47) + '...'
+    const hasDescription = lines.length > 1 || bullets.length >= 2;
+    
+    // Title character limits: 1 line (~50 chars) with description, 3 lines (~150 chars) without
+    const maxTitleLength = hasDescription ? 50 : 150;
+    const title = firstLine.length > maxTitleLength 
+      ? firstLine.substring(0, maxTitleLength).trim()
       : firstLine;
     
     if (bullets.length >= 2) {
@@ -142,7 +145,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       return {
         hasStructure: false,
         title,
-        description: description + (description.length >= 120 ? '...' : ''),
+        description: description.length >= 120 ? description.trim() : description,
         bullets: []
       };
     }
@@ -350,8 +353,10 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       </div>
       {/* Content with iOS Notes-style formatting */}
       <div className="mb-3">
-        {/* Title - bigger and bolder like iOS Notes */}
-        <h3 className="text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))]">
+        {/* Title - 1 line with description, 3 lines without */}
+        <h3 className={`text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))] ${
+          formattedContent.description || formattedContent.hasStructure ? 'line-clamp-1' : 'line-clamp-3'
+        }`}>
           {formattedContent.title}
         </h3>
         
