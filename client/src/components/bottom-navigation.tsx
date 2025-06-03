@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Folder, Plus, Settings } from "lucide-react";
+import { Home, CheckSquare, Folder, Plus, Settings, Mic } from "lucide-react";
 
 interface BottomNavigationProps {
   activeTab: "activity" | "todos" | "collections";
@@ -10,6 +10,31 @@ interface BottomNavigationProps {
 export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings }: BottomNavigationProps) {
   return (
     <>
+      {/* Chat-style input box */}
+      <div className="fixed bottom-16 left-4 right-4 z-[60]">
+        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="What's on your mind?"
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
+            onFocus={onNewNote}
+            readOnly
+          />
+          <button 
+            onClick={onNewNote}
+            className="w-8 h-8 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors"
+          >
+            <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          </button>
+          <button 
+            onClick={onNewNote}
+            className="w-8 h-8 bg-[hsl(var(--sage-green))] hover:bg-[hsl(var(--sage-green))]/90 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom z-[50]">
         <div className="flex justify-around">
@@ -46,15 +71,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
         </div>
       </nav>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={onNewNote}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-[hsl(var(--sage-green))] hover:bg-[hsl(var(--sage-green))]/90 text-white rounded-full shadow-lg flex items-center justify-center z-[60] transition-all duration-200 active:scale-95"
-        aria-label="Create new note"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
     </>
   );
 }
