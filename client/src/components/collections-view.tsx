@@ -42,6 +42,12 @@ const getIconComponent = (iconName: string) => {
       return MapPin;
     case "shopping":
       return ShoppingBag;
+    case "users":
+      return Users;
+    case "play":
+      return Play;
+    case "utensils":
+      return Utensils;
     default:
       return Folder;
   }
@@ -123,12 +129,21 @@ export default function CollectionsView() {
         <h2 className="text-lg font-semibold">Collections</h2>
         <div className="flex items-center gap-2">
           <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-            <Search size={18} />
-          </button>
-          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
             <Plus size={18} />
           </button>
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-4 h-4" />
+        <input
+          type="text"
+          placeholder="Search collections..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] focus:border-transparent"
+        />
       </div>
 
       {/* Filter Pills */}
@@ -178,7 +193,20 @@ export default function CollectionsView() {
             >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-8 h-8 flex items-center justify-center">
-                  <IconComponent className={`w-6 h-6 ${colors.text}`} />
+                  {collection.iconUrl ? (
+                    <img 
+                      src={collection.iconUrl} 
+                      alt={collection.name}
+                      className="w-6 h-6 rounded object-cover"
+                      onError={(e) => {
+                        // Fallback to icon if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : (
+                    <IconComponent className={`w-6 h-6 ${colors.text}`} />
+                  )}
                 </div>
                 <div className="space-y-0.5">
                   <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
