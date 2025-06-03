@@ -220,23 +220,23 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
 
           {/* Bottom navigation bar - 70% transparent */}
-          <div className="absolute bottom-4 left-4 right-4 z-[10001] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/20">
+          <div className="absolute bottom-4 left-4 right-4 z-[10001]">
             <div className="relative mb-3">
               <textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Add caption..."
-                className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-white/70 text-white leading-6"
+                className="w-full h-12 resize-none border-none outline-none bg-white/30 backdrop-blur-sm rounded-xl p-3 text-base placeholder-white/70 text-white leading-6"
                 inputMode="text"
                 enterKeyHint="done"
               />
             </div>
             
             {/* Mode switcher with close button */}
-            <div className="flex justify-between items-center pt-3 border-t border-white/20">
+            <div className="flex justify-between items-center">
               <button
                 onClick={onClose}
-                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2"
               >
                 <X className="w-4 h-4" />
                 <span className="text-sm">Close</span>
@@ -251,13 +251,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                 </button>
                 <button
                   onClick={() => setCaptureMode('voice')}
-                  className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                  className="p-2 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors"
                 >
                   <Mic className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setCaptureMode('text')}
-                  className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                  className="p-2 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors"
                 >
                   <Send className="w-4 h-4" />
                 </button>
