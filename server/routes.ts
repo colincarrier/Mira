@@ -6,6 +6,7 @@ import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
+import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
 
 const upload = multer();
 
