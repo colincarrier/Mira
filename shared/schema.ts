@@ -1,5 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const notes = pgTable("notes", {
@@ -13,7 +14,7 @@ export const notes = pgTable("notes", {
   aiSuggestion: text("ai_suggestion"),
   aiContext: text("ai_context"),
   richContext: text("rich_context"), // JSON string containing Google-style organized information
-  collectionId: integer("collection_id"),
+  collectionId: integer("collection_id").references(() => collections.id),
 });
 
 export const todos = pgTable("todos", {
@@ -23,7 +24,7 @@ export const todos = pgTable("todos", {
   pinned: boolean("pinned").default(false),
   archived: boolean("archived").default(false),
   priority: text("priority").default("normal"), // "urgent", "normal", "low"
-  noteId: integer("note_id").notNull(),
+  noteId: integer("note_id").notNull().references(() => notes.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -56,6 +57,26 @@ export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type Todo = typeof todos.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
+
+// Relations
+export const notesRelations = relations(notes, ({ one, many }) => ({
+  collection: one(collections, {
+    fields: [notes.collectionId],
+    references: [collections.id],
+  }),
+  todos: many(todos),
+}));
+
+export const todosRelations = relations(todos, ({ one }) => ({
+  note: one(notes, {
+    fields: [todos.noteId],
+    references: [notes.id],
+  }),
+}));
+
+export const collectionsRelations = relations(collections, ({ many }) => ({
+  notes: many(notes),
+}));
 
 export type NoteWithTodos = Note & {
   todos: Todo[];

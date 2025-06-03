@@ -5,8 +5,18 @@ import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@sha
 import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
 
 const upload = multer();
+
+// AI endpoint rate limiting
+const aiRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 AI requests per windowMs
+  message: { error: 'Too many AI requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Notes endpoints
@@ -210,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dual AI comparison endpoint
-  app.post("/api/compare-ai", async (req, res) => {
+  app.post("/api/compare-ai", aiRateLimit, async (req, res) => {
     try {
       const { content, mode = 'quick' } = req.body;
       
@@ -258,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/notes/voice", upload.single("audio"), async (req, res) => {
+  app.post("/api/notes/voice", aiRateLimit, upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No audio file provided" });
