@@ -45,7 +45,7 @@ export default function Home() {
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
       
       {/* Main Content */}
-      <div className="pb-32">
+      <div className="pb-24">
 
 
         {/* Quick Capture - removed for now */}
