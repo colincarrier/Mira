@@ -12,7 +12,7 @@ interface FullScreenCaptureProps {
 type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
 
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
-  const [captureMode, setCaptureMode] = useState<CaptureMode>('text');
+  const [captureMode, setCaptureMode] = useState<CaptureMode>('camera'); // Default to camera
   const [noteText, setNoteText] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteDescription, setNoteDescription] = useState('');
@@ -21,7 +21,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [capturedMedia, setCapturedMedia] = useState<string | null>(null);
   const [showFullEditor, setShowFullEditor] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [autoCamera, setAutoCamera] = useState(() => localStorage.getItem('mira-auto-camera') === 'true');
+  const [autoCamera, setAutoCamera] = useState(() => localStorage.getItem('mira-auto-camera') !== 'false'); // Default true
   const [autoMic, setAutoMic] = useState(() => localStorage.getItem('mira-auto-mic') === 'true');
   const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,9 +33,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     if (isOpen && !showFullEditor) {
       if (autoCamera && captureMode !== 'camera') {
         setCaptureMode('camera');
-      } else if (autoMic && captureMode !== 'voice') {
-        setCaptureMode('voice');
       }
+      // Don't auto-start microphone to prevent hanging
       
       if (captureMode === 'camera') {
         startCamera();
@@ -49,7 +48,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => {
       stopCamera();
     };
-  }, [isOpen, captureMode, showFullEditor, autoCamera, autoMic]);
+  }, [isOpen, captureMode, showFullEditor, autoCamera]);
 
   // Save auto settings to localStorage
   useEffect(() => {
@@ -67,16 +66,22 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   };
 
   const handleSendNote = async () => {
-    if (noteText.trim()) {
+    const content = noteTitle.trim() ? `${noteTitle.trim()}\n\n${noteText.trim()}` : noteText.trim();
+    
+    if (content) {
       try {
-        // Create note immediately with original text
+        // Create note immediately with combined title and content
         const response = await apiRequest("POST", "/api/notes", {
-          content: noteText.trim(),
+          content: content,
           mode: "standard"
         });
         const newNote = await response.json();
         
         queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+        
+        // Clear the form
+        setNoteTitle('');
+        setNoteText('');
         
         // Close this modal and navigate to the new note
         onClose();
@@ -138,6 +143,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const startMicrophone = async () => {
     try {
+      // Only start microphone when explicitly requested, not on auto
       const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setStream(mediaStream);
       setIsRecording(true);
@@ -208,7 +214,48 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   // Main capture interface
   return (
-    <div className="fixed inset-0 z-[100] bg-black w-screen h-screen overflow-hidden">
+    <div className="fixed inset-0 z-[100] w-screen h-screen overflow-hidden">
+      {/* iOS Notes-style background when camera is off */}
+      {captureMode !== 'camera' && !showFullEditor && (
+        <div className="absolute inset-0 bg-[#FEFFFE] dark:bg-[#1C1C1E]">
+          {/* Notes app header */}
+          <div className="pt-12 pb-4 px-4">
+            <div className="text-center">
+              <h1 className="text-lg font-semibold text-[#1C1C1E] dark:text-white mb-1">Notes</h1>
+              <p className="text-sm text-[#8E8E93] dark:text-[#8E8E93]">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+          </div>
+          
+          {/* Note content area */}
+          <div className="px-4 flex-1">
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                className="w-full text-2xl font-bold bg-transparent border-none outline-none placeholder-[#8E8E93] text-[#1C1C1E] dark:text-white dark:placeholder-[#8E8E93]"
+              />
+              <textarea
+                ref={textareaRef}
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Start writing..."
+                className="w-full min-h-[400px] bg-transparent border-none outline-none resize-none text-base leading-relaxed placeholder-[#8E8E93] text-[#1C1C1E] dark:text-white dark:placeholder-[#8E8E93]"
+                autoFocus
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Camera view - only show if camera mode and not in full editor */}
       {captureMode === 'camera' && !showFullEditor && (
         <>
@@ -443,70 +490,15 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             </div>
           )}
 
-          {/* Text input area - show when not in camera or voice mode */}
-          {(captureMode === 'text' || captureMode === 'upload-image') && (
-            <div className="px-4 pb-8">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Title (optional)"
-                    value={noteTitle}
-                    onChange={(e) => setNoteTitle(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none text-lg font-medium placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
-                  />
-                  <div className="relative">
-                    <textarea
-                      ref={textareaRef}
-                      value={noteText}
-                      onChange={(e) => setNoteText(e.target.value)}
-                      onFocus={handleTextFocus}
-                      placeholder="What's on your mind?"
-                      className="w-full h-20 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12"
-                      inputMode="text"
-                      enterKeyHint="done"
-                      autoFocus={captureMode === 'text'}
-                  />
-                  {noteText.trim() ? (
-                    <button
-                      onClick={handleSendNote}
-                      className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setCaptureMode('voice');
-                        startMicrophone();
-                      }}
-                      className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    >
-                      <Mic className="w-4 h-4" />
-                    </button>
-                  )}
-                  </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex items-center justify-between pt-2">
-                    <button
-                      onClick={() => setShowFullEditor(true)}
-                      className="text-sm text-blue-500 hover:text-blue-600 font-medium"
-                    >
-                      Full Editor
-                    </button>
-                    
-                    {noteText.trim() && (
-                      <button
-                        onClick={handleSendNote}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-                      >
-                        Create Note
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+          {/* Save button for note content - only show when there's content */}
+          {captureMode !== 'camera' && !showFullEditor && (noteText.trim() || noteTitle.trim()) && (
+            <div className="absolute bottom-8 right-4">
+              <button
+                onClick={handleSendNote}
+                className="px-6 py-3 bg-[#007AFF] text-white rounded-full text-base font-medium shadow-lg hover:bg-[#0056CC] transition-colors"
+              >
+                Save Note
+              </button>
             </div>
           )}
         </div>
