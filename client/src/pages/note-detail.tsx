@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
-import { NoteWithTodos } from "@shared/schema";
+import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -327,10 +327,10 @@ export default function NoteDetail() {
               </div>
               {note.mode && (
                 <div className="flex items-center gap-1">
-                  {note.mode === 'standard' && <MessageSquare className="w-4 h-4" title="Text input" />}
-                  {note.mode === 'voice' && <Mic className="w-4 h-4" title="Voice input" />}
-                  {note.mode === 'camera' && <Camera className="w-4 h-4" title="Camera input" />}
-                  {note.mode === 'file' && <File className="w-4 h-4" title="File upload" />}
+                  {note.mode === 'standard' && <MessageSquare className="w-4 h-4" aria-label="Text input" />}
+                  {note.mode === 'voice' && <Mic className="w-4 h-4" aria-label="Voice input" />}
+                  {note.mode === 'camera' && <Camera className="w-4 h-4" aria-label="Camera input" />}
+                  {note.mode === 'file' && <File className="w-4 h-4" aria-label="File upload" />}
                 </div>
               )}
             </div>
@@ -460,7 +460,7 @@ export default function NoteDetail() {
               <div className="flex-1">
                 <h3 className="font-medium mb-3">Action Items</h3>
                 <div className="space-y-2">
-                  {note.todos.map((todo) => (
+                  {note.todos.map((todo: Todo) => (
                     <div key={todo.id} className="flex items-center gap-3">
                       <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                         todo.completed 

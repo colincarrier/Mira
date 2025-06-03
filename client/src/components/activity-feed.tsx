@@ -22,7 +22,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 px-4">
+      <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Notes</h2>
           <button 
