@@ -209,19 +209,19 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
           
+          {/* Main capture button - centered */}
+          <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-[10001]">
+            <button
+              onClick={capturePhoto}
+              className="w-20 h-20 rounded-full flex items-center justify-center bg-white text-gray-900 hover:bg-gray-100 transition-all shadow-2xl"
+            >
+              <Camera className="w-10 h-10" />
+            </button>
+          </div>
+
           {/* Bottom navigation bar - 70% transparent */}
           <div className="absolute bottom-4 left-4 right-4 z-[10001] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/20">
-            {/* Main capture button */}
-            <div className="flex items-center justify-center mb-4">
-              <button
-                onClick={capturePhoto}
-                className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-gray-900 hover:bg-gray-100 transition-all shadow-lg"
-              >
-                <Camera className="w-8 h-8" />
-              </button>
-            </div>
-            
-            <div className="relative">
+            <div className="relative mb-3">
               <textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
@@ -233,7 +233,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             </div>
             
             {/* Mode switcher with close button */}
-            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/20">
+            <div className="flex justify-between items-center pt-3 border-t border-white/20">
               <button
                 onClick={onClose}
                 className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
