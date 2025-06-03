@@ -211,15 +211,94 @@ export default function NoteDetail() {
     );
   }
 
+  // Enhanced content rendering with rich media
+  const renderEnhancedContent = (content: string) => {
+    // Split content by lines and process each line
+    const lines = content.split('\n');
+    const elements: JSX.Element[] = [];
+    
+    lines.forEach((line, index) => {
+      // Check for image URLs
+      const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s]*)?/gi;
+      const videoRegex = /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv)(\?[^\s]*)?/gi;
+      const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/gi;
+      
+      if (imageRegex.test(line)) {
+        const imageUrls = line.match(imageRegex);
+        imageUrls?.forEach((url, imgIndex) => {
+          elements.push(
+            <div key={`${index}-img-${imgIndex}`} className="my-3">
+              <img 
+                src={url} 
+                alt="Inline image" 
+                className="w-full rounded-lg border border-[hsl(var(--border))] max-h-80 object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          );
+        });
+      } else if (videoRegex.test(line)) {
+        const videoUrls = line.match(videoRegex);
+        videoUrls?.forEach((url, vidIndex) => {
+          elements.push(
+            <div key={`${index}-vid-${vidIndex}`} className="my-3">
+              <video 
+                src={url} 
+                controls 
+                className="w-full rounded-lg border border-[hsl(var(--border))] max-h-80"
+                preload="metadata"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          );
+        });
+      } else if (youtubeRegex.test(line)) {
+        let match;
+        let ytIndex = 0;
+        youtubeRegex.lastIndex = 0; // Reset regex
+        while ((match = youtubeRegex.exec(line)) !== null) {
+          const videoId = match[1];
+          elements.push(
+            <div key={`${index}-yt-${ytIndex}`} className="my-3">
+              <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="YouTube video"
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          );
+          ytIndex++;
+        }
+      } else if (line.trim()) {
+        // Regular text content
+        elements.push(
+          <p key={`${index}-text`} className="mb-2 leading-relaxed">
+            {line}
+          </p>
+        );
+      }
+    });
+    
+    return elements;
+  };
+
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))] p-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="w-full">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-4 py-3 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation("/")}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))]"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -278,8 +357,8 @@ export default function NoteDetail() {
         </div>
 
         {/* Note Content */}
-        <div className="note-card mb-6">
-          <div className="space-y-4">
+        <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+          <div className="px-4 py-6 space-y-4">
             {/* Main Content */}
             <div>
               {isEditing ? (
@@ -290,9 +369,9 @@ export default function NoteDetail() {
                   placeholder="Edit your note..."
                 />
               ) : (
-                <p className="text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap">
-                  {note.content}
-                </p>
+                <div className="text-[hsl(var(--foreground))] leading-relaxed">
+                  {renderEnhancedContent(note.content)}
+                </div>
               )}
               
               {isEditing && (
@@ -347,8 +426,9 @@ export default function NoteDetail() {
                   <>
                     {/* Recommended Actions */}
                     {richData.recommendedActions && richData.recommendedActions.length > 0 && (
-                      <div className="note-card">
-                        <div className="flex items-center gap-2 mb-3">
+                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-3">
                           <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
                             <span className="text-white text-xs font-bold">1</span>
                           </div>
@@ -377,12 +457,14 @@ export default function NoteDetail() {
                             </div>
                           ))}
                         </div>
+                        </div>
                       </div>
                     )}
 
                     {/* Research Results */}
                     {richData.researchResults && richData.researchResults.length > 0 && (
-                      <div className="note-card">
+                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
                             <span className="text-white text-xs font-bold">2</span>
