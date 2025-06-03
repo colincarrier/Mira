@@ -17,6 +17,11 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [noteTitle, setNoteTitle] = useState('');
   const [noteDescription, setNoteDescription] = useState('');
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
   const [isTextFocused, setIsTextFocused] = useState(false);
   const [capturedMedia, setCapturedMedia] = useState<string | null>(null);
   const [showFullEditor, setShowFullEditor] = useState(false);
