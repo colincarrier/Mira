@@ -30,6 +30,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [autoMic, setAutoMic] = useState(() => localStorage.getItem('mira-auto-mic') === 'true');
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -55,6 +56,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       stopCamera();
     };
   }, [isOpen, captureMode, showFullEditor, autoCamera]);
+
+  // Mobile keyboard detection
+  useEffect(() => {
+    const handleResize = () => {
+      const visualViewport = window.visualViewport;
+      if (visualViewport) {
+        const keyboardHeight = window.innerHeight - visualViewport.height;
+        setKeyboardHeight(keyboardHeight > 0 ? keyboardHeight : 0);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleResize);
+      };
+    }
+  }, []);
 
   // Save auto settings to localStorage
   useEffect(() => {
@@ -548,7 +567,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
       {/* Bottom actions and input */}
       {!showFullEditor && (
-        <div className="absolute bottom-0 left-0 right-0 z-[200]">
+        <div 
+          className="absolute left-0 right-0 z-[200] transition-all duration-300"
+          style={{ bottom: `${keyboardHeight}px` }}
+        >
           {/* Camera capture button */}
           {captureMode === 'camera' && (
             <div className="pb-8">
@@ -562,12 +584,22 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   <span>Back</span>
                 </button>
                 
-                {/* Camera button perfectly centered */}
+                {/* Camera button perfectly centered with recording indicator */}
                 <button
                   onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
+                  className={`relative w-20 h-20 rounded-full bg-white border-4 flex items-center justify-center hover:scale-105 transition-transform ${
+                    isRecording ? 'border-red-500' : 'border-white/30'
+                  }`}
                 >
-                  <div className="w-14 h-14 rounded-full bg-white"></div>
+                  {/* Animated recording ring */}
+                  {isRecording && (
+                    <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-pulse">
+                      <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping"></div>
+                    </div>
+                  )}
+                  <div className={`w-14 h-14 rounded-full transition-colors ${
+                    isRecording ? 'bg-red-500' : 'bg-white'
+                  }`}></div>
                 </button>
               </div>
             </div>
@@ -595,7 +627,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
-            <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)]">
+            <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)]">
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl mx-auto">
                 <div className="relative">
                   <textarea
