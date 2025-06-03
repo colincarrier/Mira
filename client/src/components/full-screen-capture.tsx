@@ -581,26 +581,31 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   className="absolute left-8 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-black/50 text-white px-3 py-2 rounded-full hover:bg-black/70 transition-colors text-sm"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Back</span>
+                  <span>Back to Notes</span>
                 </button>
                 
-                {/* Camera button perfectly centered with recording indicator */}
-                <button
-                  onClick={capturePhoto}
-                  className={`relative w-20 h-20 rounded-full bg-white border-4 flex items-center justify-center hover:scale-105 transition-transform ${
-                    isRecording ? 'border-red-500' : 'border-white/30'
-                  }`}
-                >
-                  {/* Animated recording ring */}
-                  {isRecording && (
-                    <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-pulse">
-                      <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping"></div>
-                    </div>
-                  )}
-                  <div className={`w-14 h-14 rounded-full transition-colors ${
-                    isRecording ? 'bg-red-500' : 'bg-white'
-                  }`}></div>
-                </button>
+                {/* Camera button perfectly centered with permanent ring */}
+                <div className="relative">
+                  {/* Permanent outer ring */}
+                  <div className="absolute inset-0 w-24 h-24 rounded-full border-2 border-white/40 -m-2"></div>
+                  
+                  <button
+                    onClick={capturePhoto}
+                    className={`relative w-20 h-20 rounded-full bg-white border-4 flex items-center justify-center hover:scale-105 transition-transform ${
+                      isRecording ? 'border-red-500' : 'border-white/50'
+                    }`}
+                  >
+                    {/* Animated recording ring */}
+                    {isRecording && (
+                      <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-pulse">
+                        <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping"></div>
+                      </div>
+                    )}
+                    <div className={`w-14 h-14 rounded-full transition-colors ${
+                      isRecording ? 'bg-red-500' : 'bg-white'
+                    }`}></div>
+                  </button>
+                </div>
               </div>
             </div>
           )}
