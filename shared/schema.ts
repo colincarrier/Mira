@@ -37,6 +37,7 @@ export const collections = pgTable("collections", {
   name: text("name").notNull(),
   icon: text("icon").default("folder"),
   color: text("color").default("blue"),
+  iconUrl: text("icon_url"), // Custom icon image URL
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
