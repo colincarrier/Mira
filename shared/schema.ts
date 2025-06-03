@@ -7,7 +7,7 @@ export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
   mode: text("mode").notNull(), // 'text', 'voice', 'image'
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   isShared: boolean("is_shared").default(false),
   shareId: varchar("share_id"), // For shareable links
   privacyLevel: text("privacy_level").default("private"), // 'private', 'shared', 'public'

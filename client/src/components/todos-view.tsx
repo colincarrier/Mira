@@ -46,7 +46,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
   return (
     <div className="relative">
       <div 
-        className={`flex items-center gap-3 py-3 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer
+        className={`flex items-center gap-3 py-2 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer relative
           ${todo.completed 
             ? 'text-gray-500 dark:text-gray-400' 
             : 'hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -55,19 +55,28 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         `}
         onClick={handleClick}
       >
+        {/* Vertical grouping line */}
+        <div className="absolute left-2 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onToggle(todo);
           }}
-          className={`flex-shrink-0 min-w-[44px] min-h-[44px] w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
+          className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-colors touch-manipulation
             ${todo.completed 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+              ? 'text-white' 
+              : 'hover:bg-gray-100 dark:hover:bg-gray-600'
             }
           `}
         >
-          {todo.completed && <Check size={12} />}
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+            ${todo.completed 
+              ? 'bg-green-500 border-green-500 text-white' 
+              : 'border-gray-300 dark:border-gray-600'
+            }
+          `}>
+            {todo.completed && <Check size={12} />}
+          </div>
         </button>
 
         <div className="flex-grow min-w-0">
