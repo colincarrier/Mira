@@ -250,7 +250,7 @@ export default function TodosView() {
     <div className="space-y-3">
       <div className="flex items-center justify-between px-4 pt-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-4xl font-serif font-medium text-gray-900 dark:text-gray-100">
+          <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
             Tasks
           </h2>
         </div>

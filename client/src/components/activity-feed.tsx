@@ -24,7 +24,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4 pt-6">
-          <h2 className="text-4xl font-serif font-medium">Notes</h2>
+          <h2 className="text-2xl font-serif font-medium">Notes</h2>
           <button 
             onClick={() => setShowSearch(!showSearch)}
             className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
@@ -48,7 +48,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     return (
       <div className="space-y-4 px-4">
         <div className="flex items-center justify-between mb-4 pt-6">
-          <h2 className="text-4xl font-serif font-medium">Notes</h2>
+          <h2 className="text-2xl font-serif font-medium">Notes</h2>
           <button 
             onClick={() => setShowSearch(!showSearch)}
             className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
@@ -66,7 +66,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4 px-4 pt-6">
-        <h2 className="text-4xl font-serif font-medium">Notes</h2>
+        <h2 className="text-2xl font-serif font-medium">Notes</h2>
         <button 
           onClick={() => setShowSearch(!showSearch)}
           className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"

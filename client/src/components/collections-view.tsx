@@ -82,8 +82,8 @@ export default function CollectionsView() {
   if (isLoading) {
     return (
       <div className="space-y-4 px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Collections</h2>
+        <div className="flex items-center justify-between mb-4 pt-6">
+          <h2 className="text-2xl font-serif font-medium">Collections</h2>
         </div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
@@ -105,8 +105,8 @@ export default function CollectionsView() {
   if (!collections || collections.length === 0) {
     return (
       <div className="space-y-4 px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Collections</h2>
+        <div className="flex items-center justify-between mb-4 pt-6">
+          <h2 className="text-2xl font-serif font-medium">Collections</h2>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
               <Search size={18} />
@@ -125,8 +125,8 @@ export default function CollectionsView() {
 
   return (
     <div className="space-y-4 px-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Collections</h2>
+      <div className="flex items-center justify-between mb-4 pt-6">
+        <h2 className="text-2xl font-serif font-medium">Collections</h2>
         <div className="flex items-center gap-2">
           <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
             <Plus size={18} />
