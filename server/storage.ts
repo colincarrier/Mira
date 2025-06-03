@@ -1,4 +1,4 @@
-import { notes, todos, collections, type Note, type Todo, type Collection, type InsertNote, type InsertTodo, type InsertCollection, type NoteWithTodos } from "@shared/schema";
+import { notes, todos, collections, users, type Note, type Todo, type Collection, type User, type InsertNote, type InsertTodo, type InsertCollection, type UpsertUser, type NoteWithTodos } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 

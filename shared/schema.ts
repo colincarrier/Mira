@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -7,6 +7,10 @@ export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
   mode: text("mode").notNull(), // 'text', 'voice', 'image'
+  userId: varchar("user_id").notNull().references(() => users.id),
+  isShared: boolean("is_shared").default(false),
+  shareId: varchar("share_id"), // For shareable links
+  privacyLevel: text("privacy_level").default("private"), // 'private', 'shared', 'public'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   audioUrl: text("audio_url"),
   transcription: text("transcription"),
@@ -36,6 +40,34 @@ export const collections = pgTable("collections", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  phoneNumber: varchar("phone_number"), // For future contact-based discovery
+  privacySettings: json("privacy_settings").default({
+    includePrivateDataInSharedNotes: false,
+    allowContactDiscovery: true,
+    defaultNotePrivacy: "private"
+  }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertNoteSchema = createInsertSchema(notes).omit({
   id: true,
   createdAt: true,
@@ -51,12 +83,19 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type Todo = typeof todos.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 
 // Relations
 export const notesRelations = relations(notes, ({ one, many }) => ({
@@ -64,7 +103,15 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
     fields: [notes.collectionId],
     references: [collections.id],
   }),
+  user: one(users, {
+    fields: [notes.userId],
+    references: [users.id],
+  }),
   todos: many(todos),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  notes: many(notes),
 }));
 
 export const todosRelations = relations(todos, ({ one }) => ({
