@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type, Send, Settings, ToggleLeft, ToggleRight } from "lucide-react";
+import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type, Send, Settings, ToggleLeft, ToggleRight, ArrowLeft } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [showSettings, setShowSettings] = useState(false);
   const [autoCamera, setAutoCamera] = useState(() => localStorage.getItem('mira-auto-camera') !== 'false'); // Default true
   const [autoMic, setAutoMic] = useState(() => localStorage.getItem('mira-auto-mic') === 'true');
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -212,13 +214,54 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     }
   };
 
+  // Swipe gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    const isLeftSwipe = distanceX > 50 && Math.abs(distanceY) < 100;
+    const isRightSwipe = distanceX < -50 && Math.abs(distanceY) < 100;
+    
+    if (isRightSwipe) {
+      // Swipe right to close/go back
+      onClose();
+    } else if (isLeftSwipe) {
+      // Swipe left to cycle through modes
+      const modes: CaptureMode[] = ['camera', 'text', 'voice', 'upload-image', 'upload-file'];
+      const currentIndex = modes.indexOf(captureMode);
+      const nextIndex = (currentIndex + 1) % modes.length;
+      setCaptureMode(modes[nextIndex]);
+    }
+  };
+
   if (!isOpen) return null;
 
   // No more loading screen - notes are created immediately
 
   // Main capture interface
   return (
-    <div className="fixed inset-0 z-[100] w-screen h-screen overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[100] w-screen h-screen overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* iOS Notes-style background when camera is off */}
       {captureMode !== 'camera' && !showFullEditor && (
         <div className="absolute inset-0 bg-[#FEFFFE] dark:bg-[#1C1C1E]">
@@ -340,17 +383,22 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       {/* Header with Mira logo and settings */}
       {!showFullEditor && (
         <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-6 z-[200]">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }}
-            className="w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-            style={{ pointerEvents: 'auto' }}
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
+              className="w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <span className="text-white text-sm font-medium bg-black/30 px-3 py-1 rounded-full">
+              Back to Notes
+            </span>
+          </div>
 
           <div className="text-white text-2xl font-serif font-medium tracking-wide">
             Mira
@@ -496,7 +544,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
-            <div className="absolute bottom-40 left-4 right-4">
+            <div className="absolute bottom-48 left-4 right-4">
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-xl max-w-md mx-auto">
                 <div className="relative">
                   <textarea
