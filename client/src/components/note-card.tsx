@@ -120,7 +120,11 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     const lines = content.split('\n').filter(line => line.trim().length > 0);
     const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
     
-    const firstLine = lines[0] || '';
+    let firstLine = lines[0] || '';
+    
+    // Remove AI partner indicators from title
+    firstLine = firstLine.replace(/^\[claude\]\s*/i, '').replace(/^\[openai\]\s*/i, '').replace(/^\[gpt\]\s*/i, '');
+    
     const hasDescription = lines.length > 1 || bullets.length >= 2;
     
     // Title character limits: 1 line (~50 chars) with description, 3 lines (~150 chars) without
@@ -159,6 +163,20 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   };
 
   const formattedContent = formatContent(note.content);
+
+  // Detect AI partner used
+  const getAIPartner = (content: string) => {
+    const lowerContent = content.toLowerCase();
+    if (lowerContent.includes('[claude]') || note.mode === 'enhanced') {
+      return 'claude';
+    }
+    if (lowerContent.includes('[openai]') || lowerContent.includes('[gpt]')) {
+      return 'openai';
+    }
+    return null;
+  };
+
+  const aiPartner = getAIPartner(note.content);
 
   // Calculate todo progress
   const todoProgress = () => {
@@ -411,6 +429,22 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center space-x-4 text-[12px]">
+          {/* AI Partner Logo */}
+          {aiPartner && (
+            <div className="flex items-center">
+              {aiPartner === 'claude' && (
+                <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-red-500 rounded-sm flex items-center justify-center" title="Enhanced by Claude">
+                  <span className="text-white text-[8px] font-bold">C</span>
+                </div>
+              )}
+              {aiPartner === 'openai' && (
+                <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-sm flex items-center justify-center" title="Enhanced by OpenAI">
+                  <span className="text-white text-[8px] font-bold">AI</span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {progress && (
             <button 
               onClick={(e) => {

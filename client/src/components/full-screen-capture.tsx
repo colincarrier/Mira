@@ -12,7 +12,7 @@ interface FullScreenCaptureProps {
 type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
 
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
-  const [captureMode, setCaptureMode] = useState<CaptureMode>('camera'); // Default to camera
+  const [captureMode, setCaptureMode] = useState<CaptureMode>('text'); // Default to text input
   const [noteText, setNoteText] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteDescription, setNoteDescription] = useState('');
