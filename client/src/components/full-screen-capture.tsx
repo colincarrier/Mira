@@ -552,23 +552,22 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Camera capture button */}
           {captureMode === 'camera' && (
             <div className="pb-8">
-              <div className="flex items-center justify-center px-8 relative">
-                {/* Back button positioned to the left with more spacing */}
+              <div className="relative w-full flex justify-center">
+                {/* Back button positioned to the left with proper spacing */}
                 <button
                   onClick={onClose}
-                  className="absolute left-4 flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
+                  className="absolute left-8 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-black/50 text-white px-3 py-2 rounded-full hover:bg-black/70 transition-colors text-sm"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span className="text-sm font-medium">Back to Notes</span>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
                 </button>
                 
                 {/* Camera button perfectly centered */}
                 <button
                   onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform p-0"
-                  style={{ aspectRatio: '1/1' }}
+                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
                 >
-                  <div className="w-14 h-14 rounded-full bg-white" style={{ aspectRatio: '1/1' }}></div>
+                  <div className="w-14 h-14 rounded-full bg-white"></div>
                 </button>
               </div>
             </div>
