@@ -25,6 +25,43 @@ export default function Home() {
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(true); // Open capture by default
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+
+  // Swipe gesture handlers for tab switching
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    const isLeftSwipe = distanceX > 50 && Math.abs(distanceY) < 100;
+    const isRightSwipe = distanceX < -50 && Math.abs(distanceY) < 100;
+    
+    if (isLeftSwipe) {
+      // Swipe left to go to next tab
+      if (activeTab === 'activity') setActiveTab('todos');
+      else if (activeTab === 'todos') setActiveTab('collections');
+    } else if (isRightSwipe) {
+      // Swipe right to go to previous tab
+      if (activeTab === 'collections') setActiveTab('todos');
+      else if (activeTab === 'todos') setActiveTab('activity');
+    }
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -51,7 +88,11 @@ export default function Home() {
         {/* Quick Capture - removed for now */}
 
         {/* Tab Content */}
-        <div>
+        <div 
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {renderTabContent()}
         </div>
       </div>
