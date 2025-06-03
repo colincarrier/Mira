@@ -493,62 +493,34 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
             <div className="absolute bottom-8 left-4 right-4">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl max-w-md mx-auto">
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Title (optional)"
-                    value={noteTitle}
-                    onChange={(e) => setNoteTitle(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none text-lg font-medium placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-xl max-w-md mx-auto">
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Add new note..."
+                    className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12 leading-6"
+                    inputMode="text"
+                    enterKeyHint="done"
                   />
-                  <div className="relative">
-                    <textarea
-                      ref={textareaRef}
-                      value={noteText}
-                      onChange={(e) => setNoteText(e.target.value)}
-                      placeholder="What's on your mind?"
-                      className="w-full h-20 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12"
-                      inputMode="text"
-                      enterKeyHint="done"
-                    />
-                    {noteText.trim() ? (
-                      <button
-                        onClick={handleSendNote}
-                        className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setCaptureMode('voice');
-                        }}
-                        className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      >
-                        <Mic className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex items-center justify-between pt-2">
+                  {noteText.trim() ? (
                     <button
-                      onClick={() => setShowFullEditor(true)}
-                      className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+                      onClick={handleSendNote}
+                      className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
                     >
-                      Full Editor
+                      <Send className="w-4 h-4" />
                     </button>
-                    
-                    {noteText.trim() && (
-                      <button
-                        onClick={handleSendNote}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-                      >
-                        Create Note
-                      </button>
-                    )}
-                  </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setCaptureMode('voice');
+                      }}
+                      className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

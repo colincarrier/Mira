@@ -22,7 +22,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           />
           <button 
             onClick={onNewNote}
-            className="w-8 h-8 bg-gray-800 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa1]"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -34,7 +34,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
         </div>
       </div>
-
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom z-[50]">
         <div className="flex justify-around">
