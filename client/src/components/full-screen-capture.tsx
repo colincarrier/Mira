@@ -335,6 +335,30 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Translucent Navigation Bar - 50% opacity */}
+      <div className="absolute top-0 left-0 right-0 z-[300] bg-black/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+            <span className="text-sm font-medium">Close</span>
+          </button>
+          
+          <div className="flex items-center gap-4">
+            <span className="text-white/80 text-sm capitalize font-medium">
+              {captureMode === 'camera' ? 'Camera' : captureMode === 'voice' ? 'Voice' : 'Text'} Mode
+            </span>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
       {/* iOS Notes-style background when camera is off */}
       {captureMode !== 'camera' && !showFullEditor && (
         <div className="absolute inset-0 bg-[#FEFFFE] dark:bg-[#1C1C1E]">
