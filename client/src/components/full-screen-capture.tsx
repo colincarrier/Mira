@@ -507,10 +507,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
