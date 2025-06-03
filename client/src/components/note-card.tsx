@@ -456,13 +456,13 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         {aiPartner && (
           <div className="absolute bottom-0 right-0">
             {aiPartner === 'claude' && (
-              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-40 hover:opacity-70 transition-opacity" title="Enhanced by Claude">
-                <span className="text-gray-700 dark:text-gray-300 text-[6px] font-medium">C</span>
+              <div className="w-3 h-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center opacity-20 hover:opacity-40 transition-opacity" title="Enhanced by Claude Sonnet 4">
+                <span className="text-white text-[5px] font-bold">C</span>
               </div>
             )}
             {aiPartner === 'openai' && (
-              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-40 hover:opacity-70 transition-opacity" title="Enhanced by OpenAI">
-                <span className="text-gray-700 dark:text-gray-300 text-[6px] font-medium">AI</span>
+              <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center opacity-20 hover:opacity-40 transition-opacity" title="Enhanced by GPT-4o">
+                <span className="text-white text-[5px] font-bold">AI</span>
               </div>
             )}
           </div>
