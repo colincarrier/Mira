@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+
 export default function NoteDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
@@ -17,21 +18,26 @@ export default function NoteDetail() {
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
   const [updateInput, setUpdateInput] = useState('');
-  const [showUpdateArea, setShowUpdateArea] = useState(true);
+  const [showUpdateArea, setShowUpdateArea] = useState(true); // Always show floating chat bar
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
     refetchInterval: (data) => {
+      // Auto-refresh every 2 seconds if AI hasn't enhanced the note yet
       const note = Array.isArray(data) ? data[0] : data;
       return note && !note.aiEnhanced ? 2000 : false;
     },
   });
 
+  // Handle both single object and array responses
   const note = Array.isArray(noteData) ? noteData[0] : noteData;
 
-  // Mutations
+  // Debug logging
+  console.log('Note Detail Debug:', { id, noteData, note, isLoading, error });
+
+  // Mutation to update note with AI enhancement
   const updateNoteMutation = useMutation({
     mutationFn: async ({ content, newContext, updateInstruction }: { content: string; newContext?: string; updateInstruction?: string }) => {
       const response = await apiRequest("PATCH", `/api/notes/${id}`, {
@@ -43,69 +49,104 @@ export default function NoteDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      toast({ title: "Note updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setIsEditing(false);
-      setShowContextDialog(false);
+      setContextInput('');
+      setUpdateInput('');
+      setShowUpdateArea(false);
+      toast({
+        description: "Note updated successfully!",
+      });
     },
     onError: () => {
-      toast({ title: "Failed to update note", variant: "destructive" });
-    }
+      toast({
+        description: "Failed to update note",
+        variant: "destructive",
+      });
+    },
   });
 
+  // Mutation to delete note
   const deleteNoteMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/notes/${id}`);
     },
     onSuccess: () => {
-      toast({ title: "Note deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setLocation("/");
-    },
-    onError: () => {
-      toast({ title: "Failed to delete note", variant: "destructive" });
-    }
-  });
-
-  const toggleTodoMutation = useMutation({
-    mutationFn: async (todo: Todo) => {
-      await apiRequest("PATCH", `/api/todos/${todo.id}`, {
-        completed: !todo.completed
+      toast({
+        description: "Note deleted successfully!",
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-    }
+    onError: () => {
+      toast({
+        description: "Failed to delete note",
+        variant: "destructive",
+      });
+    },
   });
 
-  useEffect(() => {
-    if (note) {
-      setEditedContent(note.content);
-    }
-  }, [note]);
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Mira Note',
-          text: formatNoteForSharing(note),
-        });
-      } catch (err) {
-        console.log('Error sharing:', err);
-      }
+  const handleDeleteNote = () => {
+    console.log("Delete note clicked for note:", id);
+    if (confirm("Are you sure you want to delete this note? This action cannot be undone.")) {
+      console.log("User confirmed deletion, calling delete mutation");
+      deleteNoteMutation.mutate();
     } else {
-      navigator.clipboard.writeText(formatNoteForSharing(note));
-      toast({ title: "Note copied to clipboard" });
+      console.log("User cancelled deletion");
     }
   };
 
-  const handleDeleteNote = () => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      deleteNoteMutation.mutate();
+  const handleUpdateNote = () => {
+    if (!updateInput.trim() || !note) return;
+    
+    updateNoteMutation.mutate({
+      content: note.content,
+      updateInstruction: updateInput
+    });
+  };
+
+  // Initialize editing content when note loads
+  useEffect(() => {
+    if (note && !editedContent) {
+      setEditedContent(note.content || '');
+    }
+  }, [note, editedContent]);
+
+  // Auto-show context dialog for urgent questions
+  useEffect(() => {
+    if (note?.aiSuggestion?.includes('🚨') && !showContextDialog) {
+      setShowContextDialog(true);
+    }
+  }, [note?.aiSuggestion, showContextDialog]);
+
+  const handleShare = () => {
+    if (!note) return;
+    
+    const shareText = formatNoteForSharing(note);
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Note from ${note.createdAt ? formatDistanceToNow(new Date(note.createdAt), { addSuffix: true }) : 'recently'}`,
+        text: shareText,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          description: "Note copied to clipboard!",
+        });
+      }).catch(() => {
+        toast({
+          description: "Failed to copy note",
+          variant: "destructive",
+        });
+      });
     }
   };
 
   const formatNoteForSharing = (note: NoteWithTodos) => {
-    let shareText = `📝 ${note.content}\n\n`;
+    let shareText = `📝 Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}\n\n`;
+    
+    shareText += `${note.content}\n\n`;
     
     if (note.aiContext) {
       shareText += `💡 Context:\n${note.aiContext}\n\n`;
@@ -133,12 +174,51 @@ export default function NoteDetail() {
     return shareText;
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))] p-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))] p-4">
+        <div className="max-w-md mx-auto text-center py-12">
+          <h1 className="text-xl font-semibold mb-2">Note not found</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">
+            The note you're looking for doesn't exist or has been deleted.
+          </p>
+          <button
+            onClick={() => setLocation("/")}
+            className="text-[hsl(var(--ios-blue))] font-medium"
+          >
+            Go back to notes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Enhanced content rendering with rich media
   const renderEnhancedContent = (content: string) => {
+    // Split content by lines and process each line
     const lines = content.split('\n');
     const elements: JSX.Element[] = [];
     
     lines.forEach((line, index) => {
+      // Check for image URLs
       const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s]*)?/gi;
       const videoRegex = /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv)(\?[^\s]*)?/gi;
       const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/gi;
@@ -179,7 +259,7 @@ export default function NoteDetail() {
       } else if (youtubeRegex.test(line)) {
         let match;
         let ytIndex = 0;
-        youtubeRegex.lastIndex = 0;
+        youtubeRegex.lastIndex = 0; // Reset regex
         while ((match = youtubeRegex.exec(line)) !== null) {
           const videoId = match[1];
           elements.push(
@@ -198,6 +278,7 @@ export default function NoteDetail() {
           ytIndex++;
         }
       } else if (line.trim()) {
+        // Regular text content
         elements.push(
           <p key={`${index}-text`} className="mb-2 leading-relaxed">
             {line}
@@ -208,41 +289,6 @@ export default function NoteDetail() {
     
     return elements;
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
-        <div className="flex items-center gap-3 p-4">
-          <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
-        </div>
-        <div className="px-4 space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!note) {
-    return (
-      <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
-        <div className="text-center py-12 px-4">
-          <h1 className="text-xl font-semibold mb-2">Note not found</h1>
-          <p className="text-[hsl(var(--muted-foreground))] mb-4">
-            This note may have been deleted or moved.
-          </p>
-          <button
-            onClick={() => setLocation("/")}
-            className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
@@ -313,6 +359,7 @@ export default function NoteDetail() {
         {/* Note Content */}
         <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
           <div className="px-4 py-6 space-y-4">
+            {/* Main Content */}
             <div>
               {isEditing ? (
                 <textarea
@@ -369,9 +416,9 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* AI Research Results */}
+        {/* AI Research Results - Google-style */}
         {note.richContext && (
-          <div className="space-y-0">
+          <div className="space-y-4">
             {(() => {
               try {
                 const richData = JSON.parse(note.richContext);
@@ -382,34 +429,34 @@ export default function NoteDetail() {
                       <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
                         <div className="px-4 py-6">
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">1</span>
+                          <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">1</span>
+                          </div>
+                          <h3 className="font-medium text-[hsl(var(--foreground))]">Recommended Next Steps</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {richData.recommendedActions.map((action: any, index: number) => (
+                            <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
+                              <div className="text-sm text-blue-800 mb-2">{action.description}</div>
+                              {action.links && action.links.length > 0 && (
+                                <div className="space-y-1">
+                                  {action.links.map((link: any, linkIndex: number) => (
+                                    <a 
+                                      key={linkIndex} 
+                                      href={link.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {link.title}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Recommended Next Steps</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {richData.recommendedActions.map((action: any, index: number) => (
-                              <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
-                                <div className="text-sm text-blue-800 mb-2">{action.description}</div>
-                                {action.links && action.links.length > 0 && (
-                                  <div className="space-y-1">
-                                    {action.links.map((link: any, linkIndex: number) => (
-                                      <a 
-                                        key={linkIndex} 
-                                        href={link.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                                      >
-                                        {link.title}
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
+                          ))}
+                        </div>
                         </div>
                       </div>
                     )}
@@ -500,24 +547,190 @@ export default function NoteDetail() {
                   <h3 className="font-medium mb-3">Action Items</h3>
                   <div className="space-y-2">
                     {note.todos.map((todo: Todo) => (
-                      <div key={todo.id} className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleTodoMutation.mutate(todo)}
-                          className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            todo.completed 
-                              ? 'bg-[hsl(var(--sage-green))] border-[hsl(var(--sage-green))]' 
-                              : 'border-[hsl(var(--border))]'
-                          }`}
-                        >
-                          {todo.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                        </button>
-                        <span className={`text-sm ${todo.completed ? 'line-through text-[hsl(var(--muted-foreground))]' : ''}`}>
-                          {todo.title}
-                        </span>
+                    <div key={todo.id} className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                        todo.completed 
+                          ? 'bg-[hsl(var(--sage-green))] border-[hsl(var(--sage-green))]' 
+                          : 'border-[hsl(var(--border))]'
+                      }`}>
+                        {todo.completed && (
+                          <CheckSquare className="w-3 h-3 text-white" />
+                        )}
                       </div>
-                    ))}
+                      <span className={`flex-1 ${
+                        todo.completed ? 'line-through text-[hsl(var(--muted-foreground))]' : ''
+                      }`}>
+                        {todo.title}
+                      </span>
+                      {todo.priority === 'urgent' && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                          Urgent
+                        </span>
+                      )}
+                      {todo.pinned && (
+                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                          Pinned
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Collection */}
+        {note.collection && (
+          <div className="note-card">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[hsl(var(--soft-gray))] rounded-lg flex items-center justify-center">
+                <Folder className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="font-medium">Collection</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                  {note.collection.name}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Chat Bubble */}
+        {showUpdateArea && (
+          <div className="fixed bottom-4 left-4 right-4 z-50">
+            <div className="max-w-md mx-auto">
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-3xl shadow-lg overflow-hidden min-h-[60px]">
+                <div className="flex items-center h-full px-2 py-2 bg-[#ffffffdb]">
+                  {/* Add Media Button */}
+                  <button
+                    onClick={() => {
+                      toast({ description: "Media capture coming soon!" });
+                    }}
+                    className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[hsl(var(--dusty-teal))] transition-colors flex-shrink-0 bg-[#f1efe8]"
+                    title="Add media"
+                  >
+                    <span className="text-[#7d7d7d] text-[30px] font-light">+</span>
+                  </button>
+                  
+                  {/* Text Input */}
+                  <textarea
+                    value={updateInput}
+                    onChange={(e) => setUpdateInput(e.target.value)}
+                    placeholder="update anything here..."
+                    className="flex-1 min-h-[44px] max-h-[120px] px-3 py-3 text-sm resize-none focus:outline-none bg-transparent"
+                    style={{ lineHeight: '1.4' }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && updateInput.trim()) {
+                        e.preventDefault();
+                        handleUpdateNote();
+                      }
+                    }}
+                  />
+                  
+                  {/* Right side buttons */}
+                  <div className="flex items-center pr-1">
+                    <button
+                      onClick={() => {
+                        toast({ description: "Voice recording coming soon!" });
+                      }}
+                      className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[hsl(var(--dusty-teal))] transition-colors bg-[#a2cddc]"
+                      title="Voice note"
+                    >
+                      <Mic className="w-5 h-5 text-white" />
+                    </button>
+                    
+                    {/* Send Button - only show when there's content */}
+                    {updateInput.trim() && (
+                      <button
+                        onClick={handleUpdateNote}
+                        disabled={updateNoteMutation.isPending}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--sage-green))] text-white hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 transition-all ml-1"
+                        title="Send update"
+                      >
+                        {updateNoteMutation.isPending ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Send className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    toast({ description: `File "${file.name}" selected. Upload functionality coming soon!` });
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Context Dialog (kept for backward compatibility) */}
+        {showContextDialog && (
+          <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-lg p-4 z-50">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-[hsl(var(--sage-green))] rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold italic text-sm">M</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium mb-2 text-[hsl(var(--sage-green))]">Add Context</h4>
+                {note?.aiSuggestion?.includes('🚨') && (
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">
+                    Mira needs more information to help with urgent planning
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={contextInput}
+                    onChange={(e) => setContextInput(e.target.value)}
+                    placeholder="e.g., March 15th, or any additional details..."
+                    className="flex-1 px-3 py-2 text-sm border border-[hsl(var(--border))] rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (contextInput.trim()) {
+                          updateNoteMutation.mutate({ 
+                            content: editedContent || note?.content || '', 
+                            newContext: contextInput 
+                          });
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (contextInput.trim()) {
+                        updateNoteMutation.mutate({ 
+                          content: editedContent || note?.content || '', 
+                          newContext: contextInput 
+                        });
+                      }
+                    }}
+                    disabled={updateNoteMutation.isPending || !contextInput.trim()}
+                    className="px-3 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 flex items-center justify-center"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowContextDialog(false)}
+                  className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] mt-2"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
