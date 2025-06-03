@@ -12,7 +12,7 @@ interface SettingsModalProps {
   onNewNote: () => void;
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange, onNewNote }: SettingsModalProps) {
   const [showAIComparison, setShowAIComparison] = useState(false);
 
   if (showAIComparison) {
@@ -40,9 +40,17 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </header>
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pb-20">
             <AIComparison />
           </div>
+          
+          {/* Bottom Navigation */}
+          <BottomNavigation 
+            activeTab={activeTab} 
+            onTabChange={onTabChange}
+            onNewNote={onNewNote}
+            onSettings={onClose}
+          />
         </div>
       </div>
     );
