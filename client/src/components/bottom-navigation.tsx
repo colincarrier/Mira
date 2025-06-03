@@ -28,7 +28,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
           <button 
             onClick={onNewNote}
-            className="w-8 h-8 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors bg-[#a1c4cfcc]"
           >
             <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           </button>
