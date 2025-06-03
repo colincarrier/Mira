@@ -196,10 +196,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black">
-      {/* Debug indicator */}
-      <div className="absolute top-2 left-2 bg-red-500 text-white p-2 rounded z-[10000] text-xs">
-        Mode: {captureMode}
-      </div>
 
       {/* Camera Mode */}
       {captureMode === 'camera' && (
@@ -213,63 +209,58 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
           
-          {/* Top navigation - always visible */}
-          <div className="absolute top-0 left-0 right-0 z-[10001] bg-black/50 backdrop-blur-sm">
-            <div className="flex items-center justify-between p-4">
-              <button
-                onClick={onClose}
-                className="flex items-center gap-2 text-white hover:text-white/80 transition-colors bg-white/20 px-3 py-2 rounded-full"
-              >
-                <X className="w-5 h-5" />
-                <span className="text-sm font-medium">Close</span>
-              </button>
-              
-              <span className="text-white text-sm font-medium bg-white/20 px-3 py-2 rounded-full">Camera</span>
-              
-              <div className="w-20"></div>
-            </div>
-          </div>
-
-          {/* Floating capture controls - always visible */}
-          <div className="absolute bottom-8 left-4 right-4 z-[10001]">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-200 dark:border-gray-700">
-              <div className="relative">
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add caption..."
-                  className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12 leading-6"
-                  inputMode="text"
-                  enterKeyHint="done"
-                />
-                <button
-                  onClick={capturePhoto}
-                  className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Mode switcher */}
-              <div className="flex justify-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => setCaptureMode('camera')}
-                  className="p-2 rounded-full bg-blue-500 text-white"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setCaptureMode('voice')}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setCaptureMode('text')}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+          {/* Bottom navigation bar - 70% transparent */}
+          <div className="absolute bottom-0 left-0 right-0 z-[10001] bg-black/30 backdrop-blur-sm">
+            <div className="p-4">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
+                <div className="relative">
+                  <textarea
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Add caption..."
+                    className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12 leading-6"
+                    inputMode="text"
+                    enterKeyHint="done"
+                  />
+                  <button
+                    onClick={capturePhoto}
+                    className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {/* Mode switcher with close button */}
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={onClose}
+                    className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    <span className="text-sm">Close</span>
+                  </button>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCaptureMode('camera')}
+                      className="p-2 rounded-full bg-blue-500 text-white"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setCaptureMode('voice')}
+                      className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setCaptureMode('text')}
+                      className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
