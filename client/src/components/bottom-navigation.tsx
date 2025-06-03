@@ -35,7 +35,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
         </div>
       </div>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom z-[50]">
+      <nav className="fixed bottom-0 left-0 right-0 w-full bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] safe-area-bottom z-[50]">
         <div className="flex justify-around">
           <button 
             onClick={() => onTabChange("activity")}
