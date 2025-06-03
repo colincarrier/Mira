@@ -209,6 +209,16 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
           
+          {/* Top close button */}
+          <div className="absolute top-4 right-4 z-[10001]">
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
           {/* Main capture button - centered */}
           <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-[10001]">
             <button
@@ -219,34 +229,20 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             </button>
           </div>
 
-          {/* Bottom controls */}
-          <div className="absolute bottom-4 left-4 right-4 z-[10001] flex justify-between items-center">
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2"
-            >
-              <X className="w-4 h-4" />
-              <span className="text-sm">Close</span>
-            </button>
-            
+          {/* Bottom mode switcher */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[10001]">
             <div className="flex gap-2">
               <button
-                onClick={() => setCaptureMode('camera')}
-                className="p-2 rounded-full bg-blue-500 text-white"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <button
                 onClick={() => setCaptureMode('voice')}
-                className="p-2 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors"
+                className="p-3 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors backdrop-blur-sm"
               >
-                <Mic className="w-4 h-4" />
+                <Mic className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setCaptureMode('text')}
-                className="p-2 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors"
+                className="p-3 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors backdrop-blur-sm"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
