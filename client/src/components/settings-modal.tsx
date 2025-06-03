@@ -171,6 +171,32 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
               </div>
             </div>
 
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Account</h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="font-medium mb-2">Not signed in</p>
+                  <p className="text-sm text-[hsl(var(--ios-gray))] mb-4">
+                    Sign in to sync your notes across devices and enable collaboration features.
+                  </p>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => window.location.href = '/api/login'}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      Sign In
+                    </button>
+                    <button 
+                      onClick={() => window.location.href = '/api/logout'}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="pt-8">
               <div className="text-center text-sm text-[hsl(var(--ios-gray))]">
                 <p>Mira v1.0.0</p>

@@ -124,6 +124,18 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const startCamera = async () => {
     try {
+      // Check if permission was already granted to avoid repeated prompts
+      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      
+      if (permission.state === 'denied') {
+        toast({
+          title: "Camera Access Required",
+          description: "Please allow camera access in your browser settings to use this feature.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'user',
@@ -131,12 +143,30 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           height: { ideal: 720 }
         } 
       });
+      
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
+      
+      // Store permission granted state
+      localStorage.setItem('mira-camera-permission', 'granted');
+      
     } catch (error) {
       console.error('Error accessing camera:', error);
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Camera Permission Denied",
+          description: "Camera access was denied. Please allow camera permissions and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Camera Error",
+          description: "Unable to access camera. Please check your browser permissions.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -149,17 +179,41 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const startMicrophone = async () => {
     try {
+      // Check microphone permission to avoid repeated prompts
+      const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      if (permission.state === 'denied') {
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access in your browser settings to use voice recording.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Only start microphone when explicitly requested, not on auto
       const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setStream(mediaStream);
       setIsRecording(true);
+      
+      // Store permission granted state
+      localStorage.setItem('mira-microphone-permission', 'granted');
+      
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      toast({
-        title: "Microphone Error",
-        description: "Unable to access microphone. Please check permissions.",
-        variant: "destructive",
-      });
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Microphone Permission Denied",
+          description: "Microphone access was denied. Please allow microphone permissions and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Microphone Error",
+          description: "Unable to access microphone. Please check your browser permissions.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
