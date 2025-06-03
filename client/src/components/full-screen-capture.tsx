@@ -573,18 +573,18 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         >
           {/* Camera capture button */}
           {captureMode === 'camera' && (
-            <div className="pb-8">
-              <div className="relative w-full flex justify-center">
-                {/* Back button positioned to the left with proper spacing */}
-                <button
-                  onClick={onClose}
-                  className="absolute left-8 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-black/50 text-white px-3 py-2 rounded-full hover:bg-black/70 transition-colors text-sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back to Notes</span>
-                </button>
-                
-                {/* Camera button perfectly centered with permanent ring */}
+            <div className="pb-8 relative">
+              {/* Back button positioned to the left */}
+              <button
+                onClick={onClose}
+                className="absolute left-4 top-0 flex items-center gap-2 bg-black/50 text-white px-3 py-2 rounded-full hover:bg-black/70 transition-colors text-sm z-[250]"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Notes</span>
+              </button>
+              
+              {/* Camera button centered */}
+              <div className="flex justify-center">
                 <div className="relative">
                   {/* Permanent outer ring */}
                   <div className="absolute inset-0 w-24 h-24 rounded-full border-2 border-white/40 -m-2"></div>
@@ -632,8 +632,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
-            <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)] z-[300]">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl mx-auto border border-white/20">
+            <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)] z-[999]">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl mx-auto">
                 <div className="relative">
                   <textarea
                     ref={textareaRef}
