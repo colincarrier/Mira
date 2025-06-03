@@ -195,7 +195,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div className="fixed inset-0 z-[9999] bg-black">
+      {/* Debug indicator */}
+      <div className="absolute top-2 left-2 bg-red-500 text-white p-2 rounded z-[10000] text-xs">
+        Mode: {captureMode}
+      </div>
+
       {/* Camera Mode */}
       {captureMode === 'camera' && (
         <div className="relative w-full h-full">
@@ -208,26 +213,26 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
           
-          {/* Top navigation */}
-          <div className="absolute top-0 left-0 right-0 z-[300] bg-black/30 backdrop-blur-sm">
+          {/* Top navigation - always visible */}
+          <div className="absolute top-0 left-0 right-0 z-[10001] bg-black/50 backdrop-blur-sm">
             <div className="flex items-center justify-between p-4">
               <button
                 onClick={onClose}
-                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-white hover:text-white/80 transition-colors bg-white/20 px-3 py-2 rounded-full"
               >
                 <X className="w-5 h-5" />
                 <span className="text-sm font-medium">Close</span>
               </button>
               
-              <span className="text-white/90 text-sm font-medium">Camera</span>
+              <span className="text-white text-sm font-medium bg-white/20 px-3 py-2 rounded-full">Camera</span>
               
-              <div className="w-16"></div>
+              <div className="w-20"></div>
             </div>
           </div>
 
-          {/* Floating capture controls */}
-          <div className="absolute bottom-32 left-4 right-4 z-[200]">
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
+          {/* Floating capture controls - always visible */}
+          <div className="absolute bottom-8 left-4 right-4 z-[10001]">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-200 dark:border-gray-700">
               <div className="relative">
                 <textarea
                   value={noteText}
@@ -249,31 +254,19 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
               <div className="flex justify-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setCaptureMode('camera')}
-                  className={`p-2 rounded-full transition-colors ${
-                    captureMode === 'camera' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  }`}
+                  className="p-2 rounded-full bg-blue-500 text-white"
                 >
                   <Camera className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setCaptureMode('voice')}
-                  className={`p-2 rounded-full transition-colors ${
-                    captureMode === 'voice' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  }`}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Mic className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setCaptureMode('text')}
-                  className={`p-2 rounded-full transition-colors ${
-                    captureMode === 'text' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  }`}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Send className="w-4 h-4" />
                 </button>

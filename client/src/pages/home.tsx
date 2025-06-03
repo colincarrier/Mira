@@ -24,7 +24,7 @@ export default function Home() {
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(true); // Open capture by default
+  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
 
