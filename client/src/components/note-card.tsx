@@ -456,11 +456,11 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         {aiPartner && (
           <div className="absolute bottom-0 right-0">
             {aiPartner === 'claude' && (
-              <div className="w-4 h-3 opacity-50 hover:opacity-70 transition-opacity" title="Enhanced by Claude Sonnet 4">
+              <div className="h-3 opacity-50 hover:opacity-70 transition-opacity" title="Enhanced by Claude Sonnet 4">
                 <img 
                   src="/claude-logo.png" 
                   alt="Claude" 
-                  className="w-full h-full object-contain"
+                  className="h-full w-auto object-contain"
                 />
               </div>
             )}
