@@ -46,7 +46,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
   return (
     <div className="relative">
       <div 
-        className={`flex items-center gap-2 py-0 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer relative
+        className={`flex items-center gap-2 py-0.5 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer relative
           ${todo.completed 
             ? 'text-gray-500 dark:text-gray-400' 
             : 'hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -62,7 +62,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
             e.stopPropagation();
             onToggle(todo);
           }}
-          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors touch-manipulation
+          className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-colors touch-manipulation
             ${todo.completed 
               ? 'text-white' 
               : 'hover:bg-gray-100 dark:hover:bg-gray-600'
