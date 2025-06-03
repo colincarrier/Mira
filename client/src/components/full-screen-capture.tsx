@@ -8,22 +8,24 @@ interface FullScreenCaptureProps {
   onClose: () => void;
 }
 
-type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
+type CaptureMode = 'text' | 'camera' | 'voice';
 
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
-  const [captureMode, setCaptureMode] = useState<CaptureMode>('text');
+  const [captureMode, setCaptureMode] = useState<CaptureMode>('camera');
   const [noteText, setNoteText] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
   
   const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
 
-  // Keyboard height detection for mobile
+  // Keyboard height detection
   useEffect(() => {
     const handleResize = () => {
       const viewportHeight = window.visualViewport?.height || window.innerHeight;
@@ -45,7 +47,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     } else {
       stopCamera();
     }
-
     return () => stopCamera();
   }, [captureMode, isOpen]);
 
@@ -89,7 +90,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0);
     
-    // Convert to blob and create note
     canvas.toBlob((blob) => {
       if (blob) {
         const reader = new FileReader();
@@ -115,14 +115,19 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   };
 
   const handleSendNote = () => {
-    if (!noteText.trim()) return;
+    if (!noteText.trim() && !noteTitle.trim()) return;
+
+    const content = noteTitle.trim() 
+      ? `${noteTitle.trim()}\n\n${noteText.trim()}`
+      : noteText.trim();
 
     createNote({
-      content: noteText.trim(),
+      content,
       mode: 'smart'
     });
     
     setNoteText('');
+    setNoteTitle('');
     onClose();
     toast({
       title: "Note saved",
@@ -170,7 +175,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
       mediaRecorder.start();
 
-      // Stop recording after 30 seconds max
       setTimeout(() => {
         if (mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
@@ -192,7 +196,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   return (
     <div className="fixed inset-0 z-[100] bg-black">
-      {/* Camera view */}
+      {/* Camera Mode */}
       {captureMode === 'camera' && (
         <div className="relative w-full h-full">
           <video
@@ -204,20 +208,85 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
           
-          {/* X button for camera mode */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 left-4 z-[300] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors backdrop-blur-sm"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Top navigation */}
+          <div className="absolute top-0 left-0 right-0 z-[300] bg-black/30 backdrop-blur-sm">
+            <div className="flex items-center justify-between p-4">
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+                <span className="text-sm font-medium">Close</span>
+              </button>
+              
+              <span className="text-white/90 text-sm font-medium">Camera</span>
+              
+              <div className="w-16"></div>
+            </div>
+          </div>
+
+          {/* Floating capture controls */}
+          <div className="absolute bottom-32 left-4 right-4 z-[200]">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
+              <div className="relative">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add caption..."
+                  className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12 leading-6"
+                  inputMode="text"
+                  enterKeyHint="done"
+                />
+                <button
+                  onClick={capturePhoto}
+                  className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Mode switcher */}
+              <div className="flex justify-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setCaptureMode('camera')}
+                  className={`p-2 rounded-full transition-colors ${
+                    captureMode === 'camera' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCaptureMode('voice')}
+                  className={`p-2 rounded-full transition-colors ${
+                    captureMode === 'voice' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCaptureMode('text')}
+                  className={`p-2 rounded-full transition-colors ${
+                    captureMode === 'text' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Text mode background */}
-      {captureMode !== 'camera' && (
-        <div className="absolute inset-0 bg-[#FEFFFE] dark:bg-[#1C1C1E]">
-          {/* Header with close button */}
+      {/* Voice Mode */}
+      {captureMode === 'voice' && (
+        <div className="relative w-full h-full bg-[#FEFFFE] dark:bg-[#1C1C1E]">
+          {/* Header */}
           <div className="flex items-center justify-between p-4 bg-[#F2F2F7] dark:bg-[#2C2C2E] border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={onClose}
@@ -227,144 +296,151 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
               <span className="text-sm font-medium">Close</span>
             </button>
             
-            <span className="text-gray-900 dark:text-white text-lg font-medium">
-              New Note
-            </span>
+            <span className="text-gray-900 dark:text-white text-lg font-medium">Voice Note</span>
             
             <div className="w-16"></div>
           </div>
 
-          {/* Text editor area */}
-          <div className="p-4 h-full">
-            <textarea
-              ref={textareaRef}
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Start typing your note..."
-              className="w-full h-full resize-none border-none outline-none bg-transparent text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              autoFocus
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Bottom navigation and controls */}
-      <div 
-        className="absolute left-0 right-0 z-[200] transition-all duration-300"
-        style={{ bottom: `${keyboardHeight}px` }}
-      >
-        {/* Text input dialog for camera mode */}
-        {captureMode === 'camera' && (
-          <div className="mx-4 mb-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-200 dark:border-gray-700">
-              <div className="relative">
-                <textarea
-                  ref={textareaRef}
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add caption..."
-                  className="w-full h-12 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12 leading-6"
-                  inputMode="text"
-                  enterKeyHint="done"
-                />
-                {noteText.trim() ? (
-                  <button
-                    onClick={handleSendNote}
-                    className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setCaptureMode('voice')}
-                    className="absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+          {/* Voice recording interface */}
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                {isRecording ? 'Recording...' : 'Tap to record'}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                {isRecording ? 'Tap again to stop' : 'Your voice will be transcribed automatically'}
+              </p>
             </div>
-          </div>
-        )}
 
-        {/* Camera controls - bottom navigation */}
-        {captureMode === 'camera' && (
-          <div className="flex items-center justify-between px-4 pb-8">
-            {/* To Notes button aligned with capture button */}
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 bg-black/50 text-white px-4 py-3 rounded-full hover:bg-black/70 transition-colors text-sm backdrop-blur-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>to notes</span>
-            </button>
-            
-            {/* Camera button - perfect circle */}
-            <div className="relative">
-              <div className="absolute inset-0 w-24 h-24 rounded-full border-2 border-white/40 -m-2"></div>
-              <button
-                onClick={capturePhoto}
-                className="relative w-20 h-20 rounded-full bg-white border-4 border-white/50 flex items-center justify-center hover:scale-105 transition-transform"
-              >
-                <div className="w-14 h-14 rounded-full bg-white"></div>
-              </button>
-            </div>
-            
-            {/* Settings button for balance */}
-            <button
-              onClick={() => setCaptureMode('text')}
-              className="p-3 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10 bg-black/50 backdrop-blur-sm"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
-        )}
-
-        {/* Voice controls */}
-        {captureMode === 'voice' && (
-          <div className="flex justify-center pb-8">
             <button
               onClick={handleVoiceCapture}
-              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+              className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
                 isRecording 
                   ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              <Mic className="w-8 h-8 text-white" />
+              <Mic className="w-10 h-10 text-white" />
             </button>
-          </div>
-        )}
 
-        {/* Save button for text mode */}
-        {captureMode !== 'camera' && noteText.trim() && (
-          <div className="flex justify-center pb-8">
+            {/* Mode switcher */}
+            <div className="mt-8">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg">
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={() => setCaptureMode('camera')}
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCaptureMode('voice')}
+                    className="p-2 rounded-full bg-blue-500 text-white"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCaptureMode('text')}
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Text Mode - iOS Notes Style */}
+      {captureMode === 'text' && (
+        <div className="relative w-full h-full bg-[#FEFFFE] dark:bg-[#1C1C1E]">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 bg-[#F2F2F7] dark:bg-[#2C2C2E] border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Notes</span>
+            </button>
+            
             <button
               onClick={handleSendNote}
-              className="px-6 py-3 bg-[#007AFF] text-white rounded-full text-base font-medium shadow-lg hover:bg-[#0056CC] transition-colors"
+              disabled={!noteText.trim() && !noteTitle.trim()}
+              className="px-4 py-2 bg-[#007AFF] text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0056CC] transition-colors"
             >
-              Save Note
+              Done
             </button>
           </div>
-        )}
-      </div>
 
-      {/* Mode switcher - only show when not in camera mode */}
-      {captureMode !== 'camera' && (
-        <div className="absolute top-4 right-4 z-[200]">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCaptureMode('camera')}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors backdrop-blur-sm"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setCaptureMode('voice')}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors backdrop-blur-sm"
-            >
-              <Mic className="w-5 h-5" />
-            </button>
+          {/* iOS Notes-style editor */}
+          <div 
+            className="flex-1 overflow-hidden"
+            style={{ paddingBottom: `${keyboardHeight}px` }}
+          >
+            <div className="p-4 h-full">
+              {/* Title */}
+              <input
+                ref={titleRef}
+                type="text"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                placeholder="Title"
+                className="w-full text-2xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-2"
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+              />
+              
+              {/* Date */}
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </div>
+              
+              {/* Content */}
+              <textarea
+                ref={textareaRef}
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Start writing..."
+                className="w-full h-full resize-none border-none outline-none bg-transparent text-base leading-relaxed text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                style={{ 
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  lineHeight: '1.6'
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+
+          {/* Bottom floating controls */}
+          <div className="absolute bottom-6 left-4 right-4 z-[200]">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => setCaptureMode('camera')}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCaptureMode('voice')}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCaptureMode('text')}
+                  className="p-2 rounded-full bg-blue-500 text-white"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
