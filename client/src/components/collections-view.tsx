@@ -9,6 +9,7 @@ interface CollectionWithCount {
   name: string;
   icon: string;
   color: string;
+  iconUrl?: string;
   noteCount: number;
   createdAt: string;
 }
