@@ -20,7 +20,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const { createNote, createNoteFromAudio } = useNotes();
+  const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
 
   // Keyboard height detection for mobile
@@ -96,27 +96,16 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         reader.onload = (e) => {
           const base64 = (e.target?.result as string)?.split(',')[1];
           if (base64) {
-            createNote.mutate({
+            createNote({
               content: noteText || 'Photo captured',
-              type: 'image',
-              imageData: base64,
-            }, {
-              onSuccess: () => {
-                setNoteText('');
-                onClose();
-                toast({
-                  title: "Photo saved",
-                  description: "Your photo has been added to your notes.",
-                });
-              },
-              onError: (error: any) => {
-                console.error('Error saving photo:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to save photo. Please try again.",
-                  variant: "destructive",
-                });
-              }
+              mode: 'smart'
+            });
+            
+            setNoteText('');
+            onClose();
+            toast({
+              title: "Photo saved",
+              description: "Your photo has been added to your notes.",
             });
           }
         };
@@ -128,26 +117,16 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const handleSendNote = () => {
     if (!noteText.trim()) return;
 
-    createNote.mutate({
+    createNote({
       content: noteText.trim(),
-      type: 'text'
-    }, {
-      onSuccess: () => {
-        setNoteText('');
-        onClose();
-        toast({
-          title: "Note saved",
-          description: "Your note has been added successfully.",
-        });
-      },
-      onError: (error: any) => {
-        console.error('Error saving note:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save note. Please try again.",
-          variant: "destructive",
-        });
-      }
+      mode: 'smart'
+    });
+    
+    setNoteText('');
+    onClose();
+    toast({
+      title: "Note saved",
+      description: "Your note has been added successfully.",
     });
   };
 
@@ -178,25 +157,15 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
-        createNoteFromAudio.mutate(blob, {
-          onSuccess: () => {
-            onClose();
-            toast({
-              title: "Voice note saved",
-              description: "Your voice note has been transcribed and saved.",
-            });
-          },
-          onError: (error: any) => {
-            console.error('Error saving voice note:', error);
-            toast({
-              title: "Error",
-              description: "Failed to save voice note. Please try again.",
-              variant: "destructive",
-            });
-          }
-        });
+        createVoiceNote(blob);
+        
         stream.getTracks().forEach(track => track.stop());
         setIsRecording(false);
+        onClose();
+        toast({
+          title: "Voice note saved",
+          description: "Your voice note has been transcribed and saved.",
+        });
       };
 
       mediaRecorder.start();
