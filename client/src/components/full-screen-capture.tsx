@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type, Send } from "lucide-react";
+import { X, Camera, Mic, MessageCircle, Upload, FileText, Image, Type, Send, Settings, ToggleLeft, ToggleRight } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -14,10 +14,16 @@ type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
   const [captureMode, setCaptureMode] = useState<CaptureMode>('text');
   const [noteText, setNoteText] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteDescription, setNoteDescription] = useState('');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isTextFocused, setIsTextFocused] = useState(false);
   const [capturedMedia, setCapturedMedia] = useState<string | null>(null);
   const [showFullEditor, setShowFullEditor] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [autoCamera, setAutoCamera] = useState(() => localStorage.getItem('mira-auto-camera') === 'true');
+  const [autoMic, setAutoMic] = useState(() => localStorage.getItem('mira-auto-mic') === 'true');
+  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -25,6 +31,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   useEffect(() => {
     if (isOpen && !showFullEditor) {
+      if (autoCamera && captureMode !== 'camera') {
+        setCaptureMode('camera');
+      } else if (autoMic && captureMode !== 'voice') {
+        setCaptureMode('voice');
+      }
+      
       if (captureMode === 'camera') {
         startCamera();
       } else {
@@ -37,7 +49,16 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => {
       stopCamera();
     };
-  }, [isOpen, captureMode, showFullEditor]);
+  }, [isOpen, captureMode, showFullEditor, autoCamera, autoMic]);
+
+  // Save auto settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('mira-auto-camera', autoCamera.toString());
+  }, [autoCamera]);
+
+  useEffect(() => {
+    localStorage.setItem('mira-auto-mic', autoMic.toString());
+  }, [autoMic]);
 
   const handleTextFocus = () => {
     setIsTextFocused(true);
@@ -92,7 +113,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -106,6 +133,45 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
+    }
+  };
+
+  const startMicrophone = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setStream(mediaStream);
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Microphone Error",
+        description: "Unable to access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopMicrophone = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsRecording(false);
+  };
+
+  const capturePhoto = async () => {
+    if (videoRef.current && stream) {
+      const canvas = document.createElement('canvas');
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        setCapturedMedia(imageData);
+        handleSaveWithMedia(imageData);
+      }
     }
   };
 
@@ -144,7 +210,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   return (
     <div className="fixed inset-0 z-[100] bg-black w-screen h-screen overflow-hidden">
       {/* Camera view - only show if camera mode and not in full editor */}
-      {captureMode === 'camera' && (
+      {captureMode === 'camera' && !showFullEditor && (
         <>
           <video
             ref={videoRef}
@@ -163,75 +229,243 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         </>
       )}
 
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }}
-        className="absolute top-6 left-6 z-[200] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-        style={{ pointerEvents: 'auto' }}
-      >
-        <X className="w-6 h-6" />
-      </button>
+      {/* Voice mode recording indicator */}
+      {captureMode === 'voice' && !showFullEditor && (
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-blue-900 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className={`w-32 h-32 rounded-full border-4 border-white/30 flex items-center justify-center mb-8 ${isRecording ? 'animate-pulse bg-red-500/30' : ''}`}>
+              <Mic className={`w-16 h-16 ${isRecording ? 'text-red-300' : 'text-white'}`} />
+            </div>
+            <p className="text-xl font-semibold mb-2">
+              {isRecording ? 'Recording...' : 'Tap to start recording'}
+            </p>
+            <p className="text-white/70">Speak your thoughts</p>
+          </div>
+        </div>
+      )}
+
+      {/* Full editor mode */}
+      {showFullEditor && (
+        <div className="absolute inset-0 bg-white dark:bg-gray-900 z-[110]">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowFullEditor(false)}
+                className="text-blue-500 font-medium"
+              >
+                Cancel
+              </button>
+              <h1 className="font-semibold text-lg">New Note</h1>
+              <button
+                onClick={handleSendNote}
+                className="text-blue-500 font-medium"
+              >
+                Save
+              </button>
+            </div>
+
+            {/* Note editor */}
+            <div className="flex-1 p-4 space-y-4">
+              <input
+                type="text"
+                placeholder="Title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                className="w-full text-2xl font-bold bg-transparent border-none outline-none placeholder-gray-400"
+              />
+              <textarea
+                placeholder="Description"
+                value={noteDescription}
+                onChange={(e) => setNoteDescription(e.target.value)}
+                className="w-full flex-1 bg-transparent border-none outline-none resize-none placeholder-gray-400 text-base leading-relaxed"
+                style={{ minHeight: '300px' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header with Mira logo and settings */}
+      {!showFullEditor && (
+        <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-6 z-[200]">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="text-white text-xl font-bold tracking-wide">
+            Mira
+          </div>
+
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+          >
+            <Settings className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+
+      {/* Settings panel */}
+      {showSettings && !showFullEditor && (
+        <div className="absolute top-20 right-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg p-4 shadow-lg z-[200] min-w-[200px]">
+          <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Auto Settings</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Camera Auto-on</span>
+              <button
+                onClick={() => setAutoCamera(!autoCamera)}
+                className="flex items-center"
+              >
+                {autoCamera ? (
+                  <ToggleRight className="w-6 h-6 text-blue-500" />
+                ) : (
+                  <ToggleLeft className="w-6 h-6 text-gray-400" />
+                )}
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Mic Auto-on</span>
+              <button
+                onClick={() => setAutoMic(!autoMic)}
+                className="flex items-center"
+              >
+                {autoMic ? (
+                  <ToggleRight className="w-6 h-6 text-blue-500" />
+                ) : (
+                  <ToggleLeft className="w-6 h-6 text-gray-400" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mode selection buttons - floating on the right */}
-      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-60">
-        <button
-          onClick={() => setCaptureMode('text')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
-            captureMode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
-          }`}
-        >
-          <MessageCircle className="w-6 h-6" />
-        </button>
-        
-        <button
-          onClick={() => setCaptureMode('camera')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
-            captureMode === 'camera' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
-          }`}
-        >
-          <Camera className="w-6 h-6" />
-        </button>
-        
-        <button
-          onClick={() => setCaptureMode('upload-image')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
-            captureMode === 'upload-image' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
-          }`}
-        >
-          <Image className="w-6 h-6" />
-        </button>
-        
-        <button
-          onClick={() => setCaptureMode('upload-file')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
-            captureMode === 'upload-file' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
-          }`}
-        >
-          <FileText className="w-6 h-6" />
-        </button>
-      </div>
-
-      <div className="absolute inset-0 flex flex-col">
-        <div className="flex-1 flex flex-col justify-end pb-4">
+      {!showFullEditor && (
+        <div className="absolute right-6 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-60">
+          <button
+            onClick={() => {
+              setCaptureMode('text');
+              stopCamera();
+              stopMicrophone();
+            }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+              captureMode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+            }`}
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
           
-          {/* Shorter text input area - only show when not in camera mode */}
-          {captureMode !== 'camera' && (
-            <div className="mx-4 mb-4">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-2xl max-w-md mx-auto">
-                <div className="relative">
-                  <textarea
-                    ref={textareaRef}
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    onFocus={handleTextFocus}
-                    placeholder="Add new note"
-                    className="w-full h-10 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 pr-10"
-                    inputMode="text"
-                    enterKeyHint="done"
-                    autoFocus={captureMode === 'text'}
+          <button
+            onClick={() => {
+              setCaptureMode('camera');
+              stopMicrophone();
+              startCamera();
+            }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+              captureMode === 'camera' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+            }`}
+          >
+            <Camera className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={() => {
+              setCaptureMode('voice');
+              stopCamera();
+              if (isRecording) {
+                stopMicrophone();
+              } else {
+                startMicrophone();
+              }
+            }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+              captureMode === 'voice' ? 'bg-red-500 text-white' : 'bg-white/30 text-white'
+            }`}
+          >
+            <Mic className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={() => setCaptureMode('upload-image')}
+            className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+              captureMode === 'upload-image' ? 'bg-blue-500 text-white' : 'bg-white/30 text-white'
+            }`}
+          >
+            <Image className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+
+      {/* Bottom actions and input */}
+      {!showFullEditor && (
+        <div className="absolute bottom-0 left-0 right-0 z-[200]">
+          {/* Camera capture button */}
+          {captureMode === 'camera' && (
+            <div className="flex justify-center pb-8">
+              <button
+                onClick={capturePhoto}
+                className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
+              >
+                <div className="w-16 h-16 rounded-full bg-white"></div>
+              </button>
+            </div>
+          )}
+
+          {/* Voice recording button */}
+          {captureMode === 'voice' && (
+            <div className="flex justify-center pb-8">
+              <button
+                onClick={() => {
+                  if (isRecording) {
+                    stopMicrophone();
+                  } else {
+                    startMicrophone();
+                  }
+                }}
+                className={`w-20 h-20 rounded-full border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform ${
+                  isRecording ? 'bg-red-500' : 'bg-white/20'
+                }`}
+              >
+                <Mic className={`w-8 h-8 ${isRecording ? 'text-white' : 'text-white'}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Text input area - show when not in camera or voice mode */}
+          {(captureMode === 'text' || captureMode === 'upload-image') && (
+            <div className="px-4 pb-8">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Title (optional)"
+                    value={noteTitle}
+                    onChange={(e) => setNoteTitle(e.target.value)}
+                    className="w-full bg-transparent border-none outline-none text-lg font-medium placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
+                  />
+                  <div className="relative">
+                    <textarea
+                      ref={textareaRef}
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      onFocus={handleTextFocus}
+                      placeholder="What's on your mind?"
+                      className="w-full h-20 resize-none border-none outline-none bg-transparent text-base placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white pr-12"
+                      inputMode="text"
+                      enterKeyHint="done"
+                      autoFocus={captureMode === 'text'}
                   />
                   {noteText.trim() ? (
                     <button
@@ -242,31 +476,40 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                     </button>
                   ) : (
                     <button
-                      onClick={() => setCaptureMode('voice')}
-                      className={`absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                        captureMode === 'voice' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      onClick={() => {
+                        setCaptureMode('voice');
+                        startMicrophone();
+                      }}
+                      className="absolute right-2 top-1 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
                     >
                       <Mic className="w-4 h-4" />
                     </button>
                   )}
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      onClick={() => setShowFullEditor(true)}
+                      className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+                    >
+                      Full Editor
+                    </button>
+                    
+                    {noteText.trim() && (
+                      <button
+                        onClick={handleSendNote}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                      >
+                        Create Note
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Camera capture button - only show in camera mode */}
-          {captureMode === 'camera' && (
-            <div className="flex justify-center mb-8">
-              <button
-                onClick={handleCameraCapture}
-                className="w-20 h-20 rounded-full bg-white/20 border-4 border-white flex items-center justify-center backdrop-blur-sm"
-              >
-                <div className="w-16 h-16 rounded-full bg-white"></div>
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
