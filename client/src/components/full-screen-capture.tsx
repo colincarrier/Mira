@@ -552,26 +552,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Camera capture button */}
           {captureMode === 'camera' && (
             <div className="pb-8">
-              <div className="flex items-center justify-between px-8">
-                {/* Back button positioned to the left */}
+              <div className="flex items-center justify-center px-8 relative">
+                {/* Back button positioned to the left with more spacing */}
                 <button
                   onClick={onClose}
-                  className="flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
+                  className="absolute left-4 flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
                   <span className="text-sm font-medium">Back to Notes</span>
                 </button>
                 
-                {/* Camera button centered */}
+                {/* Camera button perfectly centered */}
                 <button
                   onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
+                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform p-0"
+                  style={{ aspectRatio: '1/1' }}
                 >
-                  <div className="w-16 h-16 rounded-full bg-white"></div>
+                  <div className="w-14 h-14 rounded-full bg-white" style={{ aspectRatio: '1/1' }}></div>
                 </button>
-                
-                {/* Spacer to balance layout */}
-                <div className="w-32"></div>
               </div>
             </div>
           )}
@@ -598,8 +596,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
-            <div className="absolute bottom-48 left-4 right-24">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-xl max-w-xs ml-4">
+            <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 w-80 max-w-[calc(100vw-2rem)]">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl mx-auto">
                 <div className="relative">
                   <textarea
                     ref={textareaRef}
