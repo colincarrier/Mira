@@ -15,22 +15,22 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3">
           <input
             type="text"
-            placeholder="What's on your mind?"
+            placeholder="Add/edit anything..."
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
             onFocus={onNewNote}
             readOnly
           />
           <button 
             onClick={onNewNote}
-            className="w-8 h-8 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 bg-gray-800 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors"
           >
-            <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+            <Plus className="w-4 h-4" />
           </button>
           <button 
             onClick={onNewNote}
-            className="w-8 h-8 bg-[hsl(var(--sage-green))] hover:bg-[hsl(var(--sage-green))]/90 text-white rounded-full flex items-center justify-center transition-colors"
+            className="w-8 h-8 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           </button>
         </div>
       </div>
