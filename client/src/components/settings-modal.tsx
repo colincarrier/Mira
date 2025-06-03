@@ -179,6 +179,14 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
             </div>
           </div>
         </div>
+        
+        {/* Bottom Navigation */}
+        <BottomNavigation 
+          activeTab={activeTab} 
+          onTabChange={onTabChange}
+          onNewNote={onNewNote}
+          onSettings={onClose}
+        />
       </div>
     </div>
   );

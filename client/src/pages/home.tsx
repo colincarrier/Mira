@@ -72,7 +72,10 @@ export default function Home() {
       
       <SettingsModal 
         isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)} 
+        onClose={() => setIsSettingsModalOpen(false)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
       />
 
       {/* Full Screen Capture */}
