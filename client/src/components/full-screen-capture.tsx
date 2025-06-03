@@ -383,22 +383,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       {/* Header with Mira logo and settings */}
       {!showFullEditor && (
         <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-6 z-[200]">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose();
-              }}
-              className="w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <span className="text-white text-sm font-medium bg-black/30 px-3 py-1 rounded-full">
-              Back to Notes
-            </span>
-          </div>
+          <div className="w-10"></div> {/* Spacer */}
 
           <div className="text-white text-2xl font-serif font-medium tracking-wide">
             Mira
@@ -512,21 +497,25 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         <div className="absolute bottom-0 left-0 right-0 z-[200]">
           {/* Camera capture button */}
           {captureMode === 'camera' && (
-            <div className="flex justify-center items-center pb-8 gap-8">
+            <div className="relative pb-8">
+              {/* Back button positioned to the left */}
               <button
                 onClick={onClose}
-                className="flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
+                className="absolute left-8 top-1/2 transform -translate-y-1/2 flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span className="text-sm font-medium">Back to Notes</span>
               </button>
               
-              <button
-                onClick={capturePhoto}
-                className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
-              >
-                <div className="w-16 h-16 rounded-full bg-white"></div>
-              </button>
+              {/* Camera button centered */}
+              <div className="flex justify-center">
+                <button
+                  onClick={capturePhoto}
+                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
+                >
+                  <div className="w-16 h-16 rounded-full bg-white"></div>
+                </button>
+              </div>
             </div>
           )}
 
