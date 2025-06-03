@@ -3,9 +3,13 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
+  // User operations (mandatory for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
   // Notes
   createNote(note: InsertNote): Promise<Note>;
-  getNotes(): Promise<NoteWithTodos[]>;
+  getNotes(userId?: string): Promise<NoteWithTodos[]>;
   getNote(id: number): Promise<NoteWithTodos | undefined>;
   updateNote(id: number, updates: Partial<Note>): Promise<Note>;
   deleteNote(id: number): Promise<void>;
