@@ -452,11 +452,11 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           )}
         </div>
 
-        {/* AI Partner Logo - Subtle, bottom right */}
+        {/* AI Partner Logo - Aligned with text baseline */}
         {aiPartner && (
-          <div className="absolute bottom-0 right-0">
+          <div className="flex items-center">
             {aiPartner === 'claude' && (
-              <div className="h-3 opacity-50 hover:opacity-70 transition-opacity" title="Enhanced by Claude Sonnet 4">
+              <div className="h-3 opacity-30 hover:opacity-50 transition-opacity" title="Enhanced by Claude Sonnet 4">
                 <img 
                   src="/claude-logo.png" 
                   alt="Claude" 
@@ -465,7 +465,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </div>
             )}
             {aiPartner === 'openai' && (
-              <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center opacity-50 hover:opacity-70 transition-opacity" title="Enhanced by GPT-4o">
+              <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center opacity-30 hover:opacity-50 transition-opacity" title="Enhanced by GPT-4o">
                 <span className="text-white text-[5px] font-bold">AI</span>
               </div>
             )}
