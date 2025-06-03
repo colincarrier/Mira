@@ -210,7 +210,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           <canvas ref={canvasRef} className="hidden" />
           
           {/* Bottom navigation bar - 70% transparent */}
-          <div className="absolute bottom-0 left-0 right-0 z-[10001] bg-black/30 backdrop-blur-sm p-4">
+          <div className="absolute bottom-4 left-4 right-4 z-[10001]">
             <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/20">
               <div className="relative">
                 <textarea
