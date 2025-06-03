@@ -512,7 +512,15 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         <div className="absolute bottom-0 left-0 right-0 z-[200]">
           {/* Camera capture button */}
           {captureMode === 'camera' && (
-            <div className="flex justify-center pb-8">
+            <div className="flex justify-center items-center pb-8 gap-8">
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 bg-black/50 text-white px-4 py-2 rounded-full hover:bg-black/70 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">Back to Notes</span>
+              </button>
+              
               <button
                 onClick={capturePhoto}
                 className="w-20 h-20 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform"
