@@ -28,7 +28,6 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [showSettings, setShowSettings] = useState(false);
   const [autoCamera, setAutoCamera] = useState(() => localStorage.getItem('mira-auto-camera') !== 'false'); // Default true
   const [autoMic, setAutoMic] = useState(() => localStorage.getItem('mira-auto-mic') === 'true');
-  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -353,7 +352,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             <X className="w-6 h-6" />
           </button>
 
-          <div className="text-white text-xl font-bold tracking-wide">
+          <div className="text-white text-2xl font-serif font-medium tracking-wide">
             Mira
           </div>
 
