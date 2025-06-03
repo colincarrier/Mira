@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, List, Grid } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
 
@@ -11,6 +11,7 @@ interface ActivityFeedProps {
 export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [isCondensedView, setIsCondensedView] = useState(false);
   
   const { data: notes, isLoading } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
@@ -18,7 +19,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
 
   const filteredNotes = notes?.filter(note => {
     return note.content.toLowerCase().includes(searchTerm.toLowerCase());
-  }) || [];
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
 
   if (isLoading) {
     return (
@@ -67,12 +68,21 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4 px-4 pt-6">
         <h2 className="text-2xl font-serif font-medium">Notes</h2>
-        <button 
-          onClick={() => setShowSearch(!showSearch)}
-          className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
-        >
-          <Search className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setIsCondensedView(!isCondensedView)}
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
+            title={isCondensedView ? "Switch to expanded view" : "Switch to condensed view"}
+          >
+            {isCondensedView ? <Grid className="w-5 h-5" /> : <List className="w-5 h-5" />}
+          </button>
+          <button 
+            onClick={() => setShowSearch(!showSearch)}
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {showSearch && (
@@ -90,9 +100,38 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className={isCondensedView ? "space-y-2" : "space-y-4"}>
         {filteredNotes.map((note) => (
-          <NoteCard key={note.id} note={note} onTodoModalClose={onTodoModalClose} />
+          isCondensedView ? (
+            <div 
+              key={note.id}
+              className="flex items-center justify-between p-3 bg-[hsl(var(--card))] rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
+              onClick={() => window.location.href = `/note/${note.id}`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                  {note.content.split('\n')[0] || 'Untitled note'}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                    {new Date(note.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                  {note.todos.length > 0 && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                      {note.todos.length} todos
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <NoteCard key={note.id} note={note} onTodoModalClose={onTodoModalClose} />
+          )
         ))}
       </div>
     </div>

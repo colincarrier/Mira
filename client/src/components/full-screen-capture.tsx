@@ -598,8 +598,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
           {/* Floating text input dialog - show over camera */}
           {captureMode === 'camera' && !showFullEditor && (
-            <div className="absolute bottom-48 left-4 right-20">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-xl max-w-md">
+            <div className="absolute bottom-48 left-4 right-24">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-xl max-w-xs ml-4">
                 <div className="relative">
                   <textarea
                     ref={textareaRef}
