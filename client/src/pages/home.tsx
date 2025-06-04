@@ -15,6 +15,7 @@ import { Settings as SettingsIcon } from "lucide-react";
 export default function Home() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
+  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -25,7 +26,6 @@ export default function Home() {
     }
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
 
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
@@ -119,8 +119,6 @@ export default function Home() {
         isOpen={isVoiceModalOpen} 
         onClose={() => setIsVoiceModalOpen(false)} 
       />
-      
-
 
       {/* Full Screen Capture */}
       <FullScreenCapture
