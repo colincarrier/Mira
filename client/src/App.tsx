@@ -9,11 +9,13 @@ import NotFound from "@/pages/not-found";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
+import Settings from "@/pages/settings";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/settings" component={Settings} />
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
       <Route path="/todo/:id" component={TodoDetail} />

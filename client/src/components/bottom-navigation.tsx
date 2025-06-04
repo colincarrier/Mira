@@ -81,6 +81,8 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     
     setTouchStart(null);
   };
+  console.log("BottomNavigation render - hideAddButton:", hideAddButton);
+  
   return (
     <>
       {/* Chat-style input box - anchored above navigation */}

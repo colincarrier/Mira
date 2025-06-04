@@ -5,14 +5,13 @@ import ActivityFeed from "@/components/activity-feed";
 import TodosView from "@/components/todos-view";
 import CollectionsView from "@/components/collections-view";
 import VoiceModal from "@/components/voice-modal";
-import SettingsModal from "@/components/settings-modal";
 import BottomNavigation from "@/components/bottom-navigation";
 import FullScreenCapture from "@/components/full-screen-capture";
 
 import { Settings } from "lucide-react";
 
 export default function Home() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections">("activity");
 
   // Check URL parameters to set initial tab
@@ -24,7 +23,6 @@ export default function Home() {
     }
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
 
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -119,7 +117,10 @@ export default function Home() {
         isOpen={isSettingsModalOpen} 
         onClose={() => setIsSettingsModalOpen(false)}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setIsSettingsModalOpen(false);
+        }}
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
       />
