@@ -1,4 +1,4 @@
-import { Camera, Mic, Plus, Send, Square, Image, FileText, X } from "lucide-react";
+import { Camera, Mic, Plus, Send, Square, Image, FileText, X, Upload } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,7 @@ export default function UniversalInputBar({
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const generalFileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -108,6 +109,42 @@ export default function UniversalInputBar({
       toast({
         title: "Error",
         description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const response = await fetch("/api/notes/file", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to upload file");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setShowMediaPicker(false);
+      toast({
+        title: "File uploaded",
+        description: "Your file has been processed and enhanced by AI.",
+      });
+    },
+    onError: (error) => {
+      console.error("File upload error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
         variant: "destructive",
       });
     },
@@ -293,7 +330,7 @@ export default function UniversalInputBar({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Check if it's an image
@@ -313,9 +350,27 @@ export default function UniversalInputBar({
     }
   };
 
+  const handleGeneralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFileMutation.mutate(file);
+    }
+    // Reset the input
+    if (generalFileInputRef.current) {
+      generalFileInputRef.current.value = '';
+    }
+  };
+
   const openPhotoLibrary = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
+    }
+    setShowMediaPicker(false);
+  };
+
+  const openFilePicker = () => {
+    if (generalFileInputRef.current) {
+      generalFileInputRef.current.click();
     }
     setShowMediaPicker(false);
   };
@@ -326,12 +381,18 @@ export default function UniversalInputBar({
 
   return (
     <div className={`relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300 ${className}`}>
-      {/* Hidden file input for photo library */}
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileSelect}
+        onChange={handleImageSelect}
+        className="hidden"
+      />
+      <input
+        ref={generalFileInputRef}
+        type="file"
+        onChange={handleGeneralFileSelect}
         className="hidden"
       />
       
@@ -349,24 +410,24 @@ export default function UniversalInputBar({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
+              onClick={openFilePicker}
+              className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              disabled={uploadFileMutation.isPending}
+            >
+              <FileText className="w-6 h-6 text-purple-500 mb-1" />
+              <span className="text-xs text-gray-600">
+                {uploadFileMutation.isPending ? "Uploading..." : "File Picker"}
+              </span>
+            </button>
+            <button
               onClick={openPhotoLibrary}
               className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={uploadImageMutation.isPending}
             >
               <Image className="w-6 h-6 text-blue-500 mb-1" />
               <span className="text-xs text-gray-600">
-                {uploadImageMutation.isPending ? "Uploading..." : "Photo Library"}
+                {uploadImageMutation.isPending ? "Uploading..." : "Photo Upload"}
               </span>
-            </button>
-            <button
-              onClick={() => {
-                if (onCameraCapture) onCameraCapture();
-                setShowMediaPicker(false);
-              }}
-              className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Camera className="w-6 h-6 text-[#a8bfa1] mb-1" />
-              <span className="text-xs text-gray-600">Camera</span>
             </button>
           </div>
         </div>

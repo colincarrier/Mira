@@ -756,6 +756,82 @@ Respond with a JSON object containing:
     }
   });
 
+  app.post("/api/notes/file", aiRateLimit, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      // Create initial note with file description
+      const note = await storage.createNote({
+        content: `[File uploaded: ${req.file.originalname}] - ${req.file.mimetype} (${Math.round(req.file.size / 1024)}KB)`,
+        mode: "file",
+      });
+
+      // Analyze file content with AI in the background
+      let fileContent = `File: ${req.file.originalname} (${req.file.mimetype}, ${Math.round(req.file.size / 1024)}KB)`;
+      
+      // For text files, try to read content
+      if (req.file.mimetype.startsWith('text/') || 
+          req.file.mimetype === 'application/json' ||
+          req.file.originalname?.endsWith('.md') ||
+          req.file.originalname?.endsWith('.txt')) {
+        try {
+          fileContent += `\n\nContent:\n${req.file.buffer.toString('utf-8')}`;
+        } catch (error) {
+          console.log("Could not read file as text:", error);
+        }
+      }
+
+      analyzeWithOpenAI(fileContent, "file")
+        .then(async (analysis) => {
+          const updates: any = {
+            aiEnhanced: true,
+            aiSuggestion: analysis.suggestion,
+            aiContext: analysis.context,
+          };
+          
+          if (analysis.enhancedContent) {
+            updates.content = analysis.enhancedContent;
+          }
+          
+          await storage.updateNote(note.id, updates);
+          
+          // Create todos if found
+          for (const todoTitle of analysis.todos) {
+            await storage.createTodo({
+              title: todoTitle,
+              noteId: note.id,
+            });
+          }
+          
+          // Create collection if suggested
+          if (analysis.collectionSuggestion) {
+            const collections = await storage.getCollections();
+            const existingCollection = collections.find(
+              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+            );
+            
+            let collectionId = existingCollection?.id;
+            if (!existingCollection) {
+              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+              collectionId = newCollection.id;
+            }
+            
+            await storage.updateNote(note.id, { collectionId });
+          }
+        })
+        .catch(error => {
+          console.error("AI file analysis failed:", error);
+        });
+
+      res.json(note);
+    } catch (error) {
+      console.error("File note creation failed:", error);
+      res.status(500).json({ message: "Failed to process file" });
+    }
+  });
+
   // Todos endpoints
   app.get("/api/todos", async (req, res) => {
     try {
