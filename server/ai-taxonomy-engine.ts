@@ -258,6 +258,19 @@ export interface FragmentCompletion {
   reasoning: string;
 }
 
+export interface AmbiguousInput {
+  originalInput: string;
+  possibleIntents: {
+    intent: string;
+    likelihood: number;
+    category: string;
+    reasoning: string;
+    immediateActions: string[];
+  }[];
+  clarificationQuestion: string;
+  urgencyLevel: 'high' | 'medium' | 'low';
+}
+
 export interface TaxonomyAnalysis {
   category: string;
   confidence: number;
@@ -265,6 +278,7 @@ export interface TaxonomyAnalysis {
   suggestedFollowUps: string[];
   contextualInsights: string[];
   fragmentCompletion?: FragmentCompletion;
+  ambiguousInput?: AmbiguousInput;
 }
 
 // Predictive fragment completion function
@@ -338,11 +352,199 @@ export function completeFragment(input: string): FragmentCompletion | null {
   return null;
 }
 
+// Ambiguous input detection for single-word or highly ambiguous inputs
+export function detectAmbiguousInput(input: string, userContext?: any): AmbiguousInput | null {
+  const inputLower = input.toLowerCase().trim();
+  
+  // Define ambiguous patterns with multiple interpretations
+  const ambiguousPatterns: Record<string, AmbiguousInput> = {
+    'chicago': {
+      originalInput: input,
+      possibleIntents: [
+        {
+          intent: 'Plan trip to Chicago',
+          likelihood: 0.4,
+          category: 'travel_planning',
+          reasoning: 'Most common use case for city names is travel planning',
+          immediateActions: [
+            'Check flight prices to Chicago',
+            'Research hotels and accommodations',
+            'Look up Chicago attractions and activities',
+            'Check weather forecast for travel dates'
+          ]
+        },
+        {
+          intent: 'Watch Chicago (movie/musical)',
+          likelihood: 0.3,
+          category: 'entertainment',
+          reasoning: 'Chicago is a popular movie and Broadway musical',
+          immediateActions: [
+            'Find Chicago movie streaming options',
+            'Check local theater showtimes for Chicago musical',
+            'Read reviews and ratings',
+            'Purchase tickets if interested'
+          ]
+        },
+        {
+          intent: 'Chicago-related research or reference',
+          likelihood: 0.3,
+          category: 'research_inquiry',
+          reasoning: 'Could be researching Chicago for work, school, or personal interest',
+          immediateActions: [
+            'Research Chicago history and facts',
+            'Look up Chicago demographics and statistics',
+            'Find Chicago news and current events',
+            'Explore Chicago cultural information'
+          ]
+        }
+      ],
+      clarificationQuestion: 'I see you mentioned Chicago. Are you planning a trip there, looking for entertainment options like the movie/musical, or researching something specific about the city?',
+      urgencyLevel: 'high'
+    },
+    
+    'paris': {
+      originalInput: input,
+      possibleIntents: [
+        {
+          intent: 'Plan trip to Paris, France',
+          likelihood: 0.7,
+          category: 'travel_planning',
+          reasoning: 'Paris is primarily known as a travel destination',
+          immediateActions: [
+            'Check flight prices to Paris',
+            'Research Paris hotels and neighborhoods',
+            'Look up Paris attractions (Eiffel Tower, Louvre, etc.)',
+            'Check visa requirements for France'
+          ]
+        },
+        {
+          intent: 'Paris, Texas or other Paris locations',
+          likelihood: 0.2,
+          category: 'travel_planning',
+          reasoning: 'Could refer to other cities named Paris',
+          immediateActions: [
+            'Clarify which Paris location',
+            'Research local Paris attractions',
+            'Check travel options to specific Paris'
+          ]
+        },
+        {
+          intent: 'Paris-related research or cultural reference',
+          likelihood: 0.1,
+          category: 'research_inquiry',
+          reasoning: 'Could be studying French culture, history, or language',
+          immediateActions: [
+            'Research Paris history and culture',
+            'Look up French language resources',
+            'Find Paris photography or art references'
+          ]
+        }
+      ],
+      clarificationQuestion: 'Are you planning a trip to Paris, France, or looking into something else Paris-related?',
+      urgencyLevel: 'medium'
+    },
+
+    'doctor': {
+      originalInput: input,
+      possibleIntents: [
+        {
+          intent: 'Schedule doctor appointment',
+          likelihood: 0.6,
+          category: 'health_fragments',
+          reasoning: 'Most common reason to mention doctor',
+          immediateActions: [
+            'Call doctor\'s office to schedule appointment',
+            'Check insurance coverage and copay',
+            'Prepare list of symptoms or concerns',
+            'Gather medical history and current medications'
+          ]
+        },
+        {
+          intent: 'Find a new doctor',
+          likelihood: 0.3,
+          category: 'health_fragments',
+          reasoning: 'May need to find a new primary care physician',
+          immediateActions: [
+            'Search for doctors accepting new patients',
+            'Check insurance provider network',
+            'Read doctor reviews and ratings',
+            'Verify office locations and hours'
+          ]
+        },
+        {
+          intent: 'Doctor-related question or research',
+          likelihood: 0.1,
+          category: 'research_inquiry',
+          reasoning: 'Could be researching medical information',
+          immediateActions: [
+            'Research medical symptoms or conditions',
+            'Look up medical procedures or treatments',
+            'Find reputable medical information sources'
+          ]
+        }
+      ],
+      clarificationQuestion: 'Do you need to schedule an appointment with your doctor, find a new doctor, or are you looking for medical information?',
+      urgencyLevel: 'high'
+    },
+
+    'gym': {
+      originalInput: input,
+      possibleIntents: [
+        {
+          intent: 'Go to gym for workout',
+          likelihood: 0.5,
+          category: 'health_fitness',
+          reasoning: 'Most common gym-related intent',
+          immediateActions: [
+            'Check gym hours and availability',
+            'Plan workout routine',
+            'Pack gym bag with essentials',
+            'Check if gym equipment is available'
+          ]
+        },
+        {
+          intent: 'Join a new gym',
+          likelihood: 0.4,
+          category: 'health_fitness',
+          reasoning: 'May be looking for gym membership',
+          immediateActions: [
+            'Research local gyms and pricing',
+            'Compare gym amenities and equipment',
+            'Read member reviews and ratings',
+            'Schedule gym tours and consultations'
+          ]
+        },
+        {
+          intent: 'Cancel or modify gym membership',
+          likelihood: 0.1,
+          category: 'health_fitness',
+          reasoning: 'May need to make membership changes',
+          immediateActions: [
+            'Review gym membership contract',
+            'Contact gym customer service',
+            'Understand cancellation policies'
+          ]
+        }
+      ],
+      clarificationQuestion: 'Are you planning to work out at the gym, looking to join a new gym, or need help with your current membership?',
+      urgencyLevel: 'medium'
+    }
+  };
+
+  return ambiguousPatterns[inputLower] || null;
+}
+
 export async function analyzeTaxonomy(content: string): Promise<TaxonomyAnalysis | null> {
   const contentLower = content.toLowerCase();
   
   // First try fragment completion
   const fragmentCompletion = completeFragment(content);
+  
+  // Check for ambiguous input if no high-confidence fragment completion
+  let ambiguousInput = null;
+  if (!fragmentCompletion || fragmentCompletion.confidence < 0.8) {
+    ambiguousInput = detectAmbiguousInput(content);
+  }
   
   // Find matching patterns
   const matches = Object.entries(AI_TAXONOMY_PATTERNS).map(([category, pattern]) => {
@@ -359,17 +561,17 @@ export async function analyzeTaxonomy(content: string): Promise<TaxonomyAnalysis
     };
   }).filter(match => match.confidence > 0);
 
-  if (matches.length === 0 && !fragmentCompletion) return null;
+  if (matches.length === 0 && !fragmentCompletion && !ambiguousInput) return null;
 
   // Get the best match or use fragment completion category
   let bestMatch;
   if (matches.length > 0) {
     bestMatch = matches.sort((a, b) => b.confidence - a.confidence)[0];
-    if (bestMatch.confidence < 0.2 && !fragmentCompletion) return null;
+    if (bestMatch.confidence < 0.2 && !fragmentCompletion && !ambiguousInput) return null;
   }
 
-  const category = fragmentCompletion?.category || bestMatch?.category || 'general';
-  const confidence = fragmentCompletion?.confidence || bestMatch?.confidence || 0.5;
+  const category = fragmentCompletion?.category || ambiguousInput?.possibleIntents[0]?.category || bestMatch?.category || 'general';
+  const confidence = fragmentCompletion?.confidence || (ambiguousInput ? 0.3 : bestMatch?.confidence) || 0.5;
   
   return {
     category,
@@ -377,7 +579,8 @@ export async function analyzeTaxonomy(content: string): Promise<TaxonomyAnalysis
     microQuestions: bestMatch?.pattern?.microQuestions || [],
     suggestedFollowUps: bestMatch?.pattern?.followUpActions || [],
     contextualInsights: generateContextualInsights(category, content),
-    fragmentCompletion: fragmentCompletion ?? undefined
+    fragmentCompletion: fragmentCompletion ?? undefined,
+    ambiguousInput: ambiguousInput ?? undefined
   };
 }
 

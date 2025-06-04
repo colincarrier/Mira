@@ -16,6 +16,25 @@ interface TaxonomyAnalysisResult {
   contextualInsights?: string[];
   message?: string;
   suggestions?: string[];
+  fragmentCompletion?: {
+    originalInput: string;
+    completedIntent: string;
+    confidence: number;
+    category: string;
+    reasoning: string;
+  };
+  ambiguousInput?: {
+    originalInput: string;
+    possibleIntents: {
+      intent: string;
+      likelihood: number;
+      category: string;
+      reasoning: string;
+      immediateActions: string[];
+    }[];
+    clarificationQuestion: string;
+    urgencyLevel: string;
+  };
 }
 
 interface EnhancedAnalysisResult {
@@ -47,10 +66,10 @@ const sampleInputs = [
   "restaurant tonight",
   "Atlas 3pm", 
   "fix laptop",
-  "new laptop",
-  "gym tomorrow",
-  "dentist",
-  "paris summer",
+  "chicago",
+  "gym",
+  "doctor",
+  "paris",
   "learn python"
 ];
 
@@ -242,6 +261,51 @@ export default function AITaxonomyDemo() {
                           <div className="text-xs text-blue-600">
                             {taxonomyResult.fragmentCompletion.reasoning}
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {taxonomyResult.ambiguousInput && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-1 text-orange-700">
+                          <AlertCircle className="h-4 w-4" />
+                          Multiple Interpretations Detected
+                        </h4>
+                        
+                        <div className="mb-3 p-3 bg-orange-100 rounded border-l-4 border-orange-400">
+                          <p className="text-sm font-medium text-orange-800">
+                            {taxonomyResult.ambiguousInput.clarificationQuestion}
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          {taxonomyResult.ambiguousInput.possibleIntents.map((intent, index) => (
+                            <div key={index} className="border border-gray-200 rounded-lg p-3 bg-white">
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="font-medium text-sm">{intent.intent}</h5>
+                                <Badge variant="outline" className="text-xs">
+                                  {Math.round(intent.likelihood * 100)}% likely
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2">{intent.reasoning}</p>
+                              
+                              <div>
+                                <p className="text-xs font-medium text-gray-700 mb-1">Immediate Actions:</p>
+                                <ul className="space-y-1">
+                                  {intent.immediateActions.map((action, actionIndex) => (
+                                    <li key={actionIndex} className="text-xs bg-gray-50 p-1 rounded flex items-start gap-1">
+                                      <CheckCircle className="h-3 w-3 mt-0.5 text-green-600 flex-shrink-0" />
+                                      {action}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-3 text-xs text-orange-600">
+                          Urgency Level: {taxonomyResult.ambiguousInput.urgencyLevel}
                         </div>
                       </div>
                     )}
