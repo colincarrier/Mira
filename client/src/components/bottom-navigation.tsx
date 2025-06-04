@@ -200,8 +200,8 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
           
           <button 
-            onClick={handleSettings}
-            className="tab-button"
+            onClick={() => handleTabChange("settings")}
+            className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
           >
             <Settings className="w-5 h-5" />
             <span className="text-xs">Settings</span>
