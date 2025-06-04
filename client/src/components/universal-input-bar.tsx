@@ -416,7 +416,7 @@ export default function UniversalInputBar({
             >
               <FileText className="w-6 h-6 text-purple-500 mb-1" />
               <span className="text-xs text-gray-600">
-                {uploadFileMutation.isPending ? "Uploading..." : "File Picker"}
+                {uploadFileMutation.isPending ? "Uploading..." : "Files"}
               </span>
             </button>
             <button
@@ -426,7 +426,7 @@ export default function UniversalInputBar({
             >
               <Image className="w-6 h-6 text-blue-500 mb-1" />
               <span className="text-xs text-gray-600">
-                {uploadImageMutation.isPending ? "Uploading..." : "Photo Upload"}
+                {uploadImageMutation.isPending ? "Uploading..." : "Media"}
               </span>
             </button>
           </div>
