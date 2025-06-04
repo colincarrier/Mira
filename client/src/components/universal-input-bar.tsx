@@ -43,8 +43,32 @@ export default function UniversalInputBar({
 
   const createVoiceNoteMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
+      // Create immediate placeholder note for voice recording
+      const placeholderResponse = await fetch("/api/notes/placeholder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "voice",
+          duration: recordingTime
+        }),
+        credentials: "include",
+      });
+      
+      if (!placeholderResponse.ok) {
+        throw new Error("Failed to create placeholder note");
+      }
+      
+      const placeholderNote = await placeholderResponse.json();
+      
+      // Immediately refresh to show placeholder
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      
+      // Now upload the actual audio
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
+      formData.append("noteId", placeholderNote.id.toString());
       
       const response = await fetch("/api/notes/voice", {
         method: "POST",
@@ -63,7 +87,7 @@ export default function UniversalInputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       handleResetRecording();
       toast({
-        title: "Voice note saved",
+        title: "Voice note processed",
         description: "Your voice note has been transcribed and enhanced by AI.",
       });
     },
@@ -80,8 +104,34 @@ export default function UniversalInputBar({
 
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
+      // Create immediate placeholder note
+      const placeholderResponse = await fetch("/api/notes/placeholder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "image",
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type
+        }),
+        credentials: "include",
+      });
+      
+      if (!placeholderResponse.ok) {
+        throw new Error("Failed to create placeholder note");
+      }
+      
+      const placeholderNote = await placeholderResponse.json();
+      
+      // Immediately refresh to show placeholder
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      
+      // Now upload the actual image
       const formData = new FormData();
       formData.append("image", file);
+      formData.append("noteId", placeholderNote.id.toString());
       
       const response = await fetch("/api/notes/image", {
         method: "POST",
@@ -100,8 +150,8 @@ export default function UniversalInputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setShowMediaPicker(false);
       toast({
-        title: "Image uploaded",
-        description: "Your image has been processed and enhanced by AI.",
+        title: "Image processed",
+        description: "Your image has been analyzed and enhanced by AI.",
       });
     },
     onError: (error) => {
@@ -116,8 +166,34 @@ export default function UniversalInputBar({
 
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
+      // Create immediate placeholder note
+      const placeholderResponse = await fetch("/api/notes/placeholder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "file",
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type
+        }),
+        credentials: "include",
+      });
+      
+      if (!placeholderResponse.ok) {
+        throw new Error("Failed to create placeholder note");
+      }
+      
+      const placeholderNote = await placeholderResponse.json();
+      
+      // Immediately refresh to show placeholder
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      
+      // Now upload the actual file
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("noteId", placeholderNote.id.toString());
       
       const response = await fetch("/api/notes/file", {
         method: "POST",
@@ -136,8 +212,8 @@ export default function UniversalInputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setShowMediaPicker(false);
       toast({
-        title: "File uploaded",
-        description: "Your file has been processed and enhanced by AI.",
+        title: "File processed",
+        description: "Your file has been analyzed and enhanced by AI.",
       });
     },
     onError: (error) => {

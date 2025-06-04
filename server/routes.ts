@@ -620,11 +620,68 @@ Respond with a JSON object containing:
     }
   });
 
+  // Placeholder note creation endpoint
+  app.post("/api/notes/placeholder", async (req, res) => {
+    try {
+      const { type, fileName, fileSize, mimeType, duration } = req.body;
+      
+      let placeholderContent = "";
+      let aiTitle = "";
+      
+      // Generate AI title based on type and context
+      if (type === "voice") {
+        aiTitle = "Voice Recording";
+        placeholderContent = `🎤 Recording voice note (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`;
+      } else if (type === "image") {
+        // Use AI to generate meaningful title from file context
+        const contextPrompt = `Generate a concise, meaningful title for an image file. The user is saving this image for a reason. Based on the filename "${fileName}" and type "${mimeType}", suggest what this image might be about and why they're saving it. Respond with just the title, no quotes or extra text. Make it human and contextual, not technical.`;
+        
+        try {
+          const titleResponse = await analyzeWithOpenAI(contextPrompt, "title-generation");
+          aiTitle = titleResponse.enhancedContent || titleResponse.suggestion || "Image Upload";
+        } catch (error) {
+          aiTitle = "Image Upload";
+        }
+        
+        placeholderContent = `📸 Processing image...`;
+      } else if (type === "file") {
+        // Use filename and type to generate meaningful context
+        const extension = fileName.split('.').pop()?.toLowerCase() || '';
+        const contextPrompt = `Generate a concise, meaningful title for a file the user is uploading. Filename: "${fileName}", Type: "${mimeType}". Consider why someone would save this type of file and what it might contain. Respond with just the title, no quotes or extra text. Make it human and contextual.`;
+        
+        try {
+          const titleResponse = await analyzeWithOpenAI(contextPrompt, "title-generation");
+          aiTitle = titleResponse.enhancedContent || titleResponse.suggestion || fileName;
+        } catch (error) {
+          aiTitle = fileName;
+        }
+        
+        placeholderContent = `📄 Processing file...`;
+      }
+      
+      // Create placeholder note
+      const note = await storage.createNote({
+        content: placeholderContent,
+        mode: type,
+        aiSuggestion: aiTitle,
+        isProcessing: true
+      });
+      
+      res.json(note);
+    } catch (error) {
+      console.error("Failed to create placeholder note:", error);
+      res.status(500).json({ message: "Failed to create placeholder note" });
+    }
+  });
+
   app.post("/api/notes/voice", aiRateLimit, upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No audio file provided" });
       }
+
+      const noteId = req.body.noteId;
+      let note;
 
       // Transcribe audio
       const transcription = await transcribeAudio(req.file.buffer);
@@ -633,12 +690,21 @@ Respond with a JSON object containing:
         return res.status(400).json({ message: "Failed to transcribe audio" });
       }
 
-      // Create note with transcription
-      const note = await storage.createNote({
-        content: transcription,
-        mode: "voice",
-        transcription,
-      });
+      if (noteId) {
+        // Update existing placeholder note
+        note = await storage.updateNote(parseInt(noteId), {
+          content: transcription,
+          transcription,
+          isProcessing: false,
+        });
+      } else {
+        // Create new note (fallback)
+        note = await storage.createNote({
+          content: transcription,
+          mode: "voice",
+          transcription,
+        });
+      }
 
       // Analyze with AI in the background
       analyzeWithOpenAI(transcription, "voice")
@@ -696,15 +762,27 @@ Respond with a JSON object containing:
         return res.status(400).json({ message: "No image file provided" });
       }
 
+      const noteId = req.body.noteId;
+      let note;
+
       // Convert image to base64 for AI analysis
       const imageBase64 = req.file.buffer.toString('base64');
       
-      // Create initial note with image description
-      const note = await storage.createNote({
-        content: `[Image uploaded: ${req.file.originalname}]`,
-        mode: "image",
-        imageData: imageBase64,
-      });
+      if (noteId) {
+        // Update existing placeholder note
+        note = await storage.updateNote(parseInt(noteId), {
+          content: `📸 Analyzing image...`,
+          imageData: imageBase64,
+          isProcessing: false,
+        });
+      } else {
+        // Create new note (fallback)
+        note = await storage.createNote({
+          content: `[Image uploaded: ${req.file.originalname}]`,
+          mode: "image",
+          imageData: imageBase64,
+        });
+      }
 
       // Analyze image with AI in the background
       analyzeWithOpenAI(`data:${req.file.mimetype};base64,${imageBase64}`, "image")
