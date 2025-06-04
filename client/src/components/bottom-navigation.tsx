@@ -5,9 +5,19 @@ interface BottomNavigationProps {
   onTabChange: (tab: "activity" | "todos" | "collections") => void;
   onNewNote: () => void;
   onSettings: () => void;
+  onCloseCapture?: () => void;
 }
 
-export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings }: BottomNavigationProps) {
+export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture }: BottomNavigationProps) {
+  const handleTabChange = (tab: "activity" | "todos" | "collections") => {
+    onCloseCapture?.();
+    onTabChange(tab);
+  };
+
+  const handleSettings = () => {
+    onCloseCapture?.();
+    onSettings();
+  };
   return (
     <>
       {/* Chat-style input box */}
@@ -38,7 +48,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
       <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50]" style={{ backgroundColor: '#f1efe8' }}>
         <div className="flex justify-around py-3">
           <button 
-            onClick={() => onTabChange("activity")}
+            onClick={() => handleTabChange("activity")}
             className={`tab-button ${activeTab === "activity" ? "active" : ""}`}
           >
             <Home className="w-5 h-5" />
@@ -46,7 +56,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
           
           <button 
-            onClick={() => onTabChange("todos")}
+            onClick={() => handleTabChange("todos")}
             className={`tab-button ${activeTab === "todos" ? "active" : ""}`}
           >
             <CheckSquare className="w-5 h-5" />
@@ -54,7 +64,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
           
           <button 
-            onClick={() => onTabChange("collections")}
+            onClick={() => handleTabChange("collections")}
             className={`tab-button ${activeTab === "collections" ? "active" : ""}`}
           >
             <Folder className="w-5 h-5" />
@@ -62,7 +72,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           </button>
           
           <button 
-            onClick={onSettings}
+            onClick={handleSettings}
             className="tab-button"
           >
             <Settings className="w-5 h-5" />

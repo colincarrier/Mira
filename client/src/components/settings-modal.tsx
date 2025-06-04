@@ -10,9 +10,10 @@ interface SettingsModalProps {
   activeTab: "activity" | "todos" | "collections";
   onTabChange: (tab: "activity" | "todos" | "collections") => void;
   onNewNote: () => void;
+  onCloseCapture?: () => void;
 }
 
-export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange, onNewNote }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange, onNewNote, onCloseCapture }: SettingsModalProps) {
   const [showAIComparison, setShowAIComparison] = useState(false);
 
   if (showAIComparison) {
@@ -50,6 +51,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
             onTabChange={onTabChange}
             onNewNote={onNewNote}
             onSettings={onClose}
+            onCloseCapture={onCloseCapture}
           />
         </div>
       </div>

@@ -103,6 +103,7 @@ export default function Home() {
         onTabChange={setActiveTab}
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onSettings={() => setIsSettingsModalOpen(true)}
+        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
       />
 
       {/* Modals */}
