@@ -102,7 +102,7 @@ export default function Home() {
         activeTab={activeTab} 
         onTabChange={setActiveTab}
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onSettings={() => setIsSettingsModalOpen(true)}
+        onSettings={() => navigate("/settings")}
         onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
       />
@@ -113,17 +113,7 @@ export default function Home() {
         onClose={() => setIsVoiceModalOpen(false)} 
       />
       
-      <SettingsModal 
-        isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)}
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          setIsSettingsModalOpen(false);
-        }}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-      />
+
 
       {/* Full Screen Capture */}
       <FullScreenCapture

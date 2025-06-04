@@ -20,7 +20,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   const addButtonRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (tab: "activity" | "todos" | "collections") => {
-    console.log("BottomNavigation handleTabChange called with:", tab);
     onCloseCapture?.();
     onTabChange(tab);
   };
@@ -81,8 +80,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     
     setTouchStart(null);
   };
-  console.log("BottomNavigation render - hideAddButton:", hideAddButton);
-  
   return (
     <>
       {/* Chat-style input box - anchored above navigation */}
