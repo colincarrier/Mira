@@ -219,10 +219,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             </button>
           </div>
 
-          {/* Main capture button - centered */}
+          {/* Main capture button - positioned above input bar */}
           <div 
             className="absolute left-1/2 transform -translate-x-1/2 z-[999999]"
-            style={{ bottom: '82px' }}
+            style={{ bottom: 'calc(24px + 48px + 10px)' }}
           >
             <button
               onClick={capturePhoto}
