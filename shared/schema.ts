@@ -14,6 +14,7 @@ export const notes = pgTable("notes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   audioUrl: text("audio_url"),
   transcription: text("transcription"),
+  imageData: text("image_data"), // Base64 encoded image data
   aiEnhanced: boolean("ai_enhanced").default(false),
   aiSuggestion: text("ai_suggestion"),
   aiContext: text("ai_context"),

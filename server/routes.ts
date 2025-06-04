@@ -690,6 +690,72 @@ Respond with a JSON object containing:
     }
   });
 
+  app.post("/api/notes/image", aiRateLimit, upload.single("image"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      // Convert image to base64 for AI analysis
+      const imageBase64 = req.file.buffer.toString('base64');
+      
+      // Create initial note with image description
+      const note = await storage.createNote({
+        content: `[Image uploaded: ${req.file.originalname}]`,
+        mode: "image",
+        imageData: imageBase64,
+      });
+
+      // Analyze image with AI in the background
+      analyzeWithOpenAI(`data:${req.file.mimetype};base64,${imageBase64}`, "image")
+        .then(async (analysis) => {
+          const updates: any = {
+            aiEnhanced: true,
+            aiSuggestion: analysis.suggestion,
+            aiContext: analysis.context,
+          };
+          
+          if (analysis.enhancedContent) {
+            updates.content = analysis.enhancedContent;
+          }
+          
+          await storage.updateNote(note.id, updates);
+          
+          // Create todos if found
+          for (const todoTitle of analysis.todos) {
+            await storage.createTodo({
+              title: todoTitle,
+              noteId: note.id,
+            });
+          }
+          
+          // Create collection if suggested
+          if (analysis.collectionSuggestion) {
+            const collections = await storage.getCollections();
+            const existingCollection = collections.find(
+              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+            );
+            
+            let collectionId = existingCollection?.id;
+            if (!existingCollection) {
+              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+              collectionId = newCollection.id;
+            }
+            
+            await storage.updateNote(note.id, { collectionId });
+          }
+        })
+        .catch(error => {
+          console.error("AI image analysis failed:", error);
+        });
+
+      res.json(note);
+    } catch (error) {
+      console.error("Image note creation failed:", error);
+      res.status(500).json({ message: "Failed to process image" });
+    }
+  });
+
   // Todos endpoints
   app.get("/api/todos", async (req, res) => {
     try {
