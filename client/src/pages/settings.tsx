@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3 } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,12 @@ export default function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [aiModel, setAiModel] = useState<'openai' | 'claude'>('claude');
   const [showEmojis, setShowEmojis] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showQuickProfile, setShowQuickProfile] = useState(false);
+  const [profileText, setProfileText] = useState('');
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
@@ -21,6 +27,152 @@ export default function Settings() {
   }>({
     queryKey: ["/api/stats/api-usage"],
   });
+
+  const { data: userProfile } = useQuery<{
+    personalBio?: string;
+    preferences?: any;
+    onboardingCompleted?: boolean;
+  }>({
+    queryKey: ["/api/profile", "demo"],
+  });
+
+  const onboardingMutation = useMutation({
+    mutationFn: async () => {
+      const onboardingNote = await apiRequest("/api/notes", "POST", {
+        content: `# Getting to Know You - Mira Onboarding
+
+Welcome to Mira! I'm here to be your intelligent memory and productivity partner. To provide you with the most personalized and helpful experience, I'd love to learn about you. Please take a few minutes to answer these questions - the more you share, the better I can assist you.
+
+## Basic Questions
+
+**1. What should I call you?**
+_Your preferred name..._
+
+**2. What do you do for work or study?**
+_Your profession, role, or field of study..._
+
+**3. What are your main goals or priorities right now?**
+_Personal goals, work projects, life aspirations..._
+
+**4. What challenges are you currently facing?**
+_Work challenges, personal obstacles, areas for improvement..._
+
+**5. What are your main interests and hobbies?**
+_Activities you enjoy, topics you are passionate about..._
+
+**6. How do you prefer to communicate and receive information?**
+_Direct, detailed, casual, formal, with examples, bullet points..._
+
+**7. What does your typical day or week look like?**
+_Daily routine, work schedule, peak productivity times..._
+
+**8. What values or principles are important to you?**
+_Core beliefs, what matters most in decisions..._
+
+**9. How do you prefer to learn new things?**
+_Visual, hands-on, reading, videos, practice, examples..._
+
+**10. What kind of support or assistance would be most helpful?**
+_Organization, reminders, research, planning, brainstorming..._
+
+## Advanced Questions (Optional)
+
+**11. How do you typically make important decisions?**
+_Analytical, intuitive, collaborative, quick, deliberate..._
+
+**12. How do you handle stress and pressure?**
+_Coping mechanisms, what helps you stay calm..._
+
+**13. How do you work best with others?**
+_Team dynamics, leadership style, collaboration preferences..._
+
+**14. What is your relationship with technology and tools?**
+_Comfort level, preferred apps, automation preferences..._
+
+**15. How do you approach creative or problem-solving tasks?**
+_Creative process, inspiration sources, ideation methods..._
+
+**16. How do you prefer to receive feedback and suggestions?**
+_Direct, gentle, detailed, with examples, timing preferences..._
+
+**17. What motivates and energizes you most?**
+_Achievements, helping others, learning, recognition..._
+
+**18. What kind of environment do you work best in?**
+_Quiet, collaborative, structured, flexible, home, office..._
+
+**19. Where do you see yourself in the next 1-3 years?**
+_Career goals, personal development, life changes..._
+
+**20. What makes you unique or what should I know that others might not?**
+_Special skills, unusual experiences, personal quirks..._
+
+---
+
+## Additional Information
+
+Feel free to paste any additional information about yourself here - personality test results, resume excerpts, contact lists, or anything else that would help me understand you better:
+
+_Your additional information..._
+
+---
+
+Once you've completed this, I'll create a personalized profile to help me assist you more effectively!`,
+        mode: "onboarding"
+      });
+      return onboardingNote;
+    },
+    onSuccess: (note) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({
+        title: "Onboarding Started",
+        description: "Your personalized questionnaire has been created. Complete it to help Mira learn about you!",
+      });
+      setShowOnboarding(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create onboarding questionnaire",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const quickProfileMutation = useMutation({
+    mutationFn: async (profileData: string) => {
+      return await apiRequest("/api/profile/quick", "POST", {
+        profileData,
+        userId: "demo"
+      });
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      toast({
+        title: "Profile Created",
+        description: "Your personal bio has been generated and saved!",
+      });
+      setShowQuickProfile(false);
+      setProfileText('');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create profile",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleCreateOnboarding = () => {
+    onboardingMutation.mutate();
+  };
+
+  const handleQuickProfile = () => {
+    if (profileText.trim()) {
+      quickProfileMutation.mutate(profileText);
+    }
+  };
 
   const handleClearData = async () => {
     if (confirm('Are you sure you want to delete all notes? This cannot be undone.')) {
@@ -88,6 +240,31 @@ export default function Settings() {
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
+        {/* Account Section */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-base font-medium text-gray-900">Account</h2>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User size={20} className="text-gray-500" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Demo User</div>
+                  <div className="text-xs text-gray-500">Not logged in</div>
+                </div>
+              </div>
+              <button
+                onClick={() => window.location.href = '/api/login'}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                <LogIn size={16} />
+                Log In
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Stats & Achievements */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-3 border-b border-gray-100">
@@ -96,59 +273,64 @@ export default function Settings() {
               Your Journey
             </h2>
           </div>
-          <div className="p-3 space-y-3">
-            {/* Compact Stats */}
-            <div className="grid grid-cols-4 gap-2">
-              <div className="text-center p-2 bg-blue-50 rounded">
-                <div className="text-lg font-bold text-blue-600">{noteCount}</div>
-                <div className="text-xs text-blue-600">Notes</div>
+          <div className="p-3">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Stats Column */}
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-gray-700">Stats</div>
+                <div className="grid grid-cols-2 gap-1">
+                  <div className="text-center p-1 bg-blue-50 rounded">
+                    <div className="text-sm font-bold text-blue-600">{noteCount}</div>
+                    <div className="text-xs text-blue-600">Notes</div>
+                  </div>
+                  <div className="text-center p-1 bg-green-50 rounded">
+                    <div className="text-sm font-bold text-green-600">{completedTodos}</div>
+                    <div className="text-xs text-green-600">Done</div>
+                  </div>
+                  <div className="text-center p-1 bg-purple-50 rounded">
+                    <div className="text-sm font-bold text-purple-600">{streakDays}</div>
+                    <div className="text-xs text-purple-600">Streak</div>
+                  </div>
+                  <div className="text-center p-1 bg-orange-50 rounded">
+                    <div className="text-sm font-bold text-orange-600">{productivityScore}%</div>
+                    <div className="text-xs text-orange-600">Score</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center p-2 bg-green-50 rounded">
-                <div className="text-lg font-bold text-green-600">{completedTodos}</div>
-                <div className="text-xs text-green-600">Done</div>
-              </div>
-              <div className="text-center p-2 bg-purple-50 rounded">
-                <div className="text-lg font-bold text-purple-600">{streakDays}</div>
-                <div className="text-xs text-purple-600">Streak</div>
-              </div>
-              <div className="text-center p-2 bg-orange-50 rounded">
-                <div className="text-lg font-bold text-orange-600">{productivityScore}%</div>
-                <div className="text-xs text-orange-600">Score</div>
-              </div>
-            </div>
 
-            {/* Compact Achievements */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-700">Achievements</span>
-                <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {achievements.slice(0, 4).map((achievement) => (
-                  <div 
-                    key={achievement.id} 
-                    className={`flex items-center gap-2 p-2 rounded text-xs ${
-                      achievement.unlocked 
-                        ? 'bg-yellow-50 border border-yellow-200' 
-                        : 'bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <span className={achievement.unlocked ? '' : 'grayscale opacity-50'}>
-                      {achievement.icon}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-medium truncate ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {achievement.name}
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div 
-                          className={`h-1 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
-                          style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
-                        />
+              {/* Achievements Column */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-700">Achievements</span>
+                  <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+                </div>
+                <div className="space-y-1">
+                  {achievements.slice(0, 2).map((achievement) => (
+                    <div 
+                      key={achievement.id} 
+                      className={`flex items-center gap-2 p-1 rounded text-xs ${
+                        achievement.unlocked 
+                          ? 'bg-yellow-50 border border-yellow-200' 
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <span className={achievement.unlocked ? '' : 'grayscale opacity-50'}>
+                        {achievement.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {achievement.name}
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-0.5">
+                          <div 
+                            className={`h-0.5 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
+                            style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -167,30 +349,60 @@ export default function Settings() {
               Help Mira learn about you to provide more personalized assistance.
             </div>
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-medium">?</span>
+              {userProfile?.personalBio ? (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-900">Your Profile</span>
                   </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-blue-900">Complete Onboarding</div>
-                    <div className="text-xs text-blue-600">Answer questions to personalize Mira</div>
+                  <div className="text-xs text-green-700 line-clamp-3">
+                    {userProfile.personalBio}
                   </div>
+                  <button 
+                    onClick={() => setShowQuickProfile(true)}
+                    className="mt-2 text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    Update Profile
+                  </button>
                 </div>
-                <div className="text-blue-600 text-sm">Start</div>
-              </button>
-              <button className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600">📋</span>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-gray-900">Quick Profile</div>
-                    <div className="text-xs text-gray-500">Paste info about yourself</div>
-                  </div>
-                </div>
-                <div className="text-gray-600 text-sm">Add</div>
-              </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={handleCreateOnboarding}
+                    disabled={onboardingMutation.isPending}
+                    className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-medium">?</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium text-blue-900">Complete Onboarding</div>
+                        <div className="text-xs text-blue-600">Answer questions to personalize Mira</div>
+                      </div>
+                    </div>
+                    <div className="text-blue-600 text-sm">
+                      {onboardingMutation.isPending ? 'Creating...' : 'Start'}
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => setShowQuickProfile(true)}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <span className="text-gray-600">📋</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium text-gray-900">Quick Profile</div>
+                        <div className="text-xs text-gray-500">Paste info about yourself</div>
+                      </div>
+                    </div>
+                    <div className="text-gray-600 text-sm">Add</div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
