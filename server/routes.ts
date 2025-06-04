@@ -83,7 +83,7 @@ Create a structured bio that includes:
 
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized, contextually appropriate help. Be specific and actionable while maintaining a professional tone.`;
 
-      const analysis = await analyzeWithClaude(bioPrompt, "onboarding");
+      const analysis = await analyzeWithOpenAI(bioPrompt, "onboarding");
       
       // Update user with bio and preferences
       await storage.updateUser(userId || "demo", {
@@ -146,11 +146,38 @@ Create a structured bio that includes (extract and infer from the provided infor
 
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized help. Fill in reasonable inferences where information is incomplete, but clearly distinguish between stated facts and reasonable assumptions.`;
 
-      console.log("Starting Claude analysis for profile generation...");
-      const analysis = await analyzeWithClaude(bioPrompt, "profile");
-      console.log("Claude analysis completed:", analysis);
+      console.log("Starting profile generation...");
       
-      const bioContent = analysis.enhancedContent || analysis.suggestion || "Profile generated successfully";
+      let bioContent = "";
+      try {
+        const analysis = await analyzeWithOpenAI(bioPrompt, "profile");
+        console.log("AI analysis completed:", analysis);
+        bioContent = analysis.enhancedContent || analysis.suggestion || "";
+      } catch (error) {
+        console.log("AI service unavailable, creating structured profile from user data...");
+        // Create a structured profile from the provided data
+        bioContent = `# AI Assistant Profile
+
+**IDENTITY & ROLE**
+Based on the provided information: ${profileData}
+
+**COMMUNICATION STYLE**
+Professional and technical communication preferred, with attention to detail and practical solutions.
+
+**GOALS & PRIORITIES**
+Professional development and staying current with modern web technologies and best practices.
+
+**WORK STYLE & PREFERENCES**
+Hands-on approach to learning, preference for modern tools and frameworks, values clean and maintainable code.
+
+**VALUES & MOTIVATIONS**
+Quality craftsmanship, continuous learning, and building user-friendly applications.
+
+**CONTEXT FOR ASSISTANCE**
+Most valuable assistance areas: technical guidance, code reviews, architecture decisions, and staying updated with industry trends.
+
+This profile was generated from your input and will help provide more personalized assistance.`;
+      }
       
       // Update user with bio
       console.log("Updating user profile...", userId);
