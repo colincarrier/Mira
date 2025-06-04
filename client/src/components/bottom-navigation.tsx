@@ -35,7 +35,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
         </div>
       </div>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50] bg-[hsl(var(--background))]">
+      <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50]" style={{ backgroundColor: '#f1efe8' }}>
         <div className="flex justify-around py-3">
           <button 
             onClick={() => onTabChange("activity")}
