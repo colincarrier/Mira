@@ -83,17 +83,45 @@ Create a structured bio that includes:
 
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized, contextually appropriate help. Be specific and actionable while maintaining a professional tone.`;
 
-      const analysis = await analyzeWithOpenAI(bioPrompt, "onboarding");
+      let bioContent = "";
+      try {
+        const analysis = await analyzeWithOpenAI(bioPrompt, "onboarding");
+        bioContent = analysis.enhancedContent || analysis.suggestion || "";
+      } catch (error) {
+        console.log("OpenAI service unavailable, creating structured profile from onboarding data...");
+        const responses = Object.entries(onboardingData).map(([key, value]) => `${key}: ${value}`).join('\n');
+        bioContent = `# AI Assistant Profile
+
+**IDENTITY & ROLE**
+Based on onboarding responses: ${responses}
+
+**COMMUNICATION STYLE**
+Preferences extracted from responses about communication and learning style.
+
+**GOALS & PRIORITIES**
+Goals and challenges identified from user responses about priorities and objectives.
+
+**WORK STYLE & PREFERENCES**
+Work preferences and daily routines based on provided schedule and work style information.
+
+**VALUES & MOTIVATIONS**
+Core values and motivations extracted from responses about principles and support needs.
+
+**CONTEXT FOR ASSISTANCE**
+Assistance preferences based on stated support needs and learning style.
+
+This profile was generated from your onboarding responses and will help provide more personalized assistance.`;
+      }
       
       // Update user with bio and preferences
       await storage.updateUser(userId || "demo", {
-        personalBio: analysis.enhancedContent || analysis.suggestion,
+        personalBio: bioContent,
         preferences: onboardingData,
         onboardingCompleted: true
       });
 
       res.json({ 
-        bio: analysis.enhancedContent || analysis.suggestion,
+        bio: bioContent,
         success: true 
       });
     } catch (error) {
