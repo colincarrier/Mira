@@ -19,9 +19,16 @@ export function useNotes() {
       return response.json();
     },
     onSuccess: () => {
+      // Force refresh all related data
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      // Also refetch immediately
+      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
+      queryClient.refetchQueries({ queryKey: ["/api/todos"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create note:", error);
     },
   });
 
