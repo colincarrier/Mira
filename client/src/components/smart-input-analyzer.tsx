@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, HelpCircle, ArrowRight, Brain } from "lucide-react";
+import { Lightbulb, HelpCircle, ArrowRight, Brain, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 interface TaxonomyResult {
   detected: boolean;
@@ -104,14 +105,24 @@ export default function SmartInputAnalyzer() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
-          <Brain className="w-8 h-8 text-blue-600" />
-          Smart Input Intelligence
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Test the AI taxonomy engine with pattern recognition and micro-questions
-        </p>
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to App
+          </Button>
+        </Link>
+        <div className="text-center flex-1">
+          <h2 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
+            <Brain className="w-8 h-8 text-blue-600" />
+            Smart Input Intelligence
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Test the AI taxonomy engine with pattern recognition and micro-questions
+          </p>
+        </div>
+        <div className="w-20"></div> {/* Spacer for centering */}
       </div>
 
       <Card>
