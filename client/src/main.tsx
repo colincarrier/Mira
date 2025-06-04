@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./basic-test";
+import App from "./App-simple";
 import "./index.css";
 
 // Register service worker for PWA capabilities and permission persistence
