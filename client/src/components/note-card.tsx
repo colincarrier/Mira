@@ -325,7 +325,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+                className="w-6 h-6 rounded-full bg-[#f9fafb] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
                 title="More options"
               >
                 <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
