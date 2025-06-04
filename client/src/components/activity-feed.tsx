@@ -114,12 +114,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {new Date(note.createdAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a")}
                   </span>
                   {note.todos.length > 0 && (
                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
