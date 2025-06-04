@@ -29,6 +29,9 @@ let apiUsageStats = {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register demo routes first to bypass frontend issues
+  registerDemoRoutes(app);
+
   // API Stats endpoint
   app.get("/api/stats/api-usage", async (req, res) => {
     res.json(apiUsageStats);
@@ -1039,9 +1042,6 @@ Provide a well-organized summary that captures the essence of this collection an
       res.status(500).json({ message: "Failed to reorder collections" });
     }
   });
-
-  // Register demo routes to bypass frontend module loading issues
-  registerDemoRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
