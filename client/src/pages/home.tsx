@@ -108,7 +108,10 @@ export default function Home() {
       {/* Bottom Navigation Tabs */}
       <BottomNavigation 
         activeTab={activeTab} 
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setIsFullScreenCaptureOpen(false);
+          setActiveTab(tab);
+        }}
       />
 
       {/* Modals */}
