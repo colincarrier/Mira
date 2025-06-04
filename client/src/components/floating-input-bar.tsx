@@ -66,7 +66,7 @@ export default function FloatingInputBar({
       {/* Floating input bar above navigation */}
       <div 
         ref={addButtonRef}
-        className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
+        className={`fixed left-4 right-4 transition-transform duration-300 ${
           isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
         }`}
         onTouchStart={handleTouchStart}
@@ -74,7 +74,7 @@ export default function FloatingInputBar({
         style={{ 
           zIndex: 9999,
           position: 'fixed',
-          bottom: '6rem',
+          bottom: 'calc(6rem + 2px)',
           left: '1rem',
           right: '1rem'
         }}

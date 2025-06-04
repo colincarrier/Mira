@@ -227,7 +227,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             className="fixed left-1/2 transform -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white/50 hover:border-white/70 transition-all shadow-2xl"
             style={{ 
               zIndex: 10001,
-              bottom: 'calc(6rem + 80px + 6px)', // 6rem (input bar position) + 80px (input bar height) + 6px gap
+              bottom: 'calc(6rem + 2px + 80px + 6px)', // 6rem + 2px (input bar position) + 80px (input bar height) + 6px gap
               backgroundColor: 'transparent'
             }}
           >
