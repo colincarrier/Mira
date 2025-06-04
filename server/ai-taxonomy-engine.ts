@@ -176,28 +176,35 @@ export interface TaxonomyAnalysis {
 
 export async function analyzeTaxonomy(content: string): Promise<TaxonomyAnalysis | null> {
   const contentLower = content.toLowerCase();
+  console.log("Analyzing content:", contentLower);
   
-  // Find matching patterns
+  // Find matching patterns with improved scoring
   const matches = Object.entries(AI_TAXONOMY_PATTERNS).map(([category, pattern]) => {
     const triggerMatches = pattern.triggers.filter(trigger => 
       contentLower.includes(trigger)
-    ).length;
+    );
     
-    const confidence = triggerMatches / pattern.triggers.length;
+    console.log(`Category ${category}: triggers=${pattern.triggers}, matches=${triggerMatches}`);
+    
+    if (triggerMatches.length === 0) return null;
+    
+    // Better confidence calculation: any match gets base confidence + bonus for multiple matches
+    const confidence = Math.min(0.8 + (triggerMatches.length - 1) * 0.1, 1.0);
     
     return {
       category,
       confidence,
-      pattern
+      pattern,
+      matchedTriggers: triggerMatches
     };
-  }).filter(match => match.confidence > 0);
+  }).filter(match => match !== null);
 
+  console.log("Found matches:", matches.length);
   if (matches.length === 0) return null;
 
   // Get the best match
   const bestMatch = matches.sort((a, b) => b.confidence - a.confidence)[0];
-  
-  if (bestMatch.confidence < 0.2) return null; // Minimum confidence threshold
+  console.log("Best match:", bestMatch.category, "confidence:", bestMatch.confidence);
 
   return {
     category: bestMatch.category,
