@@ -60,6 +60,9 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   phoneNumber: varchar("phone_number"), // For future contact-based discovery
+  personalBio: text("personal_bio"),
+  preferences: json("preferences"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   privacySettings: json("privacy_settings").default({
     includePrivateDataInSharedNotes: false,
     allowContactDiscovery: true,
