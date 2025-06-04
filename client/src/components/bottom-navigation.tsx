@@ -57,7 +57,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   return (
     <>
       {/* Chat-style input box - anchored to nav bar top with swipe functionality */}
-      {!hideAddButton && (
+      {hideAddButton !== true && (
         <div 
           ref={addButtonRef}
           className={`fixed bottom-24 left-4 right-4 z-[9999] transition-transform duration-300 ${
@@ -91,7 +91,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
       )}
       
       {/* Hidden state indicator - tap to restore */}
-      {isAddButtonHidden && !hideAddButton && (
+      {isAddButtonHidden && hideAddButton !== true && (
         <div 
           className="fixed bottom-24 right-4 z-[9999] cursor-pointer"
           onClick={() => setIsAddButtonHidden(false)}
