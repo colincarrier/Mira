@@ -635,30 +635,61 @@ Examples:
           right: '1rem'
         }}
       >
-        <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
-          <input
-            type="text"
+        <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
+          <textarea
             placeholder="Add/edit anything..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900"
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            rows={1}
+            style={{
+              minHeight: '20px',
+              maxHeight: '120px'
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+            }}
           />
-          <button 
-            onClick={() => setShowUpdateArea(true)}
-            className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setShowUpdateArea(true)}
-            className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setShowUpdateArea(true)}
-            className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
+          {isTyping ? (
+            <>
+              <button 
+                onClick={() => setShowUpdateArea(true)}
+                className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={handleSendMessage}
+                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => setShowUpdateArea(true)}
+                className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setShowUpdateArea(true)}
+                className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setShowUpdateArea(true)}
+                className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

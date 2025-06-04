@@ -135,13 +135,13 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
               <>
                 <button 
                   onClick={onNewNote}
-                  className="w-8 h-8 hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors bg-[#dcd7d0]"
+                  className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={onCameraCapture || onNewNote}
-                  className="w-8 h-8 hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa2]"
+                  className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                 >
                   <Camera className="w-4 h-4" />
                 </button>
