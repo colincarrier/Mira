@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter, Plus, Users, Play, Utensils } from "lucide-react";
 import { getCollectionColor } from "@/lib/collection-colors";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface CollectionWithCount {
   id: number;
@@ -60,9 +61,27 @@ export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
   const [draggedCollection, setDraggedCollection] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (reorderedCollections: CollectionWithCount[]) => {
+      // Update display order for each collection
+      const updates = reorderedCollections.map((collection, index) => ({
+        id: collection.id,
+        displayOrder: index
+      }));
+      
+      return apiRequest("POST", "/api/collections/reorder", { updates });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+    },
   });
 
   // Define the preferred order for collections
@@ -158,7 +177,7 @@ export default function CollectionsView() {
 
 
       <div className="grid grid-cols-3 gap-2">
-        {filteredAndSortedCollections.map((collection) => {
+        {filteredAndSortedCollections.map((collection, index) => {
           const IconComponent = getIconComponent(collection.icon);
           const colors = getCollectionColor(collection.color);
           
@@ -170,20 +189,42 @@ export default function CollectionsView() {
                 setDraggedCollection(collection.id);
                 e.dataTransfer.effectAllowed = 'move';
               }}
-              onDragEnd={() => setDraggedCollection(null)}
-              onDragOver={(e) => e.preventDefault()}
+              onDragEnd={() => {
+                setDraggedCollection(null);
+                setDragOverIndex(null);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverIndex(index);
+              }}
+              onDragLeave={() => {
+                setDragOverIndex(null);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
                 if (draggedCollection && draggedCollection !== collection.id) {
-                  // Simple visual feedback - actual reordering would need backend support
-                  console.log(`Moving collection ${draggedCollection} to position of ${collection.id}`);
+                  const draggedIndex = filteredAndSortedCollections.findIndex(c => c.id === draggedCollection);
+                  const targetIndex = index;
+                  
+                  if (draggedIndex !== -1 && targetIndex !== -1) {
+                    const reorderedCollections = [...filteredAndSortedCollections];
+                    const [draggedItem] = reorderedCollections.splice(draggedIndex, 1);
+                    reorderedCollections.splice(targetIndex, 0, draggedItem);
+                    
+                    reorderMutation.mutate(reorderedCollections);
+                  }
                 }
                 setDraggedCollection(null);
+                setDragOverIndex(null);
               }}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-all cursor-pointer touch-manipulation ${
-                draggedCollection === collection.id ? 'opacity-50' : ''
-              }`}
+              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation ${
+                draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
+              } ${
+                dragOverIndex === index && draggedCollection !== collection.id 
+                  ? 'border-blue-400 border-2' 
+                  : 'border-[hsl(var(--border))]'
+              } rounded-lg p-3 hover:shadow-sm`}
             >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -203,7 +244,7 @@ export default function CollectionsView() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
+                  <h3 className="font-bold text-sm leading-tight">{collection.name}</h3>
                   <div className="space-y-0">
                     <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
                       {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
