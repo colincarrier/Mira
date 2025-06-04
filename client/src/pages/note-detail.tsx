@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -599,26 +599,32 @@ Examples:
           </div>
         )}
       </div>
-      {/* Add/Edit Button - Fixed Position */}
-      {!isAddButtonHidden && (
-        <button
-          onClick={() => setShowUpdateArea(true)}
-          className="fixed z-50 bg-[hsl(var(--sage-green))] text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
-          style={{
-            position: 'fixed',
-            right: '16px',
-            bottom: '88px',
-            width: '56px',
-            height: '56px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50
-          }}
-        >
-          <Edit3 className="w-6 h-6" />
-        </button>
-      )}
+
+      {/* Input Bar - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-3 z-40">
+        <div className="flex items-center gap-3 max-w-md mx-auto">
+          <button
+            onClick={() => {/* Voice functionality can be added later */}}
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <Mic className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          
+          <button
+            onClick={() => setShowUpdateArea(true)}
+            className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2.5 text-left text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            Add/edit anything
+          </button>
+          
+          <button
+            onClick={() => setShowUpdateArea(true)}
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <Plus className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
