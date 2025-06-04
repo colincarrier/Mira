@@ -25,6 +25,7 @@ export interface IStorage {
   createCollection(collection: InsertCollection): Promise<Collection>;
   getCollections(): Promise<Collection[]>;
   getCollection(id: number): Promise<Collection | undefined>;
+  updateCollection(id: number, updates: Partial<Collection>): Promise<Collection>;
   getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]>;
 }
 
@@ -188,6 +189,16 @@ export class DatabaseStorage implements IStorage {
   async getCollection(id: number): Promise<Collection | undefined> {
     const [collection] = await db.select().from(collections).where(eq(collections.id, id));
     return collection || undefined;
+  }
+
+  async updateCollection(id: number, updates: Partial<Collection>): Promise<Collection> {
+    const [collection] = await db
+      .update(collections)
+      .set(updates)
+      .where(eq(collections.id, id))
+      .returning();
+    if (!collection) throw new Error("Collection not found");
+    return collection;
   }
 
   async getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]> {

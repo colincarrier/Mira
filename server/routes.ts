@@ -945,6 +945,26 @@ Provide a well-organized summary that captures the essence of this collection an
     }
   });
 
+  app.post("/api/collections/reorder", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      
+      if (!updates || !Array.isArray(updates)) {
+        return res.status(400).json({ message: "Updates array required" });
+      }
+
+      // Update each collection's display order
+      for (const update of updates) {
+        await storage.updateCollection(update.id, { displayOrder: update.displayOrder });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Collection reorder error:", error);
+      res.status(500).json({ message: "Failed to reorder collections" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

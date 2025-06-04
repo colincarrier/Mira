@@ -201,56 +201,15 @@ export default function CollectionsView() {
         <h2 className="text-2xl font-serif font-medium">Collections</h2>
         <div className="flex items-center gap-2">
           <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            <Search size={18} />
+          </button>
+          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
             <Plus size={18} />
           </button>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search collections..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] focus:border-transparent"
-        />
-      </div>
 
-      {/* Filter Pills */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setSortBy("recent")}
-          className={`px-3 py-1.5 text-xs rounded-full ${
-            sortBy === "recent" 
-              ? "bg-[hsl(var(--ocean-blue))] text-white" 
-              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
-          }`}
-        >
-          Recent
-        </button>
-        <button
-          onClick={() => setSortBy("count")}
-          className={`px-3 py-1.5 text-xs rounded-full ${
-            sortBy === "count" 
-              ? "bg-[hsl(var(--ocean-blue))] text-white" 
-              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
-          }`}
-        >
-          Most Notes
-        </button>
-        <button
-          onClick={() => setSortBy("name")}
-          className={`px-3 py-1.5 text-xs rounded-full ${
-            sortBy === "name" 
-              ? "bg-[hsl(var(--ocean-blue))] text-white" 
-              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
-          }`}
-        >
-          A-Z
-        </button>
-      </div>
 
       <div className="grid grid-cols-3 gap-2">
         {filteredAndSortedCollections.map((collection) => {
