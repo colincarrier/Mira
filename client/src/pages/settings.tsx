@@ -195,50 +195,23 @@ export default function Settings() {
             </h2>
           </div>
           <div className="p-3 space-y-3">
-            {/* Stats Grid - Collection Style Layout */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-sm">{noteCount}</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="font-medium text-xs leading-tight">Notes</h3>
-                  </div>
-                </div>
+            {/* Stats Grid - 2 Rows by 2 Columns */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '8px' }}>
+              <div className="text-center p-2 bg-blue-50 rounded">
+                <div className="text-lg font-bold text-blue-600">{noteCount}</div>
+                <div className="text-xs text-blue-600">Notes</div>
               </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-sm">{todoCount}</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="font-medium text-xs leading-tight">To-do's</h3>
-                  </div>
-                </div>
+              <div className="text-center p-2 bg-purple-50 rounded">
+                <div className="text-lg font-bold text-purple-600">{todoCount}</div>
+                <div className="text-xs text-purple-600">To-do's</div>
               </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-sm">{productivityScore}%</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="font-medium text-xs leading-tight">Done</h3>
-                  </div>
-                </div>
+              <div className="text-center p-2 bg-green-50 rounded">
+                <div className="text-lg font-bold text-green-600">{productivityScore}%</div>
+                <div className="text-xs text-green-600">Done</div>
               </div>
-              
-              <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 font-bold text-sm">{streakDays}</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="font-medium text-xs leading-tight">Streak days</h3>
-                  </div>
-                </div>
+              <div className="text-center p-2 bg-orange-50 rounded">
+                <div className="text-lg font-bold text-orange-600">{streakDays}</div>
+                <div className="text-xs text-orange-600">Streak days</div>
               </div>
             </div>
 
