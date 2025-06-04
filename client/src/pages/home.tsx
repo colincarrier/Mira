@@ -7,7 +7,7 @@ import CollectionsView from "@/components/collections-view";
 import VoiceModal from "@/components/voice-modal";
 import SettingsModal from "@/components/settings-modal";
 import BottomNavigation from "@/components/bottom-navigation";
-import FullScreenCapture from "@/components/full-screen-capture";
+
 import { Settings } from "lucide-react";
 
 export default function Home() {
@@ -24,7 +24,7 @@ export default function Home() {
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
+
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
 
@@ -97,21 +97,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Test Element */}
-      <div 
-        className="fixed bottom-32 left-4 right-4 bg-red-500 text-white p-2 text-center rounded-lg"
-        style={{ zIndex: 99999 }}
-      >
-        TEST: Should appear on all pages - Tab: {activeTab}
-      </div>
-
       {/* Bottom Navigation */}
       <BottomNavigation 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onNewNote={() => {}}
         onSettings={() => setIsSettingsModalOpen(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
+        onCloseCapture={() => {}}
+        hideAddButton={true}
       />
 
       {/* Modals */}
@@ -125,14 +118,8 @@ export default function Home() {
         onClose={() => setIsSettingsModalOpen(false)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-      />
-
-      {/* Full Screen Capture */}
-      <FullScreenCapture
-        isOpen={isFullScreenCaptureOpen}
-        onClose={() => setIsFullScreenCaptureOpen(false)}
+        onNewNote={() => {}}
+        onCloseCapture={() => {}}
       />
     </div>
   );
