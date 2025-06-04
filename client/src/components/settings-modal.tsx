@@ -17,7 +17,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
 
   if (showAIComparison) {
     return (
-      <div className={`fixed inset-0 bg-white z-50 transform transition-transform duration-300 ${
+      <div className={`fixed inset-0 bg-white z-40 transform transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "translate-x-full"
       }`} style={{ 
         willChange: 'transform',
@@ -57,7 +57,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
   }
 
   return (
-    <div className={`fixed inset-0 bg-white z-50 transform transition-transform duration-300 ${
+    <div className={`fixed inset-0 bg-white z-40 transform transition-transform duration-300 ${
       isOpen ? "translate-x-0" : "translate-x-full"
     }`} style={{ 
       willChange: 'transform',
