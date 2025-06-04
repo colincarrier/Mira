@@ -37,19 +37,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { onboardingData, userId } = req.body;
       
-      // Generate bio using AI
-      const bioPrompt = `Based on the following user responses to onboarding questions, create a comprehensive but concise personal bio that captures their personality, goals, preferences, and context. Make it friendly and useful for an AI assistant to understand them better:
+      // Generate bio using AI for assistant context
+      const bioPrompt = `You are creating a comprehensive user profile for an AI assistant. Based on the following user responses, create a detailed bio that will help the AI assistant understand how to best serve this person.
 
+User Responses:
 ${JSON.stringify(onboardingData, null, 2)}
 
-Create a bio that includes:
-- Who they are and what they do
-- Their goals and challenges
-- How they prefer to work and communicate
-- What motivates them
-- Any unique aspects about them
+Create a structured bio that includes:
 
-Keep it under 500 words but comprehensive enough to provide meaningful context.`;
+**IDENTITY & ROLE**
+- Name and preferred way to be addressed
+- Professional role, industry, and level of experience
+- Current life stage and circumstances
+
+**COMMUNICATION STYLE**
+- How they prefer to receive information (direct, detailed, casual, formal)
+- Communication preferences and response style
+- Learning style and information processing preferences
+
+**GOALS & PRIORITIES**
+- Primary professional and personal objectives
+- Current projects and focus areas
+- Short-term and long-term aspirations
+
+**CHALLENGES & PAIN POINTS**
+- Current obstacles and areas where they need support
+- Stress triggers and pressure points
+- Areas for improvement or growth
+
+**WORK STYLE & PREFERENCES**
+- Daily routines and peak productivity times
+- Preferred work environment and conditions
+- Decision-making approach and collaboration style
+- Technology comfort level and tool preferences
+
+**VALUES & MOTIVATIONS**
+- Core principles and beliefs that guide decisions
+- What energizes and motivates them
+- Recognition and feedback preferences
+
+**CONTEXT FOR ASSISTANCE**
+- How they prefer to be supported
+- Types of help most valuable to them
+- Specific areas where AI assistance would be most beneficial
+
+Write this as a comprehensive profile that an AI assistant would reference to provide personalized, contextually appropriate help. Be specific and actionable while maintaining a professional tone.`;
 
       const analysis = await analyzeWithClaude(bioPrompt, "onboarding");
       
@@ -74,19 +106,45 @@ Keep it under 500 words but comprehensive enough to provide meaningful context.`
     try {
       const { profileData, userId } = req.body;
       
-      // Generate bio from quick profile data
-      const bioPrompt = `Based on the following information about a user, create a comprehensive personal bio that an AI assistant can use to better understand and help them:
+      // Generate comprehensive bio from quick profile data
+      const bioPrompt = `You are creating a comprehensive user profile for an AI assistant. Based on the provided information, create a detailed bio that will help the AI assistant understand how to best serve this person.
 
+User Information:
 ${profileData}
 
-Create a structured bio that captures:
-- Their identity and background
-- Professional context
-- Personal interests and preferences
-- Communication style
-- Goals and priorities
+Create a structured bio that includes (extract and infer from the provided information):
 
-Keep it concise but informative.`;
+**IDENTITY & ROLE**
+- Name and preferred way to be addressed
+- Professional role, industry, and level of experience
+- Current life stage and circumstances
+
+**COMMUNICATION STYLE**
+- Inferred communication preferences and style
+- Likely learning preferences based on background
+- Professional or casual tone preference
+
+**GOALS & PRIORITIES**
+- Apparent professional and personal objectives
+- Current focus areas mentioned or implied
+- Inferred aspirations based on role/context
+
+**WORK STYLE & PREFERENCES**
+- Inferred work style and preferences
+- Technology comfort level if mentioned
+- Collaboration style based on role
+
+**VALUES & MOTIVATIONS**
+- Core values that can be inferred
+- What likely motivates them based on their background
+- Recognition preferences based on role
+
+**CONTEXT FOR ASSISTANCE**
+- How they would likely prefer to be supported
+- Types of help most valuable based on their profile
+- Specific areas where AI assistance would be most beneficial
+
+Write this as a comprehensive profile that an AI assistant would reference to provide personalized help. Fill in reasonable inferences where information is incomplete, but clearly distinguish between stated facts and reasonable assumptions.`;
 
       const analysis = await analyzeWithClaude(bioPrompt, "profile");
       

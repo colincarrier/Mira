@@ -11,7 +11,9 @@ export default function Settings() {
   const [showEmojis, setShowEmojis] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showQuickProfile, setShowQuickProfile] = useState(false);
+  const [showBioPreview, setShowBioPreview] = useState(false);
   const [profileText, setProfileText] = useState('');
+  const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,103 +39,25 @@ export default function Settings() {
   });
 
   const onboardingMutation = useMutation({
-    mutationFn: async () => {
-      const onboardingNote = await apiRequest("/api/notes", "POST", {
-        content: `# Getting to Know You - Mira Onboarding
-
-Welcome to Mira! I'm here to be your intelligent memory and productivity partner. To provide you with the most personalized and helpful experience, I'd love to learn about you. Please take a few minutes to answer these questions - the more you share, the better I can assist you.
-
-## Basic Questions
-
-**1. What should I call you?**
-_Your preferred name..._
-
-**2. What do you do for work or study?**
-_Your profession, role, or field of study..._
-
-**3. What are your main goals or priorities right now?**
-_Personal goals, work projects, life aspirations..._
-
-**4. What challenges are you currently facing?**
-_Work challenges, personal obstacles, areas for improvement..._
-
-**5. What are your main interests and hobbies?**
-_Activities you enjoy, topics you are passionate about..._
-
-**6. How do you prefer to communicate and receive information?**
-_Direct, detailed, casual, formal, with examples, bullet points..._
-
-**7. What does your typical day or week look like?**
-_Daily routine, work schedule, peak productivity times..._
-
-**8. What values or principles are important to you?**
-_Core beliefs, what matters most in decisions..._
-
-**9. How do you prefer to learn new things?**
-_Visual, hands-on, reading, videos, practice, examples..._
-
-**10. What kind of support or assistance would be most helpful?**
-_Organization, reminders, research, planning, brainstorming..._
-
-## Advanced Questions (Optional)
-
-**11. How do you typically make important decisions?**
-_Analytical, intuitive, collaborative, quick, deliberate..._
-
-**12. How do you handle stress and pressure?**
-_Coping mechanisms, what helps you stay calm..._
-
-**13. How do you work best with others?**
-_Team dynamics, leadership style, collaboration preferences..._
-
-**14. What is your relationship with technology and tools?**
-_Comfort level, preferred apps, automation preferences..._
-
-**15. How do you approach creative or problem-solving tasks?**
-_Creative process, inspiration sources, ideation methods..._
-
-**16. How do you prefer to receive feedback and suggestions?**
-_Direct, gentle, detailed, with examples, timing preferences..._
-
-**17. What motivates and energizes you most?**
-_Achievements, helping others, learning, recognition..._
-
-**18. What kind of environment do you work best in?**
-_Quiet, collaborative, structured, flexible, home, office..._
-
-**19. Where do you see yourself in the next 1-3 years?**
-_Career goals, personal development, life changes..._
-
-**20. What makes you unique or what should I know that others might not?**
-_Special skills, unusual experiences, personal quirks..._
-
----
-
-## Additional Information
-
-Feel free to paste any additional information about yourself here - personality test results, resume excerpts, contact lists, or anything else that would help me understand you better:
-
-_Your additional information..._
-
----
-
-Once you've completed this, I'll create a personalized profile to help me assist you more effectively!`,
-        mode: "onboarding"
+    mutationFn: async (answers: Record<string, string>) => {
+      return await apiRequest("/api/profile/onboarding", "POST", {
+        onboardingData: answers,
+        userId: "demo"
       });
-      return onboardingNote;
     },
-    onSuccess: (note) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({
-        title: "Onboarding Started",
-        description: "Your personalized questionnaire has been created. Complete it to help Mira learn about you!",
+        title: "Profile Created",
+        description: "Your AI assistant profile has been generated and saved!",
       });
       setShowOnboarding(false);
+      setOnboardingAnswers({});
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create onboarding questionnaire",
+        description: "Failed to create profile from onboarding",
         variant: "destructive"
       });
     }
@@ -164,8 +88,30 @@ Once you've completed this, I'll create a personalized profile to help me assist
     }
   });
 
-  const handleCreateOnboarding = () => {
-    onboardingMutation.mutate();
+  const onboardingQuestions = [
+    { id: 'name', question: 'What should I call you?', placeholder: 'Your preferred name...' },
+    { id: 'role', question: 'What do you do for work or study?', placeholder: 'Your profession, role, or field of study...' },
+    { id: 'goals', question: 'What are your main goals or priorities right now?', placeholder: 'Personal goals, work projects, life aspirations...' },
+    { id: 'challenges', question: 'What challenges are you currently facing?', placeholder: 'Work challenges, personal obstacles, areas for improvement...' },
+    { id: 'interests', question: 'What are your main interests and hobbies?', placeholder: 'Activities you enjoy, topics you are passionate about...' },
+    { id: 'communication', question: 'How do you prefer to communicate and receive information?', placeholder: 'Direct, detailed, casual, formal, with examples, bullet points...' },
+    { id: 'schedule', question: 'What does your typical day or week look like?', placeholder: 'Daily routine, work schedule, peak productivity times...' },
+    { id: 'values', question: 'What values or principles are important to you?', placeholder: 'Core beliefs, what matters most in decisions...' },
+    { id: 'learning', question: 'How do you prefer to learn new things?', placeholder: 'Visual, hands-on, reading, videos, practice, examples...' },
+    { id: 'support', question: 'What kind of support or assistance would be most helpful?', placeholder: 'Organization, reminders, research, planning, brainstorming...' }
+  ];
+
+  const handleSubmitOnboarding = () => {
+    const answeredQuestions = Object.keys(onboardingAnswers).length;
+    if (answeredQuestions < 3) {
+      toast({
+        title: "Please answer more questions",
+        description: "Answer at least 3 questions to create your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+    onboardingMutation.mutate(onboardingAnswers);
   };
 
   const handleQuickProfile = () => {
@@ -248,68 +194,69 @@ Once you've completed this, I'll create a personalized profile to help me assist
               Your Journey
             </h2>
           </div>
-          <div className="p-3 space-y-3">
-            {/* Stats Row */}
-            <div className="grid grid-cols-4 gap-2">
-              <div className="text-center p-2 bg-blue-50 rounded">
-                <div className="text-lg font-bold text-blue-600">{noteCount}</div>
-                <div className="text-xs text-blue-600">Notes</div>
-              </div>
-              <div className="text-center p-2 bg-purple-50 rounded">
-                <div className="text-lg font-bold text-purple-600">{todoCount}</div>
-                <div className="text-xs text-purple-600">To-do's</div>
-              </div>
-              <div className="text-center p-2 bg-green-50 rounded">
-                <div className="text-lg font-bold text-green-600">{productivityScore}%</div>
-                <div className="text-xs text-green-600">Done</div>
-              </div>
-              <div className="text-center p-2 bg-orange-50 rounded">
-                <div className="text-lg font-bold text-orange-600">{streakDays}</div>
-                <div className="text-xs text-orange-600">Streak</div>
-              </div>
-            </div>
-
-            {/* Achievements Full Width */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-700">Achievements</span>
-                <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
-              </div>
+          <div className="p-3">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Stats Column */}
               <div className="space-y-2">
-                {achievements.map((achievement) => (
-                  <div 
-                    key={achievement.id} 
-                    className={`flex items-center gap-3 p-2 rounded-lg ${
-                      achievement.unlocked 
-                        ? 'bg-yellow-50 border border-yellow-200' 
-                        : 'bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <span className={`text-xl ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
-                      {achievement.icon}
-                    </span>
-                    <div className="flex-1">
-                      <div className={`text-sm font-medium ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {achievement.name}
-                      </div>
-                      <div className="text-xs text-gray-500 mb-1">{achievement.description}</div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-300 ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
-                            style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
-                          />
+                <div className="text-xs font-medium text-gray-700">Stats</div>
+                <div className="grid grid-cols-2 gap-1">
+                  <div className="text-center p-1 bg-blue-50 rounded">
+                    <div className="text-sm font-bold text-blue-600">{noteCount}</div>
+                    <div className="text-xs text-blue-600">Notes</div>
+                  </div>
+                  <div className="text-center p-1 bg-purple-50 rounded">
+                    <div className="text-sm font-bold text-purple-600">{todoCount}</div>
+                    <div className="text-xs text-purple-600">To-do's</div>
+                  </div>
+                  <div className="text-center p-1 bg-green-50 rounded">
+                    <div className="text-sm font-bold text-green-600">{productivityScore}%</div>
+                    <div className="text-xs text-green-600">Done</div>
+                  </div>
+                  <div className="text-center p-1 bg-orange-50 rounded">
+                    <div className="text-sm font-bold text-orange-600">{streakDays}</div>
+                    <div className="text-xs text-orange-600">Streak</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievements Column */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-700">Achievements</span>
+                  <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+                </div>
+                <div className="space-y-1">
+                  {achievements.slice(0, 3).map((achievement) => (
+                    <div 
+                      key={achievement.id} 
+                      className={`flex items-center gap-2 p-1 rounded ${
+                        achievement.unlocked 
+                          ? 'bg-yellow-50 border border-yellow-200' 
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <span className={`text-sm ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
+                        {achievement.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-xs font-medium truncate ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {achievement.name}
                         </div>
-                        <span className="text-xs text-gray-500 font-medium">
-                          {achievement.progress}/{achievement.target}
-                        </span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1">
+                            <div 
+                              className={`h-1 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
+                              style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500 font-medium">
+                            {achievement.progress}/{achievement.target}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    {achievement.unlocked && (
-                      <Star className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -332,25 +279,33 @@ Once you've completed this, I'll create a personalized profile to help me assist
                 <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">Your Profile</span>
+                    <span className="text-sm font-medium text-green-900">Your AI Assistant Profile</span>
                   </div>
-                  <div className="text-xs text-green-700 line-clamp-3">
-                    {userProfile.personalBio}
+                  <div className="text-xs text-green-700 mb-2">
+                    {userProfile.personalBio.slice(0, 150)}...
                   </div>
-                  <button 
-                    onClick={() => setShowQuickProfile(true)}
-                    className="mt-2 text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    Update Profile
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowBioPreview(true)}
+                      className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                    >
+                      <Info className="w-3 h-3" />
+                      Read Full Bio
+                    </button>
+                    <button 
+                      onClick={() => setShowQuickProfile(true)}
+                      className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      Update
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
                   <button 
-                    onClick={handleCreateOnboarding}
-                    disabled={onboardingMutation.isPending}
-                    className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    onClick={() => setShowOnboarding(true)}
+                    className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -361,9 +316,7 @@ Once you've completed this, I'll create a personalized profile to help me assist
                         <div className="text-xs text-blue-600">Answer questions to personalize Mira</div>
                       </div>
                     </div>
-                    <div className="text-blue-600 text-sm">
-                      {onboardingMutation.isPending ? 'Creating...' : 'Start'}
-                    </div>
+                    <div className="text-blue-600 text-sm">Start</div>
                   </button>
                   <button 
                     onClick={() => setShowQuickProfile(true)}
