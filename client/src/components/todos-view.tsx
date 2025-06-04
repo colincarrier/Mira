@@ -292,30 +292,92 @@ export default function TodosView() {
         ))}
       </div>
 
-      <div className="space-y-2">
-        {Object.entries(groupedTodos).map(([groupKey, group], groupIndex) => (
-          <div key={groupKey}>
-            {group.todos.map((todo, todoIndex) => (
-              <div key={todo.id} className="relative">
-                {/* Faint gray connecting line for grouped items */}
-                {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
-                  <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
+      <div className="space-y-4">
+        {/* Active Todos Section */}
+        {activeFilter === 'all' || activeFilter === 'pinned' || activeFilter === 'urgent' || activeFilter === 'today' ? (
+          <>
+            {/* Active todos */}
+            <div className="space-y-2">
+              {Object.entries(groupedTodos).filter(([_, group]) => 
+                group.todos.some(todo => !todo.completed)
+              ).map(([groupKey, group], groupIndex) => (
+                <div key={groupKey}>
+                  {group.todos.filter(todo => !todo.completed).map((todo, todoIndex) => (
+                    <div key={todo.id} className="relative">
+                      {/* Faint gray connecting line for grouped items */}
+                      {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
+                        <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
+                      )}
+                      <TodoItem
+                        todo={todo}
+                        onToggle={handleToggleTodo}
+                        onPin={handlePinTodo}
+                        onArchive={handleArchiveTodo}
+                        onClick={handleTodoClick}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Done Section */}
+            {todos?.some(t => t.completed && !t.archived) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Done</h3>
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(groupedTodos).filter(([_, group]) => 
+                    group.todos.some(todo => todo.completed)
+                  ).map(([groupKey, group], groupIndex) => (
+                    <div key={groupKey}>
+                      {group.todos.filter(todo => todo.completed).map((todo, todoIndex) => (
+                        <div key={todo.id} className="relative opacity-60">
+                          <TodoItem
+                            todo={todo}
+                            onToggle={handleToggleTodo}
+                            onPin={handlePinTodo}
+                            onArchive={handleArchiveTodo}
+                            onClick={handleTodoClick}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Show filtered todos normally for specific filters */
+          <div className="space-y-2">
+            {Object.entries(groupedTodos).map(([groupKey, group], groupIndex) => (
+              <div key={groupKey}>
+                {group.todos.map((todo, todoIndex) => (
+                  <div key={todo.id} className="relative">
+                    {/* Faint gray connecting line for grouped items */}
+                    {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
+                      <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
+                    )}
+                    <TodoItem
+                      todo={todo}
+                      onToggle={handleToggleTodo}
+                      onPin={handlePinTodo}
+                      onArchive={handleArchiveTodo}
+                      onClick={handleTodoClick}
+                    />
+                  </div>
+                ))}
+                {/* Add spacing between groups */}
+                {Object.keys(groupedTodos).length > 1 && groupIndex < Object.keys(groupedTodos).length - 1 && (
+                  <div className="h-2"></div>
                 )}
-                <TodoItem
-                  todo={todo}
-                  onToggle={handleToggleTodo}
-                  onPin={handlePinTodo}
-                  onArchive={handleArchiveTodo}
-                  onClick={handleTodoClick}
-                />
               </div>
             ))}
-            {/* Add spacing between groups */}
-            {Object.keys(groupedTodos).length > 1 && groupIndex < Object.keys(groupedTodos).length - 1 && (
-              <div className="h-2"></div>
-            )}
           </div>
-        ))}
+        )}
       </div>
 
       {filteredTodos.length === 0 && (
