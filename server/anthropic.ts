@@ -106,9 +106,9 @@ Focus on being helpful, insightful, and actionable while maintaining the user's 
         enhancedContent: content,
         todos: [],
         collectionSuggestion: {
-          name: "General Notes",
-          icon: "lightbulb",
-          color: "blue"
+          name: "Dev Tests",
+          icon: "code",
+          color: "gray"
         },
         richContext: {
           recommendedActions: [],
