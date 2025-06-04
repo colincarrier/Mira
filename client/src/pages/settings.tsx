@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -195,33 +195,33 @@ export default function Settings() {
             </h2>
           </div>
           <div className="p-3">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Stats Column */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Left Column - Stats */}
               <div className="space-y-2">
-                <div className="text-xs font-medium text-gray-700">Stats</div>
-                <div className="grid grid-cols-2 gap-1">
-                  <div className="text-center p-1 bg-blue-50 rounded">
-                    <div className="text-sm font-bold text-blue-600">{noteCount}</div>
-                    <div className="text-xs text-blue-600">Notes</div>
+                <div className="text-xs font-medium text-gray-700 mb-2">Your Stats</div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                    <span className="text-xs text-blue-600">Notes</span>
+                    <span className="text-sm font-bold text-blue-600">{noteCount}</span>
                   </div>
-                  <div className="text-center p-1 bg-purple-50 rounded">
-                    <div className="text-sm font-bold text-purple-600">{todoCount}</div>
-                    <div className="text-xs text-purple-600">To-do's</div>
+                  <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                    <span className="text-xs text-purple-600">To-do's</span>
+                    <span className="text-sm font-bold text-purple-600">{todoCount}</span>
                   </div>
-                  <div className="text-center p-1 bg-green-50 rounded">
-                    <div className="text-sm font-bold text-green-600">{productivityScore}%</div>
-                    <div className="text-xs text-green-600">Done</div>
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                    <span className="text-xs text-green-600">Done</span>
+                    <span className="text-sm font-bold text-green-600">{productivityScore}%</span>
                   </div>
-                  <div className="text-center p-1 bg-orange-50 rounded">
-                    <div className="text-sm font-bold text-orange-600">{streakDays}</div>
-                    <div className="text-xs text-orange-600">Streak</div>
+                  <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                    <span className="text-xs text-orange-600">Streak</span>
+                    <span className="text-sm font-bold text-orange-600">{streakDays} days</span>
                   </div>
                 </div>
               </div>
 
-              {/* Achievements Column */}
+              {/* Right Column - Achievements */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-gray-700">Achievements</span>
                   <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
                 </div>
@@ -508,6 +508,159 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">Help Mira Learn About You</h2>
+                <button 
+                  onClick={() => setShowOnboarding(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <p className="text-gray-600">
+                  Answer these questions to help Mira provide more personalized assistance. You can skip questions and come back later.
+                </p>
+                
+                {onboardingQuestions.map((q, index) => (
+                  <div key={q.id} className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      {index + 1}. {q.question}
+                    </label>
+                    <textarea
+                      value={onboardingAnswers[q.id] || ''}
+                      onChange={(e) => setOnboardingAnswers(prev => ({
+                        ...prev,
+                        [q.id]: e.target.value
+                      }))}
+                      placeholder={q.placeholder}
+                      className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                    />
+                  </div>
+                ))}
+                
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="text-sm text-gray-500">
+                    {Object.keys(onboardingAnswers).length} of {onboardingQuestions.length} answered
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setShowOnboarding(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleSubmitOnboarding}
+                      disabled={onboardingMutation.isPending}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {onboardingMutation.isPending ? 'Creating Profile...' : 'Create AI Profile'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Profile Modal */}
+      {showQuickProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Quick Profile</h2>
+                <button 
+                  onClick={() => {
+                    setShowQuickProfile(false);
+                    setProfileText('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Paste information about yourself - bio, resume, personality test results, or anything that helps Mira understand you better.
+                </p>
+                
+                <textarea
+                  value={profileText}
+                  onChange={(e) => setProfileText(e.target.value)}
+                  placeholder="Tell me about yourself... your role, interests, goals, work style, or anything else that would help an AI assistant understand you better."
+                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={8}
+                />
+                
+                <div className="flex gap-3 justify-end">
+                  <button 
+                    onClick={() => {
+                      setShowQuickProfile(false);
+                      setProfileText('');
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleQuickProfile}
+                    disabled={!profileText.trim() || quickProfileMutation.isPending}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {quickProfileMutation.isPending ? 'Generating...' : 'Generate AI Profile'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bio Preview Modal */}
+      {showBioPreview && userProfile?.personalBio && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Your AI Assistant Profile</h2>
+                <button 
+                  onClick={() => setShowBioPreview(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="prose prose-sm max-w-none">
+                <div className="whitespace-pre-line text-gray-700">
+                  {userProfile.personalBio}
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-6 pt-4 border-t">
+                <button 
+                  onClick={() => setShowBioPreview(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

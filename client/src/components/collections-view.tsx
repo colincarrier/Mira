@@ -59,14 +59,32 @@ export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
   const [, setLocation] = useLocation();
+  const [draggedCollection, setDraggedCollection] = useState<number | null>(null);
   
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
   });
 
+  // Define the preferred order for collections
+  const collectionOrder = ["To-do's", "Personal", "Home", "Work"];
+  
+  const getCollectionPriority = (name: string) => {
+    const index = collectionOrder.indexOf(name);
+    return index === -1 ? 999 : index;
+  };
+
   const filteredAndSortedCollections = collections?.filter(collection =>
     collection.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
+    // First sort by priority (To-do's, Personal, Home, Work)
+    const aPriority = getCollectionPriority(a.name);
+    const bPriority = getCollectionPriority(b.name);
+    
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    
+    // Then sort by selected criteria
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
@@ -180,24 +198,35 @@ export default function CollectionsView() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {filteredAndSortedCollections.map((collection) => {
+      {/* Main Collections Grid - Prioritized Layout */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {filteredAndSortedCollections.slice(0, 4).map((collection, index) => {
           const IconComponent = getIconComponent(collection.icon);
           const colors = getCollectionColor(collection.color);
           
           return (
             <div 
               key={collection.id} 
+              draggable
+              onDragStart={() => setDraggedCollection(collection.id)}
+              onDragEnd={() => setDraggedCollection(null)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                // Handle collection reordering here
+              }}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer touch-manipulation"
+              className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-4 hover:shadow-sm transition-all cursor-pointer touch-manipulation ${
+                draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
+              }`}
             >
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-8 h-8 flex items-center justify-center">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-10 h-10 flex items-center justify-center">
                   {collection.iconUrl ? (
                     <img 
                       src={collection.iconUrl} 
                       alt={collection.name}
-                      className="w-6 h-6 rounded object-cover"
+                      className="w-8 h-8 rounded object-cover"
                       onError={(e) => {
                         // Fallback to icon if image fails to load
                         e.currentTarget.style.display = 'none';
