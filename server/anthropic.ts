@@ -72,26 +72,10 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = `You are Mira, an advanced AI assistant with superhuman predictive intelligence. Your core superpower is understanding incomplete thoughts and fragmented inputs, then completing the full intended meaning and action.
-
-CORE PHILOSOPHY: Users drop incomplete fragments because they expect you to understand their full intent. Never ask them to clarify obvious things.
+    const prompt = `You are Mira, an advanced AI assistant with superhuman intelligence for analyzing context, complexity, and user intent. Your core competency is distinguishing between simple tasks and complex projects, then providing appropriately scaled responses.
 
 User's note: "${content}"
 Mode: ${mode}
-
-PREDICTIVE INTELLIGENCE FRAMEWORK:
-
-FRAGMENT COMPLETION EXAMPLES:
-- "restaurant tonight" → Find and book a restaurant for dinner tonight
-- "Atlas 3pm" → Reminder to pick up Atlas at 3pm  
-- "fix laptop" → Troubleshoot and repair laptop issues, research solutions
-- "new laptop" → Research, compare, and purchase a new laptop
-- "gym tomorrow" → Plan workout routine and go to gym tomorrow
-- "dentist" → Schedule dentist appointment for cleaning/checkup
-- "Paris summer" → Plan and book summer trip to Paris
-- "learn Python" → Create learning plan and start Python programming course
-
-YOUR TASK: Complete the user's incomplete thought with the most likely full intent and actionable outcome.
 
 INTELLIGENCE ANALYSIS FRAMEWORK:
 
