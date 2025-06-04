@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
+import { setupViteAssetMiddleware } from "./vite-middleware-fix";
 
 const app = express();
 app.use(express.json());
@@ -44,30 +45,13 @@ app.use((req, res, next) => {
   await initializeDatabase();
   await initializeStandardCollections();
   
-  // In development, add middleware to handle Vite assets before other routes
+  // Apply Vite asset middleware first in development
   if (app.get("env") === "development") {
-    // Handle Vite dev server assets with correct MIME types
-    app.use((req, res, next) => {
-      const url = req.originalUrl;
-      
-      // Skip catch-all for Vite-specific routes
-      if (url.startsWith('/@') || 
-          url.startsWith('/node_modules/.vite') ||
-          url.startsWith('/src/') ||
-          url.includes('.js') || 
-          url.includes('.css') ||
-          url.includes('.map') ||
-          url.includes('.ts') ||
-          url.includes('.tsx')) {
-        return next();
-      }
-      
-      next();
-    });
+    setupViteAssetMiddleware(app);
   }
 
   const server = await registerRoutes(app);
-  
+
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
