@@ -7,6 +7,7 @@ import CollectionsView from "@/components/collections-view";
 import VoiceModal from "@/components/voice-modal";
 import SettingsModal from "@/components/settings-modal";
 import BottomNavigation from "@/components/bottom-navigation";
+import FullScreenCapture from "@/components/full-screen-capture";
 
 import { Settings } from "lucide-react";
 
@@ -24,6 +25,7 @@ export default function Home() {
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
 
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
@@ -101,10 +103,9 @@ export default function Home() {
       <BottomNavigation 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
-        onNewNote={() => {}}
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onSettings={() => setIsSettingsModalOpen(true)}
-        onCloseCapture={() => {}}
-        hideAddButton={true}
+        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
       />
 
       {/* Modals */}
@@ -118,8 +119,14 @@ export default function Home() {
         onClose={() => setIsSettingsModalOpen(false)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onNewNote={() => {}}
-        onCloseCapture={() => {}}
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
+      />
+
+      {/* Full Screen Capture */}
+      <FullScreenCapture
+        isOpen={isFullScreenCaptureOpen}
+        onClose={() => setIsFullScreenCaptureOpen(false)}
       />
     </div>
   );
