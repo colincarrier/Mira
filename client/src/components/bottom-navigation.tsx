@@ -56,40 +56,46 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   };
   return (
     <>
+      {/* DEBUG: Test element */}
+      <div 
+        className="fixed bottom-20 left-4 right-4 bg-red-500 text-white p-2 text-center"
+        style={{ zIndex: 99999 }}
+      >
+        DEBUG: Tab = {activeTab} | hideAddButton = {String(hideAddButton)}
+      </div>
+
       {/* Chat-style input box - anchored to nav bar top with swipe functionality */}
-      {hideAddButton !== true && (
-        <div 
-          ref={addButtonRef}
-          className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
-            isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
-          }`}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          style={{ zIndex: 10000 }}
-        >
-          <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
-            <input
-              type="text"
-              placeholder="Add/edit anything..."
-              className="flex-1 bg-transparent border-none outline-none text-sm placeholder-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
-              onFocus={onNewNote}
-              readOnly
-            />
-            <button 
-              onClick={onNewNote}
-              className="w-8 h-8 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa1]"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={onNewNote}
-              className="w-8 h-8 hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors bg-[#a1c4cfcc]"
-            >
-              <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-            </button>
-          </div>
+      <div 
+        ref={addButtonRef}
+        className={`fixed bottom-32 left-4 right-4 transition-transform duration-300 ${
+          isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+        }`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ zIndex: 10000, backgroundColor: 'lime', padding: '20px' }}
+      >
+        <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
+          <input
+            type="text"
+            placeholder="Add/edit anything..."
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900"
+            onFocus={onNewNote}
+            readOnly
+          />
+          <button 
+            onClick={onNewNote}
+            className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={onNewNote}
+            className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <Mic className="w-4 h-4" />
+          </button>
         </div>
-      )}
+      </div>
       
       {/* Hidden state indicator - tap to restore */}
       {isAddButtonHidden && hideAddButton !== true && (
