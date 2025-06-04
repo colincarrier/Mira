@@ -19,6 +19,7 @@ function Router() {
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
       <Route path="/todo/:id" component={TodoDetail} />
+      <Route path="/ai-demo" component={SmartInputAnalyzer} />
       <Route component={NotFound} />
     </Switch>
   );
