@@ -12,7 +12,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     <>
       {/* Chat-style input box */}
       <div className="fixed bottom-20 left-4 right-4 z-[60]">
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3">
+        <div className="border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-[#f4f5f5]">
           <input
             type="text"
             placeholder="Add/edit anything..."
