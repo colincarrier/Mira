@@ -98,7 +98,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
             right: '1rem'
           }}
         >
-          <div className="border border-gray-300 rounded-[24px] px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
+          <div className="border border-gray-300 rounded-[16px] px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
             <textarea
               placeholder="Add/edit anything..."
               className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
