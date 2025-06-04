@@ -1,4 +1,4 @@
-import { Home, CheckSquare, Folder, Plus, Settings, Mic, Camera } from "lucide-react";
+import { Home, CheckSquare, Folder, Plus, Settings, Mic, Camera, Send } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface BottomNavigationProps {
@@ -14,11 +14,34 @@ interface BottomNavigationProps {
 export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture, hideAddButton, onCameraCapture }: BottomNavigationProps) {
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const addButtonRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (tab: "activity" | "todos" | "collections") => {
     onCloseCapture?.();
     onTabChange(tab);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setIsTyping(value.length > 0);
+  };
+
+  const handleSendMessage = () => {
+    if (inputValue.trim()) {
+      // TODO: Send the message
+      console.log("Sending message:", inputValue);
+      setInputValue("");
+      setIsTyping(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
   };
 
   const handleSettings = () => {
@@ -79,29 +102,50 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
               type="text"
               placeholder="Add/edit anything..."
               className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
             />
-            <button 
-              onClick={onNewNote}
-              className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={onCameraCapture || onNewNote}
-              className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={onNewNote}
-              className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-            >
-              <Mic className="w-4 h-4" />
-            </button>
+            {isTyping ? (
+              <>
+                <button 
+                  onClick={onNewNote}
+                  className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={handleSendMessage}
+                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={onNewNote}
+                  className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={onCameraCapture || onNewNote}
+                  className="w-8 h-8 hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa2]"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={onNewNote}
+                  className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
-      
       {/* Hidden state indicator - tap to restore */}
       {isAddButtonHidden && hideAddButton !== true && (
         <div 

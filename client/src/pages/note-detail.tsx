@@ -18,6 +18,8 @@ export default function NoteDetail() {
   const [showContextDialog, setShowContextDialog] = useState(false);
   const [updateInput, setUpdateInput] = useState('');
   const [showUpdateArea, setShowUpdateArea] = useState(true);
+  const [inputValue, setInputValue] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -126,6 +128,28 @@ export default function NoteDetail() {
   const handleDeleteNote = () => {
     if (window.confirm('Are you sure you want to delete this note?')) {
       deleteNoteMutation.mutate();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setIsTyping(value.length > 0);
+  };
+
+  const handleSendMessage = () => {
+    if (inputValue.trim()) {
+      // TODO: Send the message for note update
+      console.log("Sending message for note update:", inputValue);
+      setInputValue("");
+      setIsTyping(false);
+      setShowUpdateArea(true);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
     }
   };
 
