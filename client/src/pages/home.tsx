@@ -7,8 +7,9 @@ import CollectionsView from "@/components/collections-view";
 import VoiceModal from "@/components/voice-modal";
 import BottomNavigation from "@/components/bottom-navigation";
 import FullScreenCapture from "@/components/full-screen-capture";
+import Settings from "@/pages/settings";
 
-import { Settings } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
 
 export default function Home() {
   const [location, navigate] = useLocation();
@@ -24,6 +25,7 @@ export default function Home() {
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
@@ -102,7 +104,7 @@ export default function Home() {
         activeTab={activeTab} 
         onTabChange={setActiveTab}
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onSettings={() => navigate("/settings")}
+        onSettings={() => setShowSettings(true)}
         onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
       />

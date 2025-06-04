@@ -16,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/settings" component={Settings} />
+      <Route path="/#/settings" component={Settings} />
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
       <Route path="/todo/:id" component={TodoDetail} />
