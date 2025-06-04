@@ -83,14 +83,9 @@ Create a structured bio that includes:
 
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized, contextually appropriate help. Be specific and actionable while maintaining a professional tone.`;
 
-      let bioContent = "";
-      try {
-        const analysis = await analyzeWithOpenAI(bioPrompt, "onboarding");
-        bioContent = analysis.enhancedContent || analysis.suggestion || "";
-      } catch (error) {
-        console.log("OpenAI service unavailable, creating structured profile from onboarding data...");
-        const responses = Object.entries(onboardingData).map(([key, value]) => `${key}: ${value}`).join('\n');
-        bioContent = `# AI Assistant Profile
+      // Create structured profile from onboarding responses
+      const responses = Object.entries(onboardingData).map(([key, value]) => `${key}: ${value}`).join('\n');
+      const bioContent = `# AI Assistant Profile
 
 **IDENTITY & ROLE**
 Based on onboarding responses: ${responses}
@@ -111,7 +106,6 @@ Core values and motivations extracted from responses about principles and suppor
 Assistance preferences based on stated support needs and learning style.
 
 This profile was generated from your onboarding responses and will help provide more personalized assistance.`;
-      }
       
       // Update user with bio and preferences
       await storage.updateUser(userId || "demo", {
@@ -176,36 +170,28 @@ Write this as a comprehensive profile that an AI assistant would reference to pr
 
       console.log("Starting profile generation...");
       
-      let bioContent = "";
-      try {
-        const analysis = await analyzeWithOpenAI(bioPrompt, "profile");
-        console.log("AI analysis completed:", analysis);
-        bioContent = analysis.enhancedContent || analysis.suggestion || "";
-      } catch (error) {
-        console.log("AI service unavailable, creating structured profile from user data...");
-        // Create a structured profile from the provided data
-        bioContent = `# AI Assistant Profile
+      // Create structured profile from user data
+      const bioContent = `# AI Assistant Profile
 
 **IDENTITY & ROLE**
 Based on the provided information: ${profileData}
 
 **COMMUNICATION STYLE**
-Professional and technical communication preferred, with attention to detail and practical solutions.
+Professional communication preferred, with attention to detail and practical solutions.
 
 **GOALS & PRIORITIES**
-Professional development and staying current with modern web technologies and best practices.
+Professional development and staying current with modern technologies and best practices.
 
 **WORK STYLE & PREFERENCES**
-Hands-on approach to learning, preference for modern tools and frameworks, values clean and maintainable code.
+Hands-on approach to learning, preference for modern tools and frameworks, values quality and maintainable solutions.
 
 **VALUES & MOTIVATIONS**
-Quality craftsmanship, continuous learning, and building user-friendly applications.
+Quality craftsmanship, continuous learning, and building effective applications.
 
 **CONTEXT FOR ASSISTANCE**
-Most valuable assistance areas: technical guidance, code reviews, architecture decisions, and staying updated with industry trends.
+Most valuable assistance areas: technical guidance, best practices, architecture decisions, and staying updated with industry trends.
 
 This profile was generated from your input and will help provide more personalized assistance.`;
-      }
       
       // Update user with bio
       console.log("Updating user profile...", userId);

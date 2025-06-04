@@ -196,7 +196,7 @@ export default function Settings() {
           </div>
           <div className="p-3 space-y-3">
             {/* Stats Grid - 2x2 Thumbnails */}
-            <div className="grid grid-cols-2 gap-2 rows-2">
+            <div className="grid grid-cols-2 grid-rows-2 gap-2">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">{noteCount}</div>
                 <div className="text-xs text-blue-600">Notes</div>
