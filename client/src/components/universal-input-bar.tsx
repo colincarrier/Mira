@@ -256,7 +256,7 @@ export default function UniversalInputBar({
   };
 
   return (
-    <div className={`relative flex items-end gap-1.5 bg-white rounded-2xl p-3 shadow-sm border border-gray-200 ${className}`}>
+    <div className={`relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300 ${className}`}>
       {/* Waveform overlay when recording */}
       {isRecording && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl z-10">
@@ -292,10 +292,18 @@ export default function UniversalInputBar({
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
         placeholder={isRecording ? "Recording voice note..." : placeholder}
-        className="flex-1 resize-none border-none outline-none text-gray-700 placeholder-gray-400 bg-transparent min-h-[20px] max-h-[120px]"
+        className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
         rows={1}
-        style={{ lineHeight: '1.25' }}
+        style={{
+          minHeight: '20px',
+          maxHeight: '120px'
+        }}
         disabled={isRecording}
+        onInput={(e) => {
+          const target = e.target as HTMLTextAreaElement;
+          target.style.height = 'auto';
+          target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+        }}
       />
       
       <div className="flex items-center gap-1.5">
