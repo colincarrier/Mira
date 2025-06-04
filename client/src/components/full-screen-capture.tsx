@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Mic, X, Send, ArrowLeft, Settings } from 'lucide-react';
+import { Camera, Mic, X, Send, ArrowLeft, Settings, Upload, Image, FileText } from 'lucide-react';
 import { useNotes } from '@/hooks/use-notes';
 import { useToast } from '@/hooks/use-toast';
 
@@ -8,7 +8,7 @@ interface FullScreenCaptureProps {
   onClose: () => void;
 }
 
-type CaptureMode = 'text' | 'camera' | 'voice';
+type CaptureMode = 'text' | 'camera' | 'voice' | 'upload-image' | 'upload-file';
 
 export default function FullScreenCapture({ isOpen, onClose }: FullScreenCaptureProps) {
   const [captureMode, setCaptureMode] = useState<CaptureMode>('camera');
@@ -16,11 +16,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
@@ -192,6 +195,72 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     }
   };
 
+  // File upload handlers
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      
+      // If it's an image, create a preview URL
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setUploadedImageUrl(url);
+        setCaptureMode('upload-image');
+      } else {
+        setCaptureMode('upload-file');
+      }
+      
+      // Auto-fill title with filename
+      setNoteTitle(file.name);
+    }
+  };
+
+  const handleUploadNote = async () => {
+    if (!selectedFile) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('title', noteTitle || selectedFile.name);
+      formData.append('content', noteText);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const result = await response.json();
+      
+      toast({
+        title: "File uploaded successfully",
+        description: "Your file has been saved as a note.",
+      });
+
+      // Reset and close
+      setSelectedFile(null);
+      setUploadedImageUrl('');
+      setNoteText('');
+      setNoteTitle('');
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Could not upload the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetUpload = () => {
+    setSelectedFile(null);
+    setUploadedImageUrl('');
+    setNoteText('');
+    setNoteTitle('');
+    setCaptureMode('camera');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -308,6 +377,18 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   >
                     <Send className="w-4 h-4" />
                   </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Image className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -407,6 +488,147 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
         </div>
       )}
+
+      {/* Upload Image Mode */}
+      {captureMode === 'upload-image' && (
+        <div className="relative w-full h-full bg-[#FEFFFE] dark:bg-[#1C1C1E]">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 bg-[#F2F2F7] dark:bg-[#2C2C2E] border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={resetUpload}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+            
+            <button
+              onClick={handleUploadNote}
+              disabled={!selectedFile}
+              className="px-4 py-2 bg-[#007AFF] text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0056CC] transition-colors"
+            >
+              Save
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Image Preview */}
+            {uploadedImageUrl && (
+              <div className="mb-4">
+                <img 
+                  src={uploadedImageUrl} 
+                  alt="Preview" 
+                  className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-700"
+                />
+              </div>
+            )}
+
+            {/* Title */}
+            <input
+              type="text"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              placeholder="Title"
+              className="w-full text-2xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-2"
+            />
+            
+            {/* Date */}
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </div>
+            
+            {/* Content */}
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Add a description..."
+              className="w-full h-32 resize-none border-none outline-none bg-transparent text-base leading-relaxed text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Upload File Mode */}
+      {captureMode === 'upload-file' && (
+        <div className="relative w-full h-full bg-[#FEFFFE] dark:bg-[#1C1C1E]">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 bg-[#F2F2F7] dark:bg-[#2C2C2E] border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={resetUpload}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+            
+            <button
+              onClick={handleUploadNote}
+              disabled={!selectedFile}
+              className="px-4 py-2 bg-[#007AFF] text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0056CC] transition-colors"
+            >
+              Save
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* File Info */}
+            {selectedFile && (
+              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-8 h-8 text-gray-500" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{selectedFile.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Title */}
+            <input
+              type="text"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              placeholder="Title"
+              className="w-full text-2xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-2"
+            />
+            
+            {/* Date */}
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </div>
+            
+            {/* Content */}
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Add a description..."
+              className="w-full h-32 resize-none border-none outline-none bg-transparent text-base leading-relaxed text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        onChange={handleFileSelect}
+        accept="image/*,application/pdf,.doc,.docx,.txt,.rtf"
+        className="hidden"
+      />
     </div>
   );
 }
