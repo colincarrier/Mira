@@ -195,7 +195,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black">
+    <div className="fixed inset-0 z-[40] bg-black">
 
       {/* Camera Mode */}
       {captureMode === 'camera' && (
