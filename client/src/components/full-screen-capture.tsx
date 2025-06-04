@@ -220,16 +220,11 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
 
           {/* Main capture button - positioned above input bar */}
-          <div 
-            className="absolute left-1/2 transform -translate-x-1/2 z-[999999]"
-            style={{ bottom: '100px' }}
+          <button
+            onClick={capturePhoto}
+            className="fixed bottom-24 left-1/2 transform -translate-x-1/2 w-20 h-20 rounded-full bg-white/50 border-4 border-white/70 hover:bg-white/60 transition-all shadow-2xl z-[999999]"
           >
-            <button
-              onClick={capturePhoto}
-              className="w-20 h-20 rounded-full bg-white/50 border-4 border-white/70 hover:bg-white/60 transition-all shadow-2xl"
-            >
-            </button>
-          </div>
+          </button>
 
           {/* Bottom mode switcher */}
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[10001]">
