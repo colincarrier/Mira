@@ -321,14 +321,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleShare}
-            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-            title="Share note"
-          >
-            <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-          </button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -367,6 +359,14 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          <button
+            onClick={handleShare}
+            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+            title="Share note"
+          >
+            <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+          </button>
         </div>
       </div>
       {/* Content with iOS Notes-style formatting */}

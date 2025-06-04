@@ -23,7 +23,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     onTabChange(tab);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInputValue(value);
     setIsTyping(value.length > 0);
@@ -38,8 +38,9 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -97,7 +98,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
             right: '1rem'
           }}
         >
-          <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
+          <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
             <textarea
               placeholder="Add/edit anything..."
               className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
