@@ -409,6 +409,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
         </div>
       )}
+
+      {/* iOS Voice Recorder */}
+      <IOSVoiceRecorder 
+        isOpen={isVoiceRecorderOpen} 
+        onClose={() => setIsVoiceRecorderOpen(false)} 
+      />
     </div>
   );
 }
