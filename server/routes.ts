@@ -783,7 +783,18 @@ Provide a concise, actionable response that adds value beyond just the task titl
             note.content.trim().length > 10 && 
             !note.content.startsWith('🎉 Welcome to Mira')
           );
-          return { ...collection, noteCount: meaningfulNotes.length };
+          
+          // Count open todos for this collection
+          const openTodoCount = notes.reduce((count, note) => {
+            const openTodos = note.todos.filter(todo => !todo.completed);
+            return count + openTodos.length;
+          }, 0);
+          
+          return { 
+            ...collection, 
+            noteCount: meaningfulNotes.length,
+            openTodoCount 
+          };
         })
       );
       res.json(collectionsWithCounts);

@@ -12,6 +12,7 @@ interface CollectionWithCount {
   color: string;
   iconUrl?: string;
   noteCount: number;
+  openTodoCount: number;
   createdAt: string;
 }
 
