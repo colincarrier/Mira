@@ -5,6 +5,22 @@ import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
 
 const app = express();
+
+// Fix MIME type and security headers for ES modules
+app.use((req, res, next) => {
+  // Set proper MIME types for JavaScript modules
+  if (req.url.includes('.js') || req.url.includes('.jsx') || req.url.includes('.ts') || req.url.includes('.tsx')) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  }
+  
+  // Security headers for development
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
