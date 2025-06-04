@@ -15,8 +15,6 @@ interface BottomNavigationProps {
 export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture, hideAddButton, onCameraCapture }: BottomNavigationProps) {
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const addButtonRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (tab: "activity" | "todos" | "collections" | "settings") => {
@@ -24,25 +22,11 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     onTabChange(tab);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    setIsTyping(value.length > 0);
-  };
-
-  const handleSendMessage = () => {
-    if (inputValue.trim()) {
-      // TODO: Send the message
-      console.log("Sending message:", inputValue);
-      setInputValue("");
-      setIsTyping(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleTextSubmit = (text: string) => {
+    if (text.trim()) {
+      // Create a quick note with the submitted text
+      // For now, trigger the new note functionality
+      onNewNote();
     }
   };
 
@@ -99,65 +83,12 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
             right: '1rem'
           }}
         >
-          <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
-            <textarea
-              placeholder="Add/edit anything..."
-              className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              rows={1}
-              style={{
-                minHeight: '20px',
-                maxHeight: '120px'
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-              }}
-            />
-            {isTyping ? (
-              <>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleSendMessage}
-                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </>
-            ) : (
-              <>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#f1efe8]"
-                  title="PLUS BUTTON - Grey"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={onCameraCapture || onNewNote}
-                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: '#a8bfa1' }}
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: '#9bb8d3' }}
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-              </>
-            )}
-          </div>
+          <UniversalInputBar
+            onTextSubmit={handleTextSubmit}
+            onCameraCapture={onCameraCapture}
+            onMediaUpload={onNewNote}
+            placeholder="Add/edit anything..."
+          />
         </div>
       )}
       {/* Hidden state indicator - tap to restore */}
