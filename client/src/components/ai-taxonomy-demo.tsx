@@ -44,14 +44,14 @@ interface EnhancedAnalysisResult {
 }
 
 const sampleInputs = [
-  "Need to find a good restaurant for dinner tonight",
-  "Want to learn Python programming",
-  "Planning a trip to Japan next summer",
-  "Need to buy a new laptop for work",
-  "Starting a workout routine",
-  "Looking for a new job in tech",
-  "Redecorating my living room",
-  "Save money for a house down payment"
+  "restaurant tonight",
+  "Atlas 3pm", 
+  "fix laptop",
+  "new laptop",
+  "gym tomorrow",
+  "dentist",
+  "paris summer",
+  "learn python"
 ];
 
 export default function AITaxonomyDemo() {
@@ -221,6 +221,30 @@ export default function AITaxonomyDemo() {
                     <div>
                       <h4 className="font-semibold text-sm mb-2">Category: {taxonomyResult.category}</h4>
                     </div>
+
+                    {taxonomyResult.fragmentCompletion && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-1 text-blue-700">
+                          <Brain className="h-4 w-4" />
+                          Predictive Completion
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="text-gray-600">Original:</span>
+                            <span className="ml-2 font-mono bg-gray-100 px-2 py-1 rounded">"{taxonomyResult.fragmentCompletion.originalInput}"</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Completed Intent:</span>
+                            <div className="ml-2 mt-1 bg-blue-100 p-2 rounded border-l-2 border-blue-400">
+                              {taxonomyResult.fragmentCompletion.completedIntent}
+                            </div>
+                          </div>
+                          <div className="text-xs text-blue-600">
+                            {taxonomyResult.fragmentCompletion.reasoning}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {taxonomyResult.microQuestions && taxonomyResult.microQuestions.length > 0 && (
                       <div>
