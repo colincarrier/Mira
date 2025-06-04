@@ -118,6 +118,7 @@ export default function Home() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
       />
 
       {/* Full Screen Capture */}

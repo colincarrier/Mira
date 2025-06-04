@@ -214,6 +214,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
           onTabChange={onTabChange}
           onNewNote={onNewNote}
           onSettings={onClose}
+          onCloseCapture={onCloseCapture}
         />
       </div>
     </div>
