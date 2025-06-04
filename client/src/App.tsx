@@ -10,6 +10,7 @@ import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
 import AIDemoPage from "@/pages/ai-demo";
+import TestAIPage from "@/pages/test-ai";
 
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/collection/:id" component={CollectionDetail} />
       <Route path="/todo/:id" component={TodoDetail} />
       <Route path="/ai-demo" component={AIDemoPage} />
+      <Route path="/test-ai" component={TestAIPage} />
       <Route component={NotFound} />
     </Switch>
   );

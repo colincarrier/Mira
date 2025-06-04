@@ -185,9 +185,13 @@ export default function AITaxonomyDemo() {
             />
             
             <Button 
-              onClick={handleAnalyze}
+              onClick={() => {
+                console.log("Button clicked directly");
+                handleAnalyze();
+              }}
               disabled={!input.trim() || taxonomyMutation.isPending || enhancedMutation.isPending}
               className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
+              type="button"
             >
               {taxonomyMutation.isPending || enhancedMutation.isPending ? (
                 <div className="flex items-center gap-2">
