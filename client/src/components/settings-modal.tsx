@@ -25,19 +25,15 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
         <div className="mx-auto max-w-sm w-full h-full flex flex-col">
           <div className="safe-area-top"></div>
           
-          <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <button 
-                onClick={() => setShowAIComparison(false)}
-                className="flex items-center text-[hsl(var(--ios-blue))] touch-manipulation"
-              >
-                <ChevronLeft className="w-5 h-5 mr-1" />
-                Settings
-              </button>
-              <h1 className="text-lg font-semibold">AI Comparison</h1>
-              <div className="w-12"></div>
-            </div>
-          </header>
+          <div className="flex items-center justify-between mb-4 px-4 pt-6">
+            <h2 className="text-2xl font-serif font-medium">AI Comparison</h2>
+            <button 
+              onClick={() => setShowAIComparison(false)}
+              className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
           
           <div className="flex-1 overflow-y-auto pb-20">
             <AIComparison />
@@ -68,19 +64,15 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
       <div className="mx-auto max-w-sm w-full h-full flex flex-col">
         <div className="safe-area-top"></div>
         
-        <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={onClose}
-              className="flex items-center text-[hsl(var(--ios-blue))] touch-manipulation"
-            >
-              <ChevronLeft className="w-5 h-5 mr-1" />
-              Back
-            </button>
-            <h1 className="text-lg font-semibold">Settings</h1>
-            <div className="w-12"></div>
-          </div>
-        </header>
+        <div className="flex items-center justify-between mb-4 px-4 pt-6">
+          <h2 className="text-2xl font-serif font-medium">Settings</h2>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
         
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-6 pb-20">

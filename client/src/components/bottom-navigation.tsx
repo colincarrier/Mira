@@ -19,11 +19,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   const [isTyping, setIsTyping] = useState(false);
   const addButtonRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging
-  console.log("BottomNavigation hideAddButton:", hideAddButton);
-
   const handleTabChange = (tab: "activity" | "todos" | "collections") => {
-    console.log("handleTabChange called with tab:", tab);
     onCloseCapture?.();
     onTabChange(tab);
   };
