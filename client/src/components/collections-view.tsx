@@ -202,16 +202,18 @@ export default function CollectionsView() {
                     <IconComponent className={`w-6 h-6 ${colors.text}`} />
                   )}
                 </div>
-                <div className="space-y-0">
+                <div className="space-y-1">
                   <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
-                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                    {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
-                  </p>
-                  {collection.openTodoCount > 0 && (
-                    <p className="text-[10px] text-orange-600 font-medium">
-                      {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
+                  <div className="space-y-0">
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                      {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
                     </p>
-                  )}
+                    {collection.openTodoCount > 0 && (
+                      <p className="text-[10px] text-orange-600 font-medium">
+                        {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
