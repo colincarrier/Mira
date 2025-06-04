@@ -77,7 +77,7 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full bg-[hsl(var(--background))] min-h-screen relative overflow-hidden">
+    <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
       {/* Status Bar */}
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
       
