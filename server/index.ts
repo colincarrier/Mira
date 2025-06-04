@@ -4,7 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
-import { setupViteAssetMiddleware } from "./vite-middleware-fix";
+import { viteBypass } from "./middleware/viteBypass";
 
 const app = express();
 app.use(express.json());
@@ -45,14 +45,11 @@ app.use((req, res, next) => {
   await initializeDatabase();
   await initializeStandardCollections();
   
-  // Apply Vite asset middleware first in development
-  if (app.get("env") === "development") {
-    setupViteAssetMiddleware(app);
-  }
-
   const server = await registerRoutes(app);
 
   if (app.get("env") === "development") {
+    // Add bypass middleware to skip Vite's HTML fallback for JS/CSS requests
+    app.use(viteBypass);
     await setupVite(app, server);
   } else {
     serveStatic(app);
