@@ -3,8 +3,8 @@ import { useState, useRef } from "react";
 import UniversalInputBar from "./universal-input-bar";
 
 interface BottomNavigationProps {
-  activeTab: "activity" | "todos" | "collections";
-  onTabChange: (tab: "activity" | "todos" | "collections") => void;
+  activeTab: "activity" | "todos" | "collections" | "settings";
+  onTabChange: (tab: "activity" | "todos" | "collections" | "settings") => void;
   onNewNote: () => void;
   onSettings: () => void;
   onCloseCapture?: () => void;
@@ -19,7 +19,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   const [isTyping, setIsTyping] = useState(false);
   const addButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleTabChange = (tab: "activity" | "todos" | "collections") => {
+  const handleTabChange = (tab: "activity" | "todos" | "collections" | "settings") => {
     onCloseCapture?.();
     onTabChange(tab);
   };

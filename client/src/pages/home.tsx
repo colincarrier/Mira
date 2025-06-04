@@ -13,7 +13,7 @@ import { Settings as SettingsIcon } from "lucide-react";
 
 export default function Home() {
   const [location, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections">("activity");
+  const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -25,7 +25,6 @@ export default function Home() {
   }, [location]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
@@ -73,6 +72,8 @@ export default function Home() {
         return <TodosView />;
       case "collections":
         return <CollectionsView />;
+      case "settings":
+        return <Settings />;
       default:
         return <ActivityFeed onTodoModalClose={() => setActiveTab("activity")} />;
     }
@@ -80,40 +81,31 @@ export default function Home() {
 
   return (
     <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
-      {showSettings ? (
-        <Settings onClose={() => setShowSettings(false)} />
-      ) : (
-        <>
-          {/* Status Bar */}
-          <div className="safe-area-top bg-[hsl(var(--background))]"></div>
-          
-          {/* Main Content */}
-          <div className="pb-24">
+      {/* Status Bar */}
+      <div className="safe-area-top bg-[hsl(var(--background))]"></div>
+      
+      {/* Main Content */}
+      <div className="pb-24">
+        {/* Tab Content */}
+        <div 
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {renderTabContent()}
+        </div>
+      </div>
 
-
-            {/* Quick Capture - removed for now */}
-
-            {/* Tab Content */}
-            <div 
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {renderTabContent()}
-            </div>
-          </div>
-
-          {/* Bottom Navigation */}
-          <BottomNavigation 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-            onNewNote={() => setIsFullScreenCaptureOpen(true)}
-            onSettings={() => setShowSettings(true)}
-            onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-            onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-          />
-        </>
-      )}
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onSettings={() => setActiveTab("settings")}
+        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
+        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+        hideAddButton={activeTab === "settings"}
+      />
 
       {/* Modals */}
       <VoiceModal 

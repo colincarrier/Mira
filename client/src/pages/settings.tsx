@@ -1,25 +1,11 @@
-import { ArrowLeft, User, Bell, Palette, Database, Info, Shield } from "lucide-react";
+import { User, Bell, Palette, Database, Info, Shield } from "lucide-react";
 
-interface SettingsProps {
-  onClose?: () => void;
-}
-
-export default function Settings({ onClose }: SettingsProps) {
-  const handleBack = () => {
-    onClose?.();
-  };
-
+export default function Settings() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleBack}
-            className="p-2 -ml-2 text-blue-500 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
+        <div className="flex items-center">
           <h1 className="text-lg font-semibold text-gray-900">Settings</h1>
         </div>
       </div>
