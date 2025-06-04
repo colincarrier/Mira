@@ -29,6 +29,13 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          {/* Test Element at App Level */}
+          <div 
+            className="fixed bottom-32 left-4 right-4 bg-yellow-500 text-black p-2 text-center rounded-lg"
+            style={{ zIndex: 99999 }}
+          >
+            APP LEVEL TEST: Should appear everywhere
+          </div>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
