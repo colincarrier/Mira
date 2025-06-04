@@ -7,7 +7,7 @@ import CollectionsView from "@/components/collections-view";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
 import FloatingInputBar from "@/components/floating-input-bar";
-import FullScreenCapture from "@/components/full-screen-capture";
+import SafeFullScreenCapture from "@/components/safe-full-screen-capture";
 import Settings from "@/pages/settings";
 
 import { Settings as SettingsIcon } from "lucide-react";
@@ -123,7 +123,7 @@ export default function Home() {
 
 
       {/* Full Screen Capture */}
-      <FullScreenCapture
+      <SafeFullScreenCapture
         isOpen={isFullScreenCaptureOpen}
         onClose={() => setIsFullScreenCaptureOpen(false)}
       />
