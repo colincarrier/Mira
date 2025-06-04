@@ -199,22 +199,22 @@ export default function Settings() {
               {/* Left Column - Stats */}
               <div className="space-y-2">
                 <div className="text-xs font-medium text-gray-700 mb-2">Your Stats</div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                    <span className="text-xs text-blue-600">Notes</span>
-                    <span className="text-sm font-bold text-blue-600">{noteCount}</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="text-sm font-bold text-blue-600">{noteCount}</div>
+                    <div className="text-xs text-blue-600">Notes</div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
-                    <span className="text-xs text-purple-600">To-do's</span>
-                    <span className="text-sm font-bold text-purple-600">{todoCount}</span>
+                  <div className="text-center p-2 bg-purple-50 rounded">
+                    <div className="text-sm font-bold text-purple-600">{todoCount}</div>
+                    <div className="text-xs text-purple-600">To-do's</div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                    <span className="text-xs text-green-600">Done</span>
-                    <span className="text-sm font-bold text-green-600">{productivityScore}%</span>
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-sm font-bold text-green-600">{productivityScore}%</div>
+                    <div className="text-xs text-green-600">Done</div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                    <span className="text-xs text-orange-600">Streak</span>
-                    <span className="text-sm font-bold text-orange-600">{streakDays} days</span>
+                  <div className="text-center p-2 bg-orange-50 rounded">
+                    <div className="text-sm font-bold text-orange-600">{streakDays}</div>
+                    <div className="text-xs text-orange-600">Streak days</div>
                   </div>
                 </div>
               </div>
