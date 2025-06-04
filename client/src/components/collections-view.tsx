@@ -79,42 +79,31 @@ export default function CollectionsView() {
       
       return apiRequest("POST", "/api/collections/reorder", { updates });
     },
-    onSuccess: () => {
+    onMutate: async (reorderedCollections) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/collections"] });
+      
+      // Snapshot previous value
+      const previousCollections = queryClient.getQueryData(["/api/collections"]);
+      
+      // Optimistically update to new value
+      queryClient.setQueryData(["/api/collections"], reorderedCollections);
+      
+      return { previousCollections };
+    },
+    onError: (err, newCollections, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["/api/collections"], context?.previousCollections);
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
     },
   });
 
-  // Define the preferred order for collections
-  const collectionOrder = ["To-do's", "Personal", "Home", "Work"];
-  
-  const getCollectionPriority = (name: string) => {
-    const index = collectionOrder.indexOf(name);
-    return index === -1 ? 999 : index;
-  };
-
   const filteredAndSortedCollections = collections?.filter(collection =>
     collection.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => {
-    // First sort by priority (To-do's, Personal, Home, Work)
-    const aPriority = getCollectionPriority(a.name);
-    const bPriority = getCollectionPriority(b.name);
-    
-    if (aPriority !== bPriority) {
-      return aPriority - bPriority;
-    }
-    
-    // Then sort by selected criteria
-    switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "recent":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case "count":
-        return b.noteCount - a.noteCount;
-      default:
-        return 0;
-    }
-  }) || [];
+  ) || [];
 
   if (isLoading) {
     return (

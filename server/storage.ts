@@ -183,7 +183,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(collections)
-      .orderBy(collections.createdAt);
+      .orderBy(collections.displayOrder, collections.createdAt);
   }
 
   async getCollection(id: number): Promise<Collection | undefined> {
