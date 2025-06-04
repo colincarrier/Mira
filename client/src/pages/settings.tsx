@@ -248,71 +248,68 @@ Once you've completed this, I'll create a personalized profile to help me assist
               Your Journey
             </h2>
           </div>
-          <div className="p-3">
-            <div className="grid grid-cols-3 gap-3">
-              {/* Stats Column */}
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-gray-700">Stats</div>
-                <div className="space-y-1">
-                  <div className="text-center p-1 bg-blue-50 rounded">
-                    <div className="text-sm font-bold text-blue-600">{noteCount}</div>
-                    <div className="text-xs text-blue-600">Notes</div>
-                  </div>
-                  <div className="text-center p-1 bg-green-50 rounded">
-                    <div className="text-sm font-bold text-green-600">{completedTodos}</div>
-                    <div className="text-xs text-green-600">Done</div>
-                  </div>
-                </div>
+          <div className="p-3 space-y-3">
+            {/* Stats Row */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center p-2 bg-blue-50 rounded">
+                <div className="text-lg font-bold text-blue-600">{noteCount}</div>
+                <div className="text-xs text-blue-600">Notes</div>
               </div>
-
-              {/* Performance Column */}
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-gray-700">Performance</div>
-                <div className="space-y-1">
-                  <div className="text-center p-1 bg-purple-50 rounded">
-                    <div className="text-sm font-bold text-purple-600">{streakDays}</div>
-                    <div className="text-xs text-purple-600">Streak</div>
-                  </div>
-                  <div className="text-center p-1 bg-orange-50 rounded">
-                    <div className="text-sm font-bold text-orange-600">{productivityScore}%</div>
-                    <div className="text-xs text-orange-600">Score</div>
-                  </div>
-                </div>
+              <div className="text-center p-2 bg-purple-50 rounded">
+                <div className="text-lg font-bold text-purple-600">{todoCount}</div>
+                <div className="text-xs text-purple-600">To-do's</div>
               </div>
+              <div className="text-center p-2 bg-green-50 rounded">
+                <div className="text-lg font-bold text-green-600">{productivityScore}%</div>
+                <div className="text-xs text-green-600">Done</div>
+              </div>
+              <div className="text-center p-2 bg-orange-50 rounded">
+                <div className="text-lg font-bold text-orange-600">{streakDays}</div>
+                <div className="text-xs text-orange-600">Streak</div>
+              </div>
+            </div>
 
-              {/* Achievements Column */}
+            {/* Achievements Full Width */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Achievements</span>
+                <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+              </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Achievements</span>
-                  <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
-                </div>
-                <div className="space-y-1">
-                  {achievements.slice(0, 3).map((achievement) => (
-                    <div 
-                      key={achievement.id} 
-                      className={`flex items-center gap-1 p-1 rounded text-xs ${
-                        achievement.unlocked 
-                          ? 'bg-yellow-50 border border-yellow-200' 
-                          : 'bg-gray-50 border border-gray-200'
-                      }`}
-                    >
-                      <span className={`text-xs ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
-                        {achievement.icon}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className={`font-medium truncate text-xs ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
-                          {achievement.name}
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-0.5 mt-0.5">
+                {achievements.map((achievement) => (
+                  <div 
+                    key={achievement.id} 
+                    className={`flex items-center gap-3 p-2 rounded-lg ${
+                      achievement.unlocked 
+                        ? 'bg-yellow-50 border border-yellow-200' 
+                        : 'bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    <span className={`text-xl ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
+                      {achievement.icon}
+                    </span>
+                    <div className="flex-1">
+                      <div className={`text-sm font-medium ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {achievement.name}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-1">{achievement.description}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
                           <div 
-                            className={`h-0.5 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
+                            className={`h-2 rounded-full transition-all duration-300 ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
                             style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
                           />
                         </div>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {achievement.progress}/{achievement.target}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    {achievement.unlocked && (
+                      <Star className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
