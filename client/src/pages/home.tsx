@@ -107,6 +107,7 @@ export default function Home() {
         onSettings={() => setIsSettingsModalOpen(true)}
         onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+        hideAddButton={isSettingsModalOpen}
       />
 
       {/* Modals */}
