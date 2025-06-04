@@ -1,4 +1,5 @@
 import { Home, CheckSquare, Folder, Plus, Settings, Mic } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface BottomNavigationProps {
   activeTab: "activity" | "todos" | "collections";
@@ -6,9 +7,14 @@ interface BottomNavigationProps {
   onNewNote: () => void;
   onSettings: () => void;
   onCloseCapture?: () => void;
+  hideAddButton?: boolean;
 }
 
-export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture }: BottomNavigationProps) {
+export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture, hideAddButton }: BottomNavigationProps) {
+  const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const addButtonRef = useRef<HTMLDivElement>(null);
+
   const handleTabChange = (tab: "activity" | "todos" | "collections") => {
     onCloseCapture?.();
     onTabChange(tab);
@@ -18,32 +24,83 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     onCloseCapture?.();
     onSettings();
   };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touchEnd = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY
+    };
+    
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = Math.abs(touchEnd.y - touchStart.y);
+    
+    // Swipe right to hide (minimum 50px horizontal, max 30px vertical)
+    if (deltaX > 50 && deltaY < 30) {
+      setIsAddButtonHidden(true);
+    }
+    // Swipe left to show
+    else if (deltaX < -50 && deltaY < 30) {
+      setIsAddButtonHidden(false);
+    }
+    
+    setTouchStart(null);
+  };
   return (
     <>
-      {/* Chat-style input box */}
-      <div className="fixed bottom-20 left-4 right-4 z-[60]">
-        <div className="border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-[#fcfcfc]">
-          <input
-            type="text"
-            placeholder="Add/edit anything..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
-            onFocus={onNewNote}
-            readOnly
-          />
-          <button 
-            onClick={onNewNote}
-            className="w-8 h-8 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa1]"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={onNewNote}
-            className="w-8 h-8 hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors bg-[#a1c4cfcc]"
-          >
-            <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          </button>
+      {/* Chat-style input box - anchored to nav bar top with swipe functionality */}
+      {!hideAddButton && (
+        <div 
+          ref={addButtonRef}
+          className={`fixed bottom-24 left-4 right-4 z-[9999] transition-transform duration-300 ${
+            isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+          }`}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-[#fcfcfc]">
+            <input
+              type="text"
+              placeholder="Add/edit anything..."
+              className="flex-1 bg-transparent border-none outline-none text-sm placeholder-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
+              onFocus={onNewNote}
+              readOnly
+            />
+            <button 
+              onClick={onNewNote}
+              className="w-8 h-8 dark:bg-gray-200 hover:bg-gray-900 dark:hover:bg-gray-100 text-white dark:text-gray-800 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa1]"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={onNewNote}
+              className="w-8 h-8 hover:bg-[hsl(var(--muted))]/80 rounded-full flex items-center justify-center transition-colors bg-[#a1c4cfcc]"
+            >
+              <Mic className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* Hidden state indicator - tap to restore */}
+      {isAddButtonHidden && !hideAddButton && (
+        <div 
+          className="fixed bottom-24 right-4 z-[9999] cursor-pointer"
+          onClick={() => setIsAddButtonHidden(false)}
+        >
+          <div className="w-12 h-6 bg-gray-400/50 rounded-full flex items-center justify-center">
+            <div className="w-8 h-1 bg-gray-600 rounded-full"></div>
+          </div>
+        </div>
+      )}
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50]" style={{ backgroundColor: '#f1efe8' }}>
         <div className="flex justify-around py-3">
