@@ -235,7 +235,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       
       toast({
         title: "File uploaded successfully",
-        description: "Your file has been saved as a note.",
+        description: "Your file has been saved as a note with AI analysis.",
       });
 
       // Reset and close
@@ -244,6 +244,9 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       setNoteText('');
       setNoteTitle('');
       onClose();
+      
+      // Refresh the notes list by triggering a page reload or using query invalidation
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Upload failed",
