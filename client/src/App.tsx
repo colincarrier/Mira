@@ -32,10 +32,20 @@ function GlobalAddButton() {
   // Show on home page only
   const shouldShow = location === '/';
   
+  console.log('GlobalAddButton - location:', location, 'shouldShow:', shouldShow);
+  
   if (!shouldShow) return null;
   
   return (
     <>
+      {/* Debug element */}
+      <div 
+        className="fixed top-20 left-4 right-4 bg-red-500 text-white p-2 text-center"
+        style={{ zIndex: 99999 }}
+      >
+        DEBUG: GlobalAddButton rendering - location: {location}
+      </div>
+      
       <div 
         className="fixed bottom-24 left-4 right-4 transition-transform duration-300"
         style={{ zIndex: 10000 }}
