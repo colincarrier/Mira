@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import UniversalInputBar from "./universal-input-bar";
+import SafeInputBar from "./safe-input-bar";
 
 interface FloatingInputBarProps {
   onTextSubmit?: (text: string) => void;
@@ -79,10 +79,10 @@ export default function FloatingInputBar({
           right: '1rem'
         }}
       >
-        <UniversalInputBar
+        <SafeInputBar
           onTextSubmit={handleTextSubmit}
           onCameraCapture={onCameraCapture}
-          onMediaUpload={onNewNote}
+          onVoiceCapture={() => {}}
           placeholder="Add/edit anything..."
         />
       </div>

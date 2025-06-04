@@ -34,6 +34,7 @@ export default function UniversalInputBar({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const isMountedRef = useRef<boolean>(true);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -222,9 +223,11 @@ export default function UniversalInputBar({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Cleanup on unmount
+  // Component lifecycle management
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       handleResetRecording();
     };
   }, []);
