@@ -142,7 +142,7 @@ export default function AIComparison() {
           {/* Claude Results */}
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-orange-500/30" />
+              <Brain className="w-5 h-5 text-orange-500 opacity-30" />
               <h3 className="text-lg font-semibold">Claude Results</h3>
             </div>
             

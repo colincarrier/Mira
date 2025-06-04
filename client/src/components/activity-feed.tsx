@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search, List, Grid } from "lucide-react";
+import { format } from "date-fns";
 import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
 
