@@ -680,19 +680,17 @@ Examples:
               </button>
               <button 
                 onClick={() => setShowUpdateArea(true)}
-                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: '#86efac' }}
-                title="CAMERA BUTTON - Should be Light Green"
+                className="w-16 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors text-xs"
+                style={{ backgroundColor: '#a8bfa1' }}
               >
-                <Camera className="w-4 h-4" />
+                CAM
               </button>
               <button 
                 onClick={() => setShowUpdateArea(true)}
-                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: '#93c5fd' }}
-                title="MIC BUTTON - Should be Light Blue"
+                className="w-16 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors text-xs"
+                style={{ backgroundColor: '#9bb8d3' }}
               >
-                <Mic className="w-4 h-4" />
+                MIC
               </button>
             </>
           )}
