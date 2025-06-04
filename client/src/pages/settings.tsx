@@ -240,31 +240,6 @@ Once you've completed this, I'll create a personalized profile to help me assist
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
-        {/* Account Section */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="text-base font-medium text-gray-900">Account</h2>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <User size={20} className="text-gray-500" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Demo User</div>
-                  <div className="text-xs text-gray-500">Not logged in</div>
-                </div>
-              </div>
-              <button
-                onClick={() => window.location.href = '/api/login'}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                <LogIn size={16} />
-                Log In
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Stats & Achievements */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-3 border-b border-gray-100">
@@ -274,11 +249,11 @@ Once you've completed this, I'll create a personalized profile to help me assist
             </h2>
           </div>
           <div className="p-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {/* Stats Column */}
               <div className="space-y-2">
                 <div className="text-xs font-medium text-gray-700">Stats</div>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="space-y-1">
                   <div className="text-center p-1 bg-blue-50 rounded">
                     <div className="text-sm font-bold text-blue-600">{noteCount}</div>
                     <div className="text-xs text-blue-600">Notes</div>
@@ -287,6 +262,13 @@ Once you've completed this, I'll create a personalized profile to help me assist
                     <div className="text-sm font-bold text-green-600">{completedTodos}</div>
                     <div className="text-xs text-green-600">Done</div>
                   </div>
+                </div>
+              </div>
+
+              {/* Performance Column */}
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-gray-700">Performance</div>
+                <div className="space-y-1">
                   <div className="text-center p-1 bg-purple-50 rounded">
                     <div className="text-sm font-bold text-purple-600">{streakDays}</div>
                     <div className="text-xs text-purple-600">Streak</div>
@@ -305,23 +287,23 @@ Once you've completed this, I'll create a personalized profile to help me assist
                   <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
                 </div>
                 <div className="space-y-1">
-                  {achievements.slice(0, 2).map((achievement) => (
+                  {achievements.slice(0, 3).map((achievement) => (
                     <div 
                       key={achievement.id} 
-                      className={`flex items-center gap-2 p-1 rounded text-xs ${
+                      className={`flex items-center gap-1 p-1 rounded text-xs ${
                         achievement.unlocked 
                           ? 'bg-yellow-50 border border-yellow-200' 
                           : 'bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      <span className={achievement.unlocked ? '' : 'grayscale opacity-50'}>
+                      <span className={`text-xs ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
                         {achievement.icon}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-medium truncate ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                        <div className={`font-medium truncate text-xs ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
                           {achievement.name}
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-0.5">
+                        <div className="w-full bg-gray-200 rounded-full h-0.5 mt-0.5">
                           <div 
                             className={`h-0.5 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
                             style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
@@ -550,6 +532,28 @@ Once you've completed this, I'll create a personalized profile to help me assist
                 <div className="text-xs text-gray-500">AI-powered memory and productivity app</div>
                 <div className="text-xs text-gray-400 mt-1">Version 1.0.0</div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Section - Compact at Bottom */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User size={16} className="text-gray-500" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Demo User</div>
+                  <div className="text-xs text-gray-500">Not logged in</div>
+                </div>
+              </div>
+              <button
+                onClick={() => window.location.href = '/api/login'}
+                className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+              >
+                <LogIn size={12} />
+                Login
+              </button>
             </div>
           </div>
         </div>
