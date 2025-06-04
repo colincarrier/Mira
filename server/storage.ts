@@ -1,6 +1,6 @@
 import { notes, todos, collections, users, type Note, type Todo, type Collection, type User, type InsertNote, type InsertTodo, type InsertCollection, type UpsertUser, type NoteWithTodos } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (for future auth implementation)
@@ -55,7 +55,7 @@ export class DatabaseStorage implements IStorage {
     const allNotes = await db
       .select()
       .from(notes)
-      .orderBy(notes.createdAt);
+      .orderBy(desc(notes.createdAt));
     
     const notesWithTodos = await Promise.all(
       allNotes.map(async (note) => {
@@ -123,7 +123,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(todos)
       .leftJoin(notes, eq(todos.noteId, notes.id))
-      .orderBy(todos.createdAt);
+      .orderBy(desc(todos.createdAt));
     
     return todosWithNotes as any;
   }
@@ -133,7 +133,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(todos)
       .where(eq(todos.noteId, noteId))
-      .orderBy(todos.createdAt);
+      .orderBy(desc(todos.createdAt));
   }
 
   async updateTodo(id: number, updates: Partial<Todo>): Promise<Todo> {
@@ -172,7 +172,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(notes)
       .where(eq(notes.collectionId, collectionId))
-      .orderBy(notes.createdAt);
+      .orderBy(desc(notes.createdAt));
     
     const notesWithTodos = await Promise.all(
       collectionNotes.map(async (note) => {
@@ -182,7 +182,7 @@ export class DatabaseStorage implements IStorage {
       })
     );
     
-    return notesWithTodos.reverse(); // Most recent first
+    return notesWithTodos; // Already sorted newest first
   }
 }
 
