@@ -1,135 +1,82 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import CaptureArea from "@/components/capture-area";
-import ActivityFeed from "@/components/activity-feed";
-import TodosView from "@/components/todos-view";
-import CollectionsView from "@/components/collections-view";
-import VoiceModal from "@/components/voice-modal";
-import SettingsModal from "@/components/settings-modal";
-import BottomNavigation from "@/components/bottom-navigation";
-import FullScreenCapture from "@/components/full-screen-capture";
-
-import { Settings } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
-  const [location] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections">("activity");
 
-  // Check URL parameters to set initial tab
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    if (tab === 'collections' || tab === 'todos' || tab === 'activity') {
-      setActiveTab(tab as "activity" | "todos" | "collections");
-    }
-  }, [location]);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
+  const { data: notes, isLoading } = useQuery({
+    queryKey: ["/api/notes"],
+    retry: false,
+  });
 
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
-
-  // Swipe gesture handlers for tab switching
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distanceX = touchStart.x - touchEnd.x;
-    const distanceY = touchStart.y - touchEnd.y;
-    const isLeftSwipe = distanceX > 50 && Math.abs(distanceY) < 100;
-    const isRightSwipe = distanceX < -50 && Math.abs(distanceY) < 100;
-    
-    if (isLeftSwipe) {
-      // Swipe left to go to next tab
-      if (activeTab === 'activity') setActiveTab('todos');
-      else if (activeTab === 'todos') setActiveTab('collections');
-    } else if (isRightSwipe) {
-      // Swipe right to go to previous tab
-      if (activeTab === 'collections') setActiveTab('todos');
-      else if (activeTab === 'todos') setActiveTab('activity');
-    }
-  };
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "activity":
-        return <ActivityFeed onTodoModalClose={() => setActiveTab("activity")} />;
-      case "todos":
-        return <TodosView />;
-      case "collections":
-        return <CollectionsView />;
-      default:
-        return <ActivityFeed onTodoModalClose={() => setActiveTab("activity")} />;
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
-      {/* Status Bar */}
-      <div className="safe-area-top bg-[hsl(var(--background))]"></div>
-      
-      {/* Main Content */}
-      <div className="pb-24">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Mira</h1>
+        <p className="text-gray-600">Your intelligent memory assistant</p>
+      </header>
 
-
-        {/* Quick Capture - removed for now */}
-
-        {/* Tab Content */}
-        <div 
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab("activity")}
+          className={`px-4 py-2 rounded-lg ${
+            activeTab === "activity" 
+              ? "bg-blue-500 text-white" 
+              : "bg-white text-gray-700"
+          }`}
         >
-          {renderTabContent()}
-        </div>
+          Activity
+        </button>
+        <button
+          onClick={() => setActiveTab("todos")}
+          className={`px-4 py-2 rounded-lg ${
+            activeTab === "todos" 
+              ? "bg-blue-500 text-white" 
+              : "bg-white text-gray-700"
+          }`}
+        >
+          Todos
+        </button>
+        <button
+          onClick={() => setActiveTab("collections")}
+          className={`px-4 py-2 rounded-lg ${
+            activeTab === "collections" 
+              ? "bg-blue-500 text-white" 
+              : "bg-white text-gray-700"
+          }`}
+        >
+          Collections
+        </button>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onSettings={() => setIsSettingsModalOpen(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-        hideAddButton={isSettingsModalOpen}
-      />
+      <div className="space-y-4">
+        {notes && Array.isArray(notes) ? (
+          notes.map((note: any) => (
+            <div key={note.id} className="bg-white p-4 rounded-lg shadow">
+              <p className="text-gray-900">{note.content}</p>
+              <div className="text-sm text-gray-500 mt-2">
+                {new Date(note.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            No notes yet. Start by creating your first note!
+          </div>
+        )}
+      </div>
 
-      {/* Modals */}
-      <VoiceModal 
-        isOpen={isVoiceModalOpen} 
-        onClose={() => setIsVoiceModalOpen(false)} 
-      />
-      
-      <SettingsModal 
-        isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-      />
-
-      {/* Full Screen Capture */}
-      <FullScreenCapture
-        isOpen={isFullScreenCaptureOpen}
-        onClose={() => setIsFullScreenCaptureOpen(false)}
-      />
+      <button className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center text-2xl">
+        +
+      </button>
     </div>
   );
 }

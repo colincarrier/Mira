@@ -1,19 +1,20 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Route, Switch } from "wouter";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
-import NoteDetail from "@/pages/note-detail";
-import CollectionDetail from "@/pages/collection-detail";
-import TodoDetail from "@/pages/todo-detail";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/note/:id" component={NoteDetail} />
-      <Route path="/collection/:id" component={CollectionDetail} />
-      <Route path="/todo/:id" component={TodoDetail} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -22,7 +23,9 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
+      <div className="min-h-screen bg-gray-50">
+        <Router />
+      </div>
     </QueryClientProvider>
   );
 }
