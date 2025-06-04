@@ -624,7 +624,6 @@ Examples:
           </div>
         )}
       </div>
-
       {/* Input Bar - Same style as other pages */}
       <div 
         className="fixed bottom-24 left-4 right-4 transition-transform duration-300 translate-x-0 opacity-100"
@@ -673,7 +672,7 @@ Examples:
             <>
               <button 
                 onClick={() => setShowUpdateArea(true)}
-                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                className="w-8 h-8 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#f1efe8]"
                 title="PLUS BUTTON - Grey"
               >
                 <Plus className="w-4 h-4" />
