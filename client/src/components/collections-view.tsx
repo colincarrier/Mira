@@ -1,9 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter, Plus, Users, Play, Utensils } from "lucide-react";
 import { getCollectionColor } from "@/lib/collection-colors";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
 
 interface CollectionWithCount {
   id: number;
@@ -61,27 +60,8 @@ export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
   const [, setLocation] = useLocation();
-  const [draggedCollection, setDraggedCollection] = useState<number | null>(null);
-  const [dragOverCollection, setDragOverCollection] = useState<number | null>(null);
-  const queryClient = useQueryClient();
-  
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
-  });
-
-  const reorderCollectionsMutation = useMutation({
-    mutationFn: async (reorderedCollections: CollectionWithCount[]) => {
-      const updates = reorderedCollections.map((collection, index) => ({
-        id: collection.id,
-        displayOrder: index
-      }));
-      
-      const response = await apiRequest("POST", "/api/collections/reorder", { updates });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
-    },
   });
 
   // Define the preferred order for collections
@@ -115,42 +95,6 @@ export default function CollectionsView() {
         return 0;
     }
   }) || [];
-
-  const handleDragStart = (collectionId: number) => {
-    setDraggedCollection(collectionId);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedCollection(null);
-    setDragOverCollection(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent, collectionId: number) => {
-    e.preventDefault();
-    setDragOverCollection(collectionId);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetCollectionId: number) => {
-    e.preventDefault();
-    
-    if (!draggedCollection || draggedCollection === targetCollectionId) {
-      return;
-    }
-
-    const draggedIndex = filteredAndSortedCollections.findIndex(c => c.id === draggedCollection);
-    const targetIndex = filteredAndSortedCollections.findIndex(c => c.id === targetCollectionId);
-    
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    const reorderedCollections = [...filteredAndSortedCollections];
-    const [draggedItem] = reorderedCollections.splice(draggedIndex, 1);
-    reorderedCollections.splice(targetIndex, 0, draggedItem);
-
-    reorderCollectionsMutation.mutate(reorderedCollections);
-    
-    setDraggedCollection(null);
-    setDragOverCollection(null);
-  };
 
   if (isLoading) {
     return (
@@ -220,17 +164,8 @@ export default function CollectionsView() {
           return (
             <div 
               key={collection.id} 
-              draggable
-              onDragStart={() => handleDragStart(collection.id)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, collection.id)}
-              onDrop={(e) => handleDrop(e, collection.id)}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-all cursor-pointer touch-manipulation ${
-                draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
-              } ${
-                dragOverCollection === collection.id && draggedCollection !== collection.id ? 'border-blue-400 border-2' : ''
-              }`}
+              className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-all cursor-pointer touch-manipulation"
             >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -254,6 +189,11 @@ export default function CollectionsView() {
                   <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
                     {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
                   </p>
+                  {collection.openTodoCount > 0 && (
+                    <p className="text-[10px] text-orange-600 font-medium">
+                      {collection.openTodoCount} open to-do{collection.openTodoCount === 1 ? '' : 's'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
