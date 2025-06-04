@@ -1,0 +1,378 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { X, Mic, Square, Pause, Play } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface IOSVoiceRecorderProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderProps) {
+  const [recordingState, setRecordingState] = useState<'ready' | 'recording' | 'paused' | 'stopped' | 'processing'>('ready');
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [waveformData, setWaveformData] = useState<number[]>([]);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createVoiceNoteMutation = useMutation({
+    mutationFn: async (audioBlob: Blob) => {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      
+      const response = await fetch("/api/notes/voice", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create voice note");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      handleReset();
+      onClose();
+      toast({
+        title: "Voice note saved",
+        description: "Your voice note has been transcribed and enhanced by AI.",
+      });
+    },
+    onError: (error) => {
+      console.error("Voice note error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save voice note. Please try again.",
+        variant: "destructive",
+      });
+      setRecordingState('stopped');
+    },
+  });
+
+  const setupAudioContext = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }
+      });
+      
+      streamRef.current = stream;
+      
+      // Setup audio context for waveform visualization
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      
+      analyserRef.current.fftSize = 256;
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      dataArrayRef.current = new Uint8Array(bufferLength);
+      
+      source.connect(analyserRef.current);
+      
+      // Setup media recorder
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      chunksRef.current = [];
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setRecordingState('stopped');
+        stopWaveformAnimation();
+      };
+      
+      return true;
+    } catch (error) {
+      console.error("Error setting up audio:", error);
+      toast({
+        title: "Microphone Error",
+        description: "Unable to access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
+  const updateWaveform = useCallback(() => {
+    if (!analyserRef.current || !dataArrayRef.current) return;
+    
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    
+    // Convert to waveform data (simplified for visualization)
+    const waveform = [];
+    const step = Math.floor(dataArrayRef.current.length / 40); // 40 bars for waveform
+    
+    for (let i = 0; i < dataArrayRef.current.length; i += step) {
+      let sum = 0;
+      for (let j = 0; j < step && i + j < dataArrayRef.current.length; j++) {
+        sum += dataArrayRef.current[i + j];
+      }
+      waveform.push(sum / step / 255); // Normalize to 0-1
+    }
+    
+    setWaveformData(waveform);
+    
+    if (recordingState === 'recording') {
+      animationRef.current = requestAnimationFrame(updateWaveform);
+    }
+  }, [recordingState]);
+
+  const startWaveformAnimation = useCallback(() => {
+    updateWaveform();
+  }, [updateWaveform]);
+
+  const stopWaveformAnimation = useCallback(() => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+  }, []);
+
+  const startRecording = async () => {
+    const success = await setupAudioContext();
+    if (!success) return;
+    
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+      mediaRecorderRef.current.start(100); // Collect data every 100ms
+      setRecordingState('recording');
+      setRecordingTime(0);
+      
+      // Start timer
+      intervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Start waveform animation
+      startWaveformAnimation();
+    }
+  };
+
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
+      setRecordingState('paused');
+      stopWaveformAnimation();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+      setRecordingState('recording');
+      
+      // Resume timer
+      intervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Resume waveform animation
+      startWaveformAnimation();
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      stopWaveformAnimation();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+    
+    // Stop all tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const handleSave = () => {
+    if (audioBlob) {
+      setRecordingState('processing');
+      createVoiceNoteMutation.mutate(audioBlob);
+    }
+  };
+
+  const handleReset = () => {
+    setRecordingState('ready');
+    setRecordingTime(0);
+    setAudioBlob(null);
+    setWaveformData([]);
+    chunksRef.current = [];
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    stopWaveformAnimation();
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Cleanup on unmount or close
+  useEffect(() => {
+    if (!isOpen) {
+      handleReset();
+    }
+    
+    return () => {
+      handleReset();
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-sm relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="text-center mb-8">
+          <h2 className="text-xl font-semibold mb-2">Voice Recording</h2>
+          <div className="text-3xl font-mono text-blue-600 dark:text-blue-400">
+            {formatTime(recordingTime)}
+          </div>
+        </div>
+
+        {/* Waveform Visualization */}
+        <div className="h-20 mb-8 flex items-end justify-center space-x-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+          {waveformData.length > 0 ? (
+            waveformData.map((amplitude, index) => (
+              <div
+                key={index}
+                className={`w-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-full transition-all duration-100 ${
+                  recordingState === 'recording' ? 'animate-pulse' : ''
+                }`}
+                style={{
+                  height: `${Math.max(4, amplitude * 60)}px`,
+                  opacity: recordingState === 'recording' ? 0.8 + amplitude * 0.2 : 0.6
+                }}
+              />
+            ))
+          ) : (
+            <div className="text-gray-400 text-sm">
+              {recordingState === 'ready' ? 'Tap to start recording' : 'No audio data'}
+            </div>
+          )}
+        </div>
+
+        {/* Control Buttons */}
+        <div className="flex justify-center items-center space-x-4">
+          {recordingState === 'ready' && (
+            <button
+              onClick={startRecording}
+              className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <Mic className="w-6 h-6" />
+            </button>
+          )}
+
+          {recordingState === 'recording' && (
+            <>
+              <button
+                onClick={pauseRecording}
+                className="w-12 h-12 bg-yellow-500 hover:bg-yellow-600 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <Pause className="w-5 h-5" />
+              </button>
+              <button
+                onClick={stopRecording}
+                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-lg flex items-center justify-center text-white transition-colors"
+              >
+                <Square className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {recordingState === 'paused' && (
+            <>
+              <button
+                onClick={resumeRecording}
+                className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <Play className="w-5 h-5 ml-1" />
+              </button>
+              <button
+                onClick={stopRecording}
+                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-lg flex items-center justify-center text-white transition-colors"
+              >
+                <Square className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {recordingState === 'stopped' && (
+            <div className="flex space-x-3">
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors"
+              >
+                Save Note
+              </button>
+            </div>
+          )}
+
+          {recordingState === 'processing' && (
+            <div className="flex items-center space-x-2 text-blue-600">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span>Processing...</span>
+            </div>
+          )}
+        </div>
+
+        {recordingState === 'stopped' && audioBlob && (
+          <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            Recording saved ({(audioBlob.size / 1024).toFixed(1)} KB)
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

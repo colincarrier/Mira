@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, Mic, X, Send, ArrowLeft, Settings } from 'lucide-react';
 import { useNotes } from '@/hooks/use-notes';
 import { useToast } from '@/hooks/use-toast';
+import IOSVoiceRecorder from '@/components/ios-voice-recorder';
 
 interface FullScreenCaptureProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -230,7 +232,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[10001]">
             <div className="flex gap-2">
               <button
-                onClick={() => setCaptureMode('voice')}
+                onClick={() => setIsVoiceRecorderOpen(true)}
                 className="p-3 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors backdrop-blur-sm"
               >
                 <Mic className="w-5 h-5" />
@@ -391,7 +393,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   <Camera className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setCaptureMode('voice')}
+                  onClick={() => setIsVoiceRecorderOpen(true)}
                   className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Mic className="w-4 h-4" />

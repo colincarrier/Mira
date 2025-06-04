@@ -4,7 +4,7 @@ import CaptureArea from "@/components/capture-area";
 import ActivityFeed from "@/components/activity-feed";
 import TodosView from "@/components/todos-view";
 import CollectionsView from "@/components/collections-view";
-import VoiceModal from "@/components/voice-modal";
+import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
 import FullScreenCapture from "@/components/full-screen-capture";
 import Settings from "@/pages/settings";
@@ -108,7 +108,7 @@ export default function Home() {
       />
 
       {/* Modals */}
-      <VoiceModal 
+      <IOSVoiceRecorder 
         isOpen={isVoiceModalOpen} 
         onClose={() => setIsVoiceModalOpen(false)} 
       />
