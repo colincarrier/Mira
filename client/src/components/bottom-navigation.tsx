@@ -136,18 +136,23 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
                 <button 
                   onClick={onNewNote}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  title="PLUS BUTTON - Grey"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={onCameraCapture || onNewNote}
-                  className="w-8 h-8 bg-green-300 hover:bg-green-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: '#86efac' }}
+                  title="CAMERA BUTTON - Should be Light Green"
                 >
                   <Camera className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={onNewNote}
-                  className="w-8 h-8 bg-blue-300 hover:bg-blue-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: '#93c5fd' }}
+                  title="MIC BUTTON - Should be Light Blue"
                 >
                   <Mic className="w-4 h-4" />
                 </button>
