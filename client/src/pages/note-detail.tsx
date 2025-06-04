@@ -619,15 +619,15 @@ Examples:
           />
           <button 
             onClick={() => setShowUpdateArea(true)}
-            className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setShowUpdateArea(true)}
             className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
           >
             <Camera className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => setShowUpdateArea(true)}
+            className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+          >
+            <Mic className="w-4 h-4" />
           </button>
           <button 
             onClick={() => setShowUpdateArea(true)}
