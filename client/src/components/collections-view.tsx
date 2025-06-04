@@ -59,6 +59,7 @@ const getIconComponent = (iconName: string) => {
 export default function CollectionsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
+  const [draggedCollection, setDraggedCollection] = useState<number | null>(null);
   const [, setLocation] = useLocation();
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
@@ -164,8 +165,25 @@ export default function CollectionsView() {
           return (
             <div 
               key={collection.id} 
+              draggable
+              onDragStart={(e) => {
+                setDraggedCollection(collection.id);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onDragEnd={() => setDraggedCollection(null)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (draggedCollection && draggedCollection !== collection.id) {
+                  // Simple visual feedback - actual reordering would need backend support
+                  console.log(`Moving collection ${draggedCollection} to position of ${collection.id}`);
+                }
+                setDraggedCollection(null);
+              }}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-all cursor-pointer touch-manipulation"
+              className={`bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-3 hover:shadow-sm transition-all cursor-pointer touch-manipulation ${
+                draggedCollection === collection.id ? 'opacity-50' : ''
+              }`}
             >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -184,14 +202,14 @@ export default function CollectionsView() {
                     <IconComponent className={`w-6 h-6 ${colors.text}`} />
                   )}
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-0">
                   <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
                   <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
                     {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
                   </p>
                   {collection.openTodoCount > 0 && (
                     <p className="text-[10px] text-orange-600 font-medium">
-                      {collection.openTodoCount} open to-do{collection.openTodoCount === 1 ? '' : 's'}
+                      {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
                     </p>
                   )}
                 </div>
