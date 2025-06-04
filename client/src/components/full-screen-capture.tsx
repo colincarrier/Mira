@@ -220,13 +220,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
 
           {/* Main capture button - centered */}
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[999999]">
+          <div 
+            className="absolute left-1/2 transform -translate-x-1/2 z-[999999]"
+            style={{ bottom: '74px' }}
+          >
             <button
               onClick={capturePhoto}
               className="w-20 h-20 rounded-full bg-white/50 border-4 border-white/70 hover:bg-white/60 transition-all shadow-2xl"
-              style={{ 
-                marginBottom: '10px'
-              }}
             >
             </button>
           </div>
