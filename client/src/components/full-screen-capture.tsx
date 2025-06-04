@@ -223,7 +223,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-[10001]">
             <button
               onClick={capturePhoto}
-              className="w-20 h-20 rounded-full flex items-center justify-center bg-white text-gray-900 hover:bg-gray-100 transition-all shadow-2xl"
+              className="w-20 h-20 rounded-full flex items-center justify-center bg-white text-gray-900 hover:bg-gray-100 transition-all shadow-2xl border-4 border-gray-200"
+              style={{
+                position: 'absolute',
+                bottom: '128px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 10001
+              }}
             >
               <Camera className="w-10 h-10" />
             </button>
