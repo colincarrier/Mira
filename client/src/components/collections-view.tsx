@@ -195,10 +195,14 @@ export default function CollectionsView() {
               }}
               onDragOver={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setDragOverIndex(index);
               }}
-              onDragLeave={() => {
-                setDragOverIndex(null);
+              onDragLeave={(e) => {
+                e.stopPropagation();
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setDragOverIndex(null);
+                }
               }}
               onDrop={(e) => {
                 e.preventDefault();
@@ -222,7 +226,7 @@ export default function CollectionsView() {
                 draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
               } ${
                 dragOverIndex === index && draggedCollection !== collection.id 
-                  ? 'border-blue-400 border-2' 
+                  ? 'border-blue-400 border-2 bg-blue-50 dark:bg-blue-950 scale-105 shadow-lg' 
                   : 'border-[hsl(var(--border))]'
               } rounded-lg p-3 hover:shadow-sm`}
             >
