@@ -309,7 +309,15 @@ Provide intelligent analysis with complexity scoring, task hierarchy for complex
   const textContent = response.content[0].type === 'text' ? response.content[0].text : '';
   
   try {
-    const result = JSON.parse(textContent);
+    // Clean the response text - remove markdown code blocks if present
+    let cleanedContent = textContent.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const result = JSON.parse(cleanedContent);
     // Add taxonomy analysis to the result
     if (taxonomyAnalysis) {
       result.taxonomyInsights = taxonomyAnalysis;
@@ -317,6 +325,19 @@ Provide intelligent analysis with complexity scoring, task hierarchy for complex
     return result;
   } catch (parseError) {
     console.error('Failed to parse enhanced AI response:', parseError);
-    return null;
+    console.log('Raw response:', textContent);
+    // Return a basic fallback response
+    return {
+      enhancedContent: content,
+      complexityScore: 3,
+      intentType: 'simple-task',
+      urgencyLevel: 'medium',
+      todos: [],
+      collectionSuggestion: {
+        name: "General Notes",
+        icon: "lightbulb",
+        color: "blue"
+      }
+    };
   }
 }

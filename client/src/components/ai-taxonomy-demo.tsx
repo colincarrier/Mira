@@ -114,52 +114,71 @@ export default function AITaxonomyDemo() {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">AI Intelligence Framework Demo</h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-4">
           Test Mira's enhanced pattern recognition, complexity analysis, and contextual micro-questions
         </p>
+        <div className="flex justify-center gap-4 mb-6">
+          <Button variant="outline" onClick={() => window.location.href = "/"}>
+            ← Back to Home
+          </Button>
+          <Button variant="outline" onClick={() => window.location.href = "/ai-demo"}>
+            Refresh Demo
+          </Button>
+        </div>
       </div>
 
-      {/* Input Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Input Analysis
+      {/* Input Section - Made more prominent */}
+      <Card className="border-2 border-blue-200 bg-blue-50/30">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-xl">
+            <Brain className="h-6 w-6 text-blue-600" />
+            Try the Enhanced AI Intelligence
           </CardTitle>
-          <CardDescription>
-            Enter any text to see how Mira's AI analyzes patterns and provides intelligent assistance
+          <CardDescription className="text-base">
+            Enter any text to see pattern recognition, complexity analysis, and smart micro-questions
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Textarea
-            placeholder="Type anything here... e.g., 'Need to find a restaurant', 'Learning a new skill', 'Planning a trip'"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="min-h-20"
-          />
-          
-          <div className="flex flex-wrap gap-2">
-            <p className="text-sm text-gray-600 w-full mb-2">Try these examples:</p>
-            {sampleInputs.map((sample, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => handleSampleInput(sample)}
-                className="text-xs"
-              >
-                {sample}
-              </Button>
-            ))}
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Type anything here... e.g., 'Need to find a restaurant', 'Learning a new skill', 'Planning a trip'"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="min-h-24 text-lg border-2 border-blue-200 focus:border-blue-400"
+            />
+            
+            <Button 
+              onClick={handleAnalyze}
+              disabled={!input.trim() || taxonomyMutation.isPending || enhancedMutation.isPending}
+              className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
+            >
+              {taxonomyMutation.isPending || enhancedMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Analyzing with AI...
+                </div>
+              ) : (
+                "Analyze with Enhanced AI"
+              )}
+            </Button>
           </div>
           
-          <Button 
-            onClick={handleAnalyze}
-            disabled={!input.trim() || taxonomyMutation.isPending || enhancedMutation.isPending}
-            className="w-full"
-          >
-            {taxonomyMutation.isPending || enhancedMutation.isPending ? "Analyzing..." : "Analyze with AI"}
-          </Button>
+          <div className="border-t pt-4">
+            <p className="text-sm text-gray-600 mb-3 font-medium">Quick Test Examples:</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {sampleInputs.map((sample, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSampleInput(sample)}
+                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left justify-start"
+                >
+                  {sample}
+                </Button>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
