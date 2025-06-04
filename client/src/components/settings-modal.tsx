@@ -203,7 +203,9 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
         <BottomNavigation 
           activeTab={activeTab} 
           onTabChange={(tab: "activity" | "todos" | "collections") => {
+            console.log("Settings modal onTabChange called with:", tab);
             onTabChange(tab);
+            console.log("Settings modal calling onClose");
             onClose();
           }}
           onNewNote={onNewNote}
