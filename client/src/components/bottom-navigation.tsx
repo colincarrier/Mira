@@ -56,11 +56,11 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   };
   return (
     <>
-      {/* Chat-style input box - anchored to nav bar top with swipe functionality */}
+      {/* Chat-style input box - positioned relative to navigation */}
       {hideAddButton !== true && (
         <div 
           ref={addButtonRef}
-          className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
+          className={`absolute -top-20 left-4 right-4 transition-transform duration-300 ${
             isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
           }`}
           onTouchStart={handleTouchStart}
@@ -104,7 +104,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
         </div>
       )}
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50]" style={{ backgroundColor: '#f1efe8' }}>
+      <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50] relative" style={{ backgroundColor: '#f1efe8' }}>
         <div className="flex justify-around py-3">
           <button 
             onClick={() => handleTabChange("activity")}
