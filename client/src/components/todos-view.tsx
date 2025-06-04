@@ -55,8 +55,8 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         `}
         onClick={handleClick}
       >
-        {/* Vertical grouping line - positioned at first letter */}
-        <div className="absolute left-12 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+        {/* Vertical grouping line - positioned right of circle, between text */}
+        <div className="absolute left-10 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -264,12 +264,12 @@ export default function TodosView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 px-4">
+      <div className="flex gap-2 px-4 overflow-x-auto">
         {filterButtons.map(({ key, label, count, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setActiveFilter(key as FilterType)}
-            className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0
               ${activeFilter === key
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
