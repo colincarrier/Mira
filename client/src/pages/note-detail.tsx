@@ -19,6 +19,8 @@ export default function NoteDetail() {
   const [updateInput, setUpdateInput] = useState('');
   const [showUpdateArea, setShowUpdateArea] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
