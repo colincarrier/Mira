@@ -80,7 +80,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         </button>
 
         <div className="flex-grow min-w-0">
-          <p className={`text-sm ${todo.completed ? 'line-through' : ''}`}>
+          <p className={`text-sm ${todo.completed ? 'line-through' : ''} truncate`}>
             {todo.title}
           </p>
         </div>
