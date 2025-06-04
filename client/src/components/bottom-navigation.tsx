@@ -1,5 +1,5 @@
 import { Home, CheckSquare, Folder, Plus, Settings, Mic, Camera, Send } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 interface BottomNavigationProps {
   activeTab: "activity" | "todos" | "collections";
@@ -16,7 +16,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const addButtonRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (tab: "activity" | "todos" | "collections") => {
     onCloseCapture?.();

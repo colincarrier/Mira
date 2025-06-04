@@ -19,11 +19,12 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Temporarily removed refs to fix React runtime error
+  // const videoRef = useRef<HTMLVideoElement>(null);
+  // const canvasRef = useRef<HTMLCanvasElement>(null);
+  // const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // const titleRef = useRef<HTMLInputElement>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
