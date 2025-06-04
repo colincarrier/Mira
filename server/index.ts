@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
@@ -52,6 +53,24 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  // Add middleware to handle Vite module requests before catch-all route
+  if (app.get("env") === "development") {
+    // Handle Vite dependency modules
+    app.use('/node_modules/.vite', express.static(path.resolve('.', 'node_modules/.vite'), {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+          res.setHeader('Content-Type', 'text/javascript');
+        }
+      }
+    }));
+    
+    // Handle other Vite-specific requests that should not be caught by the catch-all
+    app.use('/@*', (req, res, next) => {
+      // Let Vite middleware handle these requests
+      next();
+    });
+  }
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
