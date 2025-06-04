@@ -5,6 +5,7 @@ import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@sha
 import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
 import { analyzeTaxonomy, enhancedAIAnalysis } from "./ai-taxonomy-engine";
+import { registerDemoRoutes } from "./demo-routes";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -1038,6 +1039,9 @@ Provide a well-organized summary that captures the essence of this collection an
       res.status(500).json({ message: "Failed to reorder collections" });
     }
   });
+
+  // Register demo routes to bypass frontend module loading issues
+  registerDemoRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
