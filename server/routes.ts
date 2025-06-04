@@ -269,6 +269,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Intelligent Note Evolution Endpoint
+  app.post("/api/notes/:id/evolve", aiRateLimit, async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.id);
+      const { instruction, existingContent, existingContext, existingTodos, existingRichContext } = req.body;
+      
+      if (!instruction || !existingContent) {
+        return res.status(400).json({ message: "Instruction and existing content required" });
+      }
+
+      // Get the note to ensure it exists
+      const note = await storage.getNote(noteId);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+
+      // Create comprehensive evolution prompt
+      const evolutionPrompt = `You are an intelligent assistant helping to evolve and improve a user's note. Your goal is to understand the existing content deeply and apply the user's instruction to make it better, more complete, and more actionable.
+
+EXISTING NOTE CONTENT:
+${existingContent}
+
+EXISTING AI CONTEXT:
+${existingContext || 'None'}
+
+EXISTING TODOS:
+${existingTodos && existingTodos.length > 0 ? existingTodos.map((t: any) => `• ${t.title} ${t.completed ? '(✓ completed)' : '(pending)'}`).join('\n') : 'None'}
+
+EXISTING RESEARCH/RICH CONTEXT:
+${existingRichContext ? JSON.stringify(JSON.parse(existingRichContext), null, 2) : 'None'}
+
+USER'S EVOLUTION INSTRUCTION:
+"${instruction}"
+
+Please intelligently evolve this note by:
+
+1. UNDERSTANDING the current state and context
+2. APPLYING the user's instruction thoughtfully
+3. PRESERVING important existing information
+4. ENHANCING with relevant details, next steps, or improvements
+5. CHECKING OFF completed todos if the instruction indicates completion
+6. ADDING new todos if the evolution suggests additional actions
+7. RESEARCHING and adding relevant external information if appropriate
+8. ORGANIZING the information better if needed
+
+Rules:
+- Don't lose obviously important information unless explicitly asked
+- Be proactive and anticipate what the user might need next
+- If the instruction mentions checking things off, update todo statuses
+- If research is needed, provide relevant facts and resources
+- If the instruction suggests adding items, create comprehensive additions
+- Think like a knowledgeable assistant who is always 2 steps ahead
+
+Respond with a JSON object containing:
+{
+  "enhancedContent": "The improved note content",
+  "suggestion": "Brief explanation of what you evolved",
+  "context": "Any new context or insights",
+  "todos": ["Array of new todo items to add"],
+  "todoUpdates": [{"id": number, "completed": boolean}], // for existing todos to update
+  "collectionSuggestion": {"name": "string", "icon": "string", "color": "string"} or null,
+  "richContext": {
+    "recommendedActions": [{"title": "string", "description": "string", "links": [{"title": "string", "url": "string"}]}],
+    "researchResults": [{"title": "string", "description": "string", "keyPoints": ["string"], "rating": "string"}],
+    "quickInsights": ["string"]
+  }
+}`;
+
+      console.log("Evolving note with instruction:", instruction);
+
+      // Use Claude for intelligent evolution
+      const evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+      
+      // Apply the evolution to the note
+      const updates: any = {
+        content: evolution.enhancedContent || existingContent,
+        aiSuggestion: evolution.suggestion,
+        aiContext: evolution.context,
+        aiEnhanced: true
+      };
+
+      // Add rich context if provided
+      if (evolution.richContext) {
+        updates.richContext = JSON.stringify(evolution.richContext);
+      }
+
+      // Update the note
+      await storage.updateNote(noteId, updates);
+
+      // Handle todo updates (mark completed/incomplete)
+      if (evolution.todoUpdates && evolution.todoUpdates.length > 0) {
+        for (const todoUpdate of evolution.todoUpdates) {
+          try {
+            await storage.updateTodo(todoUpdate.id, { completed: todoUpdate.completed });
+          } catch (error) {
+            console.error("Failed to update todo:", todoUpdate.id, error);
+          }
+        }
+      }
+
+      // Create new todos
+      if (evolution.todos && evolution.todos.length > 0) {
+        for (const todoTitle of evolution.todos) {
+          await storage.createTodo({
+            title: todoTitle,
+            noteId: noteId,
+          });
+        }
+      }
+
+      // Handle collection suggestion
+      if (evolution.collectionSuggestion) {
+        const collections = await storage.getCollections();
+        const existingCollection = collections.find(
+          c => c.name.toLowerCase() === evolution.collectionSuggestion!.name.toLowerCase()
+        );
+        
+        let collectionId = existingCollection?.id;
+        if (!existingCollection) {
+          const newCollection = await storage.createCollection(evolution.collectionSuggestion);
+          collectionId = newCollection.id;
+        }
+        
+        await storage.updateNote(noteId, { collectionId });
+      }
+
+      // Return the updated note
+      const updatedNote = await storage.getNote(noteId);
+      res.json(updatedNote);
+
+    } catch (error) {
+      console.error("Note evolution error:", error);
+      res.status(500).json({ message: "Failed to evolve note" });
+    }
+  });
+
   app.post("/api/notes/voice", aiRateLimit, upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
