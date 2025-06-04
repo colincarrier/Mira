@@ -55,8 +55,8 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         `}
         onClick={handleClick}
       >
-        {/* Vertical grouping line - positioned right of circle, between text */}
-        <div className="absolute left-10 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+        {/* Vertical grouping line - anchored between text content */}
+        <div className="absolute left-[52px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -241,7 +241,7 @@ export default function TodosView() {
 
   const filterButtons = [
     { key: 'all', label: 'All', count: activeTodos.length, icon: null },
-    { key: 'pinned', label: 'Pinned', count: pinnedCount, icon: Pin },
+    { key: 'pinned', label: 'Pins', count: pinnedCount, icon: Pin },
     { key: 'urgent', label: 'Urgent', count: urgentCount, icon: AlertCircle },
     { key: 'completed', label: 'Done', count: todos?.filter(t => t.completed && !t.archived).length || 0, icon: Check },
   ];
@@ -269,7 +269,7 @@ export default function TodosView() {
           <button
             key={key}
             onClick={() => setActiveFilter(key as FilterType)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0
               ${activeFilter === key
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
