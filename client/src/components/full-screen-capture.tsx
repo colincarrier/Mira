@@ -222,7 +222,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           {/* Main capture button - centered */}
           <div 
             className="absolute left-1/2 transform -translate-x-1/2 z-[999999]"
-            style={{ bottom: '74px' }}
+            style={{ bottom: '82px' }}
           >
             <button
               onClick={capturePhoto}
@@ -232,7 +232,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           </div>
 
           {/* Bottom mode switcher */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[10001]">
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[10001]">
             <div className="flex gap-2">
               <button
                 onClick={() => setCaptureMode('voice')}
