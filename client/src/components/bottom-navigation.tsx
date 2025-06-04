@@ -65,8 +65,9 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
           }`}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          style={{ backgroundColor: 'red', padding: '10px', minHeight: '60px' }}
         >
-          <div className="border border-[hsl(var(--border))] rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-[#fcfcfc]">
+          <div className="border-2 border-blue-500 rounded-full px-4 py-3 shadow-xl flex items-center gap-3 bg-blue-50">
             <input
               type="text"
               placeholder="Add/edit anything..."
