@@ -840,11 +840,22 @@ Respond with a JSON object containing:
         return res.status(400).json({ message: "No file provided" });
       }
 
-      // Create initial note with file description
-      const note = await storage.createNote({
-        content: `[File uploaded: ${req.file.originalname}] - ${req.file.mimetype} (${Math.round(req.file.size / 1024)}KB)`,
-        mode: "file",
-      });
+      const noteId = req.body.noteId;
+      let note;
+
+      if (noteId) {
+        // Update existing placeholder note
+        note = await storage.updateNote(parseInt(noteId), {
+          content: `📄 Analyzing file...`,
+          isProcessing: false,
+        });
+      } else {
+        // Create new note (fallback)
+        note = await storage.createNote({
+          content: `[File uploaded: ${req.file.originalname}] - ${req.file.mimetype} (${Math.round(req.file.size / 1024)}KB)`,
+          mode: "file",
+        });
+      }
 
       // Analyze file content with AI in the background
       let fileContent = `File: ${req.file.originalname} (${req.file.mimetype}, ${Math.round(req.file.size / 1024)}KB)`;

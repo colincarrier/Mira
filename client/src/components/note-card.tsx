@@ -1,13 +1,15 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface NoteCardProps {
   note: NoteWithTodos;
@@ -369,13 +371,26 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </button>
         </div>
       </div>
+      {/* Processing indicator */}
+      {note.isProcessing && (
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            <span className="text-sm text-blue-700">Processing with AI...</span>
+          </div>
+          <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
+            <div className="bg-blue-600 h-1 rounded-full animate-pulse" style={{ width: "60%" }}></div>
+          </div>
+        </div>
+      )}
+
       {/* Content with iOS Notes-style formatting */}
       <div className="mb-3">
         {/* Title - 1 line with description, 3 lines without */}
         <h3 className={`text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))] ${
           formattedContent.description || formattedContent.hasStructure ? 'line-clamp-1' : 'line-clamp-3'
         }`}>
-          {formattedContent.title}
+          {note.aiSuggestion || formattedContent.title}
         </h3>
         
         {/* Description or bullets - smaller, single-spaced */}
