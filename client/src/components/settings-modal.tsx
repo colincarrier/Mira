@@ -2,7 +2,7 @@ import { ChevronLeft, Brain } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import AIComparison from "./ai-comparison";
-import BottomNavigation from "./bottom-navigation";
+
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -208,14 +208,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
           </div>
         </div>
         
-        {/* Bottom Navigation */}
-        <BottomNavigation 
-          activeTab={activeTab} 
-          onTabChange={onTabChange}
-          onNewNote={onNewNote}
-          onSettings={onClose}
-          onCloseCapture={onCloseCapture}
-        />
+
       </div>
     </div>
   );
