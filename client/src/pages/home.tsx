@@ -6,6 +6,7 @@ import TodosView from "@/components/todos-view";
 import CollectionsView from "@/components/collections-view";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
+import FloatingInputBar from "@/components/floating-input-bar";
 import FullScreenCapture from "@/components/full-screen-capture";
 import Settings from "@/pages/settings";
 
@@ -97,14 +98,17 @@ export default function Home() {
       </div>
 
       {/* Bottom Navigation */}
+      {/* Floating Input Bar */}
+      <FloatingInputBar
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+        isHidden={activeTab === "settings"}
+      />
+
+      {/* Bottom Navigation Tabs */}
       <BottomNavigation 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onSettings={() => setActiveTab("settings")}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-        hideAddButton={activeTab === "settings"}
       />
 
       {/* Modals */}
