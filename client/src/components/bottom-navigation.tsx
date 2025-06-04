@@ -11,9 +11,15 @@ interface BottomNavigationProps {
   onCameraCapture?: () => void;
 }
 
-export default function BottomNavigation({ activeTab, onTabChange, onNewNote, onSettings, onCloseCapture, hideAddButton, onCameraCapture }: BottomNavigationProps) {
-  const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+export default function BottomNavigation({ 
+  activeTab, 
+  onTabChange, 
+  onNewNote, 
+  onSettings, 
+  onCloseCapture, 
+  hideAddButton, 
+  onCameraCapture 
+}: BottomNavigationProps) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
@@ -30,7 +36,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
 
   const handleSendMessage = () => {
     if (inputValue.trim()) {
-      // TODO: Send the message
       console.log("Sending message:", inputValue);
       setInputValue("");
       setIsTyping(false);
@@ -49,159 +54,142 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
     onSettings();
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-    
-    const touchEnd = {
-      x: e.changedTouches[0].clientX,
-      y: e.changedTouches[0].clientY
-    };
-    
-    const deltaX = touchEnd.x - touchStart.x;
-    const deltaY = Math.abs(touchEnd.y - touchStart.y);
-    
-    // Swipe right to hide (minimum 50px horizontal, max 30px vertical)
-    if (deltaX > 50 && deltaY < 30) {
-      setIsAddButtonHidden(true);
-    }
-    // Swipe left to show
-    else if (deltaX < -50 && deltaY < 30) {
-      setIsAddButtonHidden(false);
-    }
-    
-    setTouchStart(null);
-  };
   return (
     <>
       {/* Chat-style input box - anchored above navigation */}
       {hideAddButton !== true && (
         <div 
-          className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
-            isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
-          }`}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
+          className="fixed bottom-24 left-4 right-4 transition-transform duration-300"
           style={{ 
             zIndex: 9999,
-            position: 'fixed',
-            bottom: '6rem',
-            left: '1rem',
-            right: '1rem'
+            transform: 'translateX(0px)',
+            opacity: 1
           }}
         >
-          <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
+          {/* Main chat input container */}
+          <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2 min-h-[48px]">
+            {/* Dynamic textarea with proper line handling */}
             <textarea
-              placeholder="Add/edit anything..."
-              className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
               value={inputValue}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
+              placeholder="Message"
+              className="flex-1 bg-transparent border-none outline-none resize-none text-sm px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed"
               rows={1}
               style={{
                 minHeight: '20px',
-                maxHeight: '120px'
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                maxHeight: '80px',
+                borderRadius: '20px',
+                overflow: 'hidden'
               }}
             />
-            {isTyping ? (
-              <>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleSendMessage}
-                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </>
-            ) : (
-              <>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 hover:bg-green-700 rounded-full flex items-center justify-center transition-colors bg-[#dcd7d0] text-[#374151]"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={onCameraCapture || onNewNote}
-                  className="w-8 h-8 hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#a6bfa0]"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={onNewNote}
-                  className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-              </>
-            )}
+
+            {/* Action buttons container */}
+            <div className="flex items-center gap-1">
+              {!isTyping ? (
+                <>
+                  {/* Mic button with light blue background */}
+                  <button
+                    onClick={() => onNewNote()}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                    style={{ backgroundColor: '#a1c4cfcc' }}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+
+                  {/* Camera button with light blue background */}
+                  <button
+                    onClick={() => onNewNote()}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                    style={{ backgroundColor: '#9bb8d3' }}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+
+                  {/* Plus button with green background */}
+                  <button
+                    onClick={() => onNewNote()}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                    style={{ backgroundColor: '#a8bfa1' }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Plus button (collapsed state) */}
+                  <button
+                    onClick={() => onNewNote()}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                    style={{ backgroundColor: '#a8bfa1' }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+
+                  {/* Send button */}
+                  <button
+                    onClick={handleSendMessage}
+                    className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white transition-all duration-200"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
-      {/* Hidden state indicator - tap to restore */}
-      {isAddButtonHidden && hideAddButton !== true && (
-        <div 
-          className="fixed bottom-24 right-4 cursor-pointer"
-          onClick={() => setIsAddButtonHidden(false)}
-          style={{ zIndex: 10000 }}
-        >
-          <div className="w-12 h-6 bg-gray-400/50 rounded-full flex items-center justify-center">
-            <div className="w-8 h-1 bg-gray-600 rounded-full"></div>
-          </div>
-        </div>
-      )}
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full border-t border-[hsl(var(--border))] safe-area-bottom z-[50]" style={{ backgroundColor: '#f1efe8' }}>
-        <div className="flex justify-around py-3">
-          <button 
+
+      {/* Bottom navigation bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-3" style={{ zIndex: 9998 }}>
+        <div className="flex items-center justify-between max-w-sm mx-auto">
+          {/* Navigation tabs */}
+          <button
             onClick={() => handleTabChange("activity")}
-            className={`tab-button ${activeTab === "activity" ? "active" : ""}`}
+            className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+              activeTab === "activity"
+                ? "text-[#007AFF] bg-blue-50 dark:bg-blue-900/20"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-xs">Notes</span>
+            <span className="text-xs font-medium">Notes</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => handleTabChange("todos")}
-            className={`tab-button ${activeTab === "todos" ? "active" : ""}`}
+            className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+              activeTab === "todos"
+                ? "text-[#007AFF] bg-blue-50 dark:bg-blue-900/20"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
           >
             <CheckSquare className="w-5 h-5" />
-            <span className="text-xs">To-Dos</span>
+            <span className="text-xs font-medium">Todos</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => handleTabChange("collections")}
-            className={`tab-button ${activeTab === "collections" ? "active" : ""}`}
+            className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+              activeTab === "collections"
+                ? "text-[#007AFF] bg-blue-50 dark:bg-blue-900/20"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
           >
             <Folder className="w-5 h-5" />
-            <span className="text-xs">Collections</span>
+            <span className="text-xs font-medium">Collections</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={handleSettings}
-            className="tab-button"
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            style={{ backgroundColor: '#f9fafb' }}
           >
             <Settings className="w-5 h-5" />
-            <span className="text-xs">Settings</span>
+            <span className="text-xs font-medium">More</span>
           </button>
         </div>
-      </nav>
+      </div>
     </>
   );
 }
