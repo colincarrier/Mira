@@ -98,7 +98,7 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
             right: '1rem'
           }}
         >
-          <div className="border border-gray-300 rounded-[16px] px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
+          <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
             <textarea
               placeholder="Add/edit anything..."
               className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
@@ -135,13 +135,13 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
               <>
                 <button 
                   onClick={onNewNote}
-                  className="w-8 h-8 hover:bg-green-700 rounded-full flex items-center justify-center transition-colors bg-[#dcd7d1] text-[#394454]"
+                  className="w-8 h-8 bg-[#a8bfa1] hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={onCameraCapture || onNewNote}
-                  className="w-8 h-8 hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#a8bfa2]"
+                  className="w-8 h-8 bg-[#9bb8d3] hover:bg-blue-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                 >
                   <Camera className="w-4 h-4" />
                 </button>
