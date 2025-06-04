@@ -146,21 +146,30 @@ Create a structured bio that includes (extract and infer from the provided infor
 
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized help. Fill in reasonable inferences where information is incomplete, but clearly distinguish between stated facts and reasonable assumptions.`;
 
+      console.log("Starting Claude analysis for profile generation...");
       const analysis = await analyzeWithClaude(bioPrompt, "profile");
+      console.log("Claude analysis completed:", analysis);
+      
+      const bioContent = analysis.enhancedContent || analysis.suggestion || "Profile generated successfully";
       
       // Update user with bio
+      console.log("Updating user profile...", userId);
       await storage.updateUser(userId || "demo", {
-        personalBio: analysis.enhancedContent || analysis.suggestion,
+        personalBio: bioContent,
         onboardingCompleted: true
       });
 
       res.json({ 
-        bio: analysis.enhancedContent || analysis.suggestion,
+        bio: bioContent,
         success: true 
       });
     } catch (error) {
       console.error("Error processing quick profile:", error);
-      res.status(500).json({ error: "Failed to process profile" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorStack = error instanceof Error ? error.stack : "";
+      console.error("Error details:", errorMessage);
+      console.error("Error stack:", errorStack);
+      res.status(500).json({ error: "Failed to process profile", details: errorMessage });
     }
   });
 
