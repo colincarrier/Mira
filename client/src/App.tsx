@@ -26,58 +26,13 @@ function Router() {
 }
 
 function GlobalAddButton() {
-  const [location] = useLocation();
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
-  
-  // Show on home page only
-  const shouldShow = location === '/';
-  
-  console.log('GlobalAddButton - location:', location, 'shouldShow:', shouldShow);
-  
-  if (!shouldShow) return null;
-  
   return (
-    <>
-      {/* Debug element */}
-      <div 
-        className="fixed top-20 left-4 right-4 bg-red-500 text-white p-2 text-center"
-        style={{ zIndex: 99999 }}
-      >
-        DEBUG: GlobalAddButton rendering - location: {location}
-      </div>
-      
-      <div 
-        className="fixed bottom-24 left-4 right-4 transition-transform duration-300"
-        style={{ zIndex: 10000 }}
-      >
-        <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
-          <input
-            type="text"
-            placeholder="Add/edit anything..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900"
-            onFocus={() => setIsFullScreenCaptureOpen(true)}
-            readOnly
-          />
-          <button 
-            onClick={() => setIsFullScreenCaptureOpen(true)}
-            className="w-8 h-8 bg-[#a8bfa1] hover:bg-gray-900 text-white rounded-full flex items-center justify-center transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setIsFullScreenCaptureOpen(true)}
-            className="w-8 h-8 bg-[#a1c4cfcc] hover:bg-gray-600 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      
-      <FullScreenCapture
-        isOpen={isFullScreenCaptureOpen}
-        onClose={() => setIsFullScreenCaptureOpen(false)}
-      />
-    </>
+    <div 
+      className="fixed top-20 left-4 right-4 bg-blue-500 text-white p-4 text-center rounded"
+      style={{ zIndex: 99999 }}
+    >
+      SIMPLE TEST: GlobalAddButton is rendering
+    </div>
   );
 }
 
