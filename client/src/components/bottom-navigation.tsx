@@ -1,5 +1,6 @@
-import { Home, CheckSquare, Folder, Plus, Settings, Mic, Camera, Send } from "lucide-react";
+import { Home, CheckSquare, Folder, Settings, Plus, Camera, Mic, Send } from "lucide-react";
 import { useState, useRef } from "react";
+import UniversalInputBar from "./universal-input-bar";
 
 interface BottomNavigationProps {
   activeTab: "activity" | "todos" | "collections";

@@ -12,6 +12,11 @@
 - **Default State**: Shows Plus + Camera + Mic buttons
 - **Typing State**: Shows Plus + Send buttons (Camera and Mic collapse)
 
+### Universal Component Guidelines
+- Input bars should use consistent styling across all pages
+- Use the UniversalInputBar component to maintain color consistency
+- Any changes to input bar colors should be applied universally
+
 ### Other UI Elements
 - **More Options Button Background**: `#f9fafb` (Light Gray) - Used in note card headers
 - **Input Bar Corner Radius**: `rounded-2xl` (16px) - Fixed radius that maintains shape when textarea expands
