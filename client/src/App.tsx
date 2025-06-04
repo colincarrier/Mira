@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
+import SmartInputAnalyzer from "@/components/smart-input-analyzer";
 
 
 function Router() {
