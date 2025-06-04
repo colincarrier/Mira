@@ -4,8 +4,6 @@ import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
 import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
-import { analyzeTaxonomy, enhancedAIAnalysis } from "./ai-taxonomy-engine";
-import { registerDemoRoutes } from "./demo-routes";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -29,9 +27,6 @@ let apiUsageStats = {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Register demo routes first to bypass frontend issues
-  registerDemoRoutes(app);
-
   // API Stats endpoint
   app.get("/api/stats/api-usage", async (req, res) => {
     res.json(apiUsageStats);
@@ -440,77 +435,6 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
-  // Enhanced AI Analysis with Taxonomy Intelligence
-  app.post("/api/analyze-enhanced", aiRateLimit, async (req, res) => {
-    try {
-      const { content, mode = "claude" } = req.body;
-      
-      if (!content || content.trim().length === 0) {
-        return res.status(400).json({ error: "Content is required" });
-      }
-
-      console.log("Starting enhanced AI analysis with taxonomy patterns for:", content.substring(0, 100));
-
-      // Use the enhanced AI analysis with taxonomy integration
-      const analysis = await enhancedAIAnalysis(content, mode);
-      
-      if (!analysis) {
-        return res.status(500).json({ error: "Enhanced analysis failed" });
-      }
-
-      // Track API usage
-      if (mode === "openai") {
-        apiUsageStats.openai.requests++;
-        apiUsageStats.openai.tokens += 1500;
-        apiUsageStats.openai.cost += 0.02;
-      } else {
-        apiUsageStats.claude.requests++;
-        apiUsageStats.claude.tokens += 1500;
-        apiUsageStats.claude.cost += 0.015;
-      }
-      apiUsageStats.totalRequests++;
-
-      console.log("Enhanced analysis completed with taxonomy insights");
-      res.json(analysis);
-    } catch (error) {
-      console.error("Enhanced analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze content with enhanced intelligence" });
-    }
-  });
-
-  // Taxonomy Pattern Detection endpoint
-  app.post("/api/analyze-taxonomy", async (req, res) => {
-    try {
-      const { content } = req.body;
-      
-      if (!content || content.trim().length === 0) {
-        return res.status(400).json({ error: "Content is required" });
-      }
-
-      const taxonomyAnalysis = await analyzeTaxonomy(content);
-      
-      if (!taxonomyAnalysis) {
-        return res.json({ 
-          detected: false, 
-          message: "No specific patterns detected",
-          suggestions: ["Try providing more context about your goal", "Be more specific about what you need help with"]
-        });
-      }
-
-      res.json({
-        detected: true,
-        category: taxonomyAnalysis.category,
-        confidence: taxonomyAnalysis.confidence,
-        microQuestions: taxonomyAnalysis.microQuestions,
-        suggestedFollowUps: taxonomyAnalysis.suggestedFollowUps,
-        contextualInsights: taxonomyAnalysis.contextualInsights
-      });
-    } catch (error) {
-      console.error("Taxonomy analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze input patterns" });
-    }
-  });
-
   // Dual AI comparison endpoint
   app.post("/api/compare-ai", aiRateLimit, async (req, res) => {
     try {
@@ -649,7 +573,16 @@ Respond with a JSON object containing:
       // Update the note
       await storage.updateNote(noteId, updates);
 
-      // Note: todoUpdates property removed - handled separately
+      // Handle todo updates (mark completed/incomplete)
+      if (evolution.todoUpdates && evolution.todoUpdates.length > 0) {
+        for (const todoUpdate of evolution.todoUpdates) {
+          try {
+            await storage.updateTodo(todoUpdate.id, { completed: todoUpdate.completed });
+          } catch (error) {
+            console.error("Failed to update todo:", todoUpdate.id, error);
+          }
+        }
+      }
 
       // Create new todos
       if (evolution.todos && evolution.todos.length > 0) {

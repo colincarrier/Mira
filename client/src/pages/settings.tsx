@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Code, ExternalLink } from "lucide-react";
-import { Link } from "wouter";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -332,32 +331,6 @@ export default function Settings() {
                 </>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Developer Tools */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-3 border-b border-gray-100">
-            <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              <Code className="w-4 h-4 text-blue-500" />
-              Developer Tools
-            </h2>
-          </div>
-          <div className="p-3">
-            <Link href="/ai-demo">
-              <button className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-blue-900">AI Intelligence Demo</div>
-                    <div className="text-xs text-blue-600">Test pattern recognition and micro-questions</div>
-                  </div>
-                </div>
-                <ExternalLink className="w-4 h-4 text-blue-600" />
-              </button>
-            </Link>
           </div>
         </div>
 

@@ -9,8 +9,6 @@ import NotFound from "@/pages/not-found";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
-import SimpleAIDemo from "@/components/simple-ai-demo";
-import TestPage from "@/pages/test-page";
 
 
 function Router() {
@@ -20,8 +18,6 @@ function Router() {
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
       <Route path="/todo/:id" component={TodoDetail} />
-      <Route path="/ai-demo" component={SimpleAIDemo} />
-      <Route path="/test" component={TestPage} />
       <Route component={NotFound} />
     </Switch>
   );

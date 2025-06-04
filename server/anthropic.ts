@@ -175,9 +175,6 @@ CRITICAL: Provide real intelligence, not just reformatted input. Research authen
       // Fallback response
       return {
         enhancedContent: content,
-        complexityScore: 3,
-        intentType: 'simple-task' as const,
-        urgencyLevel: 'medium' as const,
         todos: [],
         collectionSuggestion: {
           name: "Dev Tests",
@@ -198,9 +195,6 @@ CRITICAL: Provide real intelligence, not just reformatted input. Research authen
     // Fallback response
     return {
       enhancedContent: content,
-      complexityScore: 3,
-      intentType: 'simple-task' as const,
-      urgencyLevel: 'medium' as const,
       todos: [],
       collectionSuggestion: {
         name: "General Notes",
