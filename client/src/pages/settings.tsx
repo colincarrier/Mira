@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3 } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -86,103 +88,135 @@ export default function Settings() {
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
-        {/* Achievement Dashboard */}
+        {/* Stats & Achievements */}
         <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="text-base font-medium text-gray-900 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
+          <div className="p-3 border-b border-gray-100">
+            <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-yellow-500" />
               Your Journey
             </h2>
           </div>
-          <div className="p-4 space-y-4">
-            {/* Key Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{noteCount}</div>
-                <div className="text-sm text-blue-600">📝 Notes Created</div>
+          <div className="p-3 space-y-3">
+            {/* Compact Stats */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center p-2 bg-blue-50 rounded">
+                <div className="text-lg font-bold text-blue-600">{noteCount}</div>
+                <div className="text-xs text-blue-600">Notes</div>
               </div>
-              <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{completedTodos}</div>
-                <div className="text-sm text-green-600">✅ Tasks Done</div>
+              <div className="text-center p-2 bg-green-50 rounded">
+                <div className="text-lg font-bold text-green-600">{completedTodos}</div>
+                <div className="text-xs text-green-600">Done</div>
               </div>
-              <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{streakDays}</div>
-                <div className="text-sm text-purple-600">🔥 Day Streak</div>
+              <div className="text-center p-2 bg-purple-50 rounded">
+                <div className="text-lg font-bold text-purple-600">{streakDays}</div>
+                <div className="text-xs text-purple-600">Streak</div>
               </div>
-              <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{productivityScore}%</div>
-                <div className="text-sm text-orange-600">📊 Completion Rate</div>
+              <div className="text-center p-2 bg-orange-50 rounded">
+                <div className="text-lg font-bold text-orange-600">{productivityScore}%</div>
+                <div className="text-xs text-orange-600">Score</div>
               </div>
             </div>
 
-            {/* Achievements */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Crown className="w-4 h-4" />
-                Achievements
-              </h3>
-              {achievements.map((achievement) => (
-                <div 
-                  key={achievement.id} 
-                  className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    achievement.unlocked 
-                      ? 'bg-yellow-50 border-yellow-200' 
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className={`text-2xl ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>
-                    {achievement.icon}
-                  </div>
-                  <div className="flex-1">
-                    <div className={`text-sm font-medium ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {achievement.name}
+            {/* Compact Achievements */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Achievements</span>
+                <span className="text-xs text-gray-500">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {achievements.slice(0, 4).map((achievement) => (
+                  <div 
+                    key={achievement.id} 
+                    className={`flex items-center gap-2 p-2 rounded text-xs ${
+                      achievement.unlocked 
+                        ? 'bg-yellow-50 border border-yellow-200' 
+                        : 'bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    <span className={achievement.unlocked ? '' : 'grayscale opacity-50'}>
+                      {achievement.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-medium truncate ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {achievement.name}
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1">
+                        <div 
+                          className={`h-1 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
+                          style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">{achievement.description}</div>
-                    <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className={`h-1.5 rounded-full ${achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'}`}
-                        style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
-                      />
-                    </div>
                   </div>
-                  {achievement.unlocked && (
-                    <Star className="w-5 h-5 text-yellow-500" />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* API Usage & Costs */}
+        {/* Personal Profile */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-4 border-b border-gray-100">
             <h2 className="text-base font-medium text-gray-900 flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-500" />
-              AI Usage & Costs
+              <Target className="w-5 h-5 text-blue-500" />
+              Personal Profile
             </h2>
           </div>
           <div className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg">
-                <div className="text-xl font-bold text-indigo-600">{apiStats?.openai?.requests || 0}</div>
-                <div className="text-xs text-indigo-600">OpenAI Requests</div>
-                <div className="text-xs text-gray-500">${(apiStats?.openai?.cost || 0).toFixed(4)}</div>
-              </div>
-              <div className="text-center p-3 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg">
-                <div className="text-xl font-bold text-cyan-600">{apiStats?.claude?.requests || 0}</div>
-                <div className="text-xs text-cyan-600">Claude Requests</div>
-                <div className="text-xs text-gray-500">${(apiStats?.claude?.cost || 0).toFixed(4)}</div>
-              </div>
+            <div className="text-sm text-gray-600">
+              Help Mira learn about you to provide more personalized assistance.
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">${((apiStats?.openai?.cost || 0) + (apiStats?.claude?.cost || 0)).toFixed(4)}</div>
-              <div className="text-sm text-green-600">💰 Total Cost This Month</div>
+            <div className="space-y-3">
+              <button className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium">?</span>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-blue-900">Complete Onboarding</div>
+                    <div className="text-xs text-blue-600">Answer questions to personalize Mira</div>
+                  </div>
+                </div>
+                <div className="text-blue-600 text-sm">Start</div>
+              </button>
+              <button className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-gray-600">📋</span>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-gray-900">Quick Profile</div>
+                    <div className="text-xs text-gray-500">Paste info about yourself</div>
+                  </div>
+                </div>
+                <div className="text-gray-600 text-sm">Add</div>
+              </button>
             </div>
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>• OpenAI tokens used: {apiStats?.openai?.tokens || 0}</div>
-              <div>• Claude tokens used: {apiStats?.claude?.tokens || 0}</div>
-              <div>• Average cost per request: ${(((apiStats?.openai?.cost || 0) + (apiStats?.claude?.cost || 0)) / Math.max((apiStats?.openai?.requests || 0) + (apiStats?.claude?.requests || 0), 1)).toFixed(4)}</div>
+          </div>
+        </div>
+
+        {/* API Usage (Compact) */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-3 border-b border-gray-100">
+            <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <Brain className="w-4 h-4 text-purple-500" />
+              AI Usage
+            </h2>
+          </div>
+          <div className="p-3 space-y-2">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 bg-indigo-50 rounded">
+                <div className="text-sm font-bold text-indigo-600">{apiStats?.openai?.requests || 0}</div>
+                <div className="text-xs text-indigo-600">OpenAI</div>
+              </div>
+              <div className="p-2 bg-cyan-50 rounded">
+                <div className="text-sm font-bold text-cyan-600">{apiStats?.claude?.requests || 0}</div>
+                <div className="text-xs text-cyan-600">Claude</div>
+              </div>
+              <div className="p-2 bg-green-50 rounded">
+                <div className="text-sm font-bold text-green-600">${((apiStats?.openai?.cost || 0) + (apiStats?.claude?.cost || 0)).toFixed(3)}</div>
+                <div className="text-xs text-green-600">Cost</div>
+              </div>
             </div>
           </div>
         </div>

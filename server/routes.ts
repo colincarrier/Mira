@@ -32,6 +32,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(apiUsageStats);
   });
 
+  // Profile endpoints
+  app.post("/api/profile/onboarding", async (req, res) => {
+    try {
+      const { onboardingData, userId } = req.body;
+      
+      // Generate bio using AI
+      const bioPrompt = `Based on the following user responses to onboarding questions, create a comprehensive but concise personal bio that captures their personality, goals, preferences, and context. Make it friendly and useful for an AI assistant to understand them better:
+
+${JSON.stringify(onboardingData, null, 2)}
+
+Create a bio that includes:
+- Who they are and what they do
+- Their goals and challenges
+- How they prefer to work and communicate
+- What motivates them
+- Any unique aspects about them
+
+Keep it under 500 words but comprehensive enough to provide meaningful context.`;
+
+      const analysis = await analyzeWithClaude(bioPrompt, "onboarding");
+      
+      // Update user with bio and preferences
+      await storage.updateUser(userId || "demo", {
+        personalBio: analysis.enhancedContent || analysis.suggestion,
+        preferences: onboardingData,
+        onboardingCompleted: true
+      });
+
+      res.json({ 
+        bio: analysis.enhancedContent || analysis.suggestion,
+        success: true 
+      });
+    } catch (error) {
+      console.error("Error processing onboarding:", error);
+      res.status(500).json({ error: "Failed to process onboarding" });
+    }
+  });
+
+  app.post("/api/profile/quick", async (req, res) => {
+    try {
+      const { profileData, userId } = req.body;
+      
+      // Generate bio from quick profile data
+      const bioPrompt = `Based on the following information about a user, create a comprehensive personal bio that an AI assistant can use to better understand and help them:
+
+${profileData}
+
+Create a structured bio that captures:
+- Their identity and background
+- Professional context
+- Personal interests and preferences
+- Communication style
+- Goals and priorities
+
+Keep it concise but informative.`;
+
+      const analysis = await analyzeWithClaude(bioPrompt, "profile");
+      
+      // Update user with bio
+      await storage.updateUser(userId || "demo", {
+        personalBio: analysis.enhancedContent || analysis.suggestion,
+        onboardingCompleted: true
+      });
+
+      res.json({ 
+        bio: analysis.enhancedContent || analysis.suggestion,
+        success: true 
+      });
+    } catch (error) {
+      console.error("Error processing quick profile:", error);
+      res.status(500).json({ error: "Failed to process profile" });
+    }
+  });
+
+  app.get("/api/profile", async (req, res) => {
+    try {
+      const userId = req.query.userId || "demo";
+      const user = await storage.getUser(userId as string);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
   // Notes endpoints
   app.get("/api/notes", async (req, res) => {
     try {
