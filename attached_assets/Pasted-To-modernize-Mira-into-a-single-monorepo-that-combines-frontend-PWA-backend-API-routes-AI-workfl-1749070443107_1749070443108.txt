@@ -1,0 +1,737 @@
+To modernize “Mira” into a single monorepo that combines frontend PWA, backend API routes, AI workflows, IndexedDB/offline logic and Postgres/Drizzle into one coherent stack—and to make it easy to spin up on Replit (and later package as native iOS/Android)—I recommend migrating off “Vite + Express” into a Next.js project. Next.js gives you:
+
+File-based routing for both pages and API endpoints (so you no longer need a custom Express server or wrestle with Vite’s catch-all).
+
+Built-in PWA support (using next-pwa or manual service-worker injection), so your offline/IndexedDB logic lives alongside your pages.
+
+Zero-config HMR and module bundling, eliminating MIME-type conflicts and custom middleware hacks.
+
+A pathway to React Native (share your React/TypeScript components, business logic and AI wrappers between “web” and “mobile” with minimal friction).
+
+Automatic code splitting and optimizations (Next.js will only serve exactly the JS/CSS modules you need at runtime).
+
+Below is:
+
+Part 1: A proposed “optimal architecture” (file/folder structure + tech stack choices + how modules fit together).
+
+Part 2: A step-by-step migration guide—“instructions to give Replit” so that someone can spin up Mira as a Next.js app on Replit from scratch (or migrate the existing code).
+
+Part 1. Optimal Architecture (monorepo with Next.js)
+1.1. High-Level Stack
+Framework: Next.js 13+ (using the App Router or Pages Router, whichever your team prefers—below we’ll assume the App Router for full flexibility).
+
+Language: TypeScript everywhere.
+
+Styling: Tailwind CSS (already in your code).
+
+API: Next.js “API Routes” (app/api/… or pages/api/…) instead of a standalone Express server.
+
+Database: PostgreSQL (in production) via Drizzle ORM.
+
+Offline storage: IndexedDB (client-side) managed by a Zustand store.
+
+AI backends:
+
+OpenAI GPT-4o (wrapped in our own lib/ai/openai.ts)
+
+Claude Sonnet 4 (wrapped in lib/ai/claude.ts)
+
+PWA / service worker:
+
+manifest.json + icons in /public
+
+sw.js or next-pwa plugin to precache API responses and static assets
+
+Shared code (e.g. shared/schema.ts, AI prompt definitions) in a /shared directory, importable from both pages and API routes.
+
+1.2. Folder Structure (top level)
+graphql
+Copy
+Edit
+mira/
+├── public/                     # static assets, icons, manifest, service worker
+│   ├── manifest.json
+│   ├── sw.js
+│   ├── icons/
+│   │   ├── icon-192.png
+│   │   └── icon-512.png
+│   └── mira-icon.svg
+│
+├── shared/                     # code shared between frontend & backend
+│   └── schema.ts               # Drizzle schema (tables, types)
+│   └── prompts/                # AI prompt templates (as .md or .ts)
+│       ├── openai-templates.ts
+│       └── claude-templates.ts
+│
+├── lib/
+│   ├── ai/                     # wrappers around OpenAI/Claude
+│   │   ├── openai.ts
+│   │   └── claude.ts
+│   ├── db/                     # Drizzle client initialization + helpers
+│   │   └── drizzleClient.ts
+│   ├── auth/                   # ReplitAuth or other auth helpers
+│   │   └── replitAuth.ts
+│   └── utils.ts                # misc utility functions
+│
+├── app/                        # Next.js App Router (or pages/ if you prefer Pages Router)
+│   ├── layout.tsx
+│   ├── page.tsx                # your home / dashboard
+│   ├── globals.css             # Tailwind import + global styles
+│   ├── api/                    # Next.js API routes (replaces Express “server/routes.ts”)
+│   │   ├── ai/
+│   │   │   ├── analyze.ts      # POST → analyzeNote (OpenAI)
+│   │   │   └── deep.ts         # POST → enhancedAnalysis (Claude)
+│   │   └── collections.ts      # CRUD endpoints for collections
+│   │   └── todos.ts            # CRUD endpoints for todos
+│   │   └── notes.ts            # CRUD endpoints for notes
+│   │   └── auth.ts             # ReplitAuth login/logout callback
+│   │   └── sync.ts             # background sync endpoints, if any
+│   │   └── storage.ts          # file upload / GridFS logic if needed
+│   └── components/             # all shared React components
+│       ├── CaptureArea.tsx
+│       ├── NoteCard.tsx
+│       ├── TodoView.tsx
+│       └── ui/                 # your Tailwind-based UI primitives (buttons, modals, etc.)
+│
+├── store/                      # client-side Zustand store + IndexedDB adapters
+│   ├── appStore.ts
+│   └── indexedDB.ts
+│
+├── drizzle/                    # Drizzle ORM migrations & generated types (if you use them)
+│   ├── migrations/
+│   └── schema.ts (optional copy of shared/schema.ts)
+│
+├── next.config.js              # Next.js configuration (including next-pwa plugin)
+├── tsconfig.json
+├── tailwind.config.js
+├── package.json
+└── .replit                     # Replit config for build & run commands
+Notes:
+
+All formerly separate “client/…” components now live in app/components (or app/(screenName).tsx).
+
+All “server/…” logic is refactored into the Next.js app/api/… folder, so that each file in app/api becomes an endpoint.
+
+Shared TypeScript types/Drizzle schema remain in /shared so both your API code and your frontend code (for typing) can import them.
+
+public/ holds your PWA manifest, icons, service worker (sw.js), and any other static images.
+
+1.3. How Key Pieces Fit Together
+Page rendering → Next.js will server-render your React components (or do client-side hydration). E.g. app/page.tsx is your “Home” screen. Any file under app/(routeName)/page.tsx is a route.
+
+API routes →
+
+app/api/ai/analyze.ts receives a POST with { content, mode }, calls lib/ai/openai.ts (which uses process.env.OPENAI_API_KEY) and returns a JSON AIAnalysisResult.
+
+app/api/ai/deep.ts receives { content, userContext }, calls lib/ai/claude.ts, etc.
+
+CRUD endpoints (notes/collections/todos) simply import drizzleClient from lib/db/drizzleClient.ts and run SQL as normal.
+
+Database / Drizzle
+
+In lib/db/drizzleClient.ts you do something like:
+
+ts
+Copy
+Edit
+import { createClient } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+const sql = postgres(process.env.DATABASE_URL);
+export const db = createClient(sql);
+
+// Then you can do: db.select().from(...), db.insert(...) etc.
+Migrations live under drizzle/migrations/, if you choose to track them.
+
+Client-side state & offline
+
+In store/appStore.ts you have your Zustand store that holds notes, todos, collections, etc.
+
+In store/indexedDB.ts you open an IndexedDB database called MiraDB and create object stores for “notes,” “syncQueue,” etc., exactly as you had in the old client.
+
+Whenever the user creates or edits a note, your front end writes it to IndexedDB first, then enqueues a “sync job” to POST to /api/sync (which itself writes to Postgres + Drizzle). On next app load or when connectivity returns, your sync code reconciles conflicts.
+
+PWA / Service Worker
+
+In public/manifest.json you have your name, icons, theme color, etc.
+
+In public/sw.js you implement a fetch listener that:
+
+Does a “network-first” strategy for /api/… requests (so that API calls get cached but can fall back if offline).
+
+Does a “cache-first” strategy for static assets (/_next/static/…) so your app shell loads instantly on subsequent visits.
+
+In next.config.js you can use next-pwa (or a custom pwa plugin) to automatically inject <link rel="manifest"> and register your service worker in _app.tsx (or layout.tsx).
+
+AI wrappers
+
+lib/ai/openai.ts exports analyzeWithOpenAI(content: string, mode: string): Promise<AIAnalysisResult>.
+
+lib/ai/claude.ts exports analyzeWithClaude(content: string, userContext: any): Promise<AIAnalysisResult>.
+
+Both modules live behind app/api/ai/*.ts so that your front end never touches the API keys—those live as Replit secrets (process.env.OPENAI_API_KEY, process.env.ANTHROPIC_API_KEY).
+
+Authentication (ReplitAuth)
+
+If you want to authenticate via Replit accounts, move server/replitAuth.ts into lib/auth/replitAuth.ts and then expose a Next.js app/api/auth.ts handler that runs the same logic.
+
+The Next.js handler will either set a cookie or return a JWT for the front end to use.
+
+Tailwind, TypeScript, linting
+
+Copy your existing tailwind.config.js, tsconfig.json, and any ESLint config into the root.
+
+Import your Tailwind base styles into app/globals.css, e.g.:
+
+css
+Copy
+Edit
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+Once you finish this re-architecture, your repository is basically “npm install & npm run dev” away from launching everything—pages, API, PWA, IndexedDB, Drizzle, AI calls—without any Vite catch-all collisions.
+
+Part 2. Step-by-Step Migration Guide (for Replit)
+Below are precise instructions to hand to someone (or to follow yourself) when setting up a brand-new Replit project to host Mira as a Next.js PWA, or to migrate your existing codebase. We assume Replit’s environment, where you can select a “Node.js” template, add environment variables, and define a .replit run command.
+
+2.1. Create a New Replit (Next.js) or Import Existing
+On Replit → click “Create” → choose “Import from GitHub” and paste your Mira repository URL, or click “Create Repl” → select “Node.js” → give it a name like mira-nextjs.
+
+If you are just copying code manually, click “Node.js” → you’ll get an empty Node Repl.
+
+We will turn that into a Next.js app by copying files in.
+
+Populate the Repl
+
+If you imported from GitHub, your folder structure is already present.
+
+If you created a blank Node.js Repl, upload the new Next.js folder structure (the files under /mira) via Replit’s file upload or drag-and-drop.
+
+Check that you now have (at minimum) files at the Replit root:
+
+lua
+Copy
+Edit
+.replit
+next.config.js
+package.json
+tsconfig.json
+tailwind.config.js
+public/…
+app/…
+lib/…
+shared/…
+store/…
+drizzle/…
+If any of these are missing, copy them in from your local repo.
+
+2.2. Configure package.json
+Replace your existing package.json (or merge if you already had one) with something like:
+
+jsonc
+Copy
+Edit
+{
+  "name": "mira-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p $PORT",            // Listen on Replit's assigned port
+    "build": "next build",
+    "start": "next start -p $PORT"
+  },
+  "dependencies": {
+    "next": "13.x",                        // or latest stable
+    "react": "18.x",
+    "react-dom": "18.x",
+    "tailwindcss": "^3.x",
+    "drizzle-orm": "^1.x",                 // your version
+    "postgres": "^3.x",                    // Postgres driver used by Drizzle
+    "@drizzle-orm/postgres-js": "^x.x",    // Drizzle Postgres integration
+    "@prisma/client": "if you need it",    // (optional) if you use Prisma-style
+    "zustand": "^4.x",
+    "idb": "^7.x",                         // for IndexedDB (if you use IDB)
+    "swr": "^2.x",                         // or React Query if you prefer
+    // AI SDKs
+    "@anthropic-ai/sdk": "^x.x",
+    "openai": "^4.x",
+    "react-toastify": "^9.x",              // if you use toasts
+    "react-query": "^4.x",                 // or @tanstack/react-query
+    // Static assets (if any)
+    "next-pwa": "^0.x"                     // if using next-pwa plugin
+  },
+  "devDependencies": {
+    "typescript": "^5.x",
+    "eslint": "^8.x",
+    "prettier": "^2.x",
+    "autoprefixer": "^10.x",
+    "postcss": "^8.x"
+  }
+}
+Why “-p $PORT”?
+Replit injects an environment variable PORT at runtime. Next.js by default binds to port 3000, but on Replit you must listen on process.env.PORT so your app is reachable.
+
+After copying that in, run Shell → npm install (or click the ❑ “Run” button once, Replit will auto‐install).
+
+2.3. Create/Reconcile next.config.js
+If you want to use PWA, create next.config.js in the root with something like:
+
+js
+Copy
+Edit
+/** @type {import('next').NextConfig} */
+const withPWA = require("next-pwa")({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+});
+
+module.exports = withPWA({
+  reactStrictMode: true,
+  swcMinify: true,
+  images: {
+    // If you’re pulling images from external sources, list domains here
+    domains: ["cdn.openai.com", "anthropic.ai"],
+  },
+  env: {
+    // Next.js will inline these into the bundle at build time, 
+    // but note: do NOT put secrets here! Instead, rely on Replit’s Secrets.
+    NEXT_PUBLIC_APP_NAME: "Mira"
+  }
+});
+If you prefer manual service worker registration instead of next-pwa, skip that package and simply place public/sw.js plus a small snippet in app/layout.tsx to register it.
+
+2.4. Environment Variables (Replit “Secrets”)
+In Replit‘s sidebar, click “🔒 Secrets” and add:
+
+Key	Value	Remarks
+OPENAI_API_KEY	<your OpenAI key>	used in lib/ai/openai.ts
+ANTHROPIC_API_KEY	<your Claude Sonnet key>	used in lib/ai/claude.ts
+DATABASE_URL	postgres://USER:PASS@HOST:PORT/DB	your Postgres connection string (can be Replit DB or external)
+REPLIT_AUTH_SECRET	<some random string for cookies>	if you use ReplitAuth
+NEXT_PUBLIC_BASE_URL	https://mira-yourusername.replit.app	for generating absolute URLs if needed
+
+Note: In development (npm run dev), Next.js automatically injects process.env.PORT on Replit. No need to define a “PORT” secret.
+
+2.5. Create .replit
+At the root of your Repl, create a file named .replit with:
+
+ini
+Copy
+Edit
+# .replit
+run = "npm run dev"
+language = "nodejs"
+That tells Replit: to “run” this project, do npm run dev, which (thanks to our package.json) executes:
+
+perl
+Copy
+Edit
+next dev -p $PORT
+so Next.js listens on the correct port.
+
+2.6. Copy/Migrate Code Into Next.js Structure
+Assuming your existing repo has:
+
+python-repl
+Copy
+Edit
+client/
+server/
+shared/
+...
+Do the following:
+
+Move all UI components from client/src/components/… → app/components/…
+
+If you are using the App Router, put components you want available to multiple pages under app/components/.
+
+If you still want a “pages” folder style (Pages Router), move them instead under components/… and create pages/… for each route.
+
+Move client/src/pages/*.tsx → Next.js routes
+
+E.g. client/src/pages/home.tsx → app/page.tsx
+
+client/src/pages/settings.tsx → app/settings/page.tsx
+
+client/src/pages/collection-detail.tsx → app/collections/[id]/page.tsx (and rename parameter accordingly).
+
+Rename any file with capitals or dashes to Next’s conventions.
+
+Bring client/src/lib/… into lib/utils.ts or lib/store/…
+
+For instance, client/src/lib/queryClient.ts (if that wraps React Query) can go into app/lib/queryClient.ts.
+
+client/src/lib/utils.ts can be lib/utils.ts.
+
+Copy client/src/store/app-store.ts and client/src/store/indexeddb.ts → store/appStore.ts & store/indexedDB.ts
+
+Confirm that "idb" or "idb-keyval" is installed so that your IndexedDB manager still works.
+
+In your top-level _app.tsx or app/layout.tsx, wrap your app in the Zustand provider if needed.
+
+Move any PWA files
+
+client/public/manifest.json → public/manifest.json
+
+client/public/sw.js → public/sw.js
+
+client/public/*.svg icons → public/icons/…
+
+Adjust <link rel="manifest" href="/manifest.json"> in your app/layout.tsx so Next will include it in <head>.
+
+Move server code → Next.js API routes
+For each folder under server/…:
+
+server/openai.ts → lib/ai/openai.ts
+
+Wrap the same logic (initialize OpenAI({ apiKey: process.env.OPENAI_API_KEY })) and export a function like export async function analyzeNote(...) { … }.
+
+server/anthropic.ts → lib/ai/claude.ts
+
+Export export async function enhancedAnalysis(...) { … }.
+
+server/db.ts → lib/db/drizzleClient.ts
+
+ts
+Copy
+Edit
+import { createClient } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { schema } from "../../shared/schema"; // adjust path
+
+const sql = postgres(process.env.DATABASE_URL, { ssl: { rejectUnauthorized: false } });
+export const db = drizzle(sql, { schema });
+Now db can be imported in your API route files.
+
+Routes
+
+server/routes.ts presumably enumerates your Express routes.
+
+For each route handler, create a matching file under app/api/….
+Example:
+
+ts
+Copy
+Edit
+// server/routes.ts (example pseudocode)
+// router.post("/api/notes", createNoteHandler);
+// router.get("/api/notes/:id", getNoteHandler);
+becomes:
+
+ts
+Copy
+Edit
+// app/api/notes/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db/drizzleClient";
+import { notes } from "@/shared/schema";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  // validate, then insert into Drizzle:
+  const newNote = await db.insert(notes).values({
+    title: body.title,
+    content: body.content,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }).returning();
+  return NextResponse.json(newNote[0]);
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const note = await db.select().from(notes).where(notes.id.eq(Number(id)));
+  return NextResponse.json(note);
+}
+If you need PUT or DELETE, add export async function PUT(…) { … } or export async function DELETE(…) { … }.
+
+Other server utilities
+
+server/init-db.ts (creation of tables) → incorporate as a “migration script” in drizzle/migrations/ or call it manually in a Next.js build step (e.g. in package.json add "postinstall": "ts-node drizzle/init-db.ts", but usually you run migrations manually).
+
+server/init-collections.ts (seed data) can run in a one-time script, or you can create an API route /api/seed to call it.
+
+server/reprocess-notes.ts → create a Next.js-only script under scripts/reprocess-notes.ts, and run it via npm run reprocess-notes.
+
+server/replitAuth.ts → incorporate into app/api/auth/route.ts to handle OAuth redirects or JWT logic.
+
+server/welcome-note.ts, subscription-tiers.ts, onboarding-questions.ts → if they define static data or helper functions, move them under lib/….
+
+Update imports
+
+Anywhere you see paths like ../../server/openai → change to @/lib/ai/openai (depending on your tsconfig.json path aliases).
+
+Next.js comes with a default tsconfig.json that uses "baseUrl": "." and "paths": { "@/*": ["./*"] }, so you can import modules as import { analyzeNote } from "@/lib/ai/openai";.
+
+Configuring Drizzle schema
+
+If shared/schema.ts already exports a Drizzle schema object, reference it from lib/db/drizzleClient.ts.
+
+If not, define it as:
+
+ts
+Copy
+Edit
+// shared/schema.ts
+import { pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }),
+  content: text("content"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const todos = pgTable("todos", {
+  // …your fields…
+});
+
+export const collections = pgTable("collections", {
+  // …your fields…
+});
+That way, all API route files can do import { notes, todos, collections } from "@/shared/schema";.
+
+PWA Service Worker Registration
+
+In your root layout (app/layout.tsx), add:
+
+tsx
+Copy
+Edit
+useEffect(() => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => console.log("SW registered", reg))
+      .catch((err) => console.error("SW failed to register", err));
+  }
+}, []);
+Confirm public/manifest.json has correct start_url: "/" and icons.
+
+Tailwind Setup
+
+In tailwind.config.js:
+
+js
+Copy
+Edit
+module.exports = {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}", 
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+In app/globals.css:
+
+css
+Copy
+Edit
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+Make sure you import globals.css in app/layout.tsx:
+
+tsx
+Copy
+Edit
+import "@/globals.css";
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head />
+      <body>{children}</body>
+    </html>
+  );
+}
+Zustand + IndexedDB
+
+In app/layout.tsx, wrap your entire app in the Zustand provider (if you use the <Provider> pattern).
+
+Ensure store/indexedDB.ts runs initialize() on first load:
+
+ts
+Copy
+Edit
+// store/indexedDB.ts
+import { openDB } from "idb";
+
+export async function initializeIndexedDB() {
+  const db = await openDB("MiraDB", 1, {
+    upgrade(db) {
+      const notesStore = db.createObjectStore("notes", { keyPath: "id" });
+      notesStore.createIndex("collectionId", "collectionId");
+      const syncStore = db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
+      syncStore.createIndex("timestamp", "timestamp");
+    },
+  });
+  return db;
+}
+In the root (e.g. in a useEffect in app/page.tsx), call initializeIndexedDB() once so your store can begin pushing data locally.
+
+Finalize Authentication
+
+If you use Replit’s built-in OAuth, your flow will be:
+
+User clicks “Login” → app/api/auth/login.ts redirects to Replit OAuth.
+
+Replit calls your redirect URI (e.g. /api/auth/callback) → you grab a token, store a secure cookie, then redirect back to /.
+
+On the front end, read that cookie/token and attach it to fetch requests so your API routes can verify the user.
+
+Copy any helper utilities from server/replitAuth.ts into lib/auth/replitAuth.ts and have your app/api/auth/… handlers call them.
+
+Test Locally (in Replit “Run”)
+
+Click “Run” → Replit will execute npm run dev → next dev -p $PORT.
+
+Visit the Replit URL (e.g. https://mira-yourusername.replit.app) → your Next.js app should load, offline fallback should be intact (try turning off network), and your API calls should respond.
+
+Open Developer Tools → Network → confirm /sw.js is registered, /_next/static/… is served from cache on refresh.
+
+2.7. Configuration Summary (for Replit)
+.replit:
+
+ini
+Copy
+Edit
+run = "npm run dev"
+language = "nodejs"
+package.json:
+
+jsonc
+Copy
+Edit
+{
+  "scripts": {
+    "dev": "next dev -p $PORT",
+    "build": "next build",
+    "start": "next start -p $PORT"
+  },
+  "dependencies": { /* as above */ }
+}
+next.config.js (with next-pwa or manual SW registration).
+
+tailwind.config.js and app/globals.css properly set.
+
+Replit Secrets:
+
+OPENAI_API_KEY
+
+ANTHROPIC_API_KEY
+
+DATABASE_URL
+
+REPLIT_AUTH_SECRET (if using ReplitAuth)
+
+2.8. (Optional) Build & Launch for Production on Replit
+In Replit’s “Shell” tab, run:
+
+bash
+Copy
+Edit
+npm run build
+Then, either rely on Replit to keep npm run dev running (development mode), or in production mode run
+
+bash
+Copy
+Edit
+npm start
+which executes next start -p $PORT.
+
+Note: Replit automatically watches package.json and reruns npm install whenever you push new dependencies; it also auto-restarts your “run” command if files change.
+
+2.9. Verifying Everything Works
+Browse to https://<your-repl-url>
+
+The PWA prompt (“Add Mira to Home Screen”) should appear if you open from a mobile device.
+
+Offline mode: disable your network, reload; you should still see your last-cached UI because of the service worker + IndexedDB.
+
+Test AI Endpoints
+
+In DevTools → Network → filter by /api/ai/analyze.
+
+Run a quick fetch("/api/ai/analyze", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ content: "Test note", mode: "analysis" }) }) from the console. It should return a JSON with complexityScore, todos, etc.
+
+Test Drizzle/Database
+
+Install a Postgres client (e.g. psql locally) or connect via a GUI to confirm your notes table is created.
+
+Create a note via fetch("/api/notes", { method:"POST", body: JSON.stringify({ title: "Hello", content: "World" }) }). Then SELECT * FROM notes; → you should see that row.
+
+Check Offline Sync
+
+Create a note while online → confirm it writes to IndexedDB and syncs to the server.
+
+Turn off your network (devtools offline) → create a second note → confirm it writes to IndexedDB but cannot immediately sync.
+
+Reenable network → confirm your code picks up the “pending sync” queue and writes that second note to Postgres.
+
+Final Checklist
+ All frontend components moved into app/components/… or components/…
+
+ All pages moved under app/…/page.tsx (or pages/…)
+
+ All server code refactored as Next.js API routes under app/api/…
+
+ Drizzle ORM configured in lib/db/drizzleClient.ts (using process.env.DATABASE_URL)
+
+ .replit present with run = "npm run dev"
+
+ package.json scripts set to next dev -p $PORT / next build / next start -p $PORT
+
+ next.config.js set up for PWA (or manual SW registration added to app/layout.tsx)
+
+ Tailwind configured (content paths point to your app/ and components/ directories)
+
+ Environment variables added in Replit:
+
+OPENAI_API_KEY
+
+ANTHROPIC_API_KEY
+
+DATABASE_URL
+
+REPLIT_AUTH_SECRET (if needed)
+
+ IndexedDB initialization in store/indexedDB.ts and invoked in client entrypoint
+
+ Validate that your shared/schema.ts is imported by both front and API routes with correct TS path aliases
+
+ Confirm service worker registration in app/layout.tsx and that public/manifest.json is correct for PWA
+
+Once all of the above are in place, hitting “Run” on Replit will automatically:
+
+Install dependencies (npm install).
+
+Start Next.js in dev mode (next dev -p $PORT).
+
+Serve your PWA on the Replit URL.
+
+You now have:
+
+A fully functional Next.js PWA (no more Vite catch-all problems).
+
+API routes in the same codebase, backed by Drizzle/Postgres.
+
+Offline-first behavior courtesy of IndexedDB + a service worker.
+
+AI endpoints that securely use your environment variables.
+
+An easy road to React Native (simply extract shared UI components + lib/ai logic into a new React Native app or Expo monorepo).
+
+That completes the migration. At that point, you can:
+
+Build and deploy to Vercel (just “npm run build && npm start”).
+
+Or continue running on Replit for staging.
+
+Feel free to share a link to your updated GitHub repo and test the Replit build. Once everything is green, you have fully migrated Mira from Vite + Express to a modern Next.js PWA architecture that will scale into 2026 and beyond.
