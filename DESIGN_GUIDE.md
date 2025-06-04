@@ -4,8 +4,8 @@
 
 ### Button Color Specifications
 - **Plus Button**: `bg-gray-300` (Light Grey) - Used for adding new content/media uploads
-- **Camera Button**: `bg-green-300` (Light Green) - Used for photo capture
-- **Mic Button**: `bg-blue-300` (Light Blue) - Used for voice recording
+- **Camera Button**: `#a8bfa1` (Muted Green) - Used for photo capture
+- **Mic Button**: `#9bb8d3` (Soft Blue) - Used for voice recording
 - **Send Button**: `bg-blue-500` (Blue) - Used when typing to send messages
 
 ### Button States
