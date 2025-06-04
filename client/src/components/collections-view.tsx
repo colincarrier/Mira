@@ -211,7 +211,7 @@ export default function CollectionsView() {
                 <div className="space-y-0.5">
                   <h3 className="font-medium text-xs leading-tight">{collection.name}</h3>
                   <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                    {collection.noteCount}
+                    {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
                   </p>
                 </div>
               </div>

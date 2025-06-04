@@ -562,7 +562,13 @@ Provide a concise, actionable response that adds value beyond just the task titl
       const collectionsWithCounts = await Promise.all(
         collections.map(async (collection) => {
           const notes = await storage.getNotesByCollectionId(collection.id);
-          return { ...collection, noteCount: notes.length };
+          // Count only meaningful notes (exclude welcome notes and empty content)
+          const meaningfulNotes = notes.filter(note => 
+            note.content && 
+            note.content.trim().length > 10 && 
+            !note.content.startsWith('🎉 Welcome to Mira')
+          );
+          return { ...collection, noteCount: meaningfulNotes.length };
         })
       );
       res.json(collectionsWithCounts);
@@ -603,23 +609,73 @@ Provide a concise, actionable response that adds value beyond just the task titl
       }
       
       const notes = await storage.getNotesByCollectionId(id);
+      
+      // Handle empty collections
       if (notes.length === 0) {
-        return res.status(400).json({ message: "No notes in collection" });
+        const superNoteData = {
+          collection,
+          aggregatedContent: `This is your ${collection.name} collection. Start adding notes and they'll appear here with AI-powered insights and organization.`,
+          insights: [
+            `Your ${collection.name} collection is ready to capture and organize your thoughts.`,
+            "Add notes to this collection to see intelligent summaries and connections.",
+            "AI will help extract tasks, insights, and organize your content automatically."
+          ],
+          structuredItems: {
+            recommendedActions: [],
+            researchResults: [],
+            quickInsights: [`Empty ${collection.name} collection - ready for your content`]
+          },
+          allTodos: [],
+          notes: [],
+          itemCount: 0,
+          todoCount: 0
+        };
+        return res.json(superNoteData);
       }
 
-      // Extract and aggregate all items from notes
-      const allTodos = notes.flatMap(note => note.todos || []);
-      const allContent = notes.map(note => note.content).join('\n\n');
+      // Filter out notes with no meaningful content
+      const meaningfulNotes = notes.filter(note => 
+        note.content && 
+        note.content.trim().length > 10 && 
+        !note.content.startsWith('🎉 Welcome to Mira')
+      );
+
+      if (meaningfulNotes.length === 0) {
+        const superNoteData = {
+          collection,
+          aggregatedContent: `Your ${collection.name} collection contains ${notes.length} note(s), but they need more content for meaningful analysis.`,
+          insights: [
+            "Add more detailed content to your notes for better AI insights.",
+            `${collection.name} collection is ready for meaningful content.`
+          ],
+          structuredItems: {
+            recommendedActions: [{ 
+              title: "Add detailed content", 
+              description: "Write more comprehensive notes to unlock AI-powered insights and organization." 
+            }],
+            researchResults: [],
+            quickInsights: [`${notes.length} note(s) in ${collection.name} - add more detail for insights`]
+          },
+          allTodos: [],
+          notes: meaningfulNotes,
+          itemCount: meaningfulNotes.length,
+          todoCount: 0
+        };
+        return res.json(superNoteData);
+      }
+
+      // Extract and aggregate all items from meaningful notes
+      const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
+      const allContent = meaningfulNotes.map(note => note.content).join('\n\n');
       
       // Create structured aggregation
-      const itemExtraction = `Analyze the following collection of notes about "${collection.name}" and extract all individual items, tasks, facts, recommendations, and actionable elements.
+      const itemExtraction = `Analyze the following collection of notes about "${collection.name}" and create a comprehensive summary with key insights.
 
-Create a structured list that includes:
-1. All tasks and action items (deduplicated)
-2. Key facts and information points
-3. Important recommendations or insights
-4. Any specific details, numbers, or data points
-5. Resources, links, or references mentioned
+Focus on:
+1. Main themes and patterns across all notes
+2. Key actionable items and tasks
+3. Important facts and insights
+4. Recommendations for next steps
 
 Notes content:
 ${allContent}
@@ -627,35 +683,33 @@ ${allContent}
 Existing todos:
 ${allTodos.map(todo => `- ${todo.title}`).join('\n')}
 
-Provide a comprehensive, organized list that serves as a master reference for this collection. Group similar items together and remove duplicates.`;
+Provide a well-organized summary that captures the essence of this collection and helps the user understand what they've captured.`;
 
       const aiResult = await analyzeWithOpenAI(itemExtraction, "collection-aggregation");
-      
-      // Parse rich context if available for better structure
-      let structuredItems = {};
-      if (aiResult.richContext) {
-        try {
-          const richContext = typeof aiResult.richContext === 'string' 
-            ? JSON.parse(aiResult.richContext) 
-            : aiResult.richContext;
-          structuredItems = richContext;
-        } catch (e) {
-          console.log("Could not parse rich context");
-        }
-      }
 
       const superNoteData = {
         collection,
-        aggregatedContent: aiResult.enhancedContent || allContent,
+        aggregatedContent: aiResult.enhancedContent || `Summary of ${meaningfulNotes.length} notes in ${collection.name}:\n\n${allContent.substring(0, 500)}...`,
         insights: [
           aiResult.suggestion,
           aiResult.context,
-          ...aiResult.todos.map(todo => `Action item: ${todo}`)
-        ].filter(Boolean),
-        structuredItems,
+          ...aiResult.todos.slice(0, 3).map(todo => `Next step: ${todo}`)
+        ].filter(Boolean).slice(0, 5),
+        structuredItems: aiResult.richContext || {
+          recommendedActions: aiResult.todos.slice(0, 3).map(todo => ({
+            title: todo,
+            description: "Action item extracted from your notes"
+          })),
+          researchResults: [],
+          quickInsights: [
+            `${meaningfulNotes.length} notes analyzed`,
+            `${allTodos.length} tasks identified`,
+            aiResult.suggestion || "Collection ready for review"
+          ].filter(Boolean)
+        },
         allTodos: allTodos,
-        notes,
-        itemCount: notes.length,
+        notes: meaningfulNotes,
+        itemCount: meaningfulNotes.length,
         todoCount: allTodos.length
       };
 
