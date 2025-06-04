@@ -286,7 +286,6 @@ export default function UniversalInputBar({
           </div>
         </div>
       )}
-
       <textarea
         value={inputText}
         onChange={handleInputChange}
@@ -305,7 +304,6 @@ export default function UniversalInputBar({
           target.style.height = Math.min(target.scrollHeight, 120) + 'px';
         }}
       />
-      
       <div className="flex items-center gap-1.5">
         {isTyping && !isRecording ? (
           <>
@@ -339,9 +337,7 @@ export default function UniversalInputBar({
             </button>
             <button 
               onClick={isRecording ? stopRecording : startRecording}
-              className={`w-8 h-8 text-white rounded-full flex items-center justify-center transition-colors z-20 relative ${
-                isRecording ? 'bg-red-500 hover:bg-red-600' : 'hover:opacity-90'
-              }`}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors z-20 relative hover:opacity-90 text-[#374252]"
               style={{ backgroundColor: isRecording ? '#ef4444' : '#9bb8d3' }}
               disabled={createVoiceNoteMutation.isPending}
             >
