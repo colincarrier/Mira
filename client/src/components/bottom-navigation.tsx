@@ -60,14 +60,14 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
       {hideAddButton !== true && (
         <div 
           ref={addButtonRef}
-          className={`fixed bottom-24 left-4 right-4 z-[9999] transition-transform duration-300 ${
+          className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
             isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
           }`}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          style={{ backgroundColor: 'red', padding: '10px', minHeight: '60px' }}
+          style={{ zIndex: 10000 }}
         >
-          <div className="border-2 border-blue-500 rounded-full px-4 py-3 shadow-xl flex items-center gap-3 bg-blue-50">
+          <div className="border border-gray-300 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 bg-white">
             <input
               type="text"
               placeholder="Add/edit anything..."
@@ -94,8 +94,9 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
       {/* Hidden state indicator - tap to restore */}
       {isAddButtonHidden && hideAddButton !== true && (
         <div 
-          className="fixed bottom-24 right-4 z-[9999] cursor-pointer"
+          className="fixed bottom-24 right-4 cursor-pointer"
           onClick={() => setIsAddButtonHidden(false)}
+          style={{ zIndex: 10000 }}
         >
           <div className="w-12 h-6 bg-gray-400/50 rounded-full flex items-center justify-center">
             <div className="w-8 h-1 bg-gray-600 rounded-full"></div>
