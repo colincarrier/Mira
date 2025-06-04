@@ -218,7 +218,7 @@ export default function CollectionsView() {
                 setDragOverIndex(null);
               }}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation ${
+              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation h-24 ${
                 draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
               } ${
                 dragOverIndex === index && draggedCollection !== collection.id 
@@ -243,14 +243,14 @@ export default function CollectionsView() {
                     <IconComponent className={`w-6 h-6 ${colors.text}`} />
                   )}
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm leading-tight">{collection.name}</h3>
-                  <div className="space-y-0">
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                <div className="space-y-1 flex-1 flex flex-col justify-end">
+                  <h3 className="font-bold text-sm leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center text-center">{collection.name}</h3>
+                  <div className="space-y-0 min-h-[2rem] flex flex-col justify-center">
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))] leading-tight">
                       {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
                     </p>
                     {collection.openTodoCount > 0 && (
-                      <p className="text-[10px] text-orange-600 font-medium">
+                      <p className="text-[10px] text-orange-600 font-medium leading-tight">
                         {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
                       </p>
                     )}
