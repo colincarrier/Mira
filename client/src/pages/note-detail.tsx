@@ -362,7 +362,7 @@ export default function NoteDetail() {
 
         {/* Note Content */}
         <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-          <div className="px-4 py-6 space-y-4">
+          <div className="px-4 py-6 space-y-4 bg-[#eff6ff]">
             <div>
               {isEditing ? (
                 <textarea

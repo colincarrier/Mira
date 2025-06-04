@@ -48,10 +48,14 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
           {/* Bottom Navigation */}
           <BottomNavigation 
             activeTab={activeTab} 
-            onTabChange={onTabChange}
+            onTabChange={(tab) => {
+              onTabChange(tab);
+              onClose();
+            }}
             onNewNote={onNewNote}
             onSettings={onClose}
             onCloseCapture={onCloseCapture}
+            hideAddButton={true}
           />
         </div>
       </div>
