@@ -1,11 +1,12 @@
 import { ArrowLeft, User, Bell, Palette, Database, Info, Shield } from "lucide-react";
-import { useLocation } from "wouter";
 
-export default function Settings() {
-  const [, navigate] = useLocation();
+interface SettingsProps {
+  onClose?: () => void;
+}
 
+export default function Settings({ onClose }: SettingsProps) {
   const handleBack = () => {
-    navigate("/");
+    onClose?.();
   };
 
   return (

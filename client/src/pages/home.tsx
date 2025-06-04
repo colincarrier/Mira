@@ -80,34 +80,40 @@ export default function Home() {
 
   return (
     <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
-      {/* Status Bar */}
-      <div className="safe-area-top bg-[hsl(var(--background))]"></div>
-      
-      {/* Main Content */}
-      <div className="pb-24">
+      {showSettings ? (
+        <Settings onClose={() => setShowSettings(false)} />
+      ) : (
+        <>
+          {/* Status Bar */}
+          <div className="safe-area-top bg-[hsl(var(--background))]"></div>
+          
+          {/* Main Content */}
+          <div className="pb-24">
 
 
-        {/* Quick Capture - removed for now */}
+            {/* Quick Capture - removed for now */}
 
-        {/* Tab Content */}
-        <div 
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {renderTabContent()}
-        </div>
-      </div>
+            {/* Tab Content */}
+            <div 
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {renderTabContent()}
+            </div>
+          </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onSettings={() => setShowSettings(true)}
-        onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-      />
+          {/* Bottom Navigation */}
+          <BottomNavigation 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab}
+            onNewNote={() => setIsFullScreenCaptureOpen(true)}
+            onSettings={() => setShowSettings(true)}
+            onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
+            onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+          />
+        </>
+      )}
 
       {/* Modals */}
       <VoiceModal 
