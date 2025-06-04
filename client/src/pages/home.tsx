@@ -106,6 +106,7 @@ export default function Home() {
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onSettings={() => setIsSettingsModalOpen(true)}
         onCloseCapture={() => setIsFullScreenCaptureOpen(false)}
+        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
       />
 
       {/* Modals */}
