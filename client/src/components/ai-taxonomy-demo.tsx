@@ -80,30 +80,48 @@ export default function AITaxonomyDemo() {
 
   const taxonomyMutation = useMutation({
     mutationFn: async (content: string) => {
+      console.log("Starting taxonomy analysis for:", content);
       const response = await apiRequest("POST", "/api/analyze-taxonomy", { content });
-      return response.json();
+      const data = await response.json();
+      console.log("Taxonomy response:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("Taxonomy analysis successful:", data);
       setTaxonomyResult(data);
+    },
+    onError: (error) => {
+      console.error("Taxonomy analysis error:", error);
     },
   });
 
   const enhancedMutation = useMutation({
     mutationFn: async (content: string) => {
+      console.log("Starting enhanced analysis for:", content);
       const response = await apiRequest("POST", "/api/analyze-enhanced", { content, mode: "claude" });
-      return response.json();
+      const data = await response.json();
+      console.log("Enhanced response:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("Enhanced analysis successful:", data);
       setEnhancedResult(data);
+    },
+    onError: (error) => {
+      console.error("Enhanced analysis error:", error);
     },
   });
 
   const handleAnalyze = () => {
+    console.log("Analyze button clicked, input:", input);
     if (input.trim()) {
+      console.log("Input is valid, starting analysis");
       setTaxonomyResult(null);
       setEnhancedResult(null);
       taxonomyMutation.mutate(input.trim());
       enhancedMutation.mutate(input.trim());
+    } else {
+      console.log("Input is empty, not starting analysis");
     }
   };
 
