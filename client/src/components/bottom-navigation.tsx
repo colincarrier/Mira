@@ -83,7 +83,6 @@ export default function BottomNavigation({ activeTab, onTabChange, onNewNote, on
       {/* Chat-style input box - anchored above navigation */}
       {hideAddButton !== true && (
         <div 
-          ref={addButtonRef}
           className={`fixed bottom-24 left-4 right-4 transition-transform duration-300 ${
             isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
           }`}
