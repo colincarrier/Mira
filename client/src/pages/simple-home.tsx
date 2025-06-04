@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-
 export default function SimpleHome() {
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -11,20 +9,19 @@ export default function SimpleHome() {
         </p>
         
         <div className="flex gap-4">
-          <Button 
+          <button 
             onClick={() => window.location.href = "/test-ai"}
-            className="flex-1"
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Simple AI Test
-          </Button>
+          </button>
           
-          <Button 
+          <button 
             onClick={() => window.location.href = "/ai-demo"}
-            variant="outline"
-            className="flex-1"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
           >
             Full AI Demo
-          </Button>
+          </button>
         </div>
         
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
