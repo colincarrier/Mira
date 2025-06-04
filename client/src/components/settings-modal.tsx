@@ -2,6 +2,7 @@ import { ChevronLeft, Brain } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import AIComparison from "./ai-comparison";
+import BottomNavigation from "./bottom-navigation";
 
 
 interface SettingsModalProps {
@@ -18,12 +19,9 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
 
   if (showAIComparison) {
     return (
-      <div className={`fixed inset-0 bg-white z-40 transform transition-transform duration-300 ${
-        isOpen ? "translate-x-0" : "translate-x-full"
-      }`} style={{ 
-        willChange: 'transform',
-        visibility: isOpen ? 'visible' : 'hidden'
-      }}>
+      <div className={`fixed inset-0 bg-white z-40 ${
+        isOpen ? "block" : "hidden"
+      }`}>
         <div className="mx-auto max-w-sm w-full h-full flex flex-col">
           <div className="safe-area-top"></div>
           
@@ -63,12 +61,9 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
   }
 
   return (
-    <div className={`fixed inset-0 bg-white z-40 transform transition-transform duration-300 ${
-      isOpen ? "translate-x-0" : "translate-x-full"
-    }`} style={{ 
-      willChange: 'transform',
-      visibility: isOpen ? 'visible' : 'hidden'
-    }}>
+    <div className={`fixed inset-0 bg-white z-40 ${
+      isOpen ? "block" : "hidden"
+    }`}>
       {/* Mobile app container with max width */}
       <div className="mx-auto max-w-sm w-full h-full flex flex-col">
         <div className="safe-area-top"></div>
@@ -212,6 +207,18 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
           </div>
         </div>
         
+        {/* Bottom Navigation */}
+        <BottomNavigation 
+          activeTab={activeTab} 
+          onTabChange={(tab: "activity" | "todos" | "collections") => {
+            onTabChange(tab);
+            onClose();
+          }}
+          onNewNote={onNewNote}
+          onSettings={onClose}
+          onCloseCapture={onCloseCapture}
+          hideAddButton={true}
+        />
 
       </div>
     </div>
