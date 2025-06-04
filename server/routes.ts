@@ -19,7 +19,19 @@ const aiRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
+// Track API usage and costs
+let apiUsageStats = {
+  openai: { requests: 0, tokens: 0, cost: 0 },
+  claude: { requests: 0, tokens: 0, cost: 0 },
+  totalRequests: 0
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // API Stats endpoint
+  app.get("/api/stats/api-usage", async (req, res) => {
+    res.json(apiUsageStats);
+  });
+
   // Notes endpoints
   app.get("/api/notes", async (req, res) => {
     try {
@@ -77,6 +89,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Process original note with OpenAI
         analyzeWithOpenAI(noteData.content, noteData.mode)
           .then(async (analysis) => {
+            // Track OpenAI usage
+            apiUsageStats.openai.requests++;
+            apiUsageStats.openai.tokens += 1000; // Estimate
+            apiUsageStats.openai.cost += 0.02; // Estimate
+            apiUsageStats.totalRequests++;
             console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
             // Update note with AI analysis
             const updates: any = {
@@ -169,6 +186,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Process Claude note with Claude AI
         analyzeWithClaude(noteData.content, noteData.mode)
           .then(async (analysis) => {
+            // Track Claude usage
+            apiUsageStats.claude.requests++;
+            apiUsageStats.claude.tokens += 1200; // Estimate
+            apiUsageStats.claude.cost += 0.015; // Estimate
+            apiUsageStats.totalRequests++;
             console.log("Claude analysis completed for note:", claudeNote.id, "analysis:", JSON.stringify(analysis, null, 2));
             // Update Claude note with AI analysis
             const updates: any = {
