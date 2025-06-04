@@ -55,8 +55,8 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
         `}
         onClick={handleClick}
       >
-        {/* Vertical grouping line */}
-        <div className="absolute left-2 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+        {/* Vertical grouping line - positioned at first letter */}
+        <div className="absolute left-12 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
         <button
           onClick={(e) => {
             e.stopPropagation();
