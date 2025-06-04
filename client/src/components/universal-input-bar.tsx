@@ -1,4 +1,4 @@
-import { Camera, Mic, Plus, Send, Square } from "lucide-react";
+import { Camera, Mic, Plus, Send, Square, Image, FileText, X } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ export default function UniversalInputBar({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -34,6 +35,7 @@ export default function UniversalInputBar({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -72,6 +74,42 @@ export default function UniversalInputBar({
         variant: "destructive",
       });
       handleResetRecording();
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      const response = await fetch("/api/notes/image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setShowMediaPicker(false);
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been processed and enhanced by AI.",
+      });
+    },
+    onError: (error) => {
+      console.error("Image upload error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -255,8 +293,85 @@ export default function UniversalInputBar({
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check if it's an image
+      if (file.type.startsWith('image/')) {
+        uploadImageMutation.mutate(file);
+      } else {
+        toast({
+          title: "Unsupported file type",
+          description: "Please select an image file (JPG, PNG, GIF, etc.)",
+          variant: "destructive",
+        });
+      }
+    }
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const openPhotoLibrary = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+    setShowMediaPicker(false);
+  };
+
+  const toggleMediaPicker = () => {
+    setShowMediaPicker(!showMediaPicker);
+  };
+
   return (
     <div className={`relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300 ${className}`}>
+      {/* Hidden file input for photo library */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      {/* Media picker overlay */}
+      {showMediaPicker && (
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Add Media</span>
+            <button 
+              onClick={() => setShowMediaPicker(false)}
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
+            >
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={openPhotoLibrary}
+              className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              disabled={uploadImageMutation.isPending}
+            >
+              <Image className="w-6 h-6 text-blue-500 mb-1" />
+              <span className="text-xs text-gray-600">
+                {uploadImageMutation.isPending ? "Uploading..." : "Photo Library"}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (onCameraCapture) onCameraCapture();
+                setShowMediaPicker(false);
+              }}
+              className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Camera className="w-6 h-6 text-[#a8bfa1] mb-1" />
+              <span className="text-xs text-gray-600">Camera</span>
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Waveform overlay when recording */}
       {isRecording && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl z-10">
@@ -308,7 +423,7 @@ export default function UniversalInputBar({
         {isTyping && !isRecording ? (
           <>
             <button 
-              onClick={onMediaUpload}
+              onClick={toggleMediaPicker}
               className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -323,7 +438,7 @@ export default function UniversalInputBar({
         ) : (
           <>
             <button 
-              onClick={onMediaUpload}
+              onClick={toggleMediaPicker}
               className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
             >
               <Plus className="w-4 h-4" />
