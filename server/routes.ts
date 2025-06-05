@@ -469,7 +469,7 @@ This profile was generated from your input and will help provide more personaliz
             }
           }
           
-          // Extract and create individual items
+          // Extract and create individual items from extractedItems field
           if (analysis.extractedItems && analysis.extractedItems.length > 0) {
             for (const item of analysis.extractedItems) {
               await storage.createItem({
@@ -477,10 +477,35 @@ This profile was generated from your input and will help provide more personaliz
                 description: item.description || '',
                 type: item.category,
                 sourceNoteId: note.id,
-                collectionId: id
+                collectionId: note.collectionId || null
               });
             }
             console.log(`Extracted ${analysis.extractedItems.length} individual items from note`);
+          }
+          
+          // Also extract items from richContext.researchResults (fallback for AI inconsistency)
+          if (analysis.richContext?.researchResults && analysis.richContext.researchResults.length > 0) {
+            for (const research of analysis.richContext.researchResults) {
+              // Determine item type based on collection or content
+              let itemType = 'concept';
+              const collectionName = note.collection?.name?.toLowerCase() || '';
+              if (collectionName.includes('movie') || collectionName.includes('tv')) {
+                itemType = 'movie';
+              } else if (collectionName.includes('book')) {
+                itemType = 'book';
+              } else if (collectionName.includes('restaurant') || collectionName.includes('food')) {
+                itemType = 'restaurant';
+              }
+              
+              await storage.createItem({
+                title: research.title,
+                description: research.description || '',
+                type: itemType,
+                sourceNoteId: note.id,
+                collectionId: note.collectionId || null
+              });
+            }
+            console.log(`Extracted ${analysis.richContext.researchResults.length} items from research results`);
           }
         })
         .catch(async (error) => {

@@ -372,16 +372,21 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </button>
         </div>
       </div>
-      {/* Processing indicator */}
+      {/* Subtle processing indicator */}
       {note.isProcessing && (
-        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-            <span className="text-sm text-blue-700">Processing with AI...</span>
-          </div>
-          <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
-            <div className="bg-blue-600 h-1 rounded-full animate-pulse" style={{ width: "60%" }}></div>
-          </div>
+        <div className="mb-2 flex items-center space-x-2 text-xs text-muted-foreground">
+          <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <span className="opacity-60">AI processing</span>
+        </div>
+      )}
+      
+      {/* Show AI enhanced indicator when done */}
+      {!note.isProcessing && note.aiEnhanced && (
+        <div className="mb-2 flex items-center space-x-1 text-xs text-green-600">
+          <CheckCircle2 className="w-3 h-3" />
+          <span className="opacity-80">AI enhanced</span>
         </div>
       )}
 
