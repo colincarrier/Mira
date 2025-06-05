@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, Home, Car, Plane, CheckSquare, Calendar, MapPin, ShoppingBag, Search, Mic, Filter, Plus, Users, Play, Utensils } from "lucide-react";
 import { getCollectionColor } from "@/lib/collection-colors";
 import { useLocation } from "wouter";
@@ -65,10 +65,16 @@ export default function CollectionsView() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   
+  // Force cache invalidation on mount
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+  }, [queryClient]);
+  
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
     staleTime: 0, // Force fresh data
-    cacheTime: 0, // No cache
+    gcTime: 0, // No cache (renamed from cacheTime in v5)
+    refetchOnMount: true,
   });
 
   const reorderMutation = useMutation({
