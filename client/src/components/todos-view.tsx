@@ -307,10 +307,10 @@ export default function TodosView() {
         ) : (
           <div className="px-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              None {activeReminderFilter === 'today' ? '[today]' : 
-                    activeReminderFilter === 'week' ? '[this week]' :
-                    activeReminderFilter === 'month' ? '[this month]' :
-                    '[this year]'}
+              None {activeReminderFilter === 'today' ? 'today' : 
+                    activeReminderFilter === 'week' ? 'this week' :
+                    activeReminderFilter === 'month' ? 'this month' :
+                    'this year'}
             </p>
           </div>
         )}
