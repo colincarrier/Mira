@@ -63,6 +63,7 @@ export interface AIAnalysisResult {
 
 export async function analyzeWithOpenAI(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
+
     const isImageContent = content.startsWith('data:image/') && content.includes('base64,');
     
     let messages: any[];
