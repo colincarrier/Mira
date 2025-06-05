@@ -195,7 +195,7 @@ export default function Settings() {
         </div>
         
         {/* Tiny Sync Status Bubble */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full ${
             isSyncing ? 'bg-yellow-500' : 
             !isOnline && pendingItems > 0 ? 'bg-red-500' : 
