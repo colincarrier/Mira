@@ -1,0 +1,18 @@
+
+{
+  "protectedFiles": [
+    "server/utils/miraAIProcessing.ts",
+    "server/anthropic.ts",
+    "server/openai.ts", 
+    "server/ai-taxonomy-engine.ts",
+    "AI_*.md"
+  ],
+  "requiresApproval": [
+    "AI prompts",
+    "AI processing logic",
+    "Model configurations",
+    "AI analysis functions"
+  ],
+  "protectionLevel": "strict",
+  "emergencyContact": "Stop and ask for approval if uncertain"
+}
