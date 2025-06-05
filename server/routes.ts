@@ -862,7 +862,7 @@ Respond with a JSON object containing:
       if (isOpenAIAvailable()) {
         safeAnalyzeWithOpenAI(`data:${req.file.mimetype};base64,${imageBase64}`, "image")
           .then(async (analysis) => {
-          const updates: any = {
+            const updates: any = {
             aiEnhanced: true,
             aiSuggestion: analysis.suggestion,
             aiContext: analysis.context,
