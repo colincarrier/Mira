@@ -307,10 +307,10 @@ export default function UniversalInputBar({
     
     setWaveformData(waveform);
     
-    if (isRecording) {
+    if (isVoiceRecording) {
       animationRef.current = requestAnimationFrame(updateWaveform);
     }
-  }, [isRecording]);
+  }, [isVoiceRecording]);
 
   const startWaveformAnimation = useCallback(() => {
     updateWaveform();
@@ -524,7 +524,7 @@ export default function UniversalInputBar({
       )}
       
       {/* Waveform overlay when recording */}
-      {isRecording && (
+      {isVoiceRecording && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl z-10">
           <div className="flex items-center space-x-3 w-full px-4">
             <div className="text-sm font-mono text-red-600">
@@ -556,14 +556,14 @@ export default function UniversalInputBar({
         value={inputText}
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
-        placeholder={isRecording ? "Recording voice note..." : placeholder}
+        placeholder={isVoiceRecording ? "Recording voice note..." : placeholder}
         className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
         rows={1}
         style={{
           minHeight: '20px',
           maxHeight: '120px'
         }}
-        disabled={isRecording}
+        disabled={isVoiceRecording}
         onInput={(e) => {
           const target = e.target as HTMLTextAreaElement;
           target.style.height = 'auto';
@@ -571,7 +571,7 @@ export default function UniversalInputBar({
         }}
       />
       <div className="flex items-center gap-1.5">
-        {isTyping && !isRecording ? (
+        {isTyping && !isVoiceRecording ? (
           <>
             <button 
               onClick={toggleMediaPicker}
@@ -605,12 +605,15 @@ export default function UniversalInputBar({
               <Camera className="w-4 h-4" />
             </button>
             <button 
-              onClick={isRecording ? stopRecording : () => {
+              onClick={isVoiceRecording ? () => {
+                stopRecording();
+                onVoiceStop?.();
+              } : () => {
                 onVoiceStart?.();
                 startRecording();
               }}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-colors z-20 relative hover:opacity-90 text-[#374252]"
-              style={{ backgroundColor: isRecording ? '#ef4444' : '#9bb8d3' }}
+              style={{ backgroundColor: isVoiceRecording ? '#ef4444' : '#9bb8d3' }}
               disabled={createVoiceNoteMutation.isPending}
             >
               {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
