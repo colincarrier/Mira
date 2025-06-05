@@ -1,3 +1,7 @@
+// ⚠️  CRITICAL: AI PROMPT PROTECTION - DO NOT MODIFY WITHOUT APPROVAL ⚠️
+// This file contains OpenAI integration and core prompts.
+// See AI_MODIFICATION_RULES.md for modification protocol.
+
 import OpenAI from "openai";
 import { miraPromptTemplate } from './utils/miraAIProcessing';
 

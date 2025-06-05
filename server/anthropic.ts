@@ -1,4 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+// ⚠️  CRITICAL: AI PROMPT PROTECTION - DO NOT MODIFY WITHOUT APPROVAL ⚠️
+// This file contains Claude AI integration and core prompts.
+// See AI_MODIFICATION_RULES.md for modification protocol.
+
+import Anthropic from "@anthropic-ai/sdk";
 import { miraPromptTemplate } from './utils/miraAIProcessing';
 
 // the newest Anthropic model is "claude-sonnet-4-20250514" which was released May 14, 2025. Use this by default unless user has already selected claude-3-7-sonnet-20250219
@@ -10,12 +14,12 @@ export interface AIAnalysisResult {
   enhancedContent?: string;
   suggestion?: string;
   context?: string;
-  
+
   // Complexity Analysis
   complexityScore: number; // 1-10 scale
   intentType: 'simple-task' | 'complex-project' | 'research-inquiry' | 'personal-reflection' | 'reference-material';
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  
+
   // Enhanced Task Structure
   todos: string[];
   taskHierarchy?: {
@@ -25,13 +29,13 @@ export interface AIAnalysisResult {
     estimatedTime: string;
     dependencies?: string[];
   }[];
-  
+
   collectionSuggestion?: {
     name: string;
     icon: string;
     color: string;
   };
-  
+
   // Intelligence Context
   richContext?: {
     recommendedActions: {
@@ -48,18 +52,18 @@ export interface AIAnalysisResult {
     }[];
     quickInsights: string[];
   };
-  
+
   // Predictive Intelligence
   nextSteps?: string[];
   timeToComplete?: string;
   successFactors?: string[];
   potentialObstacles?: string[];
-  
+
   // Knowledge Connections
   relatedTopics?: string[];
   skillsRequired?: string[];
   resourcesNeeded?: string[];
-  
+
   splitNotes?: {
     content: string;
     todos: string[];
@@ -95,7 +99,7 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
     }
 
     console.log("Claude raw response:", response.text.substring(0, 200) + "...");
-    
+
     let result;
     try {
       // Clean response if it has markdown formatting
@@ -106,12 +110,12 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
       if (cleanResponse.startsWith('```')) {
         cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '');
       }
-      
+
       result = JSON.parse(cleanResponse);
     } catch (parseError) {
       console.error("Error parsing Claude response:", parseError);
       console.log("Raw Claude response that failed to parse:", response.text);
-      
+
       // Return fallback analysis with proper structure
       return {
         enhancedContent: content,

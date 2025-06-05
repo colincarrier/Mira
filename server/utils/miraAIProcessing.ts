@@ -1,5 +1,10 @@
 /**
- * MIRA AI BRAIN — Processing Engine for Intelligent Note Handling
+ * MIRA AI BRAIN - Processing Engine for Intelligent Note Handling
+ * 
+ * ⚠️  CRITICAL: DO NOT MODIFY WITHOUT EXPLICIT APPROVAL ⚠️
+ * This file contains core AI processing logic and prompts.
+ * Any changes require proposal and approval process.
+ * See AI_MODIFICATION_RULES.md for protection protocol.
  * This engine is responsible for:
  * - Intelligent input classification
  * - Disciplined to-do/reminder creation
@@ -149,7 +154,7 @@ export async function processMiraAIInput(
   aiAnalysisFunction: (prompt: string) => Promise<any>
 ): Promise<MiraAIOutput> {
   const prompt = miraPromptTemplate.replace('{user_input}', input.content);
-  
+
   try {
     const aiResponse = await aiAnalysisFunction(prompt);
     return validateMiraAIOutput(aiResponse);
@@ -199,14 +204,14 @@ export function extractNotificationItems(output: MiraAIOutput): Array<{
   if (output.type === 'reminder' && output.notificationSchedule) {
     output.notificationSchedule.forEach(scheduleItem => {
       let scheduledTime: Date;
-      
+
       if (scheduleItem === 'same-day') {
         scheduledTime = new Date();
         scheduledTime.setHours(scheduledTime.getHours() + 1); // 1 hour from now
       } else {
         scheduledTime = new Date(scheduleItem);
       }
-      
+
       items.push({
         content: output.title,
         scheduledTime,
