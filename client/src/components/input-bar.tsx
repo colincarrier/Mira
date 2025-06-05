@@ -211,15 +211,22 @@ export default function InputBar({
   }, [isVoiceRecording]);
 
   const openCamera = useCallback(() => {
-    closeAllModes();
-    onCameraCapture?.();
-  }, [closeAllModes, onCameraCapture]);
-
-  const toggleSubmenu = useCallback(() => {
+    // Close all other modes first
+    setShowSubmenu(false);
     if (isVoiceRecording) {
       stopRecording();
       setIsVoiceRecording(false);
     }
+    onCameraCapture?.();
+  }, [isVoiceRecording, onCameraCapture]);
+
+  const toggleSubmenu = useCallback(() => {
+    // Close voice recording if active
+    if (isVoiceRecording) {
+      stopRecording();
+      setIsVoiceRecording(false);
+    }
+    // Toggle submenu
     setShowSubmenu(!showSubmenu);
   }, [isVoiceRecording, showSubmenu]);
 
@@ -228,7 +235,8 @@ export default function InputBar({
   }, []);
 
   const startVoiceRecording = useCallback(async () => {
-    closeSubmenu();
+    // Close submenu if open
+    setShowSubmenu(false);
     setIsVoiceRecording(true);
     await startRecording();
   }, []);
