@@ -75,7 +75,7 @@ export default function CollectionDetail() {
     generateSuperNoteMutation.mutate();
   };
 
-  if (!collection || !notes || !id) {
+  if (!collection || !notes || !id || id === null) {
     return (
       <div className="mx-auto max-w-sm w-full h-full flex flex-col">
         <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
@@ -101,8 +101,8 @@ export default function CollectionDetail() {
     );
   }
 
-  const IconComponent = getIconComponent(collection.icon);
-  const colors = getCollectionColor(collection.color);
+  const IconComponent = getIconComponent(collection?.icon || 'folder');
+  const colors = getCollectionColor(collection?.color || 'gray');
 
   return (
     <div className="w-full h-full flex flex-col bg-white">
@@ -184,7 +184,7 @@ export default function CollectionDetail() {
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3 text-gray-900">Recommended Actions</h4>
                 <div className="space-y-2">
-                  {superNote.structuredItems.recommendedActions.map((action, index) => (
+                  {superNote.structuredItems.recommendedActions.map((action: any, index: number) => (
                     <div key={index} className="bg-blue-50 rounded-lg p-3">
                       <h5 className="font-medium text-sm text-blue-900">{action.title}</h5>
                       <p className="text-xs text-blue-700 mt-1">{action.description}</p>
@@ -196,9 +196,9 @@ export default function CollectionDetail() {
 
             {/* Source Notes - Clickable */}
             <div className="mb-6">
-              <h4 className="text-md font-medium mb-3 text-gray-900">Source Notes ({superNote.notes.length})</h4>
+              <h4 className="text-md font-medium mb-3 text-gray-900">Source Notes ({superNote.notes?.length || 0})</h4>
               <div className="space-y-2">
-                {superNote.notes.map((note) => {
+                {(superNote.notes || []).map((note) => {
                   const timeAgo = (() => {
                     const now = new Date();
                     const noteDate = new Date(note.createdAt);
