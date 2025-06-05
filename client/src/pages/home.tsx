@@ -9,6 +9,7 @@ import CollectionsView from "@/components/collections-view";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
 import InputBar from "@/components/input-bar";
+import SimpleTextInput from "@/components/simple-text-input";
 import FullScreenCapture from "@/components/full-screen-capture";
 import Settings from "@/pages/settings";
 
@@ -145,12 +146,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Simple Text Input for Testing */}
+      {activeTab !== "settings" && <SimpleTextInput />}
+      
       {/* Input Bar */}
       <InputBar
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
         onTextSubmit={handleTextSubmit}
-        isHidden={activeTab === "settings"}
+        isHidden={true}
       />
 
       {/* Bottom Navigation Tabs */}
