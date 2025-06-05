@@ -146,16 +146,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Simple Text Input for Testing */}
-      {activeTab !== "settings" && <SimpleTextInput />}
-      
       {/* Input Bar */}
-      <InputBar
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-        onTextSubmit={handleTextSubmit}
-        isHidden={true}
-      />
+      {activeTab !== "settings" && (
+        <SimpleTextInput 
+          onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+          onNewNote={() => setIsVoiceModalOpen(true)}
+        />
+      )}
 
       {/* Bottom Navigation Tabs */}
       <BottomNavigation 

@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, Camera, Mic, Plus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
-export default function SimpleTextInput() {
+interface SimpleTextInputProps {
+  onCameraCapture?: () => void;
+  onNewNote?: () => void;
+}
+
+export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTextInputProps = {}) {
   const [text, setText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -60,24 +65,52 @@ export default function SimpleTextInput() {
   };
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50">
-      <div className="bg-red-500 rounded-2xl p-4 shadow-lg border-4 border-black">
+    <div className="fixed bottom-24 left-4 right-4 z-50">
+      <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
         <div className="flex items-center gap-2">
-          <input
-            type="text"
+          <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="TEST INPUT - Type here..."
-            className="flex-1 bg-white border-2 border-gray-800 outline-none text-lg p-2 rounded"
+            placeholder="Add/edit anything..."
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none"
+            rows={1}
+            style={{
+              minHeight: '20px',
+              maxHeight: '120px'
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+            }}
           />
-          <button 
-            onClick={handleSubmit}
-            disabled={createNoteMutation.isPending}
-            className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 border-2 border-black"
-          >
-            <Send className="w-6 h-6" />
-          </button>
+          {text.trim() ? (
+            <button 
+              onClick={handleSubmit}
+              disabled={createNoteMutation.isPending}
+              className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={onCameraCapture}
+                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                style={{ backgroundColor: '#a8bfa1' }}
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={onNewNote}
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors text-[#374252]"
+                style={{ backgroundColor: '#9bb8d3' }}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
