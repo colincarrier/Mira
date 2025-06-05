@@ -49,7 +49,7 @@ export default function InputBar({
 
   // Voice note mutation
   const createVoiceNoteMutation = useMutation({
-    mutationFn: async (audioBlob: Blob) => {
+    mutationFn: async (audioData: { blob: Blob; duration: number }) => {
       const placeholderResponse = await fetch("/api/notes/placeholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,7 +68,7 @@ export default function InputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       
       const formData = new FormData();
-      formData.append("audio", audioBlob);
+      formData.append("audio", audioData.blob);
       formData.append("noteId", placeholderNote.id.toString());
       
       const response = await fetch("/api/notes/voice", {
@@ -312,10 +312,13 @@ export default function InputBar({
         if (recordingDuration >= 1000) {
           const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const blob = new Blob(chunksRef.current, { type: mimeType });
-          createVoiceNoteMutation.mutate(blob);
+          
+          // Store the blob and duration for the mutation
+          const audioData = { blob, duration: recordingDuration };
+          createVoiceNoteMutation.mutate(audioData);
         } else {
           console.log('Recording too short, discarding');
-          // Silently discard short recordings without showing error
+          // Silently discard short recordings without creating any note
         }
         
         stream.getTracks().forEach(track => track.stop());
