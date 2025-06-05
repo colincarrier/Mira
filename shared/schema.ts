@@ -76,6 +76,19 @@ export const collections = pgTable("collections", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const items = pgTable("items", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  type: text("type").notNull(), // 'book', 'movie', 'restaurant', 'product', 'place', 'person', 'concept'
+  description: text("description"),
+  context: text("context"), // Why this item was mentioned
+  detailedContent: text("detailed_content"), // AI-generated detailed information
+  sourceNoteId: integer("source_note_id").references(() => notes.id),
+  collectionId: integer("collection_id").references(() => collections.id),
+  isProcessed: boolean("is_processed").default(false), // Whether detailed content has been generated
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Session storage table for Replit Auth
 export const sessions = pgTable(
   "sessions",
