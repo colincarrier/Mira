@@ -28,7 +28,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
             className={`tab-button ${activeTab === "todos" ? "active" : ""}`}
           >
             <CheckSquare className="w-5 h-5" />
-            <span className="text-xs">To-Dos</span>
+            <span className="text-xs">Remind</span>
           </button>
           
           <button 

@@ -246,12 +246,16 @@ export default function TodosView() {
     { key: 'completed', label: 'Done', count: todos?.filter(t => t.completed && !t.archived).length || 0, icon: Check },
   ];
 
+  // Separate reminders and todos
+  const reminders = todos?.filter(t => t.isActiveReminder && !t.completed && !t.archived) || [];
+  const regularTodos = todos?.filter(t => !t.isActiveReminder && !t.completed && !t.archived) || [];
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div className="flex items-center justify-between px-4 pt-6">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
-            Tasks
+            Remind
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -264,135 +268,107 @@ export default function TodosView() {
         </div>
       </div>
 
-      <div className="flex gap-2 px-4 overflow-x-auto">
-        {filterButtons.map(({ key, label, count, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveFilter(key as FilterType)}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0
-              ${activeFilter === key
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }
-            `}
-          >
-            {Icon && <Icon size={14} />}
-            {label}
-            {count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-full text-xs
-                ${activeFilter === key
-                  ? 'bg-white/20 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                }
-              `}>
-                {count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-4">
-        {/* Active Todos Section */}
-        {activeFilter === 'all' || activeFilter === 'pinned' || activeFilter === 'urgent' || activeFilter === 'today' ? (
-          <>
-            {/* Active todos */}
-            <div className="space-y-2">
-              {Object.entries(groupedTodos).filter(([_, group]) => 
-                group.todos.some(todo => !todo.completed)
-              ).map(([groupKey, group], groupIndex) => (
-                <div key={groupKey}>
-                  {group.todos.filter(todo => !todo.completed).map((todo, todoIndex) => (
-                    <div key={todo.id} className="relative">
-                      {/* Faint gray connecting line for grouped items */}
-                      {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
-                        <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
-                      )}
-                      <TodoItem
-                        todo={todo}
-                        onToggle={handleToggleTodo}
-                        onPin={handlePinTodo}
-                        onArchive={handleArchiveTodo}
-                        onClick={handleTodoClick}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Done Section */}
-            {todos?.some(t => t.completed && !t.archived) && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-4 py-2">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Done</h3>
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-                </div>
-                <div className="space-y-2">
-                  {Object.entries(groupedTodos).filter(([_, group]) => 
-                    group.todos.some(todo => todo.completed)
-                  ).map(([groupKey, group], groupIndex) => (
-                    <div key={groupKey}>
-                      {group.todos.filter(todo => todo.completed).map((todo, todoIndex) => (
-                        <div key={todo.id} className="relative opacity-60">
-                          <TodoItem
-                            todo={todo}
-                            onToggle={handleToggleTodo}
-                            onPin={handlePinTodo}
-                            onArchive={handleArchiveTodo}
-                            onClick={handleTodoClick}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          /* Show filtered todos normally for specific filters */
+      {/* Reminders Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
+          <div className="flex gap-1">
+            <button className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md">
+              Today
+            </button>
+            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
+              Week
+            </button>
+            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
+              Month
+            </button>
+            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
+              Year
+            </button>
+          </div>
+        </div>
+        
+        {reminders.length > 0 ? (
           <div className="space-y-2">
-            {Object.entries(groupedTodos).map(([groupKey, group], groupIndex) => (
-              <div key={groupKey}>
-                {group.todos.map((todo, todoIndex) => (
-                  <div key={todo.id} className="relative">
-                    {/* Faint gray connecting line for grouped items */}
-                    {Object.keys(groupedTodos).length > 1 && todoIndex > 0 && (
-                      <div className="absolute -top-1 left-6 w-px h-2 bg-gray-200 dark:bg-gray-700"></div>
-                    )}
-                    <TodoItem
-                      todo={todo}
-                      onToggle={handleToggleTodo}
-                      onPin={handlePinTodo}
-                      onArchive={handleArchiveTodo}
-                      onClick={handleTodoClick}
-                    />
-                  </div>
-                ))}
-                {/* Add spacing between groups */}
-                {Object.keys(groupedTodos).length > 1 && groupIndex < Object.keys(groupedTodos).length - 1 && (
-                  <div className="h-2"></div>
-                )}
-              </div>
+            {reminders.map(reminder => (
+              <TodoItem
+                key={reminder.id}
+                todo={reminder}
+                onToggle={handleToggleTodo}
+                onPin={handlePinTodo}
+                onArchive={handleArchiveTodo}
+                onClick={handleTodoClick}
+              />
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 px-4">
+            <Clock size={32} className="mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">No reminders set</p>
           </div>
         )}
       </div>
 
-      {filteredTodos.length === 0 && (
-        <div className="text-center py-8">
-          <div className="text-gray-400 dark:text-gray-500 mb-2">
-            <Circle size={48} className="mx-auto mb-4 opacity-50" />
+      {/* To-dos Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">To-dos</h3>
+          <div className="flex gap-2">
+            {filterButtons.map(({ key, label, count, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveFilter(key as FilterType)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0
+                  ${activeFilter === key
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }
+                `}
+              >
+                {Icon && <Icon size={14} />}
+                {label}
+                {count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-xs
+                    ${activeFilter === key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }
+                  `}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
-          <p className="text-gray-500 dark:text-gray-400">
-            {activeFilter === 'completed' ? 'No completed tasks yet' : 
-             activeFilter === 'pinned' ? 'No pinned tasks' :
-             activeFilter === 'urgent' ? 'No urgent tasks' :
-             searchTerm ? 'No tasks found' : 'No tasks yet'}
-          </p>
         </div>
-      )}
+
+        {filteredTodos.length > 0 ? (
+          <div className="space-y-2">
+            {filteredTodos.map(todo => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={handleToggleTodo}
+                onPin={handlePinTodo}
+                onArchive={handleArchiveTodo}
+                onClick={handleTodoClick}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-gray-400 dark:text-gray-500 mb-2">
+              <Circle size={48} className="mx-auto mb-4 opacity-50" />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400">
+              {activeFilter === 'completed' ? 'No completed tasks yet' : 
+               activeFilter === 'pinned' ? 'No pinned tasks' :
+               activeFilter === 'urgent' ? 'No urgent tasks' :
+               searchTerm ? 'No tasks found' : 'No tasks yet'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
