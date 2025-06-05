@@ -18,6 +18,11 @@ interface ComparisonResult {
     result: any;
     error: string | null;
   };
+  mira: {
+    success: boolean;
+    result: any;
+    error: string | null;
+  };
 }
 
 export default function AIComparison() {

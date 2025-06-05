@@ -473,7 +473,7 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
-  // Dual AI comparison endpoint
+  // Enhanced AI comparison endpoint with Mira Brain
   app.post("/api/compare-ai", aiRateLimit, async (req, res) => {
     try {
       const { content, mode = 'quick' } = req.body;
@@ -482,12 +482,13 @@ This profile was generated from your input and will help provide more personaliz
         return res.status(400).json({ message: "Content required for AI comparison" });
       }
 
-      console.log("Starting dual AI comparison for content:", content.substring(0, 100));
+      console.log("Starting enhanced AI comparison with Mira Brain for content:", content.substring(0, 100));
 
-      // Process with both AI services in parallel
-      const [openAIResult, claudeResult] = await Promise.allSettled([
+      // Process with all AI services in parallel including Mira Brain
+      const [openAIResult, claudeResult, miraResult] = await Promise.allSettled([
         analyzeWithOpenAI(content, mode),
-        analyzeWithClaude(content, mode)
+        analyzeWithClaude(content, mode),
+        processWithMiraAI(content, mode)
       ]);
 
       const response = {
@@ -501,12 +502,17 @@ This profile was generated from your input and will help provide more personaliz
           success: claudeResult.status === 'fulfilled',
           result: claudeResult.status === 'fulfilled' ? claudeResult.value : null,
           error: claudeResult.status === 'rejected' ? claudeResult.reason?.message : null
+        },
+        mira: {
+          success: miraResult.status === 'fulfilled',
+          result: miraResult.status === 'fulfilled' ? miraResult.value : null,
+          error: miraResult.status === 'rejected' ? miraResult.reason?.message : null
         }
       };
 
       res.json(response);
     } catch (error) {
-      console.error("Dual AI comparison error:", error);
+      console.error("Enhanced AI comparison error:", error);
       res.status(500).json({ message: "Failed to compare AI results" });
     }
   });
