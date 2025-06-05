@@ -85,32 +85,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
     };
   }, [setNotes, setTodos, setCollections]);
 
-  // Connection status indicator
-  const ConnectionStatus = () => (
-    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all ${
-      isOffline 
-        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' 
-        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
-    }`}>
-      {isOffline ? <WifiOff className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
-      {isOffline ? 'Offline' : 'Online'}
-      {syncQueue.length > 0 && (
-        <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">
-          {syncQueue.length} pending
-        </span>
-      )}
-    </div>
-  );
 
-  // Sync progress indicator
-  const SyncIndicator = () => (
-    isLoading && (
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        Syncing...
-      </div>
-    )
-  );
 
   if (initError) {
     return (
