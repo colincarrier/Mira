@@ -460,16 +460,22 @@ export default function UniversalInputBar({
       {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
+        id="image-file-input"
+        name="imageFile"
         type="file"
         accept="image/*"
         onChange={handleImageSelect}
         className="hidden"
+        aria-label="Select image file"
       />
       <input
         ref={generalFileInputRef}
+        id="general-file-input"
+        name="generalFile"
         type="file"
         onChange={handleGeneralFileSelect}
         className="hidden"
+        aria-label="Select any file"
       />
       
       {/* Media picker overlay */}
