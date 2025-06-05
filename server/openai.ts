@@ -63,32 +63,18 @@ export interface AIAnalysisResult {
 
 export async function analyzeWithOpenAI(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-
     const isImageContent = content.startsWith('data:image/') && content.includes('base64,');
     
     let messages: any[];
     
     if (isImageContent && mode === 'image') {
-      // Handle image analysis with Mira Brain approach
-      const imagePrompt = `You are Mira, an intelligent visual assistant. Analyze this image and provide actionable insights using the same format as the text analysis.
-
-Please respond with a JSON object containing all the standard Mira Brain fields:
-- enhancedContent: Detailed description with actionable context
-- suggestion: Actionable next steps based on image
-- context: Brief contextual summary
-- todos: Specific actionable items
-- complexityScore: 1-10 scale
-- intentType: classification of the image content
-- urgencyLevel: assessment of priority
-- collectionSuggestion: {name, icon, color}
-- richContext: {recommendedActions, researchResults, quickInsights}
-
-Use the same collection categories and format as text analysis.`;
+      // Handle image analysis with enhanced prompt
+      const imagePrompt = miraPromptTemplate.replace('{user_input}', 'Analyze this image and provide comprehensive insights.');
 
       messages = [
         {
           role: "system",
-          content: "You are Mira, an intelligent visual assistant. Always respond with valid JSON."
+          content: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt."
         },
         {
           role: "user",
@@ -107,13 +93,15 @@ Use the same collection categories and format as text analysis.`;
         }
       ];
     } else {
-      // Handle text analysis using Mira Brain prompt
+      // Handle text analysis using enhanced Mira Brain prompt
       const prompt = miraPromptTemplate.replace('{user_input}', content);
+      
+      console.log("OpenAI analysis with enhanced Mira Brain prompt");
       
       messages = [
         {
           role: "system",
-          content: "You are Mira, an intelligent research assistant. Always respond with valid JSON."
+          content: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt."
         },
         {
           role: "user",
@@ -127,17 +115,21 @@ Use the same collection categories and format as text analysis.`;
       messages: messages,
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 2000
+      max_tokens: 4000
     });
+
+    console.log("OpenAI raw response:", (response.choices[0].message.content || '').substring(0, 200) + "...");
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
-    // Ensure all required fields are present
+    console.log("OpenAI analysis completed successfully");
+    
+    // Return complete AIAnalysisResult structure
     return {
       enhancedContent: result.enhancedContent || content,
       suggestion: result.suggestion || "No specific suggestions available.",
       context: result.context || "General content analysis.",
-      complexityScore: result.complexityScore || 3,
+      complexityScore: result.complexityScore || 5,
       intentType: result.intentType || 'simple-task',
       urgencyLevel: result.urgencyLevel || 'medium',
       todos: Array.isArray(result.todos) ? result.todos : [],

@@ -75,11 +75,12 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
   try {
     const prompt = miraPromptTemplate.replace('{user_input}', content);
 
-    console.log("Claude analysis with Mira Brain prompt:", prompt.substring(0, 200));
+    console.log("Claude analysis with enhanced Mira Brain prompt");
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
+      system: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt.",
+      max_tokens: 4000,
       messages: [
         {
           role: "user",
@@ -93,37 +94,71 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
       throw new Error('Unexpected response type from Claude');
     }
 
-    console.log("Claude raw response:", response.text.substring(0, 300));
-    const analysis = JSON.parse(response.text);
-    console.log("Claude analysis result:", JSON.stringify(analysis, null, 2));
+    console.log("Claude raw response:", response.text.substring(0, 200) + "...");
+    
+    let result;
+    try {
+      // Clean response if it has markdown formatting
+      let cleanResponse = response.text.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '');
+      }
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '');
+      }
+      
+      result = JSON.parse(cleanResponse);
+    } catch (parseError) {
+      console.error("Error parsing Claude response:", parseError);
+      console.log("Raw Claude response that failed to parse:", response.text);
+      
+      // Return fallback analysis with proper structure
+      return {
+        enhancedContent: content,
+        suggestion: "Unable to analyze note at this time. Please try again.",
+        context: "Analysis failed - fallback response",
+        complexityScore: 5,
+        intentType: 'personal-reflection',
+        urgencyLevel: 'medium',
+        todos: [],
+        taskHierarchy: undefined,
+        collectionSuggestion: undefined,
+        richContext: undefined,
+        nextSteps: undefined,
+        timeToComplete: undefined,
+        successFactors: undefined,
+        potentialObstacles: undefined,
+        relatedTopics: undefined,
+        skillsRequired: undefined,
+        resourcesNeeded: undefined
+      };
+    }
 
-    // Convert Mira output format to legacy AIAnalysisResult format
+    console.log("Claude analysis completed successfully");
+
+    // Return the complete AIAnalysisResult structure
     return {
-      enhancedContent: analysis.description || analysis.enhancedContent || undefined,
-      suggestion: analysis.title || analysis.suggestion || undefined,
-      context: `Type: ${analysis.type}, Priority: ${analysis.priority || 'medium'}`,
-      
-      complexityScore: 5, // Default values for legacy compatibility
-      intentType: 'personal-reflection',
-      urgencyLevel: 'medium',
-      
-      todos: analysis.followUps || analysis.todos || [],
-      
-      collectionSuggestion: analysis.collectionSuggestion || undefined,
-      
-      richContext: undefined, // Simplified for Mira Brain
+      enhancedContent: result.enhancedContent || content,
+      suggestion: result.suggestion || "No specific suggestions available.",
+      context: result.context || "General content analysis.",
+      complexityScore: result.complexityScore || 5,
+      intentType: result.intentType || 'personal-reflection',
+      urgencyLevel: result.urgencyLevel || 'medium',
+      todos: Array.isArray(result.todos) ? result.todos : [],
+      taskHierarchy: result.taskHierarchy,
+      collectionSuggestion: result.collectionSuggestion,
+      richContext: result.richContext,
+      nextSteps: result.nextSteps,
+      timeToComplete: result.timeToComplete,
+      successFactors: result.successFactors,
+      potentialObstacles: result.potentialObstacles,
+      relatedTopics: result.relatedTopics,
+      skillsRequired: result.skillsRequired,
+      resourcesNeeded: result.resourcesNeeded
     };
   } catch (error) {
-    console.error("Error analyzing note with Claude:", error);
-    return {
-      enhancedContent: undefined,
-      suggestion: "Unable to analyze note at this time. Please try again.",
-      context: undefined,
-      complexityScore: 5,
-      intentType: 'personal-reflection',
-      urgencyLevel: 'medium',
-      todos: [],
-    };
+    console.error("Claude analysis failed:", error);
+    throw new Error(`Claude analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
