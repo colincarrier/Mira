@@ -61,6 +61,7 @@ export default function Home() {
   });
 
   const handleTextSubmit = (text: string) => {
+    console.log('🏠 HOME handleTextSubmit called with:', text);
     createTextNoteMutation.mutate(text);
   };
 
