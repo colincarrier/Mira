@@ -1161,6 +1161,164 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
+  // GET route for super-note - automatically generates if not exists
+  app.get("/api/collections/:id/super-note", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const collection = await storage.getCollection(id);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      
+      const notes = await storage.getNotesByCollectionId(id);
+      
+      // Handle empty collections
+      if (notes.length === 0) {
+        const superNoteData = {
+          collection,
+          aggregatedContent: `This is your ${collection.name} collection. Start adding notes and they'll appear here with AI-powered insights and organization.`,
+          description: "Start adding notes to see them organized here",
+          insights: [
+            `Your ${collection.name} collection is ready to capture and organize your thoughts.`,
+            "Add notes to this collection to see intelligent summaries and connections.",
+            "AI will help extract tasks, insights, and organize your content automatically."
+          ],
+          structuredItems: {
+            recommendedActions: [],
+            researchResults: [],
+            quickInsights: [`Empty ${collection.name} collection - ready for your content`]
+          },
+          allTodos: [],
+          items: [],
+          notes: [],
+          itemCount: 0,
+          todoCount: 0
+        };
+        return res.json(superNoteData);
+      }
+
+      // Filter out notes with no meaningful content
+      const meaningfulNotes = notes.filter(note => 
+        note.content && 
+        note.content.trim().length > 10 && 
+        !note.content.startsWith('🎉 Welcome to Mira')
+      );
+
+      if (meaningfulNotes.length === 0) {
+        const superNoteData = {
+          collection,
+          aggregatedContent: `Your ${collection.name} collection contains ${notes.length} note(s), but they need more content for meaningful analysis.`,
+          description: "Add more detailed content to unlock AI insights",
+          insights: [
+            "Add more detailed content to your notes for better AI insights.",
+            `${collection.name} collection is ready for meaningful content.`
+          ],
+          structuredItems: {
+            recommendedActions: [{ 
+              title: "Add detailed content", 
+              description: "Write more comprehensive notes to unlock AI-powered insights and organization." 
+            }],
+            researchResults: [],
+            quickInsights: [`${notes.length} note(s) in ${collection.name} - add more detail for insights`]
+          },
+          allTodos: [],
+          items: [],
+          notes: meaningfulNotes,
+          itemCount: 0,
+          todoCount: 0
+        };
+        return res.json(superNoteData);
+      }
+
+      // Get all todos from meaningful notes
+      const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
+      
+      // Get all items from this collection
+      const collectionItems = await storage.getItemsByCollectionId(id);
+      
+      // Create aggregated content based on collection type
+      let collectionContent = '';
+      let collectionDescription = '';
+      
+      if (collectionItems.length > 0) {
+        // Group items by type for better organization
+        const itemsByType = collectionItems.reduce((acc: any, item) => {
+          const type = item.type || 'item';
+          if (!acc[type]) acc[type] = [];
+          acc[type].push(item);
+          return acc;
+        }, {});
+
+        // Create content based on collection type
+        const collectionName = collection.name.toLowerCase();
+        if (collectionName.includes('movie') || collectionName.includes('tv')) {
+          collectionContent = '🎬 Movies & Shows:\n';
+          collectionDescription = 'Movies and TV shows to watch';
+        } else if (collectionName.includes('book') || collectionName.includes('read')) {
+          collectionContent = '📚 Books & Reading:\n';
+          collectionDescription = 'Books and reading materials';
+        } else if (collectionName.includes('restaurant') || collectionName.includes('food')) {
+          collectionContent = '🍽️ Restaurants & Food:\n';
+          collectionDescription = 'Places to eat and food to try';
+        } else {
+          collectionContent = `📋 ${collection.name} Items:\n`;
+          collectionDescription = `Items in your ${collection.name} collection`;
+        }
+
+        // Add each item as a line
+        collectionItems.forEach(item => {
+          collectionContent += `• ${item.title}`;
+          if (item.description) {
+            collectionContent += ` - ${item.description}`;
+          }
+          collectionContent += '\n';
+        });
+      } else {
+        collectionContent = `Add notes with specific ${collection.name.toLowerCase()} to see them organized here.`;
+        collectionDescription = `Items will appear here when extracted from your notes`;
+      }
+
+      const superNoteData = {
+        collection,
+        aggregatedContent: collectionContent,
+        description: collectionDescription,
+        insights: [
+          `${collectionItems.length} individual items tracked`,
+          `${allTodos.length} related tasks`,
+          `${meaningfulNotes.length} source notes`
+        ].filter(Boolean),
+        structuredItems: {
+          recommendedActions: allTodos.slice(0, 5).map((todo: any) => ({
+            title: todo.title,
+            description: "Task from your notes",
+            noteId: todo.noteId
+          })),
+          extractedItems: collectionItems.map(item => ({
+            title: item.title,
+            description: item.description || '',
+            type: item.type,
+            sourceNoteId: item.sourceNoteId
+          })),
+          quickInsights: [
+            `${collectionItems.length} items extracted`,
+            `${allTodos.length} tasks available`,
+            `${meaningfulNotes.length} notes in collection`
+          ]
+        },
+        allTodos: allTodos,
+        items: collectionItems,
+        notes: meaningfulNotes,
+        itemCount: collectionItems.length,
+        todoCount: allTodos.length
+      };
+
+      res.json(superNoteData);
+    } catch (error) {
+      console.error("Super note fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch super note" });
+    }
+  });
+
   app.post("/api/collections/:id/super-note", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
