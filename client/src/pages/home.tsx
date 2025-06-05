@@ -114,6 +114,10 @@ export default function Home() {
           setIsFullScreenCaptureOpen(false);
           setShowSubmenu(!showSubmenu);
         }}
+        onVoiceStart={() => {
+          setShowSubmenu(false);
+          setIsFullScreenCaptureOpen(false);
+        }}
         isHidden={activeTab === "settings"}
       />
 

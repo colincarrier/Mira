@@ -10,6 +10,7 @@ interface UniversalInputBarProps {
   onMediaUpload?: () => void;
   showSubmenu?: boolean;
   onToggleSubmenu?: () => void;
+  onVoiceStart?: () => void;
   placeholder?: string;
   className?: string;
 }
@@ -21,6 +22,7 @@ export default function UniversalInputBar({
   onMediaUpload,
   showSubmenu = false,
   onToggleSubmenu,
+  onVoiceStart,
   placeholder = "Add/edit anything...",
   className = ""
 }: UniversalInputBarProps) {
@@ -601,7 +603,7 @@ export default function UniversalInputBar({
             </button>
             <button 
               onClick={isRecording ? stopRecording : () => {
-                if (showSubmenu) onToggleSubmenu?.();
+                onVoiceStart?.();
                 startRecording();
               }}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-colors z-20 relative hover:opacity-90 text-[#374252]"

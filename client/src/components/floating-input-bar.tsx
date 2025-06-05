@@ -7,6 +7,7 @@ interface FloatingInputBarProps {
   onNewNote: () => void;
   showSubmenu?: boolean;
   onToggleSubmenu?: () => void;
+  onVoiceStart?: () => void;
   isHidden?: boolean;
 }
 
@@ -16,6 +17,7 @@ export default function FloatingInputBar({
   onNewNote, 
   showSubmenu = false,
   onToggleSubmenu,
+  onVoiceStart,
   isHidden = false 
 }: FloatingInputBarProps) {
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
@@ -89,6 +91,7 @@ export default function FloatingInputBar({
           onMediaUpload={onNewNote}
           showSubmenu={showSubmenu}
           onToggleSubmenu={onToggleSubmenu}
+          onVoiceStart={onVoiceStart}
           placeholder="Add/edit anything..."
         />
       </div>
