@@ -3,18 +3,24 @@
 ## Active Bugs
 
 ### Voice Recording Issues
-**Priority: Medium**
-- **Issue**: Voice recordings shorter than 1 second still create placeholder notes and get processed
+**Priority: High**
+- **Issue 1**: Voice recordings shorter than 1 second still create placeholder notes and get processed
 - **Current Status**: Duration check exists but placeholder note creation happens before duration validation
 - **Expected Behavior**: Recordings under 1 second should not create any notes or placeholders
 - **Debug Notes**: Console logging shows correct duration measurement, but mutation still triggers
 - **Technical Details**: The issue is in the async flow - placeholder note is created immediately in mutation, before duration check
 
+- **Issue 2**: Recording timer runs at incorrect speed (too fast)
+- **Current Status**: Timer appears to tick faster than 1-second intervals
+- **Expected Behavior**: Timer should increment exactly every 1 second
+- **Debug Notes**: Added console logging to track timer increments
+
 ### Voice Note Duration Display
-**Priority: Low**
+**Priority: Medium**
 - **Issue**: All voice notes display as "0:45" duration with halfway progress bar regardless of actual recording length
 - **Current Status**: Display bug in note card component
 - **Expected Behavior**: Should show actual recording duration and accurate progress indicator
+- **Impact**: Users cannot see actual voice note lengths in the interface
 
 ## UI/UX Improvements
 

@@ -391,7 +391,10 @@ export default function InputBar({
       setRecordingTime(0);
       
       intervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime(prev => {
+          console.log('Timer tick:', prev + 1);
+          return prev + 1;
+        });
       }, 1000);
       
       startWaveformAnimation();
