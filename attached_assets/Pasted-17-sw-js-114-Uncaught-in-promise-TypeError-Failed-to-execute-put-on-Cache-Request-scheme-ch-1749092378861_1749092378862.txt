@@ -1,0 +1,40 @@
+17
+sw.js:114 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at handleStaticRequest (sw.js:114:13)
+
+lockdown-install.js:1 Removing unpermitted intrinsics
+chunk-RPCDYKBN.js?v=54fc2a66:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+sw.js:114 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at handleStaticRequest (sw.js:114:13)
+main.tsx:11 SW registered:  
+ServiceWorkerRegistration
+client:536 WebSocket connection to 'wss://0517a15b-347d-4db8-a163-91ace8bc0750-00-1h777ousqwaud.spock.replit.dev/?token=FV0-BSV5-9qI' failed: 
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=FV0-BSV5-9qI' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+0517a15b-347d-4db8-a…spock.replit.dev/:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+0517a15b-347d-4db8-a…spock.replit.dev/:1 Error while trying to use the following icon from the Manifest: https://0517a15b-347d-4db8-a163-91ace8bc0750-00-1h777ousqwaud.spock.replit.dev/vite.svg (Download error or resource isn't a valid image)
+﻿
+
+A form field element should have an id or name attribute
+A form field element has neither an id nor a name attribute. This might prevent the browser from correctly autofilling the form.
+
+To fix this issue, add a unique id or name attribute to a form field. This is not strictly needed, but still recommended even if you have an autocomplete attribute on the same element.
+
+1 resource
+Violating node
+Learn more: The form input element
+Content Security Policy of your site blocks the use of 'eval' in JavaScript`
+The Content Security Policy (CSP) prevents the evaluation of arbitrary strings as JavaScript to make it more difficult for an attacker to inject unathorized code on your site.
+
+To solve this issue, avoid using eval(), new Function(), setTimeout([string], ...) and setInterval([string], ...) for evaluating strings.
+
+If you absolutely must: you can enable string evaluation by adding unsafe-eval as an allowed source in a script-src directive.
+
+⚠️ Allowing string evaluation comes at the risk of inline script injection.
+
+1 directive
+Source location	Directive	Status
+script-src	blocked
+Learn more: Content Security Policy - Eval

@@ -264,7 +264,7 @@ export default function InputBar({
   }, [isVoiceRecording]);
 
   const openCamera = useCallback(() => {
-    console.log('Camera button clicked, current states:', { showSubmenu, isVoiceRecording });
+    console.log('📷 CAMERA TRIGGERED! Current states:', { showSubmenu, isVoiceRecording });
     // Close all other modes first
     setShowSubmenu(false);
     if (isVoiceRecording) {
@@ -298,25 +298,29 @@ export default function InputBar({
   };
 
   const handleSendMessage = () => {
-    console.log('handleSendMessage called with text:', inputText);
+    console.log('🚀 SEND BUTTON CLICKED! Text:', inputText, 'onTextSubmit exists:', !!onTextSubmit);
     if (inputText.trim()) {
-      console.log('Creating text note with content:', inputText.trim());
+      console.log('✅ Text found, processing:', inputText.trim());
       if (onTextSubmit) {
+        console.log('🎯 Using onTextSubmit prop');
         onTextSubmit(inputText.trim());
       } else {
+        console.log('📝 Using internal mutation');
         createTextNoteMutation.mutate(inputText.trim());
       }
       setInputText("");
       setIsTyping(false);
       closeAllModes(); // Close any open modes
     } else {
-      console.log('No text to send, calling onNewNote fallback');
+      console.log('❌ No text to send, calling onNewNote fallback');
       onNewNote?.(); // Fallback for empty text
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    console.log('🔑 KEY PRESSED:', e.key, 'shiftKey:', e.shiftKey);
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('⚡ ENTER KEY TRIGGERED - calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }
