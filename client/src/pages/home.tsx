@@ -17,6 +17,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
   const [showSubmenu, setShowSubmenu] = useState(false);
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -114,9 +115,14 @@ export default function Home() {
           setIsFullScreenCaptureOpen(false);
           setShowSubmenu(!showSubmenu);
         }}
+        isVoiceRecording={isVoiceRecording}
         onVoiceStart={() => {
           setShowSubmenu(false);
           setIsFullScreenCaptureOpen(false);
+          setIsVoiceRecording(true);
+        }}
+        onVoiceStop={() => {
+          setIsVoiceRecording(false);
         }}
         isHidden={activeTab === "settings"}
       />

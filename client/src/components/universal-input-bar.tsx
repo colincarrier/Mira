@@ -10,7 +10,9 @@ interface UniversalInputBarProps {
   onMediaUpload?: () => void;
   showSubmenu?: boolean;
   onToggleSubmenu?: () => void;
+  isVoiceRecording?: boolean;
   onVoiceStart?: () => void;
+  onVoiceStop?: () => void;
   placeholder?: string;
   className?: string;
 }
@@ -22,13 +24,14 @@ export default function UniversalInputBar({
   onMediaUpload,
   showSubmenu = false,
   onToggleSubmenu,
+  isVoiceRecording = false,
   onVoiceStart,
+  onVoiceStop,
   placeholder = "Add/edit anything...",
   className = ""
 }: UniversalInputBarProps) {
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
   
