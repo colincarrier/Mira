@@ -477,7 +477,7 @@ This profile was generated from your input and will help provide more personaliz
                 description: item.description || '',
                 type: item.category,
                 sourceNoteId: note.id,
-                collectionId: note.collectionId || null
+                collectionId: id
               });
             }
             console.log(`Extracted ${analysis.extractedItems.length} individual items from note`);
@@ -1201,7 +1201,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
       }
 
       // Get individual items extracted from notes in this collection
-      const collectionItems = await storage.getItemsByCollectionId(collectionId);
+      const collectionItems = await storage.getItemsByCollectionId(id);
       const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
       
       // Create collection-specific content based on type
