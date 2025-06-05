@@ -318,11 +318,13 @@ export default function InputBar({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    console.log('🔑 KEY PRESSED:', e.key, 'shiftKey:', e.shiftKey);
     if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('⚡ ENTER KEY TRIGGERED - calling handleSendMessage');
       e.preventDefault();
-      handleSendMessage();
+      if (onTextSubmit && inputText.trim()) {
+        onTextSubmit(inputText.trim());
+        setInputText("");
+        setIsTyping(false);
+      }
     }
   };
 
@@ -714,7 +716,7 @@ export default function InputBar({
               console.log('Button render state:', { isTyping, isVoiceRecording, inputText: inputText.substring(0, 20) });
               return null;
             })()}
-            {isTyping && !isVoiceRecording ? (
+            {inputText.trim().length > 0 && !isVoiceRecording ? (
               <>
                 <button 
                   onClick={toggleSubmenu}
@@ -723,7 +725,13 @@ export default function InputBar({
                   <Plus className="w-4 h-4" />
                 </button>
                 <button 
-                  onClick={handleSendMessage}
+                  onClick={() => {
+                    if (onTextSubmit && inputText.trim()) {
+                      onTextSubmit(inputText.trim());
+                      setInputText("");
+                      setIsTyping(false);
+                    }
+                  }}
                   className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
                 >
                   <Send className="w-4 h-4" />
