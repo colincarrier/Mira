@@ -386,16 +386,16 @@ export default function InputBar({
     if (!success) return;
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
-      setRecordingStartTime(Date.now());
+      const startTime = Date.now();
+      setRecordingStartTime(startTime);
       mediaRecorderRef.current.start(100);
       setRecordingTime(0);
       
+      // Use actual elapsed time instead of simple counter
       intervalRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          console.log('Timer tick:', prev + 1);
-          return prev + 1;
-        });
-      }, 1000);
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setRecordingTime(elapsed);
+      }, 100); // Check every 100ms for smoother updates
       
       startWaveformAnimation();
     }

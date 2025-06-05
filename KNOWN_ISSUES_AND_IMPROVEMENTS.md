@@ -22,6 +22,14 @@
 - **Expected Behavior**: Should show actual recording duration and accurate progress indicator
 - **Impact**: Users cannot see actual voice note lengths in the interface
 
+### Input Bar Button Mutual Exclusion
+**Priority: High**
+- **Issue**: The three input modes (submenu, camera, voice recording) don't properly close each other
+- **Current Status**: Multiple modes can be active simultaneously, causing UI conflicts
+- **Expected Behavior**: Only one mode should be active at a time - starting one should close the others
+- **Impact**: Confusing user experience with overlapping UI elements
+- **Technical Details**: Need proper state management to ensure mutual exclusion between modes
+
 ## UI/UX Improvements
 
 ### Waveform Visualization
