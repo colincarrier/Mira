@@ -29,9 +29,11 @@ const getIconComponent = (iconName: string) => {
 interface SuperNoteData {
   collection: Collection;
   aggregatedContent: string;
+  description: string;
   insights: string[];
   structuredItems?: any;
   allTodos?: any[];
+  items: any[];
   notes: NoteWithTodos[];
   itemCount: number;
   todoCount?: number;
@@ -123,17 +125,23 @@ export default function CollectionDetail() {
         </div>
       </header>
 
-      {/* Collection Info */}
+      {/* Collection Header */}
       <div className="p-4 border-b border-gray-100 flex-shrink-0">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-12 h-12 flex items-center justify-center">
-            <IconComponent className={`w-8 h-8 ${colors.text}`} />
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-10 h-10 flex items-center justify-center">
+            <IconComponent className={`w-6 h-6 ${colors.text}`} />
           </div>
           <div>
             <h2 className="font-semibold text-lg">{collection.name}</h2>
-            <p className="text-sm text-gray-500">{notes.length} notes collected</p>
+            <p className="text-xs text-gray-500">
+              {superNote ? `${superNote.itemCount} items` : `${notes.length} notes`}
+            </p>
           </div>
         </div>
+        
+        {superNote && (
+          <p className="text-sm text-gray-600 mb-3">{superNote.description}</p>
+        )}
 
         {!superNote && (
           <button
@@ -152,119 +160,105 @@ export default function CollectionDetail() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {superNote ? (
-          /* Super Note View - Aggregated Content */
-          <div className="p-4">
-            {/* Aggregated Content Section */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3 text-gray-900">Collection Summary</h3>
-              <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {superNote.aggregatedContent}
-                </p>
-              </div>
+          /* Individual Items View */
+          <div className="pb-4">
+            {/* Items Subheading */}
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Items</h3>
             </div>
 
-            {/* Quick Insights */}
-            {superNote.insights && superNote.insights.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-md font-medium mb-3 text-gray-900">Key Insights</h4>
-                <div className="space-y-2">
-                  {superNote.insights.filter(Boolean).map((insight, index) => (
-                    <div key={index} className="flex items-start space-x-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-sm text-gray-600">{insight}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Individual Line Items */}
+            <div className="divide-y divide-gray-100">
+              {superNote.items && superNote.items.length > 0 ? (
+                (() => {
+                  // Separate completed and uncompleted items
+                  const uncompleted = superNote.items.filter((item: any) => !item.isProcessed);
+                  const completed = superNote.items.filter((item: any) => item.isProcessed);
+                  
+                  return [...uncompleted, ...completed].map((item: any, index: number) => {
+                    const timeAgo = (() => {
+                      const now = new Date();
+                      const itemDate = new Date(item.createdAt);
+                      const diffInSeconds = Math.floor((now.getTime() - itemDate.getTime()) / 1000);
+                      
+                      if (diffInSeconds < 60) return 'now';
+                      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                    })();
 
-            {/* Recommended Actions */}
-            {superNote.structuredItems?.recommendedActions && superNote.structuredItems.recommendedActions.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-md font-medium mb-3 text-gray-900">Recommended Actions</h4>
-                <div className="space-y-2">
-                  {superNote.structuredItems.recommendedActions.map((action: any, index: number) => (
-                    <div key={index} className="bg-blue-50 rounded-lg p-3">
-                      <h5 className="font-medium text-sm text-blue-900">{action.title}</h5>
-                      <p className="text-xs text-blue-700 mt-1">{action.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Source Notes - Clickable */}
-            <div className="mb-6">
-              <h4 className="text-md font-medium mb-3 text-gray-900">Source Notes ({superNote.notes?.length || 0})</h4>
-              <div className="space-y-2">
-                {(superNote.notes || []).map((note) => {
-                  const timeAgo = (() => {
-                    const now = new Date();
-                    const noteDate = new Date(note.createdAt);
-                    const diffInSeconds = Math.floor((now.getTime() - noteDate.getTime()) / 1000);
-                    
-                    if (diffInSeconds < 60) return 'now';
-                    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-                    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-                    return `${Math.floor(diffInSeconds / 86400)}d ago`;
-                  })();
-
-                  return (
-                    <div 
-                      key={note.id} 
-                      className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-300 cursor-pointer transition-colors"
-                      onClick={() => setLocation(`/notes/${note.id}`)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          {note.mode === 'voice' && <Icons.Mic className="w-4 h-4 text-blue-500" />}
-                          {note.mode === 'camera' && <Icons.Camera className="w-4 h-4 text-green-500" />}
-                          {note.mode === 'file' && <Icons.File className="w-4 h-4 text-purple-500" />}
-                          {note.mode === 'text' && <Icons.MessageSquare className="w-4 h-4 text-gray-500" />}
-                          <span className="text-xs text-gray-500">{timeAgo}</span>
-                        </div>
-                        {note.todos && note.todos.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <Icons.CheckSquare className="w-3 h-3 text-blue-500" />
-                            <span className="text-xs text-gray-600">
-                              {note.todos.filter(t => t.completed).length}/{note.todos.length}
-                            </span>
+                    return (
+                      <div 
+                        key={item.id || index} 
+                        className={`px-4 py-3 transition-colors ${item.isProcessed ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div 
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => {
+                              if (item.sourceNoteId) {
+                                setLocation(`/notes/${item.sourceNoteId}`);
+                              }
+                            }}
+                          >
+                            <h4 className={`text-sm font-medium truncate ${item.isProcessed ? 'text-gray-500' : 'text-gray-900'}`}>
+                              {item.title}
+                            </h4>
+                            {item.description && (
+                              <p className={`text-xs mt-1 line-clamp-1 ${item.isProcessed ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {item.description}
+                              </p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-900 line-clamp-2">
-                        {note.content ? note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '') : 'Untitled Note'}
-                      </p>
-                      {note.todos && note.todos.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {note.todos.slice(0, 2).map((todo) => (
-                            <div key={todo.id} className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${todo.completed ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span className={`text-xs ${todo.completed ? 'text-green-600 line-through' : 'text-gray-600'}`}>
-                                {todo.title}
-                              </span>
-                            </div>
-                          ))}
-                          {note.todos.length > 2 && (
-                            <p className="text-xs text-gray-500">+{note.todos.length - 2} more tasks</p>
-                          )}
+                          <div className="flex items-center space-x-2 ml-3">
+                            <span className="text-xs text-gray-400">{timeAgo}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Add API call to update item processed status
+                                console.log('Toggle item processed:', item.id);
+                              }}
+                              className="w-4 h-4 border border-gray-300 rounded flex-shrink-0 flex items-center justify-center hover:border-blue-500 transition-colors"
+                            >
+                              {item.isProcessed && (
+                                <Icons.Check className="w-3 h-3 text-blue-500" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      </div>
+                    );
+                  });
+                })()
+              ) : (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-gray-500">No items extracted yet</p>
+                </div>
+              )}
             </div>
 
-            {/* Regenerate Button */}
-            <button
-              onClick={handleGenerateSuper}
-              disabled={generateSuperNoteMutation.isPending}
-              className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium disabled:opacity-50 touch-manipulation hover:bg-gray-200 transition-colors"
-            >
-              {generateSuperNoteMutation.isPending ? 'Regenerating...' : 'Regenerate Super Note'}
-            </button>
+            {/* Source Notes Link */}
+            {superNote.notes && superNote.notes.length > 0 && (
+              <div className="border-t border-gray-100 mt-6 pt-4 px-4">
+                <button
+                  onClick={() => {
+                    // Navigate to the first source note if only one, otherwise show a list
+                    if (superNote.notes.length === 1) {
+                      setLocation(`/notes/${superNote.notes[0].id}`);
+                    } else {
+                      // For now, navigate to the most recent note
+                      const mostRecent = superNote.notes.sort((a, b) => 
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                      )[0];
+                      setLocation(`/notes/${mostRecent.id}`);
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  View original note{superNote.notes.length > 1 ? 's' : ''} →
+                </button>
+              </div>
+            )}
           </div>
         ) : notes.length > 0 ? (
           /* Regular Notes List */
