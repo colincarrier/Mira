@@ -1,0 +1,100 @@
+Most of the messages you’re seeing in the desktop preview console are simply DevTools “lint” and policy warnings from Replit’s wrapper page (e.g. missing `id`/`name` on inputs, CSP “eval” blocked, Quirks Mode, cookie notices, etc.). None of those will actually prevent Vite from serving your React app. In other words, those are just advisories from Replit’s own scripts (DoubleClick, Google Analytics, etc.), not fatal errors in your code.
+
+Below are a few concrete things to check so that your Vite server actually appears in the desktop preview:
+
+---
+
+## 1. Make sure Vite is listening on the right host/port
+
+By default, Vite’s dev server binds to `localhost:5173`. Replit’s “Preview” expects the dev server to be listening on `0.0.0.0` (all interfaces) and on the port that Replit assigns via `$PORT`. If you leave Vite at its default, Replit’s proxy won’t forward desktop‐browser requests. In practice, your **mobile preview** works because Replit may be forwarding the tunnel to the correct port, but the **desktop pane** does not.
+
+To fix this, edit (or create) your root `vite.config.ts` (or `vite.config.js`) and add:
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,            // bind to 0.0.0.0
+    port: Number(process.env.PORT) || 5173,
+    strictPort: true       // fail if that port is already in use
+  },
+});
+```
+
+Then in your `package.json` make sure your “dev” script is:
+
+```jsonc
+"scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+}
+```
+
+When you click **Run** in Replit, it will set `PORT` automatically (e.g. 3000 or 8000). Vite will see that and bind to `0.0.0.0:$PORT`. Replit’s desktop “Preview” pane will then be able to reach it.
+
+---
+
+## 2. Verify in Replit’s Shell that Vite actually started
+
+1. Click **Run** so that Replit installs dependencies and runs `npm run dev`.
+
+2. In the **Shell** tab, you should see something like:
+
+   ```
+   > vite
+
+   VITE v4.x.x  ready in 350ms
+
+   ➜  Local:   http://0.0.0.0:3000/
+   ➜  Network: use --host to expose
+   ```
+
+   (If you see `Local: http://localhost:5173/` instead, it means `process.env.PORT` wasn’t applied. Check that you set `host: true` and `port: Number(process.env.PORT)`.)
+
+3. Once you see “`Local: http://0.0.0.0:3000/`” (or whatever `$PORT` is), you know Vite is up and reachable.
+
+---
+
+## 3. Open the correct preview URL
+
+* **Inside Replit**: Click the preview window’s “⋮” menu (⋮ in the top‐right of the preview pane) and select **“Open in new tab”**. That new tab should show your Vite app instead of Replit’s wrapper.
+* **Directly**: If your Repl is named `AiMemoryCompanion`, and your username is `colincarrier`, then the URL is `https://ai‐memory‐companion.colincarrier.repl.co` (or similar). Pasting that into your desktop browser should load your React app, not the Replit landing page.
+
+---
+
+## 4. Ignore the form/CSP/Quirks warnings
+
+Once Vite is properly bound, you will still see a handful of warnings in the desktop console:
+
+* **“form field element has neither an id nor a name attribute…”**
+* **“Content Security Policy blocks eval()…”**
+* **“Incorrect use of `<label for=>`…”**
+* **“Document in Quirks Mode…”**
+* **“Third‐party cookie notices”**
+
+All of those originate from Replit’s own analytics scripts (DoubleClick, Google Analytics) and do not break your app. You can safely ignore them unless you want to clean up minor accessibility/CSP details in your client code.
+
+---
+
+## Quick checklist:
+
+1. **vite.config.ts** has:
+
+   ```ts
+   server: {
+     host: true,
+     port: Number(process.env.PORT) || 5173,
+     strictPort: true
+   }
+   ```
+2. **package.json** “dev” script is just `"vite"`.
+3. Click **Run** → in **Shell** you see `VITE vX.X.X  ready in …` and `Local: http://0.0.0.0:<PORT>/`.
+4. Open **Preview → Open in New Tab**, or visit `https://<replname>.<username>.repl.co`.
+5. If you still only see Replit’s “Quirks Mode” page, double‐check that Vite truly printed “Local: [http://0.0.0.0:…”](http://0.0.0.0:…”). If it bound to `localhost:5173`, then Replit’s desktop preview cannot reach it.
+
+Once Vite is binding to `0.0.0.0:$PORT`, the desktop and mobile previews will both load your app, and all those console “violations” can be safely ignored (they’re just warnings from Replit’s third­-party scripts).
