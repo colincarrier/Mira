@@ -591,33 +591,36 @@ export default function InputBar({
             </div>
           )}
           
-          {/* Waveform overlay when recording */}
+          {/* Recording waveform display */}
           {isVoiceRecording && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl z-10">
-              <div className="flex items-center space-x-3 w-full px-4">
-                <div className="text-sm font-mono text-red-600">
-                  {formatTime(recordingTime)}
-                </div>
-                <div className="flex-1 h-8 flex items-end justify-center space-x-1">
-                  {waveformData.length > 0 ? (
-                    waveformData.map((amplitude, index) => (
-                      <div
-                        key={index}
-                        className="w-1 bg-gradient-to-t from-red-500 to-red-300 rounded-full transition-all duration-100 animate-pulse"
-                        style={{
-                          height: `${Math.max(2, amplitude * 24)}px`,
-                          opacity: 0.8 + amplitude * 0.2
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-red-500 text-sm">Recording...</div>
-                  )}
-                </div>
-                {createVoiceNoteMutation.isPending && (
-                  <div className="text-blue-600 text-xs">Processing...</div>
+            <div className="absolute left-3 right-20 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white/95 rounded-lg px-3 py-2 z-20">
+              <div className="text-xs font-mono text-red-600 min-w-[2.5rem]">
+                {formatTime(recordingTime)}
+              </div>
+              <div className="flex-1 h-6 flex items-end justify-start space-x-0.5 overflow-hidden">
+                {waveformData.length > 0 ? (
+                  waveformData.slice(0, 20).map((amplitude, index) => (
+                    <div
+                      key={index}
+                      className="w-0.5 bg-gradient-to-t from-red-600 to-red-400 rounded-full transition-all duration-75"
+                      style={{
+                        height: `${Math.max(2, amplitude * 20)}px`,
+                        opacity: 0.7 + amplitude * 0.3
+                      }}
+                    />
+                  ))
+                ) : (
+                  <div className="flex items-center space-x-1">
+                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="w-1 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <span className="text-xs text-red-600 ml-2">Recording...</span>
+                  </div>
                 )}
               </div>
+              {createVoiceNoteMutation.isPending && (
+                <div className="text-xs text-blue-600">Processing...</div>
+              )}
             </div>
           )}
 
