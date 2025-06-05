@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
+import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemSchema } from "@shared/schema";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
@@ -1269,6 +1269,62 @@ Provide a well-organized summary that captures the essence of this collection an
     } catch (error) {
       console.error("Collection reorder error:", error);
       res.status(500).json({ message: "Failed to reorder collections" });
+    }
+  });
+
+  // Items API routes
+  app.get("/api/items", async (req, res) => {
+    try {
+      const items = await storage.getItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Failed to fetch items:", error);
+      res.status(500).json({ message: "Failed to fetch items" });
+    }
+  });
+
+  app.get("/api/collections/:id/items", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const items = await storage.getItemsByCollectionId(id);
+      res.json(items);
+    } catch (error) {
+      console.error("Failed to fetch collection items:", error);
+      res.status(500).json({ message: "Failed to fetch collection items" });
+    }
+  });
+
+  app.post("/api/items", async (req, res) => {
+    try {
+      const itemData = insertItemSchema.parse(req.body);
+      const item = await storage.createItem(itemData);
+      res.json(item);
+    } catch (error) {
+      console.error("Failed to create item:", error);
+      res.status(400).json({ message: "Invalid item data" });
+    }
+  });
+
+  app.patch("/api/items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const item = await storage.updateItem(id, updates);
+      res.json(item);
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      res.status(500).json({ message: "Failed to update item" });
+    }
+  });
+
+  app.delete("/api/items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteItem(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      res.status(500).json({ message: "Failed to delete item" });
     }
   });
 

@@ -1,4 +1,4 @@
-import { notes, todos, collections, users, type Note, type Todo, type Collection, type User, type InsertNote, type InsertTodo, type InsertCollection, type UpsertUser, type NoteWithTodos } from "@shared/schema";
+import { notes, todos, collections, users, items, type Note, type Todo, type Collection, type User, type Item, type InsertNote, type InsertTodo, type InsertCollection, type InsertItem, type UpsertUser, type NoteWithTodos } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
@@ -27,6 +27,14 @@ export interface IStorage {
   getCollection(id: number): Promise<Collection | undefined>;
   updateCollection(id: number, updates: Partial<Collection>): Promise<Collection>;
   getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]>;
+  
+  // Items
+  createItem(item: InsertItem): Promise<Item>;
+  getItems(): Promise<Item[]>;
+  getItemsByNoteId(noteId: number): Promise<Item[]>;
+  getItemsByCollectionId(collectionId: number): Promise<Item[]>;
+  updateItem(id: number, updates: Partial<Item>): Promise<Item>;
+  deleteItem(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -217,6 +225,52 @@ export class DatabaseStorage implements IStorage {
     );
     
     return notesWithTodos; // Already sorted newest first
+  }
+
+  // Items operations
+  async createItem(insertItem: InsertItem): Promise<Item> {
+    const [item] = await db
+      .insert(items)
+      .values(insertItem)
+      .returning();
+    return item;
+  }
+
+  async getItems(): Promise<Item[]> {
+    return await db
+      .select()
+      .from(items)
+      .orderBy(desc(items.createdAt));
+  }
+
+  async getItemsByNoteId(noteId: number): Promise<Item[]> {
+    return await db
+      .select()
+      .from(items)
+      .where(eq(items.sourceNoteId, noteId))
+      .orderBy(desc(items.createdAt));
+  }
+
+  async getItemsByCollectionId(collectionId: number): Promise<Item[]> {
+    return await db
+      .select()
+      .from(items)
+      .where(eq(items.collectionId, collectionId))
+      .orderBy(desc(items.createdAt));
+  }
+
+  async updateItem(id: number, updates: Partial<Item>): Promise<Item> {
+    const [item] = await db
+      .update(items)
+      .set(updates)
+      .where(eq(items.id, id))
+      .returning();
+    if (!item) throw new Error("Item not found");
+    return item;
+  }
+
+  async deleteItem(id: number): Promise<void> {
+    await db.delete(items).where(eq(items.id, id));
   }
 }
 
