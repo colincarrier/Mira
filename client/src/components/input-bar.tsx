@@ -285,7 +285,20 @@ export default function InputBar({
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
       
-      const mediaRecorder = new MediaRecorder(stream);
+      // Try to use a supported audio format
+      const options = { mimeType: 'audio/webm' };
+      let mediaRecorder;
+      
+      if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/mp4' });
+      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/ogg' });
+      } else {
+        mediaRecorder = new MediaRecorder(stream);
+      }
+      
       chunksRef.current = [];
       
       mediaRecorder.ondataavailable = (event) => {
@@ -297,7 +310,8 @@ export default function InputBar({
         
         // Only process recordings longer than 1 second
         if (recordingDuration >= 1000) {
-          const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+          const mimeType = mediaRecorder.mimeType || 'audio/webm';
+          const blob = new Blob(chunksRef.current, { type: mimeType });
           createVoiceNoteMutation.mutate(blob);
         } else {
           console.log('Recording too short, discarding');
