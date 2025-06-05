@@ -329,7 +329,6 @@ export default function UniversalInputBar({
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       mediaRecorderRef.current.start(100);
-      setIsRecording(true);
       setRecordingTime(0);
       
       // Start timer
@@ -345,7 +344,6 @@ export default function UniversalInputBar({
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
       stopWaveformAnimation();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -359,7 +357,6 @@ export default function UniversalInputBar({
   };
 
   const handleResetRecording = () => {
-    setIsRecording(false);
     setRecordingTime(0);
     setWaveformData([]);
     chunksRef.current = [];
@@ -616,7 +613,7 @@ export default function UniversalInputBar({
               style={{ backgroundColor: isVoiceRecording ? '#ef4444' : '#9bb8d3' }}
               disabled={createVoiceNoteMutation.isPending}
             >
-              {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isVoiceRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
           </>
         )}
