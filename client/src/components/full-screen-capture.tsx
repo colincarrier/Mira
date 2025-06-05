@@ -16,6 +16,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [noteText, setNoteText] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioLevels, setAudioLevels] = useState<number[]>([]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   
@@ -23,6 +25,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
@@ -137,6 +143,67 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     });
   };
 
+  // Audio visualization effect
+  useEffect(() => {
+    let animationFrame: number;
+    
+    if (isRecording && analyserRef.current) {
+      const updateWaveform = () => {
+        const analyser = analyserRef.current!;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Convert to visual levels (32 bars)
+        const barCount = 32;
+        const levels: number[] = [];
+        const samplesPerBar = Math.floor(bufferLength / barCount);
+        
+        for (let i = 0; i < barCount; i++) {
+          let sum = 0;
+          for (let j = 0; j < samplesPerBar; j++) {
+            sum += dataArray[i * samplesPerBar + j];
+          }
+          const average = sum / samplesPerBar;
+          levels.push(Math.max(8, (average / 255) * 50)); // Scale to 8-50px height
+        }
+        
+        setAudioLevels(levels);
+        animationFrame = requestAnimationFrame(updateWaveform);
+      };
+      
+      updateWaveform();
+    }
+    
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [isRecording]);
+
+  // Recording timer effect
+  useEffect(() => {
+    if (isRecording) {
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      setRecordingTime(0);
+    }
+    
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, [isRecording]);
+
   const handleVoiceCapture = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast({
@@ -148,15 +215,33 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     }
 
     if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
       setIsRecording(false);
       return;
     }
 
     try {
-      setIsRecording(true);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Set up audio analysis
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      
+      // Set up recording
       const mediaRecorder = new MediaRecorder(stream);
       const chunks: Blob[] = [];
+      
+      mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
         chunks.push(event.data);
@@ -166,17 +251,23 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         const blob = new Blob(chunks, { type: 'audio/wav' });
         createVoiceNote(blob);
         
+        // Clean up
         stream.getTracks().forEach(track => track.stop());
+        audioContext.close();
         setIsRecording(false);
+        setAudioLevels([]);
         onClose();
+        
         toast({
           title: "Voice note saved",
           description: "Your voice note has been transcribed and saved.",
         });
       };
 
+      setIsRecording(true);
       mediaRecorder.start();
 
+      // Auto-stop after 30 seconds
       setTimeout(() => {
         if (mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
@@ -287,18 +378,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
             {/* Waveform visualization */}
             {isRecording && (
-              <div className="mb-8 flex items-center justify-center gap-1">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-blue-500 rounded-full animate-pulse"
-                    style={{
-                      height: `${Math.random() * 40 + 10}px`,
-                      animationDelay: `${i * 0.1}s`,
-                      animationDuration: '0.8s'
-                    }}
-                  />
-                ))}
+              <div className="mb-8 w-64 h-16 flex items-center justify-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                {audioLevels.length > 0 ? (
+                  audioLevels.map((level, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-blue-500 rounded-full transition-all duration-75"
+                      style={{ height: `${level}px` }}
+                    />
+                  ))
+                ) : (
+                  Array.from({ length: 32 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-gray-400 rounded-full"
+                      style={{ height: '8px' }}
+                    />
+                  ))
+                )}
               </div>
             )}
 
