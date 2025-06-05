@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
-import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
+import { analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
 // Both AI models now use the same Mira Brain prompt template directly
 import multer from "multer";
@@ -576,16 +576,7 @@ Respond with a JSON object containing:
       // Update the note
       await storage.updateNote(noteId, updates);
 
-      // Handle todo updates (mark completed/incomplete)
-      if (evolution.todoUpdates && evolution.todoUpdates.length > 0) {
-        for (const todoUpdate of evolution.todoUpdates) {
-          try {
-            await storage.updateTodo(todoUpdate.id, { completed: todoUpdate.completed });
-          } catch (error) {
-            console.error("Failed to update todo:", todoUpdate.id, error);
-          }
-        }
-      }
+      // Create new todos from AI analysis
 
       // Create new todos
       if (evolution.todos && evolution.todos.length > 0) {
