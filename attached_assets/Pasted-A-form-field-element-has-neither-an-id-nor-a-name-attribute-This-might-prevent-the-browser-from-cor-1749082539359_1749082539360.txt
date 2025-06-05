@@ -1,0 +1,126 @@
+A form field element has neither an id nor a name attribute. This might prevent the browser from correctly autofilling the form.
+
+To fix this issue, add a unique id or name attribute to a form field. This is not strictly needed, but still recommended even if you have an autocomplete attribute on the same element.
+
+18 resources
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Violating node
+Learn more: The form input element
+Content Security Policy of your site blocks the use of 'eval' in JavaScript`
+The Content Security Policy (CSP) prevents the evaluation of arbitrary strings as JavaScript to make it more difficult for an attacker to inject unathorized code on your site.
+
+To solve this issue, avoid using eval(), new Function(), setTimeout([string], ...) and setInterval([string], ...) for evaluating strings.
+
+If you absolutely must: you can enable string evaluation by adding unsafe-eval as an allowed source in a script-src directive.
+
+⚠️ Allowing string evaluation comes at the risk of inline script injection.
+
+1 directive
+Source location	Directive	Status
+script-src	blocked
+Learn more: Content Security Policy - Eval
+No label associated with a form field
+A <label> isn't associated with a form field.
+
+To fix this issue, nest the <input> in the <label> or provide a for attribute on the <label> that matches a form field id.
+
+2 resources
+Violating node
+Violating node
+Learn more: The label elements
+Page layout may be unexpected due to Quirks Mode
+One or more documents in this page is in Quirks Mode, which will render the affected document(s) with quirks incompatible with the current HTML and CSS specifications.
+
+Quirks Mode exists mostly due to historical reasons. If this is not intentional, you can add or modify the DOCTYPE to be `<!DOCTYPE html>` to render the page in No Quirks Mode.
+
+1 element
+Document in the DOM tree	Mode	URL
+document	Quirks Mode	https://td.doubleclick.net/td/rul/11411994397?random=1749082476291&cv=11&fst=1749082476291&fmt=3&bg=ffffff&guid=ON&async=1&gtm=45be5631h1v9171242957za200&gcd=13l3l3l3l1l1&dma=0&tag_exp=101509157~103116026~103200004~103233427~103351869~103351871~104611962~104611964~104661466~104661468&u_w=1512&u_h=982&url=https%3A%2F%2Freplit.com%2F%40colincarrier%2FAiMemoryCompanion&hn=www.googleadservices.com&frm=0&tiba=-%20Replit&npa=0&pscdl=noapi&auid=313540574.1749082005&fledge=1&data=event%3Dgtag.config
+Learn more: Document compatibility mode
+Reading cookie in cross-site context may be impacted on Chrome
+Cookies with the SameSite=None; Secure and not Partitioned attributes that operate in cross-site contexts are third-party cookies. Chrome is moving towards a new experience that allows users to choose to browse without third-party cookies.
+
+Learn more from the linked article about preparing your site to avoid potential breakage.
+
+42 cookies
+Name	Domain & Path
+COMPASS	chat.google.com/u/0/webchannel/
+COMPASS	mail.google.com/mail/u/0
+COMPASS	mail.google.com/sync/u/0
+__Secure-OSID	photos.google.com/
+__Secure-OSID	meet.google.com/
+__Secure-OSID	play.google.com/
+__Secure-OSID	calendar.google.com/
+__Secure-OSID	.docs.google.com/
+__Secure-OSID	photos.fife.usercontent.google.com/
+LSOLH	accounts.google.com/
+__Secure-OSID	lens.google.com/
+__Secure-OSID	drive.usercontent.google.com/
+__Secure-OSID	drive.google.com/
+__Secure-OSID	mail.google.com/
+__Secure-OSID	chat.google.com/
+COMPASS	mail.google.com/
+COMPASS	chat.google.com/
+COMPASS	tasks-pa.clients6.google.com/
+COMPASS	appsgenaiserver-pa.clients6.google.com/
+COMPASS	drive.google.com/
+COMPASS	meet.google.com/
+__Host-3PLSID	accounts.google.com/
+COMPASS	calendar-pa.clients6.google.com/
+COMPASS	calendar.google.com/
+__Secure-3PAPISID	.google.com/
+__Secure-3PSID	.google.com/
+NID	.google.com/
+__Secure-3PSIDTS	.google.com/
+__Secure-3PSIDCC	.google.com/
+ar_debug	.doubleclick.net/
+__podscribe_etsy_referrer	.doubleclick.net/
+__podscribe_etsy_landing_url	.doubleclick.net/
+__podscribe_did	.doubleclick.net/
+IDE	.doubleclick.net/
+m	m.stripe.com/
+__Host-LinkSessionPresent	merchant-ui-api.stripe.com/
+__Host-LinkSession	merchant-ui-api.stripe.com/
+__Secure-LinkSessionPresent	.stripe.com/
+_ttp	.tiktok.com/
+s_v_web_id	.tiktok.com/
+ttwid	.tiktok.com/
+ar_debug	.www.google-analytics.com/
+3 requests
+
+ 6
+
+ collect?v=1&_v=j101&aip=1&a=447915173&t=event&ni=0&_s=5&dl=https%3A%2F%2Freplit.com%2F%40colincarrier%2FAiMemoryCompanion&dp=%2F%40colincarrier%2FAiMemoryCompanion&ul=en-us&de=UTF-8&dt=replEnvironmentDesktop&sd=30-bit&sr=1512x982&vp=1467x823&je=0&ec=All&ea=Packager%20Packages%20Installed&ev=0&_u=SCCAgEAjQAAAACgCIAD~&jid=&gjid=&cid=1982402699.1749082005&tid=UA-25629695-1&_gid=1844725422.1749082005&z=176749141
+
+ collect?v=2&tid=G-MPJY3F1YEL&gtm=45je5631v9135634466za200&_p=1749082476287&gcd=13l3l3l3l2l1&npa=0&dma=0&tag_exp=101509157~103116026~103200004~103233427~103351869~103351871~104611962~104611964~104661466~104661468&ul=en-us&sr=1512x982&cid=1982402699.1749082005&ecid=1554867120&ir=1&uaa=arm&uab=64&uafvl=Google%2520Chrome%3B135.0.7049.115%7CNot-A.Brand%3B8.0.0.0%7CChromium%3B135.0.7049.115&uamb=0&uam=&uap=macOS&uapv=15.3.0&uaw=0&are=1&frm=0&pscdl=noapi&_eu=EBAIAAQ&_s=3&dl=https%3A%2F%2Freplit.com%2F%40colincarrier%2FAiMemoryCompanion&dp=%2F%40colincarrier%2FAiMemoryCompanion&dt=replEnvironmentDesktop&sid=1749082004&sct=1&seg=1&_tu=wAQ&en=Packager%20Packages%20Installed&_ee=1&ep.event_category=All&ep.value=0&_et=3946&tfd=22526
+Learn more: Changes to Chrome's treatment of third-party cookies
+Setting cookie in cross-site context may be impacted on Chrome
+Cookies with the SameSite=None; Secure and not Partitioned attributes that operate in cross-site contexts are third-party cookies. Chrome is moving towards a new experience that allows users to choose to browse without third-party cookies
+
+Learn more from the linked article about preparing your site to avoid potential breakage.
+
+3 cookies
+Name	Domain & Path
+_ttp	.tiktok.com/
+__Secure-3PSIDCC	.google.com/
+m	m.stripe.com/
+1 request
+
+ 6
+Learn more: Changes to Chrome's treatment of third-party cookies
