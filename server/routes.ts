@@ -327,8 +327,11 @@ This profile was generated from your input and will help provide more personaliz
     try {
       const noteData = insertNoteSchema.parse(req.body);
       
-      // Create the note first
-      const note = await storage.createNote(noteData);
+      // Create the note with processing flag set
+      const note = await storage.createNote({
+        ...noteData,
+        isProcessing: noteData.content ? true : false
+      });
       
       // Create dual AI processing for comparison
       if (noteData.content) {
@@ -337,7 +340,8 @@ This profile was generated from your input and will help provide more personaliz
         // Create a second note for Claude processing
         const claudeNote = await storage.createNote({
           ...noteData,
-          content: `[Claude] ${noteData.content}`
+          content: `[Claude] ${noteData.content}`,
+          isProcessing: true
         });
         
         // Process original note with OpenAI
@@ -355,6 +359,7 @@ This profile was generated from your input and will help provide more personaliz
               aiSuggestion: analysis.suggestion,
               aiContext: analysis.context,
               richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+              isProcessing: false, // Clear processing flag
             };
             
             if (analysis.enhancedContent) {
@@ -433,8 +438,10 @@ This profile was generated from your input and will help provide more personaliz
               }
             }
           })
-          .catch(error => {
+          .catch(async (error) => {
             console.error("OpenAI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
+            // Clear processing flag even on error
+            await storage.updateNote(note.id, { isProcessing: false });
           });
         
         // Process Claude note with Claude AI
@@ -452,6 +459,7 @@ This profile was generated from your input and will help provide more personaliz
               aiSuggestion: analysis.suggestion,
               aiContext: analysis.context,
               richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+              isProcessing: false, // Clear processing flag
             };
             
             if (analysis.enhancedContent) {
@@ -485,8 +493,10 @@ This profile was generated from your input and will help provide more personaliz
               await storage.updateNote(claudeNote.id, { collectionId });
             }
           })
-          .catch(error => {
+          .catch(async (error) => {
             console.error("Claude analysis failed for note:", claudeNote.id, "error:", error.message, "stack:", error.stack);
+            // Clear processing flag even on error
+            await storage.updateNote(claudeNote.id, { isProcessing: false });
           });
       }
       
