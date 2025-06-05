@@ -67,6 +67,8 @@ export default function CollectionsView() {
   
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // No cache
   });
 
   const reorderMutation = useMutation({
