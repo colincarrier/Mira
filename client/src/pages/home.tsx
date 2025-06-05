@@ -6,7 +6,7 @@ import TodosView from "@/components/todos-view";
 import CollectionsView from "@/components/collections-view";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
-import FloatingInputBar from "@/components/floating-input-bar";
+import InputBar from "@/components/input-bar";
 import FullScreenCapture from "@/components/full-screen-capture";
 import Settings from "@/pages/settings";
 
@@ -16,8 +16,6 @@ export default function Home() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
-  const [showSubmenu, setShowSubmenu] = useState(false);
-  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -99,31 +97,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      {/* Floating Input Bar */}
-      <FloatingInputBar
-        onNewNote={() => {
-          setShowSubmenu(false);
-          setIsFullScreenCaptureOpen(true);
-        }}
-        onCameraCapture={() => {
-          setShowSubmenu(false);
-          setIsFullScreenCaptureOpen(true);
-        }}
-        showSubmenu={showSubmenu}
-        onToggleSubmenu={() => {
-          setIsFullScreenCaptureOpen(false);
-          setShowSubmenu(!showSubmenu);
-        }}
-        isVoiceRecording={isVoiceRecording}
-        onVoiceStart={() => {
-          setShowSubmenu(false);
-          setIsFullScreenCaptureOpen(false);
-          setIsVoiceRecording(true);
-        }}
-        onVoiceStop={() => {
-          setIsVoiceRecording(false);
-        }}
+      {/* Input Bar */}
+      <InputBar
+        onNewNote={() => setIsFullScreenCaptureOpen(true)}
+        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
         isHidden={activeTab === "settings"}
       />
 
