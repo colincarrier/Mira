@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import CaptureArea from "@/components/capture-area";
 import ActivityFeed from "@/components/activity-feed";
@@ -12,6 +12,8 @@ import InputBar from "@/components/input-bar";
 import SimpleTextInput from "@/components/simple-text-input";
 import FullScreenCapture from "@/components/full-screen-capture";
 import Settings from "@/pages/settings";
+import AIProcessingIndicator from "@/components/ai-processing-indicator";
+import type { NoteWithTodos } from "@shared/schema";
 
 import { Settings as SettingsIcon } from "lucide-react";
 
@@ -22,6 +24,13 @@ export default function Home() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Check for any notes currently being processed
+  const { data: notes } = useQuery<NoteWithTodos[]>({
+    queryKey: ["/api/notes"],
+  });
+  
+  const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
 
   // Text note creation mutation
   const createTextNoteMutation = useMutation({
@@ -174,6 +183,9 @@ export default function Home() {
         isOpen={isFullScreenCaptureOpen}
         onClose={() => setIsFullScreenCaptureOpen(false)}
       />
+
+      {/* Global AI Processing Indicator */}
+      <AIProcessingIndicator isProcessing={hasProcessingNotes} position="fixed" />
     </div>
   );
 }

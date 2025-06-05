@@ -416,7 +416,7 @@ export default function NoteDetail() {
                   {note.mode === 'file' && <File className="w-4 h-4" aria-label="File upload" />}
                 </div>
               )}
-              <AIProcessingIndicator isProcessing={!!note.isProcessing} size="sm" />
+
             </div>
           </div>
         </div>

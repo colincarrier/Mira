@@ -322,7 +322,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         <div className="flex items-center space-x-2">
           <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
-          <AIProcessingIndicator isProcessing={!!note.isProcessing} size="sm" />
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
