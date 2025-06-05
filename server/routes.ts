@@ -777,48 +777,51 @@ Respond with a JSON object containing:
       if (isClaudeAvailable()) {
         safeAnalyzeWithClaude(transcription, "voice")
           .then(async (analysis) => {
-          apiUsageStats.claude.requests++;
-          apiUsageStats.totalRequests++;
-          
-          const updates: any = {
-            aiEnhanced: true,
-            aiSuggestion: analysis.suggestion,
-            aiContext: analysis.context,
-          };
-          
-          if (analysis.enhancedContent) {
-            updates.content = analysis.enhancedContent;
-          }
-          
-          await storage.updateNote(note.id, updates);
-          
-          // Create todos if found
-          for (const todoTitle of analysis.todos) {
-            await storage.createTodo({
-              title: todoTitle,
-              noteId: note.id,
-            });
-          }
-          
-          // Create collection if suggested
-          if (analysis.collectionSuggestion) {
-            const collections = await storage.getCollections();
-            const existingCollection = collections.find(
-              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
-            );
+            apiUsageStats.claude.requests++;
+            apiUsageStats.totalRequests++;
             
-            let collectionId = existingCollection?.id;
-            if (!existingCollection) {
-              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
-              collectionId = newCollection.id;
+            const updates: any = {
+              aiEnhanced: true,
+              aiSuggestion: analysis.suggestion,
+              aiContext: analysis.context,
+            };
+            
+            if (analysis.enhancedContent) {
+              updates.content = analysis.enhancedContent;
             }
             
-            await storage.updateNote(note.id, { collectionId });
-          }
-        })
-        .catch(error => {
-          console.error("Mira AI analysis failed:", error);
-        });
+            await storage.updateNote(note.id, updates);
+            
+            // Create todos if found
+            for (const todoTitle of analysis.todos) {
+              await storage.createTodo({
+                title: todoTitle,
+                noteId: note.id,
+              });
+            }
+            
+            // Create collection if suggested
+            if (analysis.collectionSuggestion) {
+              const collections = await storage.getCollections();
+              const existingCollection = collections.find(
+                c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+              );
+              
+              let collectionId = existingCollection?.id;
+              if (!existingCollection) {
+                const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+                collectionId = newCollection.id;
+              }
+              
+              await storage.updateNote(note.id, { collectionId });
+            }
+          })
+          .catch(error => {
+            console.error("Mira AI analysis failed:", error);
+          });
+      } else {
+        console.warn("Claude AI not available - skipping voice note analysis");
+      }
 
       res.json(note);
     } catch (error) {
@@ -855,9 +858,10 @@ Respond with a JSON object containing:
         });
       }
 
-      // Analyze image with AI in the background
-      analyzeWithOpenAI(`data:${req.file.mimetype};base64,${imageBase64}`, "image")
-        .then(async (analysis) => {
+      // Analyze image with AI in the background (non-blocking)
+      if (isOpenAIAvailable()) {
+        safeAnalyzeWithOpenAI(`data:${req.file.mimetype};base64,${imageBase64}`, "image")
+          .then(async (analysis) => {
           const updates: any = {
             aiEnhanced: true,
             aiSuggestion: analysis.suggestion,
@@ -894,9 +898,12 @@ Respond with a JSON object containing:
             await storage.updateNote(note.id, { collectionId });
           }
         })
-        .catch(error => {
-          console.error("AI image analysis failed:", error);
-        });
+          .catch(error => {
+            console.error("AI image analysis failed:", error);
+          });
+      } else {
+        console.warn("OpenAI not available - skipping image analysis");
+      }
 
       res.json(note);
     } catch (error) {
