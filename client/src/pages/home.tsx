@@ -16,6 +16,7 @@ export default function Home() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
+  const [showSubmenu, setShowSubmenu] = useState(false);
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -100,8 +101,19 @@ export default function Home() {
       {/* Bottom Navigation */}
       {/* Floating Input Bar */}
       <FloatingInputBar
-        onNewNote={() => setIsFullScreenCaptureOpen(true)}
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+        onNewNote={() => {
+          setShowSubmenu(false);
+          setIsFullScreenCaptureOpen(true);
+        }}
+        onCameraCapture={() => {
+          setShowSubmenu(false);
+          setIsFullScreenCaptureOpen(true);
+        }}
+        showSubmenu={showSubmenu}
+        onToggleSubmenu={() => {
+          setIsFullScreenCaptureOpen(false);
+          setShowSubmenu(!showSubmenu);
+        }}
         isHidden={activeTab === "settings"}
       />
 

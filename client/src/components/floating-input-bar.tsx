@@ -5,6 +5,8 @@ interface FloatingInputBarProps {
   onTextSubmit?: (text: string) => void;
   onCameraCapture?: () => void;
   onNewNote: () => void;
+  showSubmenu?: boolean;
+  onToggleSubmenu?: () => void;
   isHidden?: boolean;
 }
 
@@ -12,6 +14,8 @@ export default function FloatingInputBar({
   onTextSubmit, 
   onCameraCapture, 
   onNewNote, 
+  showSubmenu = false,
+  onToggleSubmenu,
   isHidden = false 
 }: FloatingInputBarProps) {
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
@@ -83,6 +87,8 @@ export default function FloatingInputBar({
           onTextSubmit={handleTextSubmit}
           onCameraCapture={onCameraCapture}
           onMediaUpload={onNewNote}
+          showSubmenu={showSubmenu}
+          onToggleSubmenu={onToggleSubmenu}
           placeholder="Add/edit anything..."
         />
       </div>

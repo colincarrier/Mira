@@ -8,6 +8,8 @@ interface UniversalInputBarProps {
   onCameraCapture?: () => void;
   onVoiceCapture?: () => void;
   onMediaUpload?: () => void;
+  showSubmenu?: boolean;
+  onToggleSubmenu?: () => void;
   placeholder?: string;
   className?: string;
 }
@@ -17,6 +19,8 @@ export default function UniversalInputBar({
   onCameraCapture,
   onVoiceCapture,
   onMediaUpload,
+  showSubmenu = false,
+  onToggleSubmenu,
   placeholder = "Add/edit anything...",
   className = ""
 }: UniversalInputBarProps) {
@@ -25,7 +29,6 @@ export default function UniversalInputBar({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
-  const [showMediaPicker, setShowMediaPicker] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
