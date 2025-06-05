@@ -334,188 +334,77 @@ This profile was generated from your input and will help provide more personaliz
         isProcessing: noteData.content ? true : false
       });
       
-      // Check if dual AI processing is enabled (developer setting)
-      const isDualProcessingEnabled = false; // Default off, will check user settings later
-      
+      // Process with available AI (single analysis for speed)
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
         
-        if (isDualProcessingEnabled) {
-          // Dual processing for comparison
-          console.log("Running dual AI analysis");
-          
-          const claudeNote = await storage.createNote({
-            ...noteData,
-            content: `[Claude] ${noteData.content}`,
-            isProcessing: true
-          });
-          
-          // Process both simultaneously
-          const openaiPromise = safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
-            .then(async (analysis: any) => {
-              apiUsageStats.openai.requests++;
-              apiUsageStats.openai.tokens += 1000;
-              apiUsageStats.openai.cost += 0.02;
-              apiUsageStats.totalRequests++;
-              
-              await storage.updateNote(note.id, {
-                aiEnhanced: true,
-                aiSuggestion: analysis.suggestion,
-                aiContext: analysis.context,
-                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
-                isProcessing: false,
-              });
-              
-              for (const todoTitle of analysis.todos) {
-                await storage.createTodo({
-                  title: todoTitle,
-                  noteId: note.id,
-                });
-              }
-            })
-            .catch(async (error: any) => {
-              console.error("OpenAI analysis failed:", error.message);
-              await storage.updateNote(note.id, { isProcessing: false });
-            });
-          
-          const claudePromise = safeAnalyzeWithClaude(noteData.content, noteData.mode)
-            .then(async (analysis: any) => {
-              apiUsageStats.claude.requests++;
-              apiUsageStats.claude.tokens += 1200;
-              apiUsageStats.claude.cost += 0.015;
-              apiUsageStats.totalRequests++;
-              
-              await storage.updateNote(claudeNote.id, {
-                aiEnhanced: true,
-                aiSuggestion: analysis.suggestion,
-                aiContext: analysis.context,
-                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
-                isProcessing: false,
-              });
-              
-              for (const todoTitle of analysis.todos) {
-                await storage.createTodo({
-                  title: todoTitle,
-                  noteId: claudeNote.id,
-                });
-              }
-            })
-            .catch(async (error: any) => {
-              console.error("Claude analysis failed:", error.message);
-              await storage.updateNote(claudeNote.id, { isProcessing: false });
-            });
-          
-          Promise.allSettled([openaiPromise, claudePromise]);
-        } else {
-          // Single AI processing for speed
-          const useOpenAI = isOpenAIAvailable();
-          console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
-          
-          const analysisPromise = useOpenAI 
-            ? safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
-            : safeAnalyzeWithClaude(noteData.content, noteData.mode);
-            
-          analysisPromise
-          .then(async (analysis) => {
-            // Track OpenAI usage
-            apiUsageStats.openai.requests++;
-            apiUsageStats.openai.tokens += 1000; // Estimate
-            apiUsageStats.openai.cost += 0.02; // Estimate
-            apiUsageStats.totalRequests++;
-            console.log("OpenAI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
-            // Update note with AI analysis
-            const updates: any = {
-              aiEnhanced: true,
-              aiSuggestion: analysis.suggestion,
-              aiContext: analysis.context,
-              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
-              isProcessing: false, // Clear processing flag
-            };
-            
-            if (analysis.enhancedContent) {
-              updates.content = analysis.enhancedContent;
-            }
-            
-            await storage.updateNote(note.id, updates);
-            console.log("Note updated with AI analysis:", note.id);
-            
-            // Create todos if found
-            for (const todoTitle of analysis.todos) {
-              await storage.createTodo({
-                title: todoTitle,
-                noteId: note.id,
-              });
-            }
-            
-            // Create collection if suggested and doesn't exist
-            if (analysis.collectionSuggestion) {
-              const collections = await storage.getCollections();
-              const existingCollection = collections.find(
-                c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
-              );
-              
-              let collectionId = existingCollection?.id;
-              if (!existingCollection) {
-                const newCollection = await storage.createCollection(analysis.collectionSuggestion);
-                collectionId = newCollection.id;
-              }
-              
-              // Update note with collection
-              await storage.updateNote(note.id, { collectionId });
-              
-              // Create classification todo if assigned to "Undefined"
-              if (analysis.collectionSuggestion.name.toLowerCase() === "undefined") {
-                await storage.createTodo({
-                  title: "Classify and organize your note - consider creating custom categories",
-                  noteId: note.id,
-                  completed: false,
-                  pinned: true
-                });
-              }
-            }
-            
-            // Create split notes if AI detected unrelated topics
-            if (analysis.splitNotes && analysis.splitNotes.length > 0) {
-              for (const splitNote of analysis.splitNotes) {
-                const newNote = await storage.createNote({
-                  content: splitNote.content,
-                  mode: noteData.mode
-                });
-                
-                // Add todos for split note
-                for (const todoTitle of splitNote.todos || []) {
-                  await storage.createTodo({
-                    title: todoTitle,
-                    noteId: newNote.id,
-                  });
-                }
-                
-                // Create collection for split note if suggested
-                if (splitNote.collectionSuggestion) {
-                  const collections = await storage.getCollections();
-                  const existingCollection = collections.find(
-                    c => c.name.toLowerCase() === splitNote.collectionSuggestion!.name.toLowerCase()
-                  );
-                  
-                  let collectionId = existingCollection?.id;
-                  if (!existingCollection) {
-                    const newCollection = await storage.createCollection(splitNote.collectionSuggestion);
-                    collectionId = newCollection.id;
-                  }
-                  
-                  await storage.updateNote(newNote.id, { collectionId });
-                }
-              }
-            }
-          })
-          .catch(async (error) => {
-            console.error("OpenAI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
-            console.error("Full error details:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-            // Clear processing flag even on error
-            await storage.updateNote(note.id, { isProcessing: false });
-          });
+        // Use OpenAI if available, fallback to Claude
+        const useOpenAI = isOpenAIAvailable();
+        console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
         
-        }
+        const analysisPromise = useOpenAI 
+          ? safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
+          : safeAnalyzeWithClaude(noteData.content, noteData.mode);
+          
+        analysisPromise
+        .then(async (analysis) => {
+          // Track usage
+          if (useOpenAI) {
+            apiUsageStats.openai.requests++;
+            apiUsageStats.openai.tokens += 1000;
+            apiUsageStats.openai.cost += 0.02;
+          } else {
+            apiUsageStats.claude.requests++;
+            apiUsageStats.claude.tokens += 1200;
+            apiUsageStats.claude.cost += 0.015;
+          }
+          apiUsageStats.totalRequests++;
+          
+          console.log("AI analysis completed for note:", note.id);
+          
+          // Update note with AI analysis
+          const updates: any = {
+            aiEnhanced: true,
+            aiSuggestion: analysis.suggestion,
+            aiContext: analysis.context,
+            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            isProcessing: false,
+          };
+          
+          if (analysis.enhancedContent) {
+            updates.content = analysis.enhancedContent;
+          }
+          
+          await storage.updateNote(note.id, updates);
+          
+          // Create todos if found
+          for (const todoTitle of analysis.todos) {
+            await storage.createTodo({
+              title: todoTitle,
+              noteId: note.id,
+            });
+          }
+          
+          // Create collection if suggested
+          if (analysis.collectionSuggestion) {
+            const collections = await storage.getCollections();
+            const existingCollection = collections.find(
+              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+            );
+            
+            let collectionId = existingCollection?.id;
+            if (!existingCollection) {
+              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+              collectionId = newCollection.id;
+            }
+            
+            await storage.updateNote(note.id, { collectionId });
+          }
+        })
+        .catch(async (error) => {
+          console.error("AI analysis failed for note:", note.id, "error:", error.message);
+          await storage.updateNote(note.id, { isProcessing: false });
+        });
       }
       
       res.json(note);
