@@ -2,8 +2,63 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
-import { analyzeWithOpenAI, transcribeAudio } from "./openai";
-import { analyzeNote as analyzeWithClaude } from "./anthropic";
+// Safe AI module loading - never crash the server if AI modules fail
+let analyzeWithOpenAI: any = null;
+let transcribeAudio: any = null;
+let analyzeWithClaude: any = null;
+
+// Helper functions to safely check AI availability
+function isOpenAIAvailable(): boolean {
+  return analyzeWithOpenAI !== null && transcribeAudio !== null;
+}
+
+function isClaudeAvailable(): boolean {
+  return analyzeWithClaude !== null;
+}
+
+function isAnyAIAvailable(): boolean {
+  return isOpenAIAvailable() || isClaudeAvailable();
+}
+
+async function safeAnalyzeWithOpenAI(content: string, mode: string) {
+  if (!isOpenAIAvailable()) {
+    throw new Error("OpenAI not available - AI processing disabled");
+  }
+  return analyzeWithOpenAI(content, mode);
+}
+
+async function safeAnalyzeWithClaude(content: string, mode: string) {
+  if (!isClaudeAvailable()) {
+    throw new Error("Claude not available - AI processing disabled");
+  }
+  return analyzeWithClaude(content, mode);
+}
+
+async function safeTranscribeAudio(buffer: Buffer) {
+  if (!isOpenAIAvailable()) {
+    throw new Error("Audio transcription not available - AI processing disabled");
+  }
+  return transcribeAudio(buffer);
+}
+
+async function initializeAI() {
+  try {
+    const openaiModule = await import("./openai");
+    analyzeWithOpenAI = openaiModule.analyzeWithOpenAI;
+    transcribeAudio = openaiModule.transcribeAudio;
+    console.log("OpenAI module loaded successfully");
+  } catch (error) {
+    console.warn("OpenAI module failed to load - AI features disabled:", error);
+  }
+
+  try {
+    const anthropicModule = await import("./anthropic");
+    analyzeWithClaude = anthropicModule.analyzeNote;
+    console.log("Anthropic module loaded successfully");
+  } catch (error) {
+    console.warn("Anthropic module failed to load - AI features disabled:", error);
+  }
+}
 // Both AI models now use the same Mira Brain prompt template directly
 import multer from "multer";
 import rateLimit from "express-rate-limit";
@@ -30,6 +85,9 @@ let apiUsageStats = {
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize AI modules safely - never crash if AI fails
+  await initializeAI();
+  
   // API Stats endpoint
   app.get("/api/stats/api-usage", async (req, res) => {
     res.json(apiUsageStats);
@@ -449,10 +507,19 @@ This profile was generated from your input and will help provide more personaliz
 
       console.log("Starting enhanced AI comparison with Mira Brain for content:", content.substring(0, 100));
 
+      // Check if any AI is available, if not return appropriate response
+      if (!isAnyAIAvailable()) {
+        return res.json({
+          original: content,
+          openAI: { success: false, result: null, error: "OpenAI not available - AI processing disabled" },
+          claude: { success: false, result: null, error: "Claude not available - AI processing disabled" }
+        });
+      }
+
       // Process with both AI services (both now use Mira Brain prompt)
       const [openAIResult, claudeResult] = await Promise.allSettled([
-        analyzeWithOpenAI(content, mode),
-        analyzeWithClaude(content, mode)
+        safeAnalyzeWithOpenAI(content, mode),
+        safeAnalyzeWithClaude(content, mode)
       ]);
 
       const response = {
@@ -677,11 +744,17 @@ Respond with a JSON object containing:
       const noteId = req.body.noteId;
       let note;
 
-      // Transcribe audio
-      const transcription = await transcribeAudio(req.file.buffer);
-      
-      if (!transcription) {
-        return res.status(400).json({ message: "Failed to transcribe audio" });
+      // Transcribe audio safely - never crash if AI fails
+      let transcription = "Audio note (transcription unavailable)";
+      try {
+        if (isOpenAIAvailable()) {
+          transcription = await safeTranscribeAudio(req.file.buffer);
+        } else {
+          console.warn("Audio transcription skipped - OpenAI not available");
+        }
+      } catch (error) {
+        console.error("Audio transcription failed, using fallback:", error);
+        // Continue with fallback transcription - don't fail the entire request
       }
 
       if (noteId) {
@@ -700,9 +773,10 @@ Respond with a JSON object containing:
         });
       }
 
-      // Process with Claude using Mira AI Brain
-      analyzeWithClaude(transcription, "voice")
-        .then(async (analysis) => {
+      // Process with Claude using Mira AI Brain (non-blocking)
+      if (isClaudeAvailable()) {
+        safeAnalyzeWithClaude(transcription, "voice")
+          .then(async (analysis) => {
           apiUsageStats.claude.requests++;
           apiUsageStats.totalRequests++;
           
