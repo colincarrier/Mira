@@ -1200,52 +1200,85 @@ Provide a concise, actionable response that adds value beyond just the task titl
         return res.json(superNoteData);
       }
 
-      // Extract and aggregate all items from meaningful notes
+      // Get individual items extracted from notes in this collection
+      const collectionItems = await storage.getItemsByCollectionId(collectionId);
       const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
-      const allContent = meaningfulNotes.map(note => note.content).join('\n\n');
       
-      // Create structured aggregation
-      const itemExtraction = `Analyze the following collection of notes about "${collection.name}" and create a comprehensive summary with key insights.
-
-Focus on:
-1. Main themes and patterns across all notes
-2. Key actionable items and tasks
-3. Important facts and insights
-4. Recommendations for next steps
-
-Notes content:
-${allContent}
-
-Existing todos:
-${allTodos.map(todo => `- ${todo.title}`).join('\n')}
-
-Provide a well-organized summary that captures the essence of this collection and helps the user understand what they've captured.`;
-
-      const aiResult = await analyzeWithOpenAI(itemExtraction, "collection-aggregation");
+      // Create collection-specific content based on type
+      let collectionContent = "";
+      let collectionDescription = "";
+      
+      const collectionName = collection.name.toLowerCase();
+      
+      if (collectionName.includes('book')) {
+        collectionDescription = "Your reading list and book recommendations";
+        collectionContent = collectionItems.length > 0 
+          ? `📚 Books in your collection:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No books have been extracted yet. Add notes mentioning specific books to see them here.";
+      } else if (collectionName.includes('movie') || collectionName.includes('tv')) {
+        collectionDescription = "Movies and TV shows to watch";
+        collectionContent = collectionItems.length > 0 
+          ? `🎬 Movies & Shows:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No movies or shows have been extracted yet. Add notes mentioning specific titles to see them here.";
+      } else if (collectionName.includes('restaurant') || collectionName.includes('food')) {
+        collectionDescription = "Places to eat and food recommendations";
+        collectionContent = collectionItems.length > 0 
+          ? `🍽️ Restaurants & Food:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No restaurants have been extracted yet. Add notes mentioning specific places to eat to see them here.";
+      } else if (collectionName.includes('product')) {
+        collectionDescription = "Products and items of interest";
+        collectionContent = collectionItems.length > 0 
+          ? `🛍️ Products:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No products have been extracted yet. Add notes mentioning specific products to see them here.";
+      } else if (collectionName.includes('place') || collectionName.includes('travel')) {
+        collectionDescription = "Places to visit and travel destinations";
+        collectionContent = collectionItems.length > 0 
+          ? `📍 Places:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No places have been extracted yet. Add notes mentioning specific locations to see them here.";
+      } else if (collectionName.includes('person') || collectionName.includes('contact')) {
+        collectionDescription = "People and contacts";
+        collectionContent = collectionItems.length > 0 
+          ? `👥 People:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : "No people have been extracted yet. Add notes mentioning specific individuals to see them here.";
+      } else {
+        // Generic collection
+        collectionDescription = `Your ${collection.name} collection`;
+        collectionContent = collectionItems.length > 0 
+          ? `📋 Items:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
+          : `No specific items have been extracted yet. Add notes with specific ${collection.name.toLowerCase()} to see them organized here.`;
+      }
 
       const superNoteData = {
         collection,
-        aggregatedContent: aiResult.enhancedContent || `Summary of ${meaningfulNotes.length} notes in ${collection.name}:\n\n${allContent.substring(0, 500)}...`,
+        aggregatedContent: collectionContent,
+        description: collectionDescription,
         insights: [
-          aiResult.suggestion,
-          aiResult.context,
-          ...aiResult.todos.slice(0, 3).map(todo => `Next step: ${todo}`)
-        ].filter(Boolean).slice(0, 5),
-        structuredItems: aiResult.richContext || {
-          recommendedActions: aiResult.todos.slice(0, 3).map(todo => ({
-            title: todo,
-            description: "Action item extracted from your notes"
+          `${collectionItems.length} individual items tracked`,
+          `${allTodos.length} related tasks`,
+          `${meaningfulNotes.length} source notes`
+        ].filter(Boolean),
+        structuredItems: {
+          recommendedActions: allTodos.slice(0, 5).map(todo => ({
+            title: todo.title,
+            description: "Task from your notes",
+            noteId: todo.noteId
           })),
-          researchResults: [],
+          extractedItems: collectionItems.map(item => ({
+            title: item.title,
+            description: item.description || '',
+            type: item.type,
+            sourceNoteId: item.sourceNoteId
+          })),
           quickInsights: [
-            `${meaningfulNotes.length} notes analyzed`,
-            `${allTodos.length} tasks identified`,
-            aiResult.suggestion || "Collection ready for review"
-          ].filter(Boolean)
+            `${collectionItems.length} items extracted`,
+            `${allTodos.length} tasks available`,
+            `${meaningfulNotes.length} notes in collection`
+          ]
         },
         allTodos: allTodos,
+        items: collectionItems,
         notes: meaningfulNotes,
-        itemCount: meaningfulNotes.length,
+        itemCount: collectionItems.length,
         todoCount: allTodos.length
       };
 
