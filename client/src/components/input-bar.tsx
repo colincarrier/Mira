@@ -89,6 +89,7 @@ export default function InputBar({
       toast({
         title: "Voice note saved",
         description: "Your voice note has been transcribed and saved.",
+        duration: 3000,
       });
     },
     onError: (error) => {
@@ -144,6 +145,7 @@ export default function InputBar({
       toast({
         title: "Image processed",
         description: "Your image has been analyzed and enhanced by AI.",
+        duration: 3000,
       });
     },
     onError: (error) => {
@@ -199,6 +201,7 @@ export default function InputBar({
       toast({
         title: "File processed",
         description: "Your file has been analyzed and enhanced by AI.",
+        duration: 3000,
       });
     },
     onError: (error) => {
