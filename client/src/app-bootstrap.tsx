@@ -152,8 +152,6 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   return (
     <>
       {children}
-      <ConnectionStatus />
-      <SyncIndicator />
     </>
   );
 }
