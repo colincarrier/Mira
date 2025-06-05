@@ -402,21 +402,63 @@ This profile was generated from your input and will help provide more personaliz
             }
           }
           
-          // Create collection if suggested
+          // Create collection if suggested with smart mapping
           if (analysis.collectionSuggestion) {
-            console.log("Creating/assigning collection:", analysis.collectionSuggestion.name);
+            console.log("Processing collection suggestion:", analysis.collectionSuggestion.name);
             const collections = await storage.getCollections();
-            const existingCollection = collections.find(
-              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
-            );
             
-            let collectionId = existingCollection?.id;
-            if (!existingCollection) {
-              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
-              collectionId = newCollection.id;
+            // Smart collection mapping to existing categories
+            const suggestedName = analysis.collectionSuggestion.name.toLowerCase();
+            let finalCollectionName = analysis.collectionSuggestion.name;
+            
+            // Map overly specific collections to existing ones
+            if (suggestedName.includes('personal') || suggestedName.includes('communication') || suggestedName.includes('family')) {
+              finalCollectionName = "Personal";
+            } else if (suggestedName.includes('healthcare') || suggestedName.includes('medical') || suggestedName.includes('appointment')) {
+              finalCollectionName = "Personal"; // Healthcare is personal
+            } else if (suggestedName.includes('grocery') || suggestedName.includes('shopping') || suggestedName.includes('errands')) {
+              finalCollectionName = "To-dos";
+            } else if (suggestedName.includes('work') || suggestedName.includes('office') || suggestedName.includes('business')) {
+              finalCollectionName = "Work";
+            } else if (suggestedName.includes('home') || suggestedName.includes('house') || suggestedName.includes('maintenance')) {
+              finalCollectionName = "Home";
+            } else {
+              // Check if it's too specific and should go to Other
+              const existingStandardCollections = ['to-dos', 'personal', 'home', 'work', 'family', 'books', 'movies & tv', 'restaurants', 'travel'];
+              const isStandardCategory = existingStandardCollections.some(std => 
+                suggestedName.includes(std.replace(/[^a-z]/g, '')) || std.includes(suggestedName.replace(/[^a-z]/g, ''))
+              );
+              
+              if (!isStandardCategory) {
+                finalCollectionName = "Other";
+              }
             }
             
-            await storage.updateNote(note.id, { collectionId });
+            // Find or create the final collection
+            const targetCollection = collections.find(
+              c => c.name.toLowerCase() === finalCollectionName.toLowerCase()
+            );
+            
+            let collectionId = targetCollection?.id;
+            if (!targetCollection && finalCollectionName !== "Other") {
+              // Only create new collections for broad categories, not specific ones
+              const newCollection = await storage.createCollection({
+                name: finalCollectionName,
+                icon: analysis.collectionSuggestion.icon,
+                color: analysis.collectionSuggestion.color
+              });
+              collectionId = newCollection.id;
+              console.log("Created new broad collection:", finalCollectionName);
+            } else if (!targetCollection) {
+              // Find Other collection
+              const otherCollection = collections.find(c => c.name.toLowerCase() === "other");
+              collectionId = otherCollection?.id;
+            }
+            
+            if (collectionId) {
+              await storage.updateNote(note.id, { collectionId });
+              console.log("Assigned note to collection:", finalCollectionName);
+            }
           }
         })
         .catch(async (error) => {

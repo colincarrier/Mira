@@ -10,7 +10,7 @@ const standardCollections = [
   { name: "Movies & TV", icon: "play", color: "red" },
   { name: "Restaurants", icon: "utensils", color: "teal" },
   { name: "Travel", icon: "plane", color: "blue" },
-  { name: "Undefined", icon: "help-circle", color: "gray" }
+  { name: "Other", icon: "help-circle", color: "gray" }
 ];
 
 export async function initializeStandardCollections() {
