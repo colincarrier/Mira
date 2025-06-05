@@ -237,7 +237,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[10001]">
             <div className="flex gap-2">
               <button
-                onClick={() => setIsVoiceRecorderOpen(true)}
+                onClick={() => {
+                  setCaptureMode('voice');
+                  setIsVoiceRecorderOpen(false);
+                }}
                 className="p-3 rounded-full bg-white/30 text-white hover:bg-white/40 transition-colors backdrop-blur-sm"
               >
                 <Mic className="w-5 h-5" />
@@ -282,6 +285,23 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
               </p>
             </div>
 
+            {/* Waveform visualization */}
+            {isRecording && (
+              <div className="mb-8 flex items-center justify-center gap-1">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-blue-500 rounded-full animate-pulse"
+                    style={{
+                      height: `${Math.random() * 40 + 10}px`,
+                      animationDelay: `${i * 0.1}s`,
+                      animationDuration: '0.8s'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
             <button
               onClick={handleVoiceCapture}
               className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
@@ -292,6 +312,18 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             >
               <Mic className="w-10 h-10 text-white" />
             </button>
+
+            {/* Recording timer */}
+            {isRecording && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-full">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-red-700 dark:text-red-300 text-sm font-medium">
+                    00:{recordingTime.toString().padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Mode switcher */}
             <div className="mt-8">

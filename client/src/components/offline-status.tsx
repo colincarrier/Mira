@@ -65,19 +65,18 @@ export default function OfflineStatus() {
       <div className="fixed top-4 right-4 z-50">
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <div
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 px-3 py-2 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg hover:bg-white transition-colors"
+              className="flex items-center gap-1 px-2 py-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-sm hover:bg-white transition-colors cursor-pointer"
             >
-              <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
-              {getStatusIcon()}
-              <span className="text-xs font-medium text-gray-700">
+              <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor()}`} />
+              <span className="text-xs text-gray-600">
                 {getStatusText()}
               </span>
-            </button>
+            </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Click for sync details</p>
+            <p>Sync status - click for details</p>
           </TooltipContent>
         </Tooltip>
 
@@ -128,23 +127,12 @@ export default function OfflineStatus() {
               </div>
             )}
 
-            {/* Manual Sync Button */}
-            <Button
-              onClick={handleManualSync}
-              disabled={!isOnline || isSyncing}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              {isSyncing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                'Sync Now'
-              )}
-            </Button>
+            {/* Auto-sync status */}
+            {isOnline && (
+              <div className="text-xs text-gray-500 text-center">
+                {isSyncing ? 'Syncing changes...' : 'Auto-sync enabled'}
+              </div>
+            )}
 
             {/* Offline Mode Info */}
             {!isOnline && (
