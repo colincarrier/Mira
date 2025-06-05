@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import CaptureArea from "@/components/capture-area";
 import ActivityFeed from "@/components/activity-feed";
 import TodosView from "@/components/todos-view";
@@ -16,6 +18,51 @@ export default function Home() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"activity" | "todos" | "collections" | "settings">("activity");
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Text note creation mutation
+  const createTextNoteMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          content: text,
+          mode: "text"
+        }),
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create text note");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      toast({
+        title: "Note saved",
+        description: "Your note has been created successfully.",
+        duration: 3000,
+      });
+    },
+    onError: (error) => {
+      console.error("Text note error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save note. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTextSubmit = (text: string) => {
+    createTextNoteMutation.mutate(text);
+  };
 
   // Check URL parameters to set initial tab
   useEffect(() => {
@@ -101,6 +148,7 @@ export default function Home() {
       <InputBar
         onNewNote={() => setIsFullScreenCaptureOpen(true)}
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
+        onTextSubmit={handleTextSubmit}
         isHidden={activeTab === "settings"}
       />
 

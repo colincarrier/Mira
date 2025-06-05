@@ -6,12 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 interface InputBarProps {
   onCameraCapture?: () => void;
   onNewNote?: () => void;
+  onTextSubmit?: (text: string) => void;
   isHidden?: boolean;
 }
 
 export default function InputBar({
   onCameraCapture,
   onNewNote,
+  onTextSubmit,
   isHidden = false
 }: InputBarProps) {
   // Input state
@@ -298,7 +300,11 @@ export default function InputBar({
     console.log('handleSendMessage called with text:', inputText);
     if (inputText.trim()) {
       console.log('Creating text note with content:', inputText.trim());
-      createTextNoteMutation.mutate(inputText.trim());
+      if (onTextSubmit) {
+        onTextSubmit(inputText.trim());
+      } else {
+        createTextNoteMutation.mutate(inputText.trim());
+      }
       setInputText("");
       setIsTyping(false);
       closeAllModes(); // Close any open modes
