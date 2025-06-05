@@ -47,6 +47,44 @@ export default function InputBar({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Text note mutation
+  const createTextNoteMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          content: text,
+          mode: "text"
+        }),
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create text note");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      toast({
+        title: "Note saved",
+        description: "Your note has been created successfully.",
+        duration: 3000,
+      });
+    },
+    onError: (error) => {
+      console.error("Text note error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save note. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Voice note mutation
   const createVoiceNoteMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
@@ -248,6 +286,29 @@ export default function InputBar({
   const closeSubmenu = useCallback(() => {
     setShowSubmenu(false);
   }, []);
+
+  // Text input handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setInputText(value);
+    setIsTyping(value.trim().length > 0);
+  };
+
+  const handleSendMessage = () => {
+    if (inputText.trim()) {
+      createTextNoteMutation.mutate(inputText.trim());
+      setInputText("");
+      setIsTyping(false);
+      closeAllModes(); // Close any open modes
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   const startVoiceRecording = useCallback(async () => {
     console.log('Voice button clicked, current states:', { showSubmenu, isVoiceRecording });
