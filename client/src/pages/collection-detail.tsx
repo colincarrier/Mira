@@ -22,6 +22,7 @@ const getIconComponent = (iconName: string) => {
     calendar: Icons.Calendar,
     location: Icons.MapPin,
     shopping: Icons.ShoppingBag,
+    play: Icons.Play,
   };
   return iconMap[iconName] || Icons.Folder;
 };
@@ -69,7 +70,8 @@ export default function CollectionDetail() {
 
   const { data: superNote } = useQuery<SuperNoteData>({
     queryKey: ["/api/collections", id, "super-note"],
-    enabled: !!collection && !!notes,
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!collection && !!notes && !!id,
   });
 
   const handleGenerateSuper = () => {
@@ -232,7 +234,7 @@ export default function CollectionDetail() {
                 })()
               ) : (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-sm text-gray-500">No items extracted yet</p>
+                  <p className="text-sm text-gray-500">No items yet</p>
                 </div>
               )}
             </div>
