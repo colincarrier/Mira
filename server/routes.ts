@@ -382,7 +382,19 @@ This profile was generated from your input and will help provide more personaliz
           // Create todos if found
           if (analysis.todos && analysis.todos.length > 0) {
             console.log("Creating", analysis.todos.length, "todos for note:", note.id);
-            for (const todoTitle of analysis.todos) {
+            for (const todo of analysis.todos) {
+              // Handle both string and object format todos
+              let todoTitle: string;
+              if (typeof todo === 'string') {
+                todoTitle = todo;
+              } else if (typeof todo === 'object' && todo.title) {
+                todoTitle = todo.title;
+              } else {
+                console.log("Skipping invalid todo format:", todo);
+                continue;
+              }
+              
+              console.log("Creating todo with title:", todoTitle);
               await storage.createTodo({
                 title: todoTitle,
                 noteId: note.id,
