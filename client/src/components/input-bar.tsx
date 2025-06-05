@@ -292,9 +292,8 @@ export default function InputBar({
   // Text input handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    console.log('Input changed:', { value, hasText: value.trim().length > 0 });
     setInputText(value);
-    setIsTyping(value.trim().length > 0);
+    setIsTyping(value.length > 0);
   };
 
   const handleSendMessage = () => {
@@ -720,7 +719,7 @@ export default function InputBar({
               console.log('Button render state:', { isTyping, isVoiceRecording, inputText: inputText.substring(0, 20) });
               return null;
             })()}
-            {inputText.trim().length > 0 && !isVoiceRecording ? (
+            {isTyping && !isVoiceRecording ? (
               <>
                 <button 
                   onClick={toggleSubmenu}
