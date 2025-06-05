@@ -333,20 +333,19 @@ This profile was generated from your input and will help provide more personaliz
         isProcessing: noteData.content ? true : false
       });
       
-      // Create dual AI processing for comparison
+      // Process with available AI (single analysis for speed)
       if (noteData.content) {
-        console.log("Starting dual AI analysis for note:", note.id, "content length:", noteData.content.length);
+        console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
         
-        // Create a second note for Claude processing
-        const claudeNote = await storage.createNote({
-          ...noteData,
-          content: `[Claude] ${noteData.content}`,
-          isProcessing: true
-        });
+        // Use OpenAI if available, fallback to Claude
+        const useOpenAI = isOpenAIAvailable();
+        console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
         
-        // Process original note with OpenAI
-        console.log("Starting OpenAI analysis for note:", note.id, "OpenAI available:", isOpenAIAvailable());
-        analyzeWithOpenAI(noteData.content, noteData.mode)
+        const analysisPromise = useOpenAI 
+          ? analyzeWithOpenAI(noteData.content, noteData.mode)
+          : analyzeWithClaude(noteData.content, noteData.mode);
+          
+        analysisPromise
           .then(async (analysis) => {
             // Track OpenAI usage
             apiUsageStats.openai.requests++;
