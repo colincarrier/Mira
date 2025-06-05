@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 
 type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
+type ReminderFilterType = 'today' | 'week' | 'month' | 'year';
 
 interface TodoItemProps {
   todo: Todo;
@@ -101,6 +102,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
 
 export default function TodosView() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [activeReminderFilter, setActiveReminderFilter] = useState<ReminderFilterType>('today');
   const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const queryClient = useQueryClient();
@@ -273,18 +275,19 @@ export default function TodosView() {
         <div className="flex items-center justify-between px-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
           <div className="flex gap-1">
-            <button className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md">
-              Today
-            </button>
-            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
-              Week
-            </button>
-            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
-              Month
-            </button>
-            <button className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-md">
-              Year
-            </button>
+            {(['today', 'week', 'month', 'year'] as ReminderFilterType[]).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveReminderFilter(filter)}
+                className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                  activeReminderFilter === filter
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
         
@@ -303,7 +306,12 @@ export default function TodosView() {
           </div>
         ) : (
           <div className="px-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">None [today]</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              None {activeReminderFilter === 'today' ? '[today]' : 
+                    activeReminderFilter === 'week' ? '[this week]' :
+                    activeReminderFilter === 'month' ? '[this month]' :
+                    '[this year]'}
+            </p>
           </div>
         )}
       </div>
@@ -325,7 +333,6 @@ export default function TodosView() {
                 `}
               >
                 {label}
-                {count > 0 && ` (${count})`}
               </button>
             ))}
           </div>
