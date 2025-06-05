@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
 import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
+import { processMiraAIInput, type MiraAIInput, type MiraAIOutput } from "./utils/miraAIProcessing";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -25,6 +26,43 @@ let apiUsageStats = {
   claude: { requests: 0, tokens: 0, cost: 0 },
   totalRequests: 0
 };
+
+// Enhanced AI processing function using Mira AI Brain
+async function processWithMiraAI(content: string, mode: string): Promise<any> {
+  const input: MiraAIInput = {
+    content,
+    mode: mode as any,
+    timestamp: Date.now(),
+    context: {
+      timeOfDay: new Date().toLocaleTimeString(),
+    }
+  };
+
+  // Use Claude as the primary AI brain for Mira processing
+  const aiAnalysisFunction = async (prompt: string) => {
+    const response = await analyzeWithClaude(prompt, mode);
+    return response;
+  };
+
+  try {
+    const miraOutput = await processMiraAIInput(input, aiAnalysisFunction);
+    
+    // Convert Mira output to legacy format for compatibility
+    return {
+      enhancedContent: miraOutput.description,
+      suggestion: miraOutput.title,
+      context: `Type: ${miraOutput.type}, Priority: ${miraOutput.priority || 'medium'}`,
+      todos: miraOutput.followUps || [],
+      collectionSuggestion: miraOutput.collectionSuggestion,
+      miraClassification: miraOutput.type,
+      miraOutput: miraOutput
+    };
+  } catch (error) {
+    console.error('Mira AI processing failed, falling back to standard AI:', error);
+    // Fallback to existing AI analysis
+    return await analyzeWithClaude(content, mode);
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Stats endpoint
@@ -706,9 +744,12 @@ Respond with a JSON object containing:
         });
       }
 
-      // Analyze with AI in the background
-      analyzeWithOpenAI(transcription, "voice")
+      // Process with enhanced Mira AI Brain
+      processWithMiraAI(transcription, "voice")
         .then(async (analysis) => {
+          apiUsageStats.claude.requests++;
+          apiUsageStats.totalRequests++;
+          
           const updates: any = {
             aiEnhanced: true,
             aiSuggestion: analysis.suggestion,
@@ -746,7 +787,7 @@ Respond with a JSON object containing:
           }
         })
         .catch(error => {
-          console.error("AI analysis failed:", error);
+          console.error("Mira AI analysis failed:", error);
         });
 
       res.json(note);
