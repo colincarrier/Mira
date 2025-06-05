@@ -301,10 +301,7 @@ export default function InputBar({
           createVoiceNoteMutation.mutate(blob);
         } else {
           console.log('Recording too short, discarding');
-          toast({
-            title: "Recording too short",
-            description: "Please record for at least 1 second.",
-          });
+          // Silently discard short recordings without showing error
         }
         
         stream.getTracks().forEach(track => track.stop());

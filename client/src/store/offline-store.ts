@@ -8,6 +8,7 @@ interface OfflineState {
   // Data
   notes: NoteWithTodos[];
   collections: Collection[];
+  pendingChanges: any[];
   
   // Sync status
   isOnline: boolean;
@@ -43,6 +44,7 @@ export const useOfflineStore = create<OfflineState>()(
       // Initial state
       notes: [],
       collections: [],
+      pendingChanges: [],
       isOnline: navigator.onLine,
       isSyncing: false,
       lastSyncTime: null,

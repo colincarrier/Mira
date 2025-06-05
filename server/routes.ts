@@ -623,15 +623,15 @@ Respond with a JSON object containing:
   // Placeholder note creation endpoint
   app.post("/api/notes/placeholder", async (req, res) => {
     try {
-      const { type, fileName, fileSize, mimeType, duration } = req.body;
+      const { type, fileName, fileSize, mimeType, duration, content } = req.body;
       
-      let placeholderContent = "";
+      let placeholderContent = content || "";
       let aiTitle = "";
       
       // Generate AI title based on type and context
       if (type === "voice") {
         aiTitle = "Voice Recording";
-        placeholderContent = `🎤 Recording voice note (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`;
+        placeholderContent = content || "🎤 Recording voice note...";
       } else if (type === "image") {
         // Use AI to generate meaningful title from file context
         const contextPrompt = `Generate a concise, meaningful title for an image file. The user is saving this image for a reason. Based on the filename "${fileName}" and type "${mimeType}", suggest what this image might be about and why they're saving it. Respond with just the title, no quotes or extra text. Make it human and contextual, not technical.`;
@@ -662,7 +662,7 @@ Respond with a JSON object containing:
       // Create placeholder note
       const note = await storage.createNote({
         content: placeholderContent,
-        mode: type,
+        mode: type || "text",
         aiSuggestion: aiTitle,
         isProcessing: true
       });
