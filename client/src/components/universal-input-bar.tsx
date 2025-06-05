@@ -151,7 +151,7 @@ export default function UniversalInputBar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setShowMediaPicker(false);
+      onToggleSubmenu?.();
       toast({
         title: "Image processed",
         description: "Your image has been analyzed and enhanced by AI.",
@@ -213,7 +213,7 @@ export default function UniversalInputBar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setShowMediaPicker(false);
+      onToggleSubmenu?.();
       toast({
         title: "File processed",
         description: "Your file has been analyzed and enhanced by AI.",
@@ -444,18 +444,18 @@ export default function UniversalInputBar({
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-    setShowMediaPicker(false);
+    onToggleSubmenu?.();
   };
 
   const openFilePicker = () => {
     if (generalFileInputRef.current) {
       generalFileInputRef.current.click();
     }
-    setShowMediaPicker(false);
+    onToggleSubmenu?.();
   };
 
   const toggleMediaPicker = () => {
-    setShowMediaPicker(!showMediaPicker);
+    onToggleSubmenu?.();
   };
 
   return (
@@ -482,12 +482,12 @@ export default function UniversalInputBar({
       />
       
       {/* Media picker overlay */}
-      {showMediaPicker && (
+      {showSubmenu && (
         <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Add Media</span>
             <button 
-              onClick={() => setShowMediaPicker(false)}
+              onClick={() => onToggleSubmenu?.()}
               className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
             >
               <X className="w-4 h-4 text-gray-500" />
@@ -591,7 +591,7 @@ export default function UniversalInputBar({
             </button>
             <button 
               onClick={() => {
-                setShowMediaPicker(false);
+                if (showSubmenu) onToggleSubmenu?.();
                 onCameraCapture?.();
               }}
               className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
@@ -600,7 +600,10 @@ export default function UniversalInputBar({
               <Camera className="w-4 h-4" />
             </button>
             <button 
-              onClick={isRecording ? stopRecording : startRecording}
+              onClick={isRecording ? stopRecording : () => {
+                if (showSubmenu) onToggleSubmenu?.();
+                startRecording();
+              }}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-colors z-20 relative hover:opacity-90 text-[#374252]"
               style={{ backgroundColor: isRecording ? '#ef4444' : '#9bb8d3' }}
               disabled={createVoiceNoteMutation.isPending}
