@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useOfflineStore } from "@/store/offline-store";
 
 export default function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -17,6 +18,16 @@ export default function Settings() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Sync status from offline store
+  const {
+    isOnline,
+    isSyncing,
+    lastSyncTime,
+    pendingItems,
+    conflictItems,
+    syncWithServer
+  } = useOfflineStore();
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
@@ -186,6 +197,79 @@ export default function Settings() {
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
+        {/* Sync Status */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-3 border-b border-gray-100">
+            <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              {isOnline ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
+              Sync Status
+            </h2>
+          </div>
+          <div className="p-3 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Connection</span>
+              <span className={`flex items-center gap-1 ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            
+            {lastSyncTime && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Last sync</span>
+                <span className="text-gray-500 text-xs">
+                  {new Date(lastSyncTime).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+            
+            {pendingItems > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Pending changes</span>
+                <span className="text-blue-600">{pendingItems}</span>
+              </div>
+            )}
+            
+            {conflictItems > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Conflicts</span>
+                <span className="text-red-600">{conflictItems}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Status</span>
+              <span className={`flex items-center gap-1 text-xs ${
+                isSyncing ? 'text-blue-600' : 
+                conflictItems > 0 ? 'text-red-600' : 
+                pendingItems > 0 ? 'text-orange-600' : 
+                'text-green-600'
+              }`}>
+                {isSyncing ? (
+                  <>
+                    <Clock className="w-3 h-3" />
+                    Syncing...
+                  </>
+                ) : conflictItems > 0 ? (
+                  <>
+                    <AlertCircle className="w-3 h-3" />
+                    Conflicts
+                  </>
+                ) : pendingItems > 0 ? (
+                  <>
+                    <Clock className="w-3 h-3" />
+                    Pending
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-3 h-3" />
+                    All synced
+                  </>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Stats & Achievements */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-3 border-b border-gray-100">
