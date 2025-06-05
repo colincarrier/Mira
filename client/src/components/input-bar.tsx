@@ -53,7 +53,10 @@ export default function InputBar({
       const placeholderResponse = await fetch("/api/notes/placeholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: "🎤 Recording voice note..." }),
+        body: JSON.stringify({ 
+          content: "🎤 Recording voice note...",
+          type: "voice"
+        }),
         credentials: "include",
       });
       
@@ -104,7 +107,10 @@ export default function InputBar({
       const placeholderResponse = await fetch("/api/notes/placeholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: "📷 Processing image..." }),
+        body: JSON.stringify({ 
+          content: "📷 Processing image...",
+          type: "image"
+        }),
         credentials: "include",
       });
       
@@ -156,7 +162,10 @@ export default function InputBar({
       const placeholderResponse = await fetch("/api/notes/placeholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: `📄 Processing ${file.name}...` }),
+        body: JSON.stringify({ 
+          content: `📄 Processing ${file.name}...`,
+          type: "file"
+        }),
         credentials: "include",
       });
       

@@ -1,4 +1,5 @@
 import { Home, CheckSquare, Folder, Settings } from "lucide-react";
+import { useOfflineStore } from "@/store/offline-store";
 
 interface BottomNavigationProps {
   activeTab: "activity" | "todos" | "collections" | "settings";
@@ -6,6 +7,9 @@ interface BottomNavigationProps {
 }
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
+  const { pendingChanges } = useOfflineStore();
+  const syncCount = pendingChanges.length;
+
   return (
     <>
       {/* Bottom Navigation Bar */}
@@ -37,10 +41,15 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
           
           <button 
             onClick={() => onTabChange("settings")}
-            className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
+            className={`tab-button ${activeTab === "settings" ? "active" : ""} relative`}
           >
             <Settings className="w-5 h-5" />
             <span className="text-xs">Settings</span>
+            {syncCount > 0 && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {syncCount > 9 ? '9+' : syncCount}
+              </div>
+            )}
           </button>
         </div>
       </nav>
