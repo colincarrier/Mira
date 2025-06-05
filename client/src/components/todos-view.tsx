@@ -271,7 +271,7 @@ export default function TodosView() {
       {/* Reminders Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
           <div className="flex gap-1">
             <button className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md">
               Today
@@ -302,9 +302,8 @@ export default function TodosView() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-6 px-4">
-            <Clock size={32} className="mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">No reminders set</p>
+          <div className="px-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">None [today]</p>
           </div>
         )}
       </div>
@@ -312,31 +311,21 @@ export default function TodosView() {
       {/* To-dos Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">To-dos</h3>
-          <div className="flex gap-2">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">To-dos</h3>
+          <div className="flex gap-1">
             {filterButtons.map(({ key, label, count, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setActiveFilter(key as FilterType)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0
+                className={`px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap flex-shrink-0
                   ${activeFilter === key
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                   }
                 `}
               >
-                {Icon && <Icon size={14} />}
                 {label}
-                {count > 0 && (
-                  <span className={`px-1.5 py-0.5 rounded-full text-xs
-                    ${activeFilter === key
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                    }
-                  `}>
-                    {count}
-                  </span>
-                )}
+                {count > 0 && ` (${count})`}
               </button>
             ))}
           </div>
