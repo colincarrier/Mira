@@ -329,6 +329,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             <div className="flex gap-2">
               <button
                 onClick={() => {
+                  stopCamera();
                   setCaptureMode('voice');
                   setIsVoiceRecorderOpen(false);
                 }}
