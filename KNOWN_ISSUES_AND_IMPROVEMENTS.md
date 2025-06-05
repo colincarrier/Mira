@@ -11,9 +11,10 @@
 - **Technical Details**: The issue is in the async flow - placeholder note is created immediately in mutation, before duration check
 
 - **Issue 2**: Recording timer runs at incorrect speed (too fast)
-- **Current Status**: Timer appears to tick faster than 1-second intervals
+- **Current Status**: Multiple attempts to fix timer speed have failed - still running too fast
 - **Expected Behavior**: Timer should increment exactly every 1 second
-- **Debug Notes**: Added console logging to track timer increments
+- **Debug Notes**: Tried simple counter, actual elapsed time calculation, different intervals - still sped up
+- **Technical Details**: Issue persists despite using Date.now() elapsed time calculation
 
 ### Voice Note Duration Display
 **Priority: Medium**

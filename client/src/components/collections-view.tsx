@@ -211,7 +211,7 @@ export default function CollectionsView() {
                 setDragOverIndex(null);
               }}
               onClick={() => setLocation(`/collection/${collection.id}`)}
-              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation h-24 ${
+              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation h-32 ${
                 draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
               } ${
                 dragOverIndex === index && draggedCollection !== collection.id 
@@ -219,7 +219,7 @@ export default function CollectionsView() {
                   : 'border-[hsl(var(--border))]'
               } rounded-lg p-3 hover:shadow-sm`}
             >
-              <div className="flex flex-col items-center text-center space-y-2">
+              <div className="flex flex-col items-center text-center space-y-1">
                 <div className="w-8 h-8 flex items-center justify-center">
                   {collection.iconUrl ? (
                     <img 
