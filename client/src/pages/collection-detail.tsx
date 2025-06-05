@@ -151,9 +151,124 @@ export default function CollectionDetail() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {notes.length > 0 ? (
+        {superNote ? (
+          /* Super Note View - Aggregated Content */
           <div className="p-4">
-            {/* Notes List - Compact */}
+            {/* Aggregated Content Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 text-gray-900">Collection Summary</h3>
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {superNote.aggregatedContent}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Insights */}
+            {superNote.insights && superNote.insights.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-3 text-gray-900">Key Insights</h4>
+                <div className="space-y-2">
+                  {superNote.insights.filter(Boolean).map((insight, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-600">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recommended Actions */}
+            {superNote.structuredItems?.recommendedActions && superNote.structuredItems.recommendedActions.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-3 text-gray-900">Recommended Actions</h4>
+                <div className="space-y-2">
+                  {superNote.structuredItems.recommendedActions.map((action, index) => (
+                    <div key={index} className="bg-blue-50 rounded-lg p-3">
+                      <h5 className="font-medium text-sm text-blue-900">{action.title}</h5>
+                      <p className="text-xs text-blue-700 mt-1">{action.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Source Notes - Clickable */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium mb-3 text-gray-900">Source Notes ({superNote.notes.length})</h4>
+              <div className="space-y-2">
+                {superNote.notes.map((note) => {
+                  const timeAgo = (() => {
+                    const now = new Date();
+                    const noteDate = new Date(note.createdAt);
+                    const diffInSeconds = Math.floor((now.getTime() - noteDate.getTime()) / 1000);
+                    
+                    if (diffInSeconds < 60) return 'now';
+                    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                  })();
+
+                  return (
+                    <div 
+                      key={note.id} 
+                      className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-300 cursor-pointer transition-colors"
+                      onClick={() => setLocation(`/notes/${note.id}`)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          {note.mode === 'voice' && <Icons.Mic className="w-4 h-4 text-blue-500" />}
+                          {note.mode === 'camera' && <Icons.Camera className="w-4 h-4 text-green-500" />}
+                          {note.mode === 'file' && <Icons.File className="w-4 h-4 text-purple-500" />}
+                          {note.mode === 'text' && <Icons.MessageSquare className="w-4 h-4 text-gray-500" />}
+                          <span className="text-xs text-gray-500">{timeAgo}</span>
+                        </div>
+                        {note.todos && note.todos.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <Icons.CheckSquare className="w-3 h-3 text-blue-500" />
+                            <span className="text-xs text-gray-600">
+                              {note.todos.filter(t => t.completed).length}/{note.todos.length}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-900 line-clamp-2">
+                        {note.content ? note.content.split('\n')[0].replace(/^\[.*?\]\s*/, '') : 'Untitled Note'}
+                      </p>
+                      {note.todos && note.todos.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {note.todos.slice(0, 2).map((todo) => (
+                            <div key={todo.id} className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${todo.completed ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                              <span className={`text-xs ${todo.completed ? 'text-green-600 line-through' : 'text-gray-600'}`}>
+                                {todo.title}
+                              </span>
+                            </div>
+                          ))}
+                          {note.todos.length > 2 && (
+                            <p className="text-xs text-gray-500">+{note.todos.length - 2} more tasks</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Regenerate Button */}
+            <button
+              onClick={handleGenerateSuper}
+              disabled={generateSuperNoteMutation.isPending}
+              className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium disabled:opacity-50 touch-manipulation hover:bg-gray-200 transition-colors"
+            >
+              {generateSuperNoteMutation.isPending ? 'Regenerating...' : 'Regenerate Super Note'}
+            </button>
+          </div>
+        ) : notes.length > 0 ? (
+          /* Regular Notes List */
+          <div className="p-4">
             <div className="space-y-2">
               {notes.map((note, index) => {
                 const timeAgo = (() => {
