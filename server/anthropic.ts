@@ -64,6 +64,14 @@ export interface AIAnalysisResult {
   skillsRequired?: string[];
   resourcesNeeded?: string[];
 
+  // Individual Item Extraction
+  extractedItems?: {
+    title: string;
+    description?: string;
+    category: string;
+    metadata?: Record<string, any>;
+  }[];
+
   splitNotes?: {
     content: string;
     todos: string[];

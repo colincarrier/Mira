@@ -63,6 +63,14 @@ export interface AIAnalysisResult {
   relatedTopics?: string[];
   skillsRequired?: string[];
   resourcesNeeded?: string[];
+  
+  // Individual Item Extraction
+  extractedItems?: {
+    title: string;
+    description?: string;
+    category: string;
+    metadata?: Record<string, any>;
+  }[];
 }
 
 export async function analyzeWithOpenAI(content: string, mode: string): Promise<AIAnalysisResult> {

@@ -129,7 +129,15 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
   "potentialObstacles": ["challenges to watch for"],
   "relatedTopics": ["connected subjects"],
   "skillsRequired": ["abilities needed"],
-  "resourcesNeeded": ["tools, people, or materials required"]
+  "resourcesNeeded": ["tools, people, or materials required"],
+  "extractedItems": [
+    {
+      "title": "specific item name",
+      "description": "brief description",
+      "category": "book|movie|restaurant|product|place|person|concept",
+      "metadata": {"additional": "contextual data"}
+    }
+  ]
 }
 
 **Analysis Rules:**
@@ -139,6 +147,9 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - Suggest meaningful collections and categories
 - Focus on adding genuine value and insight
 - Include predictive intelligence about success and obstacles
+- Extract specific trackable items (books, movies, restaurants, products, places, people, concepts) mentioned in the content
+- For extractedItems, include only concrete, specific items that can be tracked individually
+- Use appropriate categories: book, movie, restaurant, product, place, person, concept
 
 **Time-Sensitivity Analysis Rules:**
 - Carefully analyze input for temporal cues: "tomorrow", "next week", "by Friday", "every morning", "annual", "daily"

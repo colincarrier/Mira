@@ -468,6 +468,20 @@ This profile was generated from your input and will help provide more personaliz
               console.log("Assigned note to collection:", finalCollectionName);
             }
           }
+          
+          // Extract and create individual items
+          if (analysis.extractedItems && analysis.extractedItems.length > 0) {
+            for (const item of analysis.extractedItems) {
+              await storage.createItem({
+                title: item.title,
+                description: item.description || '',
+                type: item.category,
+                sourceNoteId: note.id,
+                collectionId: note.collectionId || null
+              });
+            }
+            console.log(`Extracted ${analysis.extractedItems.length} individual items from note`);
+          }
         })
         .catch(async (error) => {
           console.error("AI analysis failed for note:", note.id);
