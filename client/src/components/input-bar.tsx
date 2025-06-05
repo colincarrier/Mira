@@ -343,19 +343,24 @@ export default function InputBar({
 
   // Waveform animation
   const updateWaveform = useCallback(() => {
-    if (!analyserRef.current || !dataArrayRef.current) return;
+    if (!analyserRef.current || !dataArrayRef.current || !isVoiceRecording) return;
     
-    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    analyserRef.current.getByteTimeDomainData(dataArrayRef.current);
     
     const waveform: number[] = [];
-    const step = Math.floor(dataArrayRef.current.length / 20);
+    const bufferLength = dataArrayRef.current.length;
+    const step = Math.floor(bufferLength / 16); // Reduce to 16 bars for better visual
     
-    for (let i = 0; i < dataArrayRef.current.length; i += step) {
+    for (let i = 0; i < bufferLength; i += step) {
       let sum = 0;
-      for (let j = 0; j < step && i + j < dataArrayRef.current.length; j++) {
-        sum += dataArrayRef.current[i + j];
+      let count = 0;
+      for (let j = 0; j < step && i + j < bufferLength; j++) {
+        const value = Math.abs(dataArrayRef.current[i + j] - 128) / 128;
+        sum += value;
+        count++;
       }
-      waveform.push(sum / step / 255);
+      const avgAmplitude = count > 0 ? sum / count : 0;
+      waveform.push(Math.min(1, avgAmplitude * 2)); // Amplify and clamp
     }
     
     setWaveformData(waveform);
