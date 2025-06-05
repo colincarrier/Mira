@@ -49,7 +49,7 @@ export default function InputBar({
 
   // Voice note mutation
   const createVoiceNoteMutation = useMutation({
-    mutationFn: async (audioData: { blob: Blob; duration: number }) => {
+    mutationFn: async (audioBlob: Blob) => {
       const placeholderResponse = await fetch("/api/notes/placeholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,7 +68,7 @@ export default function InputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       
       const formData = new FormData();
-      formData.append("audio", audioData.blob);
+      formData.append("audio", audioBlob);
       formData.append("noteId", placeholderNote.id.toString());
       
       const response = await fetch("/api/notes/voice", {
@@ -310,17 +310,16 @@ export default function InputBar({
       
       mediaRecorder.onstop = () => {
         const recordingDuration = Date.now() - recordingStartTime;
+        console.log('Recording stopped, duration:', recordingDuration, 'ms');
         
         // Only process recordings longer than 1 second
         if (recordingDuration >= 1000) {
+          console.log('Processing recording - duration acceptable');
           const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const blob = new Blob(chunksRef.current, { type: mimeType });
-          
-          // Store the blob and duration for the mutation
-          const audioData = { blob, duration: recordingDuration };
-          createVoiceNoteMutation.mutate(audioData);
+          createVoiceNoteMutation.mutate(blob);
         } else {
-          console.log('Recording too short, discarding');
+          console.log('Recording too short, discarding - no note will be created');
           // Silently discard short recordings without creating any note
         }
         
