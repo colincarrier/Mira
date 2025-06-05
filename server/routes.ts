@@ -345,6 +345,7 @@ This profile was generated from your input and will help provide more personaliz
         });
         
         // Process original note with OpenAI
+        console.log("Starting OpenAI analysis for note:", note.id, "OpenAI available:", isOpenAIAvailable());
         analyzeWithOpenAI(noteData.content, noteData.mode)
           .then(async (analysis) => {
             // Track OpenAI usage
@@ -352,7 +353,7 @@ This profile was generated from your input and will help provide more personaliz
             apiUsageStats.openai.tokens += 1000; // Estimate
             apiUsageStats.openai.cost += 0.02; // Estimate
             apiUsageStats.totalRequests++;
-            console.log("AI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
+            console.log("OpenAI analysis completed for note:", note.id, "analysis:", JSON.stringify(analysis, null, 2));
             // Update note with AI analysis
             const updates: any = {
               aiEnhanced: true,
@@ -440,6 +441,7 @@ This profile was generated from your input and will help provide more personaliz
           })
           .catch(async (error) => {
             console.error("OpenAI analysis failed for note:", note.id, "error:", error.message, "stack:", error.stack);
+            console.error("Full error details:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
             // Clear processing flag even on error
             await storage.updateNote(note.id, { isProcessing: false });
           });
