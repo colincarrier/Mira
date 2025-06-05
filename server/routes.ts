@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
+import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -333,19 +334,88 @@ This profile was generated from your input and will help provide more personaliz
         isProcessing: noteData.content ? true : false
       });
       
-      // Process with available AI (single analysis for speed)
+      // Check if dual AI processing is enabled (developer setting)
+      const isDualProcessingEnabled = false; // Default off, will check user settings later
+      
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
         
-        // Use OpenAI if available, fallback to Claude
-        const useOpenAI = isOpenAIAvailable();
-        console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
-        
-        const analysisPromise = useOpenAI 
-          ? analyzeWithOpenAI(noteData.content, noteData.mode)
-          : analyzeWithClaude(noteData.content, noteData.mode);
+        if (isDualProcessingEnabled) {
+          // Dual processing for comparison
+          console.log("Running dual AI analysis");
           
-        analysisPromise
+          const claudeNote = await storage.createNote({
+            ...noteData,
+            content: `[Claude] ${noteData.content}`,
+            isProcessing: true
+          });
+          
+          // Process both simultaneously
+          const openaiPromise = safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
+            .then(async (analysis: any) => {
+              apiUsageStats.openai.requests++;
+              apiUsageStats.openai.tokens += 1000;
+              apiUsageStats.openai.cost += 0.02;
+              apiUsageStats.totalRequests++;
+              
+              await storage.updateNote(note.id, {
+                aiEnhanced: true,
+                aiSuggestion: analysis.suggestion,
+                aiContext: analysis.context,
+                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                isProcessing: false,
+              });
+              
+              for (const todoTitle of analysis.todos) {
+                await storage.createTodo({
+                  title: todoTitle,
+                  noteId: note.id,
+                });
+              }
+            })
+            .catch(async (error: any) => {
+              console.error("OpenAI analysis failed:", error.message);
+              await storage.updateNote(note.id, { isProcessing: false });
+            });
+          
+          const claudePromise = safeAnalyzeWithClaude(noteData.content, noteData.mode)
+            .then(async (analysis: any) => {
+              apiUsageStats.claude.requests++;
+              apiUsageStats.claude.tokens += 1200;
+              apiUsageStats.claude.cost += 0.015;
+              apiUsageStats.totalRequests++;
+              
+              await storage.updateNote(claudeNote.id, {
+                aiEnhanced: true,
+                aiSuggestion: analysis.suggestion,
+                aiContext: analysis.context,
+                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                isProcessing: false,
+              });
+              
+              for (const todoTitle of analysis.todos) {
+                await storage.createTodo({
+                  title: todoTitle,
+                  noteId: claudeNote.id,
+                });
+              }
+            })
+            .catch(async (error: any) => {
+              console.error("Claude analysis failed:", error.message);
+              await storage.updateNote(claudeNote.id, { isProcessing: false });
+            });
+          
+          Promise.allSettled([openaiPromise, claudePromise]);
+        } else {
+          // Single AI processing for speed
+          const useOpenAI = isOpenAIAvailable();
+          console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
+          
+          const analysisPromise = useOpenAI 
+            ? safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
+            : safeAnalyzeWithClaude(noteData.content, noteData.mode);
+            
+          analysisPromise
           .then(async (analysis) => {
             // Track OpenAI usage
             apiUsageStats.openai.requests++;
@@ -445,60 +515,7 @@ This profile was generated from your input and will help provide more personaliz
             await storage.updateNote(note.id, { isProcessing: false });
           });
         
-        // Process Claude note with Claude AI
-        analyzeWithClaude(noteData.content, noteData.mode)
-          .then(async (analysis) => {
-            // Track Claude usage
-            apiUsageStats.claude.requests++;
-            apiUsageStats.claude.tokens += 1200; // Estimate
-            apiUsageStats.claude.cost += 0.015; // Estimate
-            apiUsageStats.totalRequests++;
-            console.log("Claude analysis completed for note:", claudeNote.id, "analysis:", JSON.stringify(analysis, null, 2));
-            // Update Claude note with AI analysis
-            const updates: any = {
-              aiEnhanced: true,
-              aiSuggestion: analysis.suggestion,
-              aiContext: analysis.context,
-              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
-              isProcessing: false, // Clear processing flag
-            };
-            
-            if (analysis.enhancedContent) {
-              updates.content = `[Claude] ${analysis.enhancedContent}`;
-            }
-            
-            await storage.updateNote(claudeNote.id, updates);
-            console.log("Claude note updated with AI analysis:", claudeNote.id);
-            
-            // Create todos for Claude note if found
-            for (const todoTitle of analysis.todos) {
-              await storage.createTodo({
-                title: todoTitle,
-                noteId: claudeNote.id,
-              });
-            }
-            
-            // Create collection for Claude note if suggested
-            if (analysis.collectionSuggestion) {
-              const collections = await storage.getCollections();
-              const existingCollection = collections.find(
-                c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
-              );
-              
-              let collectionId = existingCollection?.id;
-              if (!existingCollection) {
-                const newCollection = await storage.createCollection(analysis.collectionSuggestion);
-                collectionId = newCollection.id;
-              }
-              
-              await storage.updateNote(claudeNote.id, { collectionId });
-            }
-          })
-          .catch(async (error) => {
-            console.error("Claude analysis failed for note:", claudeNote.id, "error:", error.message, "stack:", error.stack);
-            // Clear processing flag even on error
-            await storage.updateNote(claudeNote.id, { isProcessing: false });
-          });
+        }
       }
       
       res.json(note);

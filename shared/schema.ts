@@ -97,6 +97,11 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number"), // For future contact-based discovery
   personalBio: text("personal_bio"),
   preferences: json("preferences"),
+  developerSettings: json("developer_settings").default({
+    enableDualAIProcessing: false,
+    showAIComparison: false,
+    debugMode: false
+  }),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   privacySettings: json("privacy_settings").default({
     includePrivateDataInSharedNotes: false,
