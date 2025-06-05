@@ -295,11 +295,16 @@ export default function InputBar({
   };
 
   const handleSendMessage = () => {
+    console.log('handleSendMessage called with text:', inputText);
     if (inputText.trim()) {
+      console.log('Creating text note with content:', inputText.trim());
       createTextNoteMutation.mutate(inputText.trim());
       setInputText("");
       setIsTyping(false);
       closeAllModes(); // Close any open modes
+    } else {
+      console.log('No text to send, calling onNewNote fallback');
+      onNewNote?.(); // Fallback for empty text
     }
   };
 
@@ -480,27 +485,7 @@ export default function InputBar({
     setWaveformData([]);
   }, [stopWaveformAnimation]);
 
-  // Text input functions
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputText(value);
-    setIsTyping(value.trim().length > 0);
-  };
-
-  const handleSendMessage = () => {
-    if (inputText.trim()) {
-      onNewNote?.();
-      setInputText("");
-      setIsTyping(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  // Removed duplicate text input functions - using the correct ones above
 
   // File handlers
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
