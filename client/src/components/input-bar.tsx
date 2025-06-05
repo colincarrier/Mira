@@ -696,8 +696,20 @@ export default function InputBar({
           {/* Text input */}
           <textarea
             value={inputText}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              setIsTyping(e.target.value.length > 0);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (onTextSubmit && inputText.trim()) {
+                  onTextSubmit(inputText.trim());
+                  setInputText("");
+                  setIsTyping(false);
+                }
+              }
+            }}
             placeholder={isVoiceRecording ? "Recording voice note..." : "Add/edit anything..."}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
             rows={1}
@@ -715,40 +727,28 @@ export default function InputBar({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5">
-            {(() => {
-              console.log('Button render state:', { isTyping, isVoiceRecording, inputText: inputText.substring(0, 20) });
-              return null;
-            })()}
-            {isTyping && !isVoiceRecording ? (
-              <>
-                <button 
-                  onClick={toggleSubmenu}
-                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => {
-                    alert('Send button clicked with text: ' + inputText);
-                    if (onTextSubmit && inputText.trim()) {
-                      onTextSubmit(inputText.trim());
-                      setInputText("");
-                      setIsTyping(false);
-                    }
-                  }}
-                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </>
+            <button 
+              onClick={toggleSubmenu}
+              className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            
+            {inputText.trim() ? (
+              <button 
+                onClick={() => {
+                  if (onTextSubmit && inputText.trim()) {
+                    onTextSubmit(inputText.trim());
+                    setInputText("");
+                    setIsTyping(false);
+                  }
+                }}
+                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
             ) : (
               <>
-                <button 
-                  onClick={toggleSubmenu}
-                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
                 <button 
                   onClick={openCamera}
                   className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
