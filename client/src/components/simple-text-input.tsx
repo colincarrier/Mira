@@ -60,30 +60,24 @@ export default function SimpleTextInput() {
   };
 
   return (
-    <div className="fixed bottom-24 left-4 right-4 z-50">
-      <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
+    <div className="fixed bottom-20 left-4 right-4 z-50">
+      <div className="bg-red-500 rounded-2xl p-4 shadow-lg border-4 border-black">
         <div className="flex items-center gap-2">
-          <textarea
+          <input
+            type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your note here..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none"
-            rows={1}
-            style={{
-              minHeight: '20px',
-              maxHeight: '120px'
-            }}
+            placeholder="TEST INPUT - Type here..."
+            className="flex-1 bg-white border-2 border-gray-800 outline-none text-lg p-2 rounded"
           />
-          {text.trim() && (
-            <button 
-              onClick={handleSubmit}
-              disabled={createNoteMutation.isPending}
-              className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          )}
+          <button 
+            onClick={handleSubmit}
+            disabled={createNoteMutation.isPending}
+            className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 border-2 border-black"
+          >
+            <Send className="w-6 h-6" />
+          </button>
         </div>
       </div>
     </div>
