@@ -412,26 +412,34 @@ This profile was generated from your input and will help provide more personaliz
             let finalCollectionName = analysis.collectionSuggestion.name;
             
             // Map overly specific collections to existing ones
-            if (suggestedName.includes('personal') || suggestedName.includes('communication') || suggestedName.includes('family')) {
+            if (suggestedName.includes('personal') || suggestedName.includes('communication') || 
+                suggestedName.includes('family') || suggestedName.includes('healthcare') || 
+                suggestedName.includes('medical') || suggestedName.includes('health') || 
+                suggestedName.includes('appointment') || suggestedName.includes('doctor')) {
               finalCollectionName = "Personal";
-            } else if (suggestedName.includes('healthcare') || suggestedName.includes('medical') || suggestedName.includes('appointment')) {
-              finalCollectionName = "Personal"; // Healthcare is personal
-            } else if (suggestedName.includes('grocery') || suggestedName.includes('shopping') || suggestedName.includes('errands')) {
+            } else if (suggestedName.includes('grocery') || suggestedName.includes('shopping') || 
+                       suggestedName.includes('errands') || suggestedName.includes('store')) {
               finalCollectionName = "To-dos";
-            } else if (suggestedName.includes('work') || suggestedName.includes('office') || suggestedName.includes('business')) {
+            } else if (suggestedName.includes('work') || suggestedName.includes('office') || 
+                       suggestedName.includes('business') || suggestedName.includes('meeting')) {
               finalCollectionName = "Work";
-            } else if (suggestedName.includes('home') || suggestedName.includes('house') || suggestedName.includes('maintenance')) {
+            } else if (suggestedName.includes('home') || suggestedName.includes('house') || 
+                       suggestedName.includes('maintenance') || suggestedName.includes('repair')) {
               finalCollectionName = "Home";
+            } else if (suggestedName.includes('book') || suggestedName.includes('reading')) {
+              finalCollectionName = "Books";
+            } else if (suggestedName.includes('movie') || suggestedName.includes('tv') || 
+                       suggestedName.includes('film') || suggestedName.includes('entertainment')) {
+              finalCollectionName = "Movies & TV";
+            } else if (suggestedName.includes('restaurant') || suggestedName.includes('food') || 
+                       suggestedName.includes('dining')) {
+              finalCollectionName = "Restaurants";
+            } else if (suggestedName.includes('travel') || suggestedName.includes('trip') || 
+                       suggestedName.includes('vacation')) {
+              finalCollectionName = "Travel";
             } else {
-              // Check if it's too specific and should go to Other
-              const existingStandardCollections = ['to-dos', 'personal', 'home', 'work', 'family', 'books', 'movies & tv', 'restaurants', 'travel'];
-              const isStandardCategory = existingStandardCollections.some(std => 
-                suggestedName.includes(std.replace(/[^a-z]/g, '')) || std.includes(suggestedName.replace(/[^a-z]/g, ''))
-              );
-              
-              if (!isStandardCategory) {
-                finalCollectionName = "Other";
-              }
+              // Default to Other for overly specific suggestions
+              finalCollectionName = "Other";
             }
             
             // Find or create the final collection
