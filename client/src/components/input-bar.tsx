@@ -292,6 +292,7 @@ export default function InputBar({
   // Text input handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
+    console.log('Input changed:', { value, hasText: value.trim().length > 0 });
     setInputText(value);
     setIsTyping(value.trim().length > 0);
   };
@@ -705,6 +706,10 @@ export default function InputBar({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5">
+            {(() => {
+              console.log('Button render state:', { isTyping, isVoiceRecording, inputText: inputText.substring(0, 20) });
+              return null;
+            })()}
             {isTyping && !isVoiceRecording ? (
               <>
                 <button 
