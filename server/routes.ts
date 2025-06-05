@@ -348,6 +348,9 @@ This profile was generated from your input and will help provide more personaliz
           
         analysisPromise
         .then(async (analysis) => {
+          console.log("AI analysis successful for note:", note.id, "Service:", useOpenAI ? "OpenAI" : "Claude");
+          console.log("Analysis result:", JSON.stringify(analysis, null, 2));
+          
           // Track usage
           if (useOpenAI) {
             apiUsageStats.openai.requests++;
@@ -359,8 +362,6 @@ This profile was generated from your input and will help provide more personaliz
             apiUsageStats.claude.cost += 0.015;
           }
           apiUsageStats.totalRequests++;
-          
-          console.log("AI analysis completed for note:", note.id);
           
           // Update note with AI analysis
           const updates: any = {
@@ -376,17 +377,22 @@ This profile was generated from your input and will help provide more personaliz
           }
           
           await storage.updateNote(note.id, updates);
+          console.log("Note updated successfully with AI analysis");
           
           // Create todos if found
-          for (const todoTitle of analysis.todos) {
-            await storage.createTodo({
-              title: todoTitle,
-              noteId: note.id,
-            });
+          if (analysis.todos && analysis.todos.length > 0) {
+            console.log("Creating", analysis.todos.length, "todos for note:", note.id);
+            for (const todoTitle of analysis.todos) {
+              await storage.createTodo({
+                title: todoTitle,
+                noteId: note.id,
+              });
+            }
           }
           
           // Create collection if suggested
           if (analysis.collectionSuggestion) {
+            console.log("Creating/assigning collection:", analysis.collectionSuggestion.name);
             const collections = await storage.getCollections();
             const existingCollection = collections.find(
               c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
@@ -402,7 +408,9 @@ This profile was generated from your input and will help provide more personaliz
           }
         })
         .catch(async (error) => {
-          console.error("AI analysis failed for note:", note.id, "error:", error.message);
+          console.error("AI analysis failed for note:", note.id);
+          console.error("Error details:", error.message);
+          console.error("Full error:", error);
           await storage.updateNote(note.id, { isProcessing: false });
         });
       }
