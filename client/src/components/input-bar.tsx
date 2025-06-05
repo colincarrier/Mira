@@ -320,10 +320,14 @@ export default function InputBar({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('🔑 ENTER pressed with text:', inputText);
       if (onTextSubmit && inputText.trim()) {
+        console.log('🔑 Calling onTextSubmit via Enter');
         onTextSubmit(inputText.trim());
         setInputText("");
         setIsTyping(false);
+      } else {
+        console.log('🔑 Enter pressed but no onTextSubmit or empty text');
       }
     }
   };
@@ -726,14 +730,11 @@ export default function InputBar({
                 </button>
                 <button 
                   onClick={() => {
-                    console.log('📤 SEND BUTTON CLICKED! Text:', inputText, 'Has onTextSubmit:', !!onTextSubmit);
+                    alert('Send button clicked with text: ' + inputText);
                     if (onTextSubmit && inputText.trim()) {
-                      console.log('📤 Calling onTextSubmit with:', inputText.trim());
                       onTextSubmit(inputText.trim());
                       setInputText("");
                       setIsTyping(false);
-                    } else {
-                      console.log('❌ Missing onTextSubmit or empty text');
                     }
                   }}
                   className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
