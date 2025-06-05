@@ -25,6 +25,7 @@ export default function InputBar({
   // Voice recording state
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
+  const [recordingStartTime, setRecordingStartTime] = useState<number>(0);
   
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -211,6 +212,7 @@ export default function InputBar({
   }, [isVoiceRecording]);
 
   const openCamera = useCallback(() => {
+    console.log('Camera button clicked, current states:', { showSubmenu, isVoiceRecording });
     // Close all other modes first
     setShowSubmenu(false);
     if (isVoiceRecording) {
@@ -218,9 +220,10 @@ export default function InputBar({
       setIsVoiceRecording(false);
     }
     onCameraCapture?.();
-  }, [isVoiceRecording, onCameraCapture]);
+  }, [isVoiceRecording, showSubmenu, onCameraCapture]);
 
   const toggleSubmenu = useCallback(() => {
+    console.log('Submenu button clicked, current states:', { showSubmenu, isVoiceRecording });
     // Close voice recording if active
     if (isVoiceRecording) {
       stopRecording();
@@ -235,11 +238,12 @@ export default function InputBar({
   }, []);
 
   const startVoiceRecording = useCallback(async () => {
+    console.log('Voice button clicked, current states:', { showSubmenu, isVoiceRecording });
     // Close submenu if open
     setShowSubmenu(false);
     setIsVoiceRecording(true);
     await startRecording();
-  }, []);
+  }, [showSubmenu, isVoiceRecording]);
 
   const stopVoiceRecording = useCallback(() => {
     stopRecording();
@@ -280,8 +284,19 @@ export default function InputBar({
       };
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
-        createVoiceNoteMutation.mutate(blob);
+        const recordingDuration = Date.now() - recordingStartTime;
+        
+        // Only process recordings longer than 1 second
+        if (recordingDuration >= 1000) {
+          const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+          createVoiceNoteMutation.mutate(blob);
+        } else {
+          console.log('Recording too short, discarding');
+          toast({
+            title: "Recording too short",
+            description: "Please record for at least 1 second.",
+          });
+        }
         
         stream.getTracks().forEach(track => track.stop());
         audioContext.close();
@@ -342,6 +357,7 @@ export default function InputBar({
     if (!success) return;
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+      setRecordingStartTime(Date.now());
       mediaRecorderRef.current.start(100);
       setRecordingTime(0);
       
