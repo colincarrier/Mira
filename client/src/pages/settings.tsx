@@ -193,82 +193,26 @@ export default function Settings() {
             Settings
           </h2>
         </div>
+        
+        {/* Tiny Sync Status Bubble */}
+        <div className="flex items-center gap-1">
+          <div className={`w-2 h-2 rounded-full ${
+            isSyncing ? 'bg-yellow-500' : 
+            !isOnline && pendingItems > 0 ? 'bg-red-500' : 
+            !isOnline ? 'bg-orange-500' : 
+            'bg-green-500'
+          }`} />
+          <span className="text-xs text-gray-500">
+            {isSyncing ? 'syncing' : 
+             !isOnline && pendingItems > 0 ? 'offline' : 
+             !isOnline ? 'offline' : 
+             'synced'}
+          </span>
+        </div>
       </div>
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
-        {/* Sync Status */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-3 border-b border-gray-100">
-            <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              {isOnline ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
-              Sync Status
-            </h2>
-          </div>
-          <div className="p-3 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Connection</span>
-              <span className={`flex items-center gap-1 ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
-                {isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            
-            {lastSyncTime && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Last sync</span>
-                <span className="text-gray-500 text-xs">
-                  {new Date(lastSyncTime).toLocaleTimeString()}
-                </span>
-              </div>
-            )}
-            
-            {pendingItems > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Pending changes</span>
-                <span className="text-blue-600">{pendingItems}</span>
-              </div>
-            )}
-            
-            {conflictItems > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Conflicts</span>
-                <span className="text-red-600">{conflictItems}</span>
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Status</span>
-              <span className={`flex items-center gap-1 text-xs ${
-                isSyncing ? 'text-blue-600' : 
-                conflictItems > 0 ? 'text-red-600' : 
-                pendingItems > 0 ? 'text-orange-600' : 
-                'text-green-600'
-              }`}>
-                {isSyncing ? (
-                  <>
-                    <Clock className="w-3 h-3" />
-                    Syncing...
-                  </>
-                ) : conflictItems > 0 ? (
-                  <>
-                    <AlertCircle className="w-3 h-3" />
-                    Conflicts
-                  </>
-                ) : pendingItems > 0 ? (
-                  <>
-                    <Clock className="w-3 h-3" />
-                    Pending
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-3 h-3" />
-                    All synced
-                  </>
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Stats & Achievements */}
         <div className="bg-white rounded-lg border border-gray-200">
