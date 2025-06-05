@@ -27,42 +27,7 @@ let apiUsageStats = {
   totalRequests: 0
 };
 
-// Enhanced AI processing function using Mira AI Brain
-async function processWithMiraAI(content: string, mode: string): Promise<any> {
-  const input: MiraAIInput = {
-    content,
-    mode: mode as any,
-    timestamp: Date.now(),
-    context: {
-      timeOfDay: new Date().toLocaleTimeString(),
-    }
-  };
 
-  // Use Claude as the primary AI brain for Mira processing
-  const aiAnalysisFunction = async (prompt: string) => {
-    const response = await analyzeWithClaude(prompt, mode);
-    return response;
-  };
-
-  try {
-    const miraOutput = await processMiraAIInput(input, aiAnalysisFunction);
-    
-    // Convert Mira output to legacy format for compatibility
-    return {
-      enhancedContent: miraOutput.description,
-      suggestion: miraOutput.title,
-      context: `Type: ${miraOutput.type}, Priority: ${miraOutput.priority || 'medium'}`,
-      todos: miraOutput.followUps || [],
-      collectionSuggestion: miraOutput.collectionSuggestion,
-      miraClassification: miraOutput.type,
-      miraOutput: miraOutput
-    };
-  } catch (error) {
-    console.error('Mira AI processing failed, falling back to standard AI:', error);
-    // Fallback to existing AI analysis
-    return await analyzeWithClaude(content, mode);
-  }
-}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Stats endpoint
