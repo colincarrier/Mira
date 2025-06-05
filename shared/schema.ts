@@ -30,6 +30,38 @@ export const todos = pgTable("todos", {
   pinned: boolean("pinned").default(false),
   archived: boolean("archived").default(false),
   priority: text("priority").default("normal"), // "urgent", "normal", "low"
+  
+  // Enhanced time-sensitivity and reminder classification
+  itemType: text("item_type").default("todo"), // "todo", "reminder"
+  timeDue: timestamp("time_due"), // Specific due date/time (nullable for "not set")
+  timeDependency: text("time_dependency"), // "none", "sequential", "parallel", "contingent"
+  dependsOnTodoIds: json("depends_on_todo_ids").$type<number[]>().default([]), // Array of todo IDs this depends on
+  triggersTodoIds: json("triggers_todo_ids").$type<number[]>().default([]), // Array of todo IDs triggered by completion
+  
+  // Sophisticated notification structure
+  plannedNotificationStructure: json("planned_notification_structure").$type<{
+    enabled: boolean;
+    reminderCategory: "today" | "week" | "month" | "year" | "not_set";
+    repeatPattern: "none" | "hourly" | "daily" | "weekly" | "monthly" | "annual";
+    leadTimeNotifications: string[]; // e.g., ["1 hour before", "1 day before"]
+    customSchedule?: {
+      times: string[]; // specific times for repeating reminders
+      daysOfWeek?: number[]; // for weekly patterns
+      dayOfMonth?: number; // for monthly patterns
+      monthOfYear?: number; // for annual patterns
+    };
+  }>().default({
+    enabled: false,
+    reminderCategory: "not_set",
+    repeatPattern: "none",
+    leadTimeNotifications: []
+  }),
+  
+  // Enhanced reminder metadata
+  isActiveReminder: boolean("is_active_reminder").default(false), // Shows in Reminders section
+  lastNotificationSent: timestamp("last_notification_sent"),
+  nextNotificationDue: timestamp("next_notification_due"),
+  
   noteId: integer("note_id").notNull().references(() => notes.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

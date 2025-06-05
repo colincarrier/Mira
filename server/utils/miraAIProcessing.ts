@@ -48,9 +48,9 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 8. **KNOWLEDGE CONNECTIONS**: Related topics, required skills, needed resources
 
 **Classification Types:**
-- **REMINDER**: Time-sensitive, meant to resurface at the right moment
-- **TODO**: Requires action/follow-through, explicitly actionable
-- **COLLECTION**: Long-term memory, ideas, research, references
+- **REMINDER**: Time-sensitive items that need to resurface at specific moments. Should have clear timing (due dates, recurring patterns, or time dependencies). Always analyze for time-sensitivity cues.
+- **TODO**: Action-oriented items requiring follow-through. May have timing but emphasis is on completion rather than time-based alerts.
+- **COLLECTION**: Long-term memory, ideas, research, references without immediate time constraints.
 
 **Required JSON Output Structure:**
 {
@@ -60,7 +60,21 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
   "complexityScore": 1-10,
   "intentType": "simple-task|complex-project|research-inquiry|personal-reflection|reference-material",
   "urgencyLevel": "low|medium|high|critical",
-  "todos": ["array of specific actionable items if any"],
+  "todos": [
+    {
+      "title": "Specific actionable item",
+      "itemType": "todo|reminder",
+      "timeDue": "ISO timestamp or null",
+      "timeDependency": "none|sequential|parallel|contingent",
+      "plannedNotificationStructure": {
+        "enabled": true/false,
+        "reminderCategory": "today|week|month|year|not_set",
+        "repeatPattern": "none|hourly|daily|weekly|monthly|annual",
+        "leadTimeNotifications": ["1 hour before", "1 day before"]
+      },
+      "isActiveReminder": true/false
+    }
+  ],
   "taskHierarchy": [
     {
       "phase": "Phase name",
@@ -110,6 +124,16 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - Suggest meaningful collections and categories
 - Focus on adding genuine value and insight
 - Include predictive intelligence about success and obstacles
+
+**Time-Sensitivity Analysis Rules:**
+- Carefully analyze input for temporal cues: "tomorrow", "next week", "by Friday", "every morning", "annual", "daily"
+- Distinguish REMINDER vs TODO based on time-sensitivity:
+  * REMINDER: Has explicit timing, recurring patterns, or time-critical nature
+  * TODO: Action-focused, may have deadlines but emphasis is on completion
+- Set timeDue for any date/time references found in the input
+- Classify timeDependency based on sequence indicators in the content
+- Enable notifications for time-sensitive items and set appropriate reminderCategory
+- Mark isActiveReminder=true for items that should appear in Reminders section
 
 Now analyze this input and provide the complete JSON structure:
 """
