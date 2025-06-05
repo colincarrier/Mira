@@ -140,6 +140,11 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
   createdAt: true,
 });
 
+export const insertItemSchema = createInsertSchema(items).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
@@ -151,6 +156,8 @@ export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type Todo = typeof todos.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
+export type InsertItem = z.infer<typeof insertItemSchema>;
+export type Item = typeof items.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
@@ -165,6 +172,7 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
     references: [users.id],
   }),
   todos: many(todos),
+  items: many(items),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -180,9 +188,22 @@ export const todosRelations = relations(todos, ({ one }) => ({
 
 export const collectionsRelations = relations(collections, ({ many }) => ({
   notes: many(notes),
+  items: many(items),
+}));
+
+export const itemsRelations = relations(items, ({ one }) => ({
+  sourceNote: one(notes, {
+    fields: [items.sourceNoteId],
+    references: [notes.id],
+  }),
+  collection: one(collections, {
+    fields: [items.collectionId],
+    references: [collections.id],
+  }),
 }));
 
 export type NoteWithTodos = Note & {
   todos: Todo[];
   collection?: Collection;
+  items?: Item[];
 };
