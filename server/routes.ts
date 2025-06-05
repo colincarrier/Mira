@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema } from "@shared/schema";
 import { analyzeNote as analyzeWithOpenAI, transcribeAudio } from "./openai";
 import { analyzeNote as analyzeWithClaude } from "./anthropic";
-import { processMiraAIInput, type MiraAIInput, type MiraAIOutput } from "./utils/miraAIProcessing";
+// Both AI models now use the same Mira Brain prompt template directly
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -449,11 +449,10 @@ This profile was generated from your input and will help provide more personaliz
 
       console.log("Starting enhanced AI comparison with Mira Brain for content:", content.substring(0, 100));
 
-      // Process with all AI services in parallel including Mira Brain
-      const [openAIResult, claudeResult, miraResult] = await Promise.allSettled([
+      // Process with both AI services (both now use Mira Brain prompt)
+      const [openAIResult, claudeResult] = await Promise.allSettled([
         analyzeWithOpenAI(content, mode),
-        analyzeWithClaude(content, mode),
-        processWithMiraAI(content, mode)
+        analyzeWithClaude(content, mode)
       ]);
 
       const response = {
@@ -467,11 +466,6 @@ This profile was generated from your input and will help provide more personaliz
           success: claudeResult.status === 'fulfilled',
           result: claudeResult.status === 'fulfilled' ? claudeResult.value : null,
           error: claudeResult.status === 'rejected' ? claudeResult.reason?.message : null
-        },
-        mira: {
-          success: miraResult.status === 'fulfilled',
-          result: miraResult.status === 'fulfilled' ? miraResult.value : null,
-          error: miraResult.status === 'rejected' ? miraResult.reason?.message : null
         }
       };
 
@@ -715,8 +709,8 @@ Respond with a JSON object containing:
         });
       }
 
-      // Process with enhanced Mira AI Brain
-      processWithMiraAI(transcription, "voice")
+      // Process with Claude using Mira AI Brain
+      analyzeWithClaude(transcription, "voice")
         .then(async (analysis) => {
           apiUsageStats.claude.requests++;
           apiUsageStats.totalRequests++;

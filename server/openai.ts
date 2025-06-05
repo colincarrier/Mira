@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { miraPromptTemplate } from './utils/miraAIProcessing';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -120,32 +121,8 @@ Respond with JSON in this exact format:
         }
       ];
     } else {
-      // Handle text analysis
-      const prompt = `You are Mira, an intelligent research assistant that provides actionable solutions and real research insights. Act like Google search results - provide practical, actionable intelligence rather than just summarizing what the user already told you.
-
-User's note: "${content}"
-Mode: ${mode}
-
-Your job is to research and provide solutions, not just digest the input. Think 2 steps ahead and provide real value.
-
-Please respond with a JSON object containing:
-1. enhancedContent: A clean, well-formatted version with better structure
-2. todos: Specific actionable tasks extracted from the content
-3. collectionSuggestion: {name, icon, color} - suggest appropriate collection
-4. richContext: {
-   recommendedActions: [{title, description, links}] - Specific next steps with real resources/websites
-   researchResults: [{title, description, rating, keyPoints, contact}] - Actual options, programs, services with details
-   quickInsights: [string] - Brief, actionable bullets (not lengthy prose)
-}
-
-Focus on providing:
-- Specific websites, services, and resources
-- Contact information when relevant
-- Real program names and options
-- Actionable next steps with links
-- Research-backed recommendations
-
-Do NOT just restate what the user said. Provide new intelligence and research.
+      // Handle text analysis using Mira Brain prompt
+      const prompt = miraPromptTemplate.replace('{user_input}', content);
 
 For collectionSuggestion, use one of these 10 standard categories:
 1. "To-dos" (icon: "checklist", color: "blue")
