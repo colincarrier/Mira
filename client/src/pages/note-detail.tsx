@@ -17,8 +17,7 @@ export default function NoteDetail() {
   const [editedContent, setEditedContent] = useState('');
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
-  const [updateInput, setUpdateInput] = useState('');
-  const [showUpdateArea, setShowUpdateArea] = useState(true);
+
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,28 +80,7 @@ export default function NoteDetail() {
     }
   });
 
-  const evolveNoteMutation = useMutation({
-    mutationFn: async (evolutionInstruction: string) => {
-      const response = await apiRequest("POST", `/api/notes/${id}/evolve`, {
-        instruction: evolutionInstruction,
-        existingContent: note?.content,
-        existingContext: note?.aiContext,
-        existingTodos: note?.todos,
-        existingRichContext: note?.richContext,
-        noteId: id
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      toast({ title: "Note evolved successfully" });
-      setUpdateInput('');
-      setShowUpdateArea(false);
-    },
-    onError: () => {
-      toast({ title: "Failed to evolve note", variant: "destructive" });
-    }
-  });
+
 
   useEffect(() => {
     if (note) {
@@ -575,56 +553,7 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* Update/Evolution Area */}
-        {showUpdateArea && (
-          <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] px-4 py-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="w-5 h-5 text-[hsl(var(--sage-green))]" />
-                <h3 className="font-medium text-[hsl(var(--foreground))]">Evolve This Note</h3>
-              </div>
-              
-              <textarea
-                value={updateInput}
-                onChange={(e) => setUpdateInput(e.target.value)}
-                placeholder="Tell me how to improve, update, or evolve this note... 
 
-Examples:
-• Add more todos based on what I wrote
-• Check off completed items and suggest next steps  
-• Research this topic and add relevant details
-• Turn this into a proper action plan
-• Add missing information or clarify unclear parts
-• React to any links or info mentioned and suggest follow-ups"
-                className="w-full min-h-[120px] p-3 border border-[hsl(var(--border))] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))] text-sm"
-              />
-              
-              <div className="flex justify-between items-center">
-                <button
-                  onClick={() => {
-                    setShowUpdateArea(false);
-                    setUpdateInput('');
-                  }}
-                  className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                >
-                  Cancel
-                </button>
-                
-                <button
-                  onClick={() => {
-                    if (updateInput.trim()) {
-                      evolveNoteMutation.mutate(updateInput.trim());
-                    }
-                  }}
-                  disabled={!updateInput.trim() || evolveNoteMutation.isPending}
-                  className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white rounded-lg hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50 text-sm font-medium"
-                >
-                  {evolveNoteMutation.isPending ? 'Evolving...' : 'Evolve Note'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       {/* Input Bar - Same style as other pages */}
       <div 
@@ -673,21 +602,21 @@ Examples:
           ) : (
             <>
               <button 
-                onClick={() => setShowUpdateArea(true)}
+                onClick={() => fileInputRef.current?.click()}
                 className="w-8 h-8 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#f1efe8]"
                 title="PLUS BUTTON - Grey"
               >
                 <Plus className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setShowUpdateArea(true)}
+                onClick={() => fileInputRef.current?.click()}
                 className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                 style={{ backgroundColor: '#a8bfa1' }}
               >
                 <Camera className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setShowUpdateArea(true)}
+                onClick={() => fileInputRef.current?.click()}
                 className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                 style={{ backgroundColor: '#9bb8d3' }}
               >
