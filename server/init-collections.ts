@@ -1,11 +1,10 @@
 import { storage } from "./storage";
 
 const standardCollections = [
-  { name: "To-dos", icon: "checklist", color: "blue" },
   { name: "Personal", icon: "heart", color: "pink" },
   { name: "Home", icon: "home", color: "green" },
   { name: "Work", icon: "briefcase", color: "purple" },
-  { name: "Family", icon: "star", color: "yellow" },
+  { name: "Family", icon: "users", color: "yellow" },
   { name: "Books", icon: "book", color: "orange" },
   { name: "Movies & TV", icon: "play", color: "red" },
   { name: "Restaurants", icon: "utensils", color: "teal" },
