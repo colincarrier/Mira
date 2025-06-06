@@ -80,7 +80,7 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
   "urgencyLevel": "low|medium|high|critical",
   "todos": [
     {
-      "title": "Concise 1-2 line actionable item for quick scanning",
+      "title": "Newspaper headline style - 3-5 words max, no full sentences",
       "itemType": "todo|reminder",
       "timeDue": "ISO timestamp or null",
       "timeDependency": "none|sequential|parallel|contingent",
@@ -169,7 +169,7 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - Avoid "consider" or "think about" - focus on concrete next actions needed
 
 **Analysis Rules:**
-- Create concise 1-2 line titles that capture core essence for quick scanning
+- Create NEWSPAPER HEADLINE titles: 3-5 words maximum, no complete sentences
 - AVOID duplicate descriptions that mirror the title - only provide if genuinely adding context
 - Force categorization into existing collections (Personal, Home, Work) or 'Other' if unclear
 - Extract specific trackable items with rich metadata
