@@ -60,7 +60,8 @@ async function initializeAI() {
     console.warn("Anthropic module failed to load - AI features disabled:", error);
   }
 }
-// Both AI models now use the same Mira Brain prompt template directly
+// Import the new Mira AI processing system
+import { processMiraAIInput, type MiraAIInput } from "./utils/miraAIProcessing";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -342,13 +343,22 @@ This profile was generated from your input and will help provide more personaliz
         const useOpenAI = isOpenAIAvailable();
         console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
         
-        const analysisPromise = useOpenAI 
-          ? safeAnalyzeWithOpenAI(noteData.content, noteData.mode)
-          : safeAnalyzeWithClaude(noteData.content, noteData.mode);
-          
-        analysisPromise
+        const miraInput: MiraAIInput = {
+          content: noteData.content,
+          mode: noteData.mode as any,
+          timestamp: Date.now(),
+          context: {
+            timeOfDay: new Date().toLocaleTimeString(),
+          }
+        };
+
+        const aiAnalysisFunction = useOpenAI 
+          ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
+          : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
+
+        processMiraAIInput(miraInput, aiAnalysisFunction)
         .then(async (analysis) => {
-          console.log("AI analysis successful for note:", note.id, "Service:", useOpenAI ? "OpenAI" : "Claude");
+          console.log("Mira AI analysis successful for note:", note.id, "Service:", useOpenAI ? "OpenAI" : "Claude");
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
           
           // Track usage
@@ -363,40 +373,30 @@ This profile was generated from your input and will help provide more personaliz
           }
           apiUsageStats.totalRequests++;
           
-          // Update note with AI analysis
+          // Update note with enhanced title from Mira AI
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: analysis.suggestion,
+            aiSuggestion: analysis.description || analysis.suggestion,
             aiContext: analysis.context,
-            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            richContext: analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
             isProcessing: false,
           };
           
-          if (analysis.enhancedContent) {
-            updates.content = analysis.enhancedContent;
+          // Use concise title from Mira AI if available
+          if (analysis.title && analysis.title !== analysis.content) {
+            updates.content = analysis.title;
           }
           
           await storage.updateNote(note.id, updates);
-          console.log("Note updated successfully with AI analysis");
+          console.log("Note updated successfully with Mira AI analysis");
           
-          // Create todos if found
+          // Create todos from Mira AI analysis
           if (analysis.todos && analysis.todos.length > 0) {
             console.log("Creating", analysis.todos.length, "todos for note:", note.id);
             for (const todo of analysis.todos) {
-              // Handle both string and object format todos
-              let todoTitle: string;
-              if (typeof todo === 'string') {
-                todoTitle = todo;
-              } else if (typeof todo === 'object' && todo.title) {
-                todoTitle = todo.title;
-              } else {
-                console.log("Skipping invalid todo format:", todo);
-                continue;
-              }
-              
-              console.log("Creating todo with title:", todoTitle);
+              console.log("Creating todo with title:", todo);
               await storage.createTodo({
-                title: todoTitle,
+                title: todo,
                 noteId: note.id,
               });
             }

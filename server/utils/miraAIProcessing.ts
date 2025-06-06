@@ -26,16 +26,28 @@ export interface MiraAIInput {
 export interface MiraAIOutput {
   type: 'reminder' | 'todo' | 'collection';
   title: string;
-  description: string;
-  followUps?: string[];
-  layoutHint?: 'checklist' | 'calendar' | 'card' | 'timeline' | 'list';
-  notificationSchedule?: string[];
-  priority?: 'low' | 'medium' | 'high' | 'critical';
+  description?: string;
+  enhancedContent?: string;
+  suggestion?: string;
+  context?: string;
+  complexityScore?: number;
+  intentType?: string;
+  urgencyLevel?: string;
+  todos?: string[];
+  extractedItems?: any[];
   collectionSuggestion?: {
     name: string;
     icon: string;
     color: string;
   };
+  criticalQuestions?: string[];
+  predictiveNextSteps?: any;
+  priorityContext?: any;
+  richContext?: any;
+  followUps?: string[];
+  layoutHint?: 'checklist' | 'calendar' | 'card' | 'timeline' | 'list';
+  notificationSchedule?: string[];
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export const miraPromptTemplate = `
