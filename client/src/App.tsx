@@ -1,11 +1,8 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
 
-import { ErrorBoundary } from "@/components/error-boundary";
-
-import Home from "@/pages/home";
+import SimpleHome from "@/pages/simple-home";
 import NotFound from "@/pages/not-found";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
@@ -16,7 +13,7 @@ import DebugCollections from "@/pages/debug-collections";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={SimpleHome} />
       <Route path="/debug" component={DebugCollections} />
       <Route path="/note/:id" component={NoteDetail} />
       <Route path="/collection/:id" component={CollectionDetail} />
@@ -29,10 +26,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <Toaster />
-        <Router />
-      </ErrorBoundary>
+      <Router />
     </QueryClientProvider>
   );
 }
