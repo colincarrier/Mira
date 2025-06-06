@@ -510,7 +510,7 @@ export default function NoteDetail() {
 
         {/* AI Research Results - Embedded in document flow */}
         {note.richContext && (
-          <div className="bg-gray-50 mx-4 mb-6 rounded-lg border border-gray-200">
+          <div className="bg-gray-50 mx-4 mb-4 rounded-lg border border-gray-200">
             {(() => {
               try {
                 const richData = JSON.parse(note.richContext);
@@ -586,7 +586,7 @@ export default function NoteDetail() {
 
         {/* Todos */}
         {note.todos && note.todos.length > 0 && (
-          <div className="bg-yellow-50 mx-4 mb-6 rounded-lg border border-yellow-200">
+          <div className="bg-yellow-50 mx-4 mb-4 rounded-lg border border-yellow-200">
             <div className="p-4">
               <h4 className="font-medium text-gray-900 mb-3 text-base">Action Items</h4>
               <div className="space-y-2">
@@ -613,7 +613,7 @@ export default function NoteDetail() {
         )}
 
         {/* Document Metadata - Bottom of page */}
-        <div className="px-4 py-6 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
+        <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
           <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
           <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
         </div>
