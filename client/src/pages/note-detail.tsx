@@ -456,9 +456,9 @@ export default function NoteDetail() {
                           </div>
                           <div className="space-y-3">
                             {richData.researchResults.map((result: any, index: number) => (
-                              <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3">
+                              <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3 hover:border-[hsl(var(--accent))] transition-colors cursor-pointer" onClick={() => handleQuestionClick(result.title)}>
                                 <div className="flex items-start justify-between mb-2">
-                                  <h4 className="font-medium text-sm">{result.title}</h4>
+                                  <h4 className="font-medium text-sm text-blue-600 hover:text-blue-800">{result.title}</h4>
                                   {result.rating && (
                                     <div className="text-xs text-yellow-600 flex items-center gap-1">
                                       <span>★</span>
