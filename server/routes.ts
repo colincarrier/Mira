@@ -394,11 +394,37 @@ This profile was generated from your input and will help provide more personaliz
           if (analysis.todos && analysis.todos.length > 0) {
             console.log("Creating", analysis.todos.length, "todos for note:", note.id);
             for (const todo of analysis.todos) {
-              console.log("Creating todo with title:", todo);
-              await storage.createTodo({
-                title: todo,
+              // Handle both string and object format todos
+              let todoTitle: string;
+              let todoData: any = {
                 noteId: note.id,
-              });
+              };
+              
+              if (typeof todo === 'string') {
+                todoTitle = todo;
+                todoData.title = todoTitle;
+              } else if (typeof todo === 'object' && todo.title) {
+                todoTitle = todo.title;
+                todoData.title = todoTitle;
+                
+                // Add enhanced todo properties from Mira AI
+                if (todo.itemType === 'reminder') {
+                  todoData.itemType = 'reminder';
+                  todoData.isActiveReminder = todo.isActiveReminder || false;
+                }
+                if (todo.timeDue) {
+                  todoData.timeDue = new Date(todo.timeDue);
+                }
+                if (todo.plannedNotificationStructure) {
+                  todoData.plannedNotificationStructure = todo.plannedNotificationStructure;
+                }
+              } else {
+                console.log("Skipping invalid todo format:", todo);
+                continue;
+              }
+              
+              console.log("Creating todo with title:", todoTitle);
+              await storage.createTodo(todoData);
             }
           }
           

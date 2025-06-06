@@ -213,10 +213,34 @@ export async function processMiraAIInput(
  * Validate and sanitize AI output
  */
 export function validateMiraAIOutput(output: any): MiraAIOutput {
+  // Create a concise title from enhancedContent if no explicit title
+  let title = output.title || output.enhancedContent || 'Untitled';
+  
+  // If title is too long, create a concise version (1-2 lines max)
+  if (title.length > 80) {
+    const sentences = title.split(/[.!?]+/);
+    title = sentences[0].trim();
+    if (title.length > 80) {
+      title = title.slice(0, 77) + '...';
+    }
+  }
+
   return {
     type: ['reminder', 'todo', 'collection'].includes(output.type) ? output.type : 'collection',
-    title: output.title || 'Untitled',
-    description: output.description || '',
+    title: title,
+    description: output.description || output.suggestion,
+    enhancedContent: output.enhancedContent,
+    suggestion: output.suggestion,
+    context: output.context,
+    complexityScore: output.complexityScore,
+    intentType: output.intentType,
+    urgencyLevel: output.urgencyLevel,
+    todos: Array.isArray(output.todos) ? output.todos : [],
+    extractedItems: Array.isArray(output.extractedItems) ? output.extractedItems : [],
+    criticalQuestions: Array.isArray(output.criticalQuestions) ? output.criticalQuestions : [],
+    predictiveNextSteps: output.predictiveNextSteps,
+    priorityContext: output.priorityContext,
+    richContext: output.richContext,
     followUps: Array.isArray(output.followUps) ? output.followUps : undefined,
     layoutHint: output.layoutHint,
     notificationSchedule: Array.isArray(output.notificationSchedule) ? output.notificationSchedule : undefined,
