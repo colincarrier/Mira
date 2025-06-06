@@ -59,6 +59,8 @@
 
 ### Collections Organization:
 - ✅ Collections order: To-dos (top-left), Personal (top-right), Home (bottom-left), Work (bottom-right)
+- ✅ Individual line items display as todo-style clickable rows
+- ❌ Collection super note pages still not working consistently (routing/loading issues)
 
 ## Database and Performance Optimizations
 
