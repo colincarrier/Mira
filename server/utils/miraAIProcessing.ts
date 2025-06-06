@@ -144,7 +144,7 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
         "contact": "relevant contact if applicable"
       }
     ],
-    "quickInsights": ["specific actionable insights with concrete details"]
+    "quickInsights": ["actionable follow-up questions that help move forward - NOT considerations"]
   },
   "nextSteps": ["immediate specific next actions"],
   "timeToComplete": "realistic time estimate",
@@ -164,6 +164,9 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - Never return empty or null richContext
 - Generate authentic, specific content - no generic placeholders
 - Include contact information and authentic URLs when available
+- quickInsights MUST be forward-looking questions that need definitive answers to proceed
+- Questions should be single-line, paraphrased, and help move the task 2 steps ahead
+- Avoid "consider" or "think about" - focus on concrete next actions needed
 
 **Analysis Rules:**
 - Create concise 1-2 line titles that capture core essence for quick scanning

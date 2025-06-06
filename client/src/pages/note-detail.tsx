@@ -122,7 +122,7 @@ export default function NoteDetail() {
       console.log("Sending message for note update:", inputValue);
       setInputValue("");
       setIsTyping(false);
-      setShowUpdateArea(true);
+      // Handle input focus
     }
   };
 
@@ -489,22 +489,33 @@ export default function NoteDetail() {
                       </div>
                     )}
 
-                    {/* Quick Insights */}
+                    {/* Follow-up Questions */}
                     {richData.quickInsights && richData.quickInsights.length > 0 && (
                       <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
                         <div className="px-4 py-6">
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">3</span>
+                            <div className="w-5 h-5 bg-orange-500 rounded flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">?</span>
                             </div>
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Key Considerations</h3>
+                            <h3 className="font-medium text-[hsl(var(--foreground))]">Next Steps</h3>
                           </div>
                           <div className="grid gap-2">
-                            {richData.quickInsights.map((insight: string, index: number) => (
-                              <div key={index} className="text-sm p-2 bg-purple-50 border-l-2 border-purple-400 rounded-r">
-                                {insight}
-                              </div>
-                            ))}
+                            {richData.quickInsights.map((insight: string, index: number) => {
+                              // Convert insights to actionable questions
+                              const question = insight.includes('?') ? insight : `${insight}?`;
+                              const questionText = question.replace('?', '');
+                              
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => setInputValue(`${questionText}:`)}
+                                  className="text-sm p-3 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-left"
+                                >
+                                  <span className="text-orange-600 mr-2">→</span>
+                                  {question}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -587,7 +598,7 @@ export default function NoteDetail() {
           {isTyping ? (
             <>
               <button 
-                onClick={() => setShowUpdateArea(true)}
+                onClick={() => {}}
                 className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
               >
                 <Plus className="w-4 h-4" />
