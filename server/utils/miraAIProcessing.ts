@@ -162,6 +162,7 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - Create concise 1-2 line titles that capture core essence for quick scanning
 - Only provide descriptions/summaries if title lacks essential context or for complex projects
 - Force categorization into existing collections (Personal, Home, Work) or 'Other' if unclear
+- MANDATORY: Generate comprehensive richContext with actual research data, specific recommendations, and authentic links
 - Extract specific trackable items with rich metadata (restaurant: phone/address/reviews, books: summaries/purchase links, products: prices/reviews)
 - Pull authentic internet links and rich media wherever possible with high confidence
 - Think two steps ahead: anticipate user's next action and the step after that
@@ -169,6 +170,7 @@ You are Mira, an AI-powered personal assistant with superhuman intelligence, imp
 - AI determines most important additional fields based on input richness and reminder type
 - For extractedItems, include only concrete, specific items that can be tracked individually
 - Use appropriate categories: book, movie, restaurant, product, place, person, concept
+- ALWAYS populate richContext with actual recommendations, research findings, and actionable insights
 
 **Time-Sensitivity Analysis Rules:**
 - Carefully analyze input for temporal cues: "tomorrow", "next week", "by Friday", "every morning", "annual", "daily"
@@ -240,7 +242,7 @@ export function validateMiraAIOutput(output: any): MiraAIOutput {
     criticalQuestions: Array.isArray(output.criticalQuestions) ? output.criticalQuestions : [],
     predictiveNextSteps: output.predictiveNextSteps,
     priorityContext: output.priorityContext,
-    richContext: output.richContext,
+    richContext: output.richContext || output.priorityContext?.richContext,
     followUps: Array.isArray(output.followUps) ? output.followUps : undefined,
     layoutHint: output.layoutHint,
     notificationSchedule: Array.isArray(output.notificationSchedule) ? output.notificationSchedule : undefined,

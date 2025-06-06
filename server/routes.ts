@@ -376,9 +376,10 @@ This profile was generated from your input and will help provide more personaliz
           // Update note with AI enhancements but preserve original content
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: analysis.description || analysis.suggestion,
-            aiContext: analysis.context,
-            richContext: analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
+            aiSuggestion: analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion,
+            aiContext: analysis.context || analysis.enhancedContent,
+            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : 
+                        analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
             isProcessing: false,
           };
           
