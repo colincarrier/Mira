@@ -373,7 +373,7 @@ This profile was generated from your input and will help provide more personaliz
           }
           apiUsageStats.totalRequests++;
           
-          // Update note with enhanced title from Mira AI
+          // Update note with AI enhancements but preserve original content
           const updates: any = {
             aiEnhanced: true,
             aiSuggestion: analysis.description || analysis.suggestion,
@@ -382,10 +382,7 @@ This profile was generated from your input and will help provide more personaliz
             isProcessing: false,
           };
           
-          // Use concise title from Mira AI if available
-          if (analysis.title && analysis.title !== analysis.content) {
-            updates.content = analysis.title;
-          }
+          // DO NOT overwrite original content - keep user's exact input
           
           await storage.updateNote(note.id, updates);
           console.log("Note updated successfully with Mira AI analysis");
@@ -403,20 +400,20 @@ This profile was generated from your input and will help provide more personaliz
               if (typeof todo === 'string') {
                 todoTitle = todo;
                 todoData.title = todoTitle;
-              } else if (typeof todo === 'object' && todo.title) {
-                todoTitle = todo.title;
+              } else if (typeof todo === 'object' && (todo as any).title) {
+                todoTitle = (todo as any).title;
                 todoData.title = todoTitle;
                 
                 // Add enhanced todo properties from Mira AI
-                if (todo.itemType === 'reminder') {
+                if ((todo as any).itemType === 'reminder') {
                   todoData.itemType = 'reminder';
-                  todoData.isActiveReminder = todo.isActiveReminder || false;
+                  todoData.isActiveReminder = (todo as any).isActiveReminder || false;
                 }
-                if (todo.timeDue) {
-                  todoData.timeDue = new Date(todo.timeDue);
+                if ((todo as any).timeDue) {
+                  todoData.timeDue = new Date((todo as any).timeDue);
                 }
-                if (todo.plannedNotificationStructure) {
-                  todoData.plannedNotificationStructure = todo.plannedNotificationStructure;
+                if ((todo as any).plannedNotificationStructure) {
+                  todoData.plannedNotificationStructure = (todo as any).plannedNotificationStructure;
                 }
               } else {
                 console.log("Skipping invalid todo format:", todo);
