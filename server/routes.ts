@@ -1108,11 +1108,6 @@ Provide a concise, actionable response that adds value beyond just the task titl
   // Collections endpoints
   app.get("/api/collections", async (req, res) => {
     try {
-      // Add cache-busting headers
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-      
       const collections = await storage.getCollections();
       const collectionsWithCounts = await Promise.all(
         collections.map(async (collection) => {
