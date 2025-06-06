@@ -15,6 +15,7 @@ export default function NoteDetail() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [editedTitle, setEditedTitle] = useState('');
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
 
@@ -85,8 +86,14 @@ export default function NoteDetail() {
   useEffect(() => {
     if (note) {
       setEditedContent(note.content);
+      setEditedTitle(note.content.split('\n')[0] || 'Untitled Note');
     }
   }, [note]);
+
+  const handleQuestionClick = (question: string) => {
+    setInputValue(question);
+    setIsTyping(true);
+  };
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -286,7 +293,20 @@ export default function NoteDetail() {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">Note Details</h1>
+              <input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={() => {
+                  // Update note with new title if changed
+                  if (editedTitle !== note.content.split('\n')[0]) {
+                    const newContent = editedTitle + '\n' + note.content.split('\n').slice(1).join('\n');
+                    updateNoteMutation.mutate({ content: newContent });
+                  }
+                }}
+                className="text-lg font-semibold bg-transparent border-none outline-none focus:bg-white focus:border focus:border-blue-300 rounded px-2 py-1"
+                placeholder="Note Title"
+              />
               {!note.aiEnhanced && (
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
@@ -339,63 +359,22 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* Note Content */}
-        <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-          <div className="px-4 py-6 space-y-4 bg-[#f5f5f5]">
-            <div>
-              {isEditing ? (
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full min-h-[120px] p-3 border border-[hsl(var(--border))] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sage-green))] bg-[hsl(var(--background))]"
-                  placeholder="Edit your note..."
-                />
-              ) : (
-                <div className="text-[hsl(var(--foreground))] leading-relaxed">
-                  {renderEnhancedContent(note.content)}
-                </div>
-              )}
-              
-              {isEditing && (
-                <div className="flex justify-end gap-2 mt-3">
-                  <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditedContent(note?.content || '');
-                    }}
-                    className="px-3 py-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      updateNoteMutation.mutate({ content: editedContent });
-                    }}
-                    disabled={updateNoteMutation.isPending}
-                    className="px-3 py-1 text-sm bg-[hsl(var(--sage-green))] text-white rounded-md hover:bg-[hsl(var(--sage-green))]/90 disabled:opacity-50"
-                  >
-                    {updateNoteMutation.isPending ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Metadata */}
-            <div className="flex items-center gap-4 text-sm text-[hsl(var(--muted-foreground))] pt-3 border-t border-[hsl(var(--border))]">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>{note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</span>
-              </div>
-              {note.mode && (
-                <div className="flex items-center gap-1">
-                  {note.mode === 'standard' && <MessageSquare className="w-4 h-4" aria-label="Text input" />}
-                  {note.mode === 'voice' && <Mic className="w-4 h-4" aria-label="Voice input" />}
-                  {note.mode === 'camera' && <Camera className="w-4 h-4" aria-label="Camera input" />}
-                  {note.mode === 'file' && <File className="w-4 h-4" aria-label="File upload" />}
-                </div>
-              )}
-
-            </div>
+        {/* Document Body - Editable like iOS Notes */}
+        <div className="flex-1 bg-white min-h-screen">
+          <div className="px-4 py-6">
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              onBlur={() => {
+                // Auto-save on blur if content changed
+                if (editedContent !== note.content) {
+                  updateNoteMutation.mutate({ content: editedContent });
+                }
+              }}
+              className="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400"
+              placeholder="Start writing..."
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+            />
           </div>
         </div>
 
@@ -529,40 +508,115 @@ export default function NoteDetail() {
           </div>
         )}
 
+        {/* AI Research Results - Embedded in document flow */}
+        {note.richContext && (
+          <div className="bg-gray-50 mx-4 mb-6 rounded-lg border border-gray-200">
+            {(() => {
+              try {
+                const richData = JSON.parse(note.richContext);
+                return (
+                  <div className="p-4 space-y-4">
+                    {/* Research Results */}
+                    {richData.researchResults && richData.researchResults.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 text-base">Research Findings</h4>
+                        <div className="space-y-3">
+                          {richData.researchResults.map((result: any, index: number) => (
+                            <div 
+                              key={index} 
+                              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer" 
+                              onClick={() => handleQuestionClick(result.title)}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <h5 className="font-medium text-blue-600 hover:text-blue-800 text-sm">{result.title}</h5>
+                                {result.rating && (
+                                  <div className="text-xs text-yellow-600 flex items-center gap-1">
+                                    <span>★</span>
+                                    <span>{result.rating}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{result.description}</p>
+                              {result.keyPoints && (
+                                <ul className="space-y-1 mb-2">
+                                  {result.keyPoints.map((point: string, pointIndex: number) => (
+                                    <li key={pointIndex} className="text-xs text-gray-500 flex items-start gap-1">
+                                      <span className="text-green-500">•</span>
+                                      {point}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                              {result.contact && (
+                                <div className="text-xs text-gray-500 mt-2">
+                                  Contact: {result.contact}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Follow-up Questions */}
+                    {richData.quickInsights && richData.quickInsights.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 text-base">Next Questions</h4>
+                        <div className="space-y-2">
+                          {richData.quickInsights.map((insight: string, index: number) => (
+                            <button
+                              key={index}
+                              onClick={() => handleQuestionClick(insight)}
+                              className="block w-full text-left p-3 bg-blue-50 border border-blue-200 rounded-lg hover:border-blue-300 transition-colors text-sm text-blue-800"
+                            >
+                              {insight}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              } catch (e) {
+                return null;
+              }
+            })()}
+          </div>
+        )}
+
         {/* Todos */}
         {note.todos && note.todos.length > 0 && (
-          <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-            <div className="px-4 py-6">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[hsl(var(--coral-accent))] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckSquare className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium mb-3">Action Items</h3>
-                  <div className="space-y-2">
-                    {note.todos.map((todo: Todo) => (
-                      <div key={todo.id} className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleTodoMutation.mutate(todo)}
-                          className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            todo.completed 
-                              ? 'bg-[hsl(var(--sage-green))] border-[hsl(var(--sage-green))]' 
-                              : 'border-[hsl(var(--border))]'
-                          }`}
-                        >
-                          {todo.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                        </button>
-                        <span className={`text-sm ${todo.completed ? 'line-through text-[hsl(var(--muted-foreground))]' : ''}`}>
-                          {todo.title}
-                        </span>
-                      </div>
-                    ))}
+          <div className="bg-yellow-50 mx-4 mb-6 rounded-lg border border-yellow-200">
+            <div className="p-4">
+              <h4 className="font-medium text-gray-900 mb-3 text-base">Action Items</h4>
+              <div className="space-y-2">
+                {note.todos.map((todo: Todo) => (
+                  <div key={todo.id} className="flex items-center gap-3">
+                    <button
+                      onClick={() => toggleTodoMutation.mutate(todo)}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                        todo.completed 
+                          ? 'bg-green-500 border-green-500' 
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {todo.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                    </button>
+                    <span className={`text-sm ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                      {todo.title}
+                    </span>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
+
+        {/* Document Metadata - Bottom of page */}
+        <div className="px-4 py-6 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
+          <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
+          <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
+        </div>
 
 
       </div>
