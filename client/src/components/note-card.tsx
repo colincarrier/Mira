@@ -396,7 +396,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         <h3 className={`text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))] ${
           formattedContent.description || formattedContent.hasStructure ? 'line-clamp-1' : 'line-clamp-3'
         }`}>
-          {note.aiSuggestion || formattedContent.title}
+          {note.todos && note.todos.length > 0 ? note.todos[0].title : formattedContent.title}
         </h3>
         
         {/* Description or bullets - smaller, single-spaced */}
@@ -409,6 +409,10 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </li>
             ))}
           </ul>
+        ) : note.aiContext ? (
+          <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
+            {note.aiContext}
+          </p>
         ) : formattedContent.description ? (
           <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
             {formattedContent.description}
@@ -427,11 +431,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <span className="text-xs text-[hsl(var(--muted-foreground))]">0:45</span>
         </div>
       )}
-      {note.aiSuggestion && (
-        <div className="rounded-xl p-3 mb-3 bg-[#f6f7f282]">
-          <p className="text-sm text-[hsl(var(--foreground))]">{note.aiSuggestion}</p>
-        </div>
-      )}
+
       {/* Follow-up Questions */}
       {followUpQuestions.length > 0 && (
         <div className="pt-3 border-t border-[hsl(var(--border))]">
