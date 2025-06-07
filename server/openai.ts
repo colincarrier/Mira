@@ -80,7 +80,7 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
     
     if (isImageContent && mode === 'image') {
       // Handle image analysis with enhanced prompt
-      const imagePrompt = miraPromptTemplate.replace('{user_input}', 'Analyze this image and provide comprehensive insights.');
+      const imagePrompt = 'Analyze this image and provide comprehensive insights.';
 
       messages = [
         {
@@ -105,7 +105,7 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
       ];
     } else {
       // Handle text analysis using enhanced Mira Brain prompt
-      const prompt = miraPromptTemplate.replace('{user_input}', content);
+      const prompt = `Analyze this content and provide structured analysis: ${content}`;
       
       console.log("OpenAI analysis with enhanced Mira Brain prompt");
       

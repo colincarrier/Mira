@@ -84,7 +84,7 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = miraPromptTemplate.replace('{user_input}', content);
+    const prompt = `Analyze this content and provide structured analysis: ${content}`;
 
     console.log("Claude analysis with enhanced Mira Brain prompt");
 

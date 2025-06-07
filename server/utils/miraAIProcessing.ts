@@ -122,25 +122,26 @@ For image analysis:
  */
 export async function processMiraInput(input: MiraAIInput): Promise<MiraAIOutput> {
   try {
-    // Select appropriate template based on input analysis
-    const template = selectTemplate(input);
+    // Create structured prompt with universal template
+    const structuredPrompt = createStructuredPrompt(input);
     
     // Route to appropriate AI service
     let result;
     
     if (input.mode === 'image' && input.imageData) {
       // Use OpenAI GPT-4o for image analysis
-      result = await analyzeImageWithOpenAI(input.imageData, input.content);
+      const openaiModule = await import("../openai");
+      result = await openaiModule.analyzeImageContent(input.imageData, structuredPrompt);
     } else if (input.content.length > 1000 || input.mode === 'file') {
       // Use Claude for complex text analysis
       result = await analyzeWithClaude(input.content, 'enhanced');
     } else {
-      // Use OpenAI for simple text analysis with template
+      // Use OpenAI for simple text analysis
       const openaiModule = await import("../openai");
       result = await openaiModule.analyzeWithOpenAI(input.content, 'quick');
     }
     
-    // Enforce title constraints
+    // Enforce universal structure constraints
     const processedResult = enforceStructure(result);
     
     return processedResult;
@@ -158,6 +159,16 @@ export async function processMiraInput(input: MiraAIInput): Promise<MiraAIOutput
       complexityScore: 1,
     };
   }
+}
+
+/**
+ * Create Structured Prompt with Universal Template
+ */
+function createStructuredPrompt(input: MiraAIInput): string {
+  const template = selectTemplate(input);
+  return `${template}
+
+Content to analyze: "${input.content}"`;
 }
 
 /**
