@@ -371,7 +371,7 @@ export default function NoteDetail() {
                   updateNoteMutation.mutate({ content: editedContent });
                 }
               }}
-              className="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400"
+              className="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-10"
               placeholder="Start writing..."
               style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
             />
