@@ -1182,11 +1182,18 @@ Respond with JSON:
           .then(async (analysis) => {
             console.log("Mira AI analysis successful for voice note:", note.id);
             
+            // DEBUG: Check if analysis contains prompt
+            if (analysis.enhancedContent && analysis.enhancedContent.includes("You are Mira")) {
+              console.error("CRITICAL: AI analysis contains prompt instead of results for note", note.id);
+              console.log("Analysis keys:", Object.keys(analysis));
+              return; // Skip updating note to prevent corruption
+            }
+            
             apiUsageStats.claude.requests++;
             apiUsageStats.totalRequests++;
             
             // Clean up suggestion to avoid storing prompt text
-            let cleanSuggestion = analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion || "";
+            let cleanSuggestion = analysis.title || analysis.description || analysis.suggestion || "";
             if (cleanSuggestion && (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200)) {
               cleanSuggestion = "";
             }

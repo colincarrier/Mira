@@ -155,8 +155,14 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
     }
 
     // Return the complete AIAnalysisResult structure
+    // NEVER return AI prompt as enhancedContent - preserve original user content
+    let cleanEnhancedContent = result.enhancedContent;
+    if (cleanEnhancedContent && cleanEnhancedContent.includes("You are Mira")) {
+      cleanEnhancedContent = content; // Fallback to original content
+    }
+    
     return {
-      enhancedContent: result.enhancedContent || content,
+      enhancedContent: cleanEnhancedContent || content,
       suggestion: cleanSuggestion,
       context: result.context || "General content analysis.",
       complexityScore: result.complexityScore || 5,
