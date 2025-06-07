@@ -618,6 +618,118 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
+  app.post("/api/notes/media", upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'file', maxCount: 1 },
+    { name: 'audio', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      const { content, mode, hasVoiceContext } = req.body;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      // Build note content from text context and AI identification
+      let noteContent = content || '';
+      
+      // Handle media files
+      let mediaUrl = null;
+      let audioUrl = null;
+      
+      // Process image
+      if (files.image && files.image[0]) {
+        const { saveAudioFile } = require("./file-storage");
+        const savedFile = await saveAudioFile(files.image[0].buffer, files.image[0].originalname);
+        mediaUrl = savedFile.url;
+        
+        if (!noteContent.trim()) {
+          noteContent = `Image captured: ${files.image[0].originalname}`;
+        }
+      }
+      
+      // Process general file
+      if (files.file && files.file[0]) {
+        const { saveAudioFile } = require("./file-storage");
+        const savedFile = await saveAudioFile(files.file[0].buffer, files.file[0].originalname);
+        mediaUrl = savedFile.url;
+        
+        if (!noteContent.trim()) {
+          noteContent = `File uploaded: ${files.file[0].originalname}`;
+        }
+      }
+      
+      // Process voice context
+      if (files.audio && files.audio[0]) {
+        const { saveAudioFile } = require("./file-storage");
+        const savedAudio = await saveAudioFile(files.audio[0].buffer, `context-${Date.now()}.webm`);
+        audioUrl = savedAudio.url;
+      }
+      
+      // Create note with media
+      const noteData = {
+        content: noteContent,
+        mode: mode || 'mixed',
+        audioUrl: audioUrl,
+        mediaUrl: mediaUrl,
+        isProcessing: true
+      };
+      
+      const note = await storage.createNote(noteData);
+      
+      // Process with AI if content exists
+      if (noteContent.trim()) {
+        const useOpenAI = isOpenAIAvailable();
+        
+        const miraInput: MiraAIInput = {
+          content: noteContent,
+          mode: noteData.mode as any,
+          timestamp: Date.now(),
+          context: {
+            timeOfDay: new Date().toLocaleTimeString(),
+            hasMedia: !!mediaUrl,
+            hasVoiceContext: !!audioUrl
+          }
+        };
+
+        const aiAnalysisFunction = useOpenAI 
+          ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
+          : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
+
+        processMiraAIInput(miraInput, aiAnalysisFunction)
+        .then(async (analysis: any) => {
+          const cleanSuggestion = analysis.suggestion?.replace(/^["']|["']$/g, '');
+          
+          const updates: any = {
+            aiEnhanced: true,
+            aiSuggestion: cleanSuggestion,
+            aiContext: analysis.context || analysis.enhancedContent,
+            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            isProcessing: false,
+          };
+          
+          await storage.updateNote(note.id, updates);
+          
+          // Create todos
+          if (analysis.todos && analysis.todos.length > 0) {
+            for (const todo of analysis.todos) {
+              if (typeof todo === 'string') {
+                await storage.createTodo({ noteId: note.id, title: todo });
+              } else if (todo.title) {
+                await storage.createTodo({ noteId: note.id, title: todo.title });
+              }
+            }
+          }
+        })
+        .catch((error: any) => {
+          console.error("Error processing media note with AI:", error);
+        });
+      }
+      
+      res.json(note);
+    } catch (error) {
+      console.error("Media note creation error:", error);
+      res.status(500).json({ message: "Failed to create media note" });
+    }
+  });
+
   app.post("/api/reprocess-notes", async (req, res) => {
     try {
       const { reprocessAllNotes } = await import("./reprocess-notes");

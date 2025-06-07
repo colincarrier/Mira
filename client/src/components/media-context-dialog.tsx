@@ -76,7 +76,10 @@ export default function MediaContextDialog({
       if (response.ok) {
         const analysis = await response.json();
         setAiIdentification(analysis.identification || "");
-        setContextText(analysis.suggestedContext || "");
+        // Only set suggested context if user hasn't typed anything yet
+        if (!contextText.trim()) {
+          setContextText(analysis.suggestedContext || "");
+        }
       }
     } catch (error) {
       console.error('Media analysis failed:', error);
@@ -155,9 +158,10 @@ export default function MediaContextDialog({
     mutationFn: async () => {
       const formData = new FormData();
       
-      // Add context text if provided
-      if (contextText.trim()) {
-        formData.append('content', contextText.trim());
+      // Add context text and AI identification
+      const finalContent = [aiIdentification, contextText].filter(Boolean).join('\n\n').trim();
+      if (finalContent) {
+        formData.append('content', finalContent);
       }
       
       // Add media based on type
@@ -181,7 +185,7 @@ export default function MediaContextDialog({
         formData.append('hasVoiceContext', 'true');
       }
       
-      const response = await fetch('/api/notes', {
+      const response = await fetch('/api/notes/media', {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -306,38 +310,47 @@ export default function MediaContextDialog({
           {/* Media Preview */}
           {getMediaPreview()}
           
-          {/* Text Context Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Add text context (optional)
-            </label>
-            <Textarea
-              ref={textareaRef}
-              value={contextText}
-              onChange={(e) => setContextText(e.target.value)}
-              placeholder="Describe what this media is about, add notes, or ask questions..."
-              className="min-h-[80px] resize-none"
-            />
-          </div>
+          {/* AI Identification Display */}
+          {aiIdentification && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>AI Analysis:</strong> {aiIdentification}
+              </div>
+            </div>
+          )}
           
-          {/* Voice Context */}
+          {/* Text Context Input with integrated microphone */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Or add voice context (optional)
+              Add context
             </label>
+            <div className="relative">
+              <Textarea
+                ref={textareaRef}
+                value={contextText}
+                onChange={(e) => setContextText(e.target.value)}
+                placeholder="Describe what this media is about, add notes, or ask questions..."
+                className="min-h-[80px] resize-none pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                className={`absolute top-2 right-2 h-8 w-8 p-0 ${
+                  isRecording 
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400' 
+                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                }`}
+              >
+                <Mic className={`w-4 h-4 ${isRecording ? 'animate-pulse' : ''}`} />
+              </Button>
+            </div>
             
-            {!audioBlob && (
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-                  className="flex items-center gap-2"
-                >
-                  <Mic className="w-4 h-4" />
-                  {isRecording ? `Stop (${formatTime(recordingTime)})` : 'Record Voice Context'}
-                </Button>
+            {isRecording && (
+              <div className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                Recording: {formatTime(recordingTime)}
               </div>
             )}
             
