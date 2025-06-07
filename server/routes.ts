@@ -696,10 +696,10 @@ This profile was generated from your input and will help provide more personaliz
           const imageBase64 = files.image[0].buffer.toString('base64');
           console.log("Base64 length:", imageBase64.length);
           
-          // Use specialized image analysis
-          if (isClaudeAvailable() && imageBase64.length > 0) {
-            console.log("Using Claude for image analysis");
-            const { analyzeImageContent } = await import('./anthropic');
+          // Use specialized image analysis with GPT-4o (superior visual recognition)
+          if (isOpenAIAvailable() && imageBase64.length > 0) {
+            console.log("Using GPT-4o for image analysis");
+            const { analyzeImageContent } = await import('./openai');
             analyzeImageContent(imageBase64, noteContent)
             .then(async (analysis: any) => {
               const updates: any = {
@@ -726,8 +726,28 @@ This profile was generated from your input and will help provide more personaliz
               console.error("Error analyzing image:", error);
               storage.updateNote(note.id, { isProcessing: false });
             });
+          } else if (isClaudeAvailable() && imageBase64.length > 0) {
+            console.log("Fallback to Claude for image analysis");
+            const { analyzeImageContent } = await import('./anthropic');
+            analyzeImageContent(imageBase64, noteContent)
+            .then(async (analysis: any) => {
+              const updates: any = {
+                content: analysis.enhancedContent || noteContent,
+                aiEnhanced: true,
+                aiSuggestion: analysis.suggestion,
+                aiContext: analysis.context,
+                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                isProcessing: false,
+              };
+              
+              await storage.updateNote(note.id, updates);
+            })
+            .catch((error: any) => {
+              console.error("Error analyzing image with Claude:", error);
+              storage.updateNote(note.id, { isProcessing: false });
+            });
           } else {
-            // Fallback for when Claude is not available
+            // No AI available for image analysis
             storage.updateNote(note.id, { 
               content: "Image Upload Complete",
               isProcessing: false 
