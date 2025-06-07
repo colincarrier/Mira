@@ -63,18 +63,65 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' },
+      console.log('Starting camera...');
+      
+      // First try with back camera preference
+      let constraints = { 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: false 
-      });
-      if (videoRef.current) {
+      };
+      
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (backCameraError) {
+        console.log('Back camera failed, trying any camera:', backCameraError);
+        // Fallback to any available camera
+        constraints = { 
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false 
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      
+      console.log('Camera stream obtained:', stream);
+      
+      if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
+        
+        // Add event listeners for debugging
+        videoRef.current.addEventListener('loadedmetadata', () => {
+          console.log('Video metadata loaded');
+        });
+        
+        videoRef.current.addEventListener('canplay', () => {
+          console.log('Video can play');
+        });
+        
+        videoRef.current.addEventListener('error', (e) => {
+          console.error('Video element error:', e);
+        });
+        
+        // Manually trigger play
+        try {
+          await videoRef.current.play();
+          console.log('Video playing successfully');
+        } catch (playError) {
+          console.error('Video play error:', playError);
+        }
       }
     } catch (error) {
       console.error('Camera access error:', error);
       toast({
         title: "Camera Error",
-        description: "Could not access camera. Please check permissions.",
+        description: "Could not access camera. Please check permissions and ensure you're using HTTPS.",
         variant: "destructive",
       });
     }
@@ -292,7 +339,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover bg-gray-900"
+            style={{ 
+              minHeight: '100vh',
+              minWidth: '100vw'
+            }}
+            onLoadedMetadata={() => console.log('Video metadata loaded - dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)}
+            onCanPlay={() => console.log('Video can play')}
+            onError={(e) => console.error('Video error:', e)}
           />
           <canvas ref={canvasRef} className="hidden" />
           
