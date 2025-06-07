@@ -13,6 +13,7 @@ export const notes = pgTable("notes", {
   privacyLevel: text("privacy_level").default("private"), // 'private', 'shared', 'public'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   audioUrl: text("audio_url"),
+  mediaUrl: text("media_url"), // URL to uploaded media files (images, documents, etc.)
   transcription: text("transcription"),
   imageData: text("image_data"), // Base64 encoded image data
   aiEnhanced: boolean("ai_enhanced").default(false),

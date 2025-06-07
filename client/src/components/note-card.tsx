@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
+import MediaDisplay from "@/components/media-display";
 
 interface NoteCardProps {
   note: NoteWithTodos;
@@ -421,6 +422,18 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </p>
         ) : null}
       </div>
+
+      {/* Media Display - Thumbnail for note cards */}
+      {note.mediaUrl && (
+        <div className="mb-3">
+          <MediaDisplay 
+            mediaUrl={note.mediaUrl} 
+            className="max-h-32 w-auto rounded-lg"
+            showControls={false}
+          />
+        </div>
+      )}
+
       {note.mode === "voice" && note.transcription && (
         <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">
           <button className="w-8 h-8 rounded-full bg-[hsl(var(--ocean-blue))] flex items-center justify-center">
