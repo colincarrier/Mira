@@ -386,6 +386,99 @@ export default function NoteDetail() {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <>
+                    {/* From the Web Section */}
+                    {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">🌐</span>
+                            </div>
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">From the Web</h3>
+                          </div>
+                          <div className="space-y-4">
+                            {richData.fromTheWeb.map((item: any, index: number) => (
+                              <div 
+                                key={index} 
+                                className="p-4 bg-[hsl(var(--muted))] rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] cursor-pointer transition-colors"
+                                onClick={() => item.url && window.open(item.url, '_blank')}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="font-medium text-[hsl(var(--foreground))] line-clamp-2">{item.title}</h4>
+                                  {item.rating && (
+                                    <span className="text-xs text-[hsl(var(--muted-foreground))] bg-yellow-100 px-2 py-1 rounded-full ml-2 whitespace-nowrap">
+                                      ⭐ {item.rating}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-[hsl(var(--muted-foreground))] mb-3 line-clamp-2">
+                                  {item.description}
+                                </p>
+                                {item.keyPoints && item.keyPoints.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {item.keyPoints.slice(0, 3).map((point: string, pointIndex: number) => (
+                                      <span key={pointIndex} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        {point}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {item.source && (
+                                  <div className="flex justify-between items-center text-xs text-[hsl(var(--muted-foreground))]">
+                                    <span>{item.source}</span>
+                                    {item.lastUpdated && <span>{item.lastUpdated}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Next Steps Section */}
+                    {richData.nextSteps && richData.nextSteps.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">→</span>
+                            </div>
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Next Steps</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {richData.nextSteps.map((step: string, index: number) => (
+                              <div key={index} className="flex items-start gap-3 p-3 bg-[hsl(var(--muted))] rounded-lg">
+                                <span className="text-sm font-medium text-purple-600 mt-0.5">{index + 1}.</span>
+                                <p className="text-sm text-[hsl(var(--foreground))] flex-1">{step}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Key Insights Section */}
+                    {richData.keyInsights && richData.keyInsights.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="w-5 h-5 bg-orange-500 rounded flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">💡</span>
+                            </div>
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Key Insights</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {richData.keyInsights.map((insight: string, index: number) => (
+                              <div key={index} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg">
+                                <p className="text-sm text-[hsl(var(--foreground))]">{insight}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Recommended Actions */}
                     {richData.recommendedActions && richData.recommendedActions.length > 0 && (
                       <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
