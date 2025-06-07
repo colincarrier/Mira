@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
+import MediaDisplay from "@/components/media-display";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -361,7 +362,18 @@ export default function NoteDetail() {
 
         {/* Document Body - Editable like iOS Notes */}
         <div className="flex-1 bg-white min-h-screen">
-          <div className="px-4 py-6">
+          <div className="px-4 py-6 space-y-6">
+            {/* Media Display - Full functionality with sharing and download */}
+            {note.mediaUrl && (
+              <div className="mb-6">
+                <MediaDisplay 
+                  mediaUrl={note.mediaUrl} 
+                  filename={note.mediaUrl.split('/').pop()} 
+                  showControls={true}
+                />
+              </div>
+            )}
+
             <textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
