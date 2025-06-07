@@ -691,10 +691,14 @@ This profile was generated from your input and will help provide more personaliz
       if (noteContent.trim()) {
         // Special handling for image analysis
         if (files.image && files.image[0]) {
+          console.log("Processing image with specialized visual recognition");
+          console.log("Image buffer size:", files.image[0].buffer.length);
           const imageBase64 = files.image[0].buffer.toString('base64');
+          console.log("Base64 length:", imageBase64.length);
           
           // Use specialized image analysis
-          if (isClaudeAvailable()) {
+          if (isClaudeAvailable() && imageBase64.length > 0) {
+            console.log("Using Claude for image analysis");
             const { analyzeImageContent } = await import('./anthropic');
             analyzeImageContent(imageBase64, noteContent)
             .then(async (analysis: any) => {
