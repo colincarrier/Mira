@@ -77,10 +77,7 @@ export default function MediaContextDialog({
       if (response.ok) {
         const analysis = await response.json();
         setAiIdentification(analysis.identification || "");
-        // Only set suggested context if user hasn't typed anything yet
-        if (!userHasTyped && !contextText.trim()) {
-          setContextText(analysis.suggestedContext || "");
-        }
+        // AI analysis stays separate - never populate user's text field
       }
     } catch (error) {
       console.error('Media analysis failed:', error);
@@ -159,10 +156,12 @@ export default function MediaContextDialog({
     mutationFn: async () => {
       const formData = new FormData();
       
-      // Add context text and AI identification
-      const finalContent = [aiIdentification, contextText].filter(Boolean).join('\n\n').trim();
-      if (finalContent) {
-        formData.append('content', finalContent);
+      // Send AI analysis and user context separately
+      if (aiIdentification) {
+        formData.append('aiAnalysis', aiIdentification);
+      }
+      if (contextText.trim()) {
+        formData.append('userContext', contextText.trim());
       }
       
       // Add media based on type
@@ -313,21 +312,28 @@ export default function MediaContextDialog({
           {/* Media Preview */}
           {getMediaPreview()}
           
-          {/* AI Analysis Display - Shows immediately when available */}
-          {(isAnalyzing || aiIdentification) && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          {/* AI Analysis Display - Non-editable */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              AI Analysis
+            </label>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 min-h-[60px]">
               {isAnalyzing ? (
                 <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   Analyzing image...
                 </div>
-              ) : (
+              ) : aiIdentification ? (
                 <div className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>AI Analysis:</strong> {aiIdentification}
+                  {aiIdentification}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-400 dark:text-gray-500">
+                  AI analysis will appear here...
                 </div>
               )}
             </div>
-          )}
+          </div>
           
           {/* Voice Recording Status */}
           {isRecording && (
@@ -363,8 +369,11 @@ export default function MediaContextDialog({
             </div>
           )}
           
-          {/* Text Input Bar - Styled like main input bar */}
-          <div className="relative">
+          {/* User Context Input - Separate from AI analysis */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Your Context (Optional)
+            </label>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-2">
               <input
                 ref={textareaRef}
@@ -373,7 +382,7 @@ export default function MediaContextDialog({
                   setContextText(e.target.value);
                   setUserHasTyped(true);
                 }}
-                placeholder="Add context about this media..."
+                placeholder="Add your own notes or context about this media..."
                 className="flex-1 bg-transparent border-0 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {

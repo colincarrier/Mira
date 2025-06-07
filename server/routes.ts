@@ -625,11 +625,22 @@ This profile was generated from your input and will help provide more personaliz
     { name: 'audio', maxCount: 1 }
   ]), async (req, res) => {
     try {
-      const { content, mode, hasVoiceContext } = req.body;
+      const { content, mode, hasVoiceContext, aiAnalysis, userContext } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
-      // Build note content from text context and AI identification
-      let noteContent = content || '';
+      // Build note content from AI analysis and user context separately
+      let noteContent = '';
+      if (aiAnalysis) {
+        noteContent = aiAnalysis;
+      }
+      if (userContext && userContext.trim()) {
+        noteContent = noteContent ? `${noteContent}\n\n**Your Notes:**\n${userContext.trim()}` : userContext.trim();
+      }
+      
+      // Fallback to legacy content field if new fields not provided
+      if (!noteContent && content) {
+        noteContent = content;
+      }
       
       // Handle media files
       let mediaUrl = null;
