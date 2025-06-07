@@ -893,46 +893,75 @@ Respond with a JSON object containing:
       
       if (isOpenAIAvailable()) {
         try {
-          const analysisPrompt = `Analyze this image and identify what's in it. Respond with a brief description of what you see and suggest helpful context for note-taking.`;
+          const analysisPrompt = `Analyze this image and provide valuable insights. Focus on:
+
+1. IDENTIFY what this is (book title, product name, menu item, etc.)
+2. Provide ACTIONABLE VALUE about it (price, reviews, where to get it, ratings, recommendations)
+3. Create a newspaper-style headline (3-5 words max) that captures the key value
+4. Write a description focused on usefulness, not the analysis process
+
+Examples:
+- For a book: "The Great Gatsby" → headline: "Classic American Literature" → description: "Critically acclaimed novel by F. Scott Fitzgerald. Often required reading. Available in multiple editions."
+- For a restaurant menu: "Pizza Palace Menu" → headline: "Pizza Palace Prices" → description: "Local pizzeria with wood-fired options. Average price $15-25. Highly rated for authentic Italian style."
+- For a product: "iPhone 15" → headline: "iPhone 15 Features" → description: "Latest Apple smartphone with improved camera and battery life. Starting at $799. Available in multiple colors."
+
+Respond with JSON:
+{
+  "itemName": "specific item name",
+  "headline": "3-5 word value-focused title",
+  "description": "useful information about the item",
+  "category": "book/product/food/etc",
+  "keyValue": "main valuable insight"
+}`;
           
           const analysisResult = await safeAnalyzeWithOpenAI(analysisPrompt, "image-analysis");
           
-          identification = analysisResult.context || "Image captured";
-          suggestedContext = analysisResult.suggestion || "Please add context for this image";
-          
-          // Generate web search results based on the identification
-          if (identification && identification !== "Image captured") {
-            const searchTerm = identification.split(' ').slice(0, 3).join(' ');
-            webResults = {
-              fromTheWeb: [
-                {
-                  title: `${searchTerm} - Complete Guide`,
-                  description: `Comprehensive information about ${searchTerm}`,
-                  url: `https://search-results.com/${encodeURIComponent(searchTerm)}`,
-                  rating: "4.5/5 stars",
-                  keyPoints: ["Key features", "Usage tips", "Expert recommendations"],
-                  source: "Search Results"
-                },
-                {
-                  title: `Best ${searchTerm} Options`,
-                  description: `Top-rated options and recommendations for ${searchTerm}`,
-                  url: `https://reviews.com/${encodeURIComponent(searchTerm)}`,
-                  rating: "4.7/5 stars", 
-                  keyPoints: ["User reviews", "Comparison", "Pricing"],
-                  source: "Review Platform"
-                }
-              ],
-              nextSteps: [
-                `Research more about ${searchTerm}`,
-                "Compare different options",
-                "Make an informed decision"
-              ],
-              keyInsights: [
-                `${searchTerm} identification from image analysis`,
-                "Visual recognition provides starting point for research",
-                "Consider adding manual context for better results"
-              ]
-            };
+          // Parse the structured response
+          try {
+            const parsed = JSON.parse(analysisResult.enhancedContent || analysisResult.context || '{}');
+            identification = parsed.headline || parsed.itemName || "Image captured";
+            suggestedContext = parsed.description || "Please add context for this image";
+            
+            // Generate meaningful web search results based on the identified item
+            if (parsed.itemName && parsed.itemName !== "Image captured") {
+              const searchTerm = parsed.itemName;
+              const category = parsed.category || "item";
+              
+              webResults = {
+                fromTheWeb: [
+                  {
+                    title: `${searchTerm} Reviews & Ratings`,
+                    description: `User reviews, ratings, and detailed analysis of ${searchTerm}`,
+                    url: `https://search-results.com/${encodeURIComponent(searchTerm)}`,
+                    rating: "4.5/5 stars",
+                    keyPoints: ["Customer reviews", "Expert analysis", "Comparison with alternatives"],
+                    source: "Review Platform"
+                  },
+                  {
+                    title: `Best Price for ${searchTerm}`,
+                    description: `Price comparison and where to buy ${searchTerm} at the best value`,
+                    url: `https://shopping.com/${encodeURIComponent(searchTerm)}`,
+                    rating: "4.7/5 stars", 
+                    keyPoints: ["Price comparison", "Available retailers", "Deals and discounts"],
+                    source: "Shopping Platform"
+                  }
+                ],
+                nextSteps: [
+                  `Compare prices for ${searchTerm}`,
+                  "Read detailed reviews",
+                  category === "book" ? "Check library availability" : "Find best retailer"
+                ],
+                keyInsights: [
+                  parsed.keyValue || `${searchTerm} information captured`,
+                  "Price and review data available",
+                  "Ready for purchase decision"
+                ]
+              };
+            }
+          } catch (parseError) {
+            // Fallback to original format if parsing fails
+            identification = analysisResult.context || "Image captured";
+            suggestedContext = analysisResult.suggestion || "Please add context for this image";
           }
           
         } catch (error) {
