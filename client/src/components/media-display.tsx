@@ -54,6 +54,17 @@ export default function MediaDisplay({ mediaUrl, filename, className = "", showC
             className={`rounded-lg object-cover cursor-pointer ${className}`}
             style={{ maxHeight: '200px', width: 'auto' }}
             onClick={() => setIsFullScreenOpen(true)}
+            onError={(e) => {
+              console.error('Image failed to load:', mediaUrl);
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.parentElement?.insertAdjacentHTML('afterbegin', 
+                '<div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500">Image failed to load</div>'
+              );
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', mediaUrl);
+            }}
           />
           {showControls && (
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">

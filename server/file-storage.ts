@@ -23,8 +23,22 @@ export async function saveAudioFile(
   mimeType: string = 'audio/webm'
 ): Promise<SavedFile> {
   try {
-    // Generate unique filename
-    const fileExtension = path.extname(originalName) || '.webm';
+    // Generate unique filename with proper extension
+    let fileExtension = path.extname(originalName);
+    
+    // If no extension, derive from MIME type
+    if (!fileExtension) {
+      if (mimeType.startsWith('image/')) {
+        fileExtension = mimeType.includes('png') ? '.png' : '.jpg';
+      } else if (mimeType.startsWith('audio/')) {
+        fileExtension = '.webm';
+      } else if (mimeType.includes('pdf')) {
+        fileExtension = '.pdf';
+      } else {
+        fileExtension = '.bin';
+      }
+    }
+    
     const filename = `${randomUUID()}${fileExtension}`;
     const filepath = path.join(UPLOADS_DIR, filename);
     
@@ -39,8 +53,8 @@ export async function saveAudioFile(
       mimeType
     };
   } catch (error) {
-    console.error('Error saving audio file:', error);
-    throw new Error('Failed to save audio file');
+    console.error('Error saving file:', error);
+    throw new Error('Failed to save file');
   }
 }
 

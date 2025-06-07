@@ -648,7 +648,11 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process image
       if (files.image && files.image[0]) {
-        const savedFile = await saveAudioFile(files.image[0].buffer, files.image[0].originalname);
+        const savedFile = await saveAudioFile(
+          files.image[0].buffer, 
+          files.image[0].originalname || 'image.jpg',
+          files.image[0].mimetype || 'image/jpeg'
+        );
         mediaUrl = savedFile.url;
         
         if (!noteContent.trim()) {
