@@ -544,6 +544,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         isOpen={isVoiceRecorderOpen} 
         onClose={() => setIsVoiceRecorderOpen(false)} 
       />
+
+      {/* Media Context Dialog */}
+      <MediaContextDialog
+        isOpen={showMediaDialog}
+        onClose={() => setShowMediaDialog(false)}
+        mediaType="camera"
+        capturedImage={capturedImageData}
+      />
     </div>
   );
 }
