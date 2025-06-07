@@ -62,7 +62,7 @@ async function initializeAI() {
   }
 }
 // Import the new Mira AI processing system
-import { processMiraAIInput, type MiraAIInput } from "./utils/miraAIProcessing";
+import { processMiraInput, type MiraAIInput } from "./utils/miraAIProcessing";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -366,64 +366,25 @@ This profile was generated from your input and will help provide more personaliz
         const miraInput: MiraAIInput = {
           content: noteData.content,
           mode: noteData.mode as any,
-          timestamp: Date.now(),
-          context: {
-            timeOfDay: new Date().toLocaleTimeString(),
-          }
         };
 
-        const aiAnalysisFunction = useOpenAI 
-          ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
-          : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
-
-        processMiraAIInput(miraInput, aiAnalysisFunction)
+        processMiraInput(miraInput)
         .then(async (analysis) => {
-          console.log("Mira AI analysis successful for note:", note.id, "Service:", useOpenAI ? "OpenAI" : "Claude");
+          console.log("Mira AI analysis successful for note:", note.id);
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
           
           // Track usage
-          if (useOpenAI) {
-            apiUsageStats.openai.requests++;
-            apiUsageStats.openai.tokens += 1000;
-            apiUsageStats.openai.cost += 0.02;
-          } else {
-            apiUsageStats.claude.requests++;
-            apiUsageStats.claude.tokens += 1200;
-            apiUsageStats.claude.cost += 0.015;
-          }
           apiUsageStats.totalRequests++;
           
-          // Clean up suggestion to avoid storing prompt text
-          let cleanSuggestion = analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion || "";
-          if (cleanSuggestion && (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200)) {
-            cleanSuggestion = "";
-          }
-
-          // Extract title from analysis but never overwrite original content
-          let noteTitle = "";
-          if (analysis.title && !analysis.title.includes("You are Mira")) {
-            noteTitle = analysis.title.substring(0, 100); // Limit title length
-          }
-
-          // Update note with AI enhancements but NEVER overwrite original content
+          // Update note with structured AI results - use title as content
           const updates: any = {
+            content: analysis.title, // Replace with newspaper-style title
             aiEnhanced: true,
-            aiSuggestion: cleanSuggestion,
-            aiContext: analysis.context || analysis.enhancedContent,
-            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : 
-                        analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
-            isProcessing: false,
+            aiSuggestion: analysis.suggestion || "",
+            aiContext: analysis.context || "",
+            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            isProcessing: false
           };
-          
-          // Only update content if we have a valid AI title and original content is not already set
-          if (noteTitle && noteTitle.length > 0 && noteTitle.length < 100 && !noteTitle.includes("You are Mira")) {
-            // For voice notes, preserve transcribed content and use AI title only if content is very short
-            if (noteData.content && noteData.content.length > noteTitle.length) {
-              // Keep original content, don't overwrite with title
-            } else {
-              updates.content = noteTitle;
-            }
-          }
           
           await storage.updateNote(note.id, updates);
           console.log("Note updated successfully with Mira AI analysis");

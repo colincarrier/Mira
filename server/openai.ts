@@ -3,7 +3,6 @@
 // See AI_MODIFICATION_RULES.md for modification protocol.
 
 import OpenAI from "openai";
-import { miraPromptTemplate } from './utils/miraAIProcessing';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
