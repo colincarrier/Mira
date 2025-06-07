@@ -86,13 +86,21 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
             }}
           />
           {text.trim() ? (
-            <button 
-              onClick={handleSubmit}
-              disabled={createNoteMutation.isPending}
-              className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            <>
+              <button 
+                onClick={() => {/* TODO: Add media picker functionality */}}
+                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={handleSubmit}
+                disabled={createNoteMutation.isPending}
+                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </>
           ) : (
             <>
               <button 
