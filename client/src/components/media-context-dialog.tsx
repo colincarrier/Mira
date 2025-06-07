@@ -22,6 +22,7 @@ export default function MediaContextDialog({
   selectedFile
 }: MediaContextDialogProps) {
   const [contextText, setContextText] = useState("");
+  const [userHasTyped, setUserHasTyped] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -77,7 +78,7 @@ export default function MediaContextDialog({
         const analysis = await response.json();
         setAiIdentification(analysis.identification || "");
         // Only set suggested context if user hasn't typed anything yet
-        if (!contextText.trim()) {
+        if (!userHasTyped && !contextText.trim()) {
           setContextText(analysis.suggestedContext || "");
         }
       }
@@ -219,6 +220,8 @@ export default function MediaContextDialog({
 
   const handleClose = () => {
     setContextText("");
+    setUserHasTyped(false);
+    setAiIdentification("");
     setAudioBlob(null);
     setRecordingTime(0);
     if (isRecording) {
@@ -328,7 +331,10 @@ export default function MediaContextDialog({
               <Textarea
                 ref={textareaRef}
                 value={contextText}
-                onChange={(e) => setContextText(e.target.value)}
+                onChange={(e) => {
+                  setContextText(e.target.value);
+                  setUserHasTyped(true);
+                }}
                 placeholder="Describe what this media is about, add notes, or ask questions..."
                 className="min-h-[80px] resize-none pr-12"
               />

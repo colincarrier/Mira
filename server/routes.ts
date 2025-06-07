@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemSchema } from "@shared/schema";
+import { saveAudioFile } from "./file-storage";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
@@ -636,7 +637,6 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process image
       if (files.image && files.image[0]) {
-        const { saveAudioFile } = require("./file-storage");
         const savedFile = await saveAudioFile(files.image[0].buffer, files.image[0].originalname);
         mediaUrl = savedFile.url;
         
@@ -647,7 +647,6 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process general file
       if (files.file && files.file[0]) {
-        const { saveAudioFile } = require("./file-storage");
         const savedFile = await saveAudioFile(files.file[0].buffer, files.file[0].originalname);
         mediaUrl = savedFile.url;
         
@@ -658,7 +657,6 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process voice context
       if (files.audio && files.audio[0]) {
-        const { saveAudioFile } = require("./file-storage");
         const savedAudio = await saveAudioFile(files.audio[0].buffer, `context-${Date.now()}.webm`);
         audioUrl = savedAudio.url;
       }
