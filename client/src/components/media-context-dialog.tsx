@@ -25,6 +25,8 @@ export default function MediaContextDialog({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiIdentification, setAiIdentification] = useState<string>("");
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -39,7 +41,49 @@ export default function MediaContextDialog({
     if (isOpen && textareaRef.current) {
       setTimeout(() => textareaRef.current?.focus(), 100);
     }
-  }, [isOpen]);
+    
+    // Auto-analyze media when dialog opens
+    if (isOpen && (capturedImage || selectedFile)) {
+      analyzeMediaContent();
+    }
+  }, [isOpen, capturedImage, selectedFile]);
+
+  const analyzeMediaContent = async () => {
+    if (!capturedImage && !selectedFile) return;
+    
+    setIsAnalyzing(true);
+    
+    try {
+      const formData = new FormData();
+      
+      if (capturedImage) {
+        // Convert base64 to blob for analysis
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+        formData.append('image', blob, 'capture.jpg');
+      } else if (selectedFile) {
+        formData.append('image', selectedFile);
+      }
+      
+      formData.append('analyzeOnly', 'true');
+      
+      const response = await fetch('/api/analyze-media', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const analysis = await response.json();
+        setAiIdentification(analysis.identification || "");
+        setContextText(analysis.suggestedContext || "");
+      }
+    } catch (error) {
+      console.error('Media analysis failed:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     return () => {

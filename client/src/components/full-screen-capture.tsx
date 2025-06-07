@@ -105,19 +105,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       if (blob) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          const base64 = (e.target?.result as string)?.split(',')[1];
-          if (base64) {
-            createNote({
-              content: noteText || 'Photo captured',
-              mode: 'smart'
-            });
-            
-            setNoteText('');
-            onClose();
-            toast({
-              title: "Photo saved",
-              description: "Your photo has been added to your notes.",
-            });
+          const capturedDataUrl = e.target?.result as string;
+          if (capturedDataUrl) {
+            setCapturedImageData(capturedDataUrl);
+            setShowMediaDialog(true);
           }
         };
         reader.readAsDataURL(blob);
