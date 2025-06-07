@@ -639,21 +639,30 @@ This profile was generated from your input and will help provide more personaliz
     { name: 'audio', maxCount: 1 }
   ]), async (req, res) => {
     try {
+      console.log("Media upload request received");
+      console.log("Body fields:", Object.keys(req.body));
+      console.log("Files:", req.files ? Object.keys(req.files) : 'none');
+      
       const { content, mode, hasVoiceContext, aiAnalysis, userContext } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
+      // Validate we have at least one file
+      if (!files || Object.keys(files).length === 0) {
+        return res.status(400).json({ message: "No files provided" });
+      }
+      
       // Build note content from AI analysis and user context separately
       let noteContent = '';
-      if (aiAnalysis) {
-        noteContent = aiAnalysis;
+      if (aiAnalysis && typeof aiAnalysis === 'string' && aiAnalysis.trim()) {
+        noteContent = aiAnalysis.trim();
       }
-      if (userContext && userContext.trim()) {
+      if (userContext && typeof userContext === 'string' && userContext.trim()) {
         noteContent = noteContent ? `${noteContent}\n\n**Your Notes:**\n${userContext.trim()}` : userContext.trim();
       }
       
       // Fallback to legacy content field if new fields not provided
-      if (!noteContent && content) {
-        noteContent = content;
+      if (!noteContent && content && typeof content === 'string') {
+        noteContent = content.trim();
       }
       
       // Handle media files
@@ -684,10 +693,46 @@ This profile was generated from your input and will help provide more personaliz
         }
       }
       
-      // Process voice context
+      // Process voice context with proper error handling
       if (files.audio && files.audio[0]) {
-        const savedAudio = await saveAudioFile(files.audio[0].buffer, `context-${Date.now()}.webm`);
-        audioUrl = savedAudio.url;
+        try {
+          console.log("Processing voice context audio, size:", files.audio[0].buffer.length);
+          const savedAudio = await saveAudioFile(files.audio[0].buffer, `context-${Date.now()}.webm`);
+          audioUrl = savedAudio.url;
+          console.log("Voice context saved:", audioUrl);
+          
+          // Transcribe voice context if available
+          if (isOpenAIAvailable()) {
+            try {
+              const transcription = await safeTranscribeAudio(files.audio[0].buffer);
+              console.log("Voice context transcribed:", transcription.substring(0, 100));
+              
+              // Add transcribed voice context to note content
+              if (transcription && transcription.trim()) {
+                noteContent = noteContent ? 
+                  `${noteContent}\n\n**Voice Context:**\n${transcription.trim()}` : 
+                  `**Voice Context:**\n${transcription.trim()}`;
+              }
+            } catch (transcriptionError) {
+              console.error("Voice context transcription failed:", transcriptionError);
+              // Continue without transcription
+            }
+          }
+        } catch (audioError) {
+          console.error("Voice context processing failed:", audioError);
+          // Continue without audio
+        }
+      }
+      
+      // Ensure we have some content for the note
+      if (!noteContent || !noteContent.trim()) {
+        if (files.image && files.image[0]) {
+          noteContent = "📷 Image uploaded";
+        } else if (files.file && files.file[0]) {
+          noteContent = `📎 File: ${files.file[0].originalname}`;
+        } else {
+          noteContent = "📎 Media uploaded";
+        }
       }
       
       // Create note with media
@@ -696,8 +741,14 @@ This profile was generated from your input and will help provide more personaliz
         mode: mode || 'mixed',
         audioUrl: audioUrl,
         mediaUrl: mediaUrl,
-        isProcessing: true
+        isProcessing: !!noteContent.trim()
       };
+      
+      console.log("Creating note with data:", { 
+        contentLength: noteContent.length, 
+        hasAudio: !!audioUrl, 
+        hasMedia: !!mediaUrl 
+      });
       
       const note = await storage.createNote(noteData);
       
@@ -820,10 +871,24 @@ This profile was generated from your input and will help provide more personaliz
         await storage.updateNote(note.id, { isProcessing: false });
       }
       
+      console.log("Media note created successfully:", note.id);
       res.json(note);
     } catch (error) {
       console.error("Media note creation error:", error);
-      res.status(500).json({ message: "Failed to create media note" });
+      console.error("Error stack:", error.stack);
+      console.error("Request body keys:", Object.keys(req.body));
+      console.error("Files received:", req.files ? Object.keys(req.files) : 'none');
+      
+      // Provide specific error details for mobile debugging
+      let errorMessage = "Failed to create media note";
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      res.status(500).json({ 
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 
