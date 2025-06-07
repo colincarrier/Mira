@@ -777,6 +777,9 @@ This profile was generated from your input and will help provide more personaliz
               storage.updateNote(note.id, { isProcessing: false });
             });
         }
+      } else {
+        // If no content to process, just mark as not processing
+        await storage.updateNote(note.id, { isProcessing: false });
       }
       
       res.json(note);
