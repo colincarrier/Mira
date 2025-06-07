@@ -373,10 +373,16 @@ This profile was generated from your input and will help provide more personaliz
           }
           apiUsageStats.totalRequests++;
           
+          // Clean up suggestion to avoid storing prompt text
+          let cleanSuggestion = analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion || "";
+          if (cleanSuggestion && (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200)) {
+            cleanSuggestion = "";
+          }
+
           // Update note with AI enhancements but preserve original content
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion,
+            aiSuggestion: cleanSuggestion,
             aiContext: analysis.context || analysis.enhancedContent,
             richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : 
                         analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
@@ -830,9 +836,15 @@ Respond with a JSON object containing:
             apiUsageStats.claude.requests++;
             apiUsageStats.totalRequests++;
             
+            // Clean up suggestion to avoid storing prompt text
+            let cleanSuggestion = analysis.suggestion || "";
+            if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
+              cleanSuggestion = "";
+            }
+
             const updates: any = {
               aiEnhanced: true,
-              aiSuggestion: analysis.suggestion,
+              aiSuggestion: cleanSuggestion,
               aiContext: analysis.context,
             };
             
@@ -1002,9 +1014,15 @@ Respond with a JSON object containing:
 
       analyzeWithOpenAI(fileContent, "file")
         .then(async (analysis) => {
+          // Clean up suggestion to avoid storing prompt text
+          let cleanSuggestion = analysis.suggestion || "";
+          if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
+            cleanSuggestion = "";
+          }
+
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: analysis.suggestion,
+            aiSuggestion: cleanSuggestion,
             aiContext: analysis.context,
           };
           
