@@ -848,23 +848,39 @@ Respond with a JSON object containing:
         });
       }
 
-      // Process with Claude using Mira AI Brain (non-blocking)
+      // Process with enhanced Mira AI Brain (non-blocking)
       if (isClaudeAvailable()) {
-        safeAnalyzeWithClaude(transcription, "voice")
+        const miraInput: MiraAIInput = {
+          content: transcription,
+          mode: "voice",
+          timestamp: Date.now(),
+          context: {
+            timeOfDay: new Date().toLocaleTimeString(),
+          }
+        };
+
+        const aiAnalysisFunction = (prompt: string) => safeAnalyzeWithClaude(prompt, "voice");
+
+        processMiraAIInput(miraInput, aiAnalysisFunction)
           .then(async (analysis) => {
+            console.log("Mira AI analysis successful for voice note:", note.id);
+            
             apiUsageStats.claude.requests++;
             apiUsageStats.totalRequests++;
             
             // Clean up suggestion to avoid storing prompt text
-            let cleanSuggestion = analysis.suggestion || "";
-            if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
+            let cleanSuggestion = analysis.title || analysis.enhancedContent || analysis.description || analysis.suggestion || "";
+            if (cleanSuggestion && (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200)) {
               cleanSuggestion = "";
             }
 
             const updates: any = {
               aiEnhanced: true,
               aiSuggestion: cleanSuggestion,
-              aiContext: analysis.context,
+              aiContext: analysis.context || analysis.enhancedContent,
+              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : 
+                          analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
+              isProcessing: false,
             };
             
             if (analysis.enhancedContent) {
@@ -874,11 +890,33 @@ Respond with a JSON object containing:
             await storage.updateNote(note.id, updates);
             
             // Create todos if found
-            for (const todoTitle of analysis.todos) {
-              await storage.createTodo({
-                title: todoTitle,
-                noteId: note.id,
-              });
+            console.log("Creating", analysis.todos?.length || 0, "todos for voice note:", note.id);
+            if (analysis.todos && analysis.todos.length > 0) {
+              for (const todo of analysis.todos) {
+                const todoTitle = typeof todo === 'string' ? todo : todo.title || 'Untitled Task';
+                console.log("Creating todo with title:", todoTitle);
+                
+                const todoData: any = {
+                  title: todoTitle,
+                  noteId: note.id,
+                };
+
+                // Add enhanced todo properties if available
+                if (typeof todo === 'object' && todo !== null) {
+                  if (todo.itemType) todoData.itemType = todo.itemType;
+                  if (todo.priority) todoData.priority = todo.priority;
+                  if (todo.timeDue) todoData.timeDue = todo.timeDue;
+                  if (todo.timeDependency) todoData.timeDependency = todo.timeDependency;
+                  if (todo.plannedNotificationStructure) {
+                    todoData.plannedNotificationStructure = todo.plannedNotificationStructure;
+                  }
+                  if (todo.isActiveReminder !== undefined) {
+                    todoData.isActiveReminder = todo.isActiveReminder;
+                  }
+                }
+
+                await storage.createTodo(todoData);
+              }
             }
             
             // Create collection if suggested

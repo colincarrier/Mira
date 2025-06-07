@@ -3,6 +3,7 @@ import { Camera, Mic, X, Send, ArrowLeft, Settings } from 'lucide-react';
 import { useNotes } from '@/hooks/use-notes';
 import { useToast } from '@/hooks/use-toast';
 import IOSVoiceRecorder from '@/components/ios-voice-recorder';
+import MediaContextDialog from '@/components/media-context-dialog';
 
 interface FullScreenCaptureProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [audioLevels, setAudioLevels] = useState<number[]>([]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
+  const [showMediaDialog, setShowMediaDialog] = useState(false);
+  const [capturedImageData, setCapturedImageData] = useState<string>("");
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
