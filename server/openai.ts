@@ -136,10 +136,16 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
     
     console.log("OpenAI analysis completed successfully");
     
+    // Clean up suggestion to avoid returning prompt text
+    let cleanSuggestion = result.suggestion || "";
+    if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
+      cleanSuggestion = "";
+    }
+
     // Return complete AIAnalysisResult structure
     return {
       enhancedContent: result.enhancedContent || content,
-      suggestion: result.suggestion || "No specific suggestions available.",
+      suggestion: cleanSuggestion,
       context: result.context || "General content analysis.",
       complexityScore: result.complexityScore || 5,
       intentType: result.intentType || 'simple-task',

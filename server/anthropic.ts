@@ -148,10 +148,16 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
 
     console.log("Claude analysis completed successfully");
 
+    // Clean up suggestion to avoid returning prompt text
+    let cleanSuggestion = result.suggestion || "";
+    if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
+      cleanSuggestion = "";
+    }
+
     // Return the complete AIAnalysisResult structure
     return {
       enhancedContent: result.enhancedContent || content,
-      suggestion: result.suggestion || "No specific suggestions available.",
+      suggestion: cleanSuggestion,
       context: result.context || "General content analysis.",
       complexityScore: result.complexityScore || 5,
       intentType: result.intentType || 'personal-reflection',

@@ -396,7 +396,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         <h3 className={`text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))] ${
           formattedContent.description || formattedContent.hasStructure ? 'line-clamp-1' : 'line-clamp-3'
         }`}>
-          {note.todos && note.todos.length > 0 ? note.todos[0].title : formattedContent.title}
+          {note.todos && note.todos.length > 0 ? note.todos[0].title : 
+           (note.aiSuggestion && !note.aiSuggestion.includes('You are Mira') && note.aiSuggestion.length < 100) ? 
+           note.aiSuggestion : formattedContent.title}
         </h3>
         
         {/* Description or bullets - smaller, single-spaced */}
