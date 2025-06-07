@@ -23,7 +23,20 @@ export interface MiraAIOutput {
   context: string; // Brief contextual summary (1-2 sentences)
   
   // TASK STRUCTURE
-  todos: string[]; // Extracted actionable items
+  todos: Array<{
+    title: string;
+    itemType?: 'task' | 'reminder';
+    priority?: 'low' | 'medium' | 'high' | 'critical';
+    timeDue?: string; // ISO date string
+    timeDependency?: 'none' | 'sequential' | 'parallel';
+    plannedNotificationStructure?: {
+      enabled: boolean;
+      reminderCategory: 'today' | 'tomorrow' | 'this-week' | 'later';
+      repeatPattern: 'none' | 'daily' | 'weekly' | 'monthly';
+      leadTimeNotifications: string[];
+    };
+    isActiveReminder?: boolean;
+  }>;
   
   // INTELLIGENCE INSIGHTS
   intentType: 'simple-task' | 'complex-project' | 'research-inquiry' | 'personal-reflection' | 'reference-material';
@@ -38,8 +51,39 @@ export interface MiraAIOutput {
       description: string;
       links?: Array<{ title: string; url: string }>;
     }>;
+    researchResults?: Array<{
+      title: string;
+      description: string;
+      rating?: string;
+      keyPoints: string[];
+      contact?: string;
+    }>;
     quickInsights: string[];
+    fromTheWeb?: Array<{
+      title: string;
+      url: string;
+      summary: string;
+    }>;
   };
+  
+  // INDIVIDUAL ITEM EXTRACTION
+  extractedItems?: Array<{
+    title: string;
+    description?: string;
+    category: string;
+    metadata?: Record<string, any>;
+  }>;
+  
+  // PREDICTIVE INTELLIGENCE
+  nextSteps?: string[];
+  timeToComplete?: string;
+  successFactors?: string[];
+  potentialObstacles?: string[];
+  
+  // KNOWLEDGE CONNECTIONS
+  relatedTopics?: string[];
+  skillsRequired?: string[];
+  resourcesNeeded?: string[];
   
   // COLLECTION ORGANIZATION
   collectionSuggestion?: {
@@ -125,20 +169,16 @@ export async function processMiraInput(input: MiraAIInput): Promise<MiraAIOutput
     // Create structured prompt with universal template
     const structuredPrompt = createStructuredPrompt(input);
     
-    // Route to appropriate AI service
+    // Route everything to OpenAI for consistency
     let result;
+    const openaiModule = await import("../openai");
     
     if (input.mode === 'image' && input.imageData) {
       // Use OpenAI GPT-4o for image analysis
-      const openaiModule = await import("../openai");
       result = await openaiModule.analyzeImageContent(input.imageData, structuredPrompt);
-    } else if (input.content.length > 1000 || input.mode === 'file') {
-      // Use Claude for complex text analysis
-      result = await analyzeWithClaude(input.content, 'enhanced');
     } else {
-      // Use OpenAI for simple text analysis
-      const openaiModule = await import("../openai");
-      result = await openaiModule.analyzeWithOpenAI(input.content, 'quick');
+      // Use OpenAI for all text analysis (simple and complex)
+      result = await openaiModule.analyzeWithOpenAI(input.content, 'enhanced');
     }
     
     // Enforce universal structure constraints
@@ -228,13 +268,39 @@ function enforceStructure(result: any): MiraAIOutput {
   return {
     title,
     context: result.context || result.aiContext || "Note processed",
-    todos: result.todos || [],
+    todos: Array.isArray(result.todos) ? result.todos.map((todo: any) => {
+      if (typeof todo === 'string') {
+        return { title: todo };
+      }
+      return {
+        title: todo.title || todo,
+        itemType: todo.itemType,
+        priority: todo.priority,
+        timeDue: todo.timeDue,
+        timeDependency: todo.timeDependency,
+        plannedNotificationStructure: todo.plannedNotificationStructure,
+        isActiveReminder: todo.isActiveReminder
+      };
+    }) : [],
     intentType: result.intentType || 'personal-reflection',
     urgencyLevel: result.urgencyLevel || 'low',
     complexityScore: result.complexityScore || 1,
     suggestion: result.suggestion || result.aiSuggestion,
-    richContext: result.richContext,
-    collectionSuggestion: result.collectionSuggestion,
+    richContext: result.richContext ? {
+      recommendedActions: result.richContext.recommendedActions || [],
+      researchResults: result.richContext.researchResults,
+      quickInsights: result.richContext.quickInsights || [],
+      fromTheWeb: result.richContext.fromTheWeb
+    } : undefined,
+    extractedItems: result.extractedItems,
+    nextSteps: result.nextSteps,
+    timeToComplete: result.timeToComplete,
+    successFactors: result.successFactors,
+    potentialObstacles: result.potentialObstacles,
+    relatedTopics: result.relatedTopics,
+    skillsRequired: result.skillsRequired,
+    resourcesNeeded: result.resourcesNeeded,
+    collectionSuggestion: result.collectionSuggestion
   };
 }
 

@@ -824,7 +824,7 @@ This profile was generated from your input and will help provide more personaliz
             ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
             : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
 
-          processMiraAIInput(miraInput, aiAnalysisFunction)
+          processMiraInput(miraInput)
             .then(async (analysis: any) => {
               const cleanSuggestion = analysis.suggestion?.replace(/^["']|["']$/g, '');
               
@@ -1224,14 +1224,12 @@ Respond with JSON:
           content: transcription,
           mode: "voice",
           timestamp: Date.now(),
-          context: {
-            timeOfDay: new Date().toLocaleTimeString(),
-          }
+          context: new Date().toLocaleTimeString()
         };
 
         const aiAnalysisFunction = (prompt: string) => safeAnalyzeWithClaude(prompt, "voice");
 
-        processMiraAIInput(miraInput, aiAnalysisFunction)
+        processMiraInput(miraInput)
           .then(async (analysis) => {
             console.log("Mira AI analysis successful for voice note:", note.id);
             
