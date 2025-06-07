@@ -180,6 +180,139 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
   }
 }
 
+export async function analyzeImageContent(imageBase64: string, content: string): Promise<AIAnalysisResult> {
+  try {
+    const imageAnalysisPrompt = `You've received an image from the user. Your job is to fully decode and surface valuable insight from it, as if you're a visual detective and shopping concierge combined.
+
+1. Identify any objects, logos, text, products, or landmarks in the image.
+2. Use OCR to extract any readable text or symbols.
+3. Interpret what the item is — include category, potential use, or style cues.
+4. Run a web search to locate:
+    - Brand or manufacturer
+    - Product name or collection
+    - Purchase links (Google, Amazon, Grailed, brand sites, etc.)
+    - Price or resale value
+    - Comparable alternatives
+5. If it's a location, return links to Google Maps, Yelp, or the official site.
+6. Format your response as a concise but rich recommendation card with embedded links.
+
+NEVER reply with "I can't tell." Always extract partial clues and make a best effort guess, followed by web-based confirmation.
+
+Generate a meaningful, specific title (3-5 words max) about what you actually see in the image. Examples:
+- "Nike Air Force 1s"
+- "Starbucks Menu Board"
+- "iPhone 15 Pro Max"
+- "Toyota Camry 2024"
+
+Return JSON with this exact structure:
+{
+  "enhancedContent": "Brief specific title of what's in the image",
+  "suggestion": "Detailed analysis and recommendations",
+  "context": "Category and usage context",
+  "complexityScore": 5,
+  "intentType": "reference-material",
+  "urgencyLevel": "low",
+  "todos": [],
+  "richContext": {
+    "recommendedActions": [
+      {
+        "title": "Shop Similar Items",
+        "description": "Find where to buy this product",
+        "links": [{"title": "Brand Website", "url": "https://example.com"}]
+      }
+    ],
+    "researchResults": [
+      {
+        "title": "Product Details",
+        "description": "Specifications and pricing",
+        "keyPoints": ["Price range", "Availability", "Reviews"]
+      }
+    ],
+    "quickInsights": ["Key facts about the item"]
+  }
+}`;
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: "You are Mira's visual analysis system. Identify objects, brands, and products in images, then provide shopping links and detailed information. Always return valid JSON.",
+      max_tokens: 4000,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: imageAnalysisPrompt
+            },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/jpeg",
+                data: imageBase64
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    const response = message.content[0];
+    if (response.type !== 'text') {
+      throw new Error('Unexpected response type from Claude');
+    }
+
+    let result;
+    try {
+      let cleanResponse = response.text.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '');
+      }
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '');
+      }
+
+      result = JSON.parse(cleanResponse);
+    } catch (parseError) {
+      console.error("Error parsing Claude image response:", parseError);
+      
+      return {
+        enhancedContent: "Visual Analysis Complete",
+        suggestion: "Image processed but detailed analysis unavailable",
+        context: "Image content review",
+        complexityScore: 5,
+        intentType: 'reference-material',
+        urgencyLevel: 'low',
+        todos: [],
+        richContext: {
+          recommendedActions: [],
+          researchResults: [],
+          quickInsights: ["Image analysis in progress"]
+        }
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error analyzing image with Claude:', error);
+    
+    return {
+      enhancedContent: "Image Review",
+      suggestion: "Visual analysis temporarily unavailable",
+      context: "Image processing",
+      complexityScore: 5,
+      intentType: 'reference-material',
+      urgencyLevel: 'low',
+      todos: [],
+      richContext: {
+        recommendedActions: [],
+        researchResults: [],
+        quickInsights: ["Analysis pending"]
+      }
+    };
+  }
+}
+
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   try {
     // Note: Anthropic doesn't have audio transcription, this would use OpenAI

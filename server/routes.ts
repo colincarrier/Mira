@@ -656,7 +656,7 @@ This profile was generated from your input and will help provide more personaliz
         mediaUrl = savedFile.url;
         
         if (!noteContent.trim()) {
-          noteContent = `Image captured: ${files.image[0].originalname}`;
+          noteContent = "Reviewing image...";
         }
       }
       
@@ -689,51 +689,94 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process with AI if content exists
       if (noteContent.trim()) {
-        const useOpenAI = isOpenAIAvailable();
-        
-        const miraInput: MiraAIInput = {
-          content: noteContent,
-          mode: noteData.mode as any,
-          timestamp: Date.now(),
-          context: {
-            timeOfDay: new Date().toLocaleTimeString(),
-            hasMedia: !!mediaUrl,
-            hasVoiceContext: !!audioUrl
-          }
-        };
-
-        const aiAnalysisFunction = useOpenAI 
-          ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
-          : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
-
-        processMiraAIInput(miraInput, aiAnalysisFunction)
-        .then(async (analysis: any) => {
-          const cleanSuggestion = analysis.suggestion?.replace(/^["']|["']$/g, '');
+        // Special handling for image analysis
+        if (files.image && files.image[0]) {
+          const imageBase64 = files.image[0].buffer.toString('base64');
           
-          const updates: any = {
-            aiEnhanced: true,
-            aiSuggestion: cleanSuggestion,
-            aiContext: analysis.context || analysis.enhancedContent,
-            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
-            isProcessing: false,
-          };
-          
-          await storage.updateNote(note.id, updates);
-          
-          // Create todos
-          if (analysis.todos && analysis.todos.length > 0) {
-            for (const todo of analysis.todos) {
-              if (typeof todo === 'string') {
-                await storage.createTodo({ noteId: note.id, title: todo });
-              } else if (todo.title) {
-                await storage.createTodo({ noteId: note.id, title: todo.title });
+          // Use specialized image analysis
+          if (isClaudeAvailable()) {
+            const { analyzeImageContent } = await import('./anthropic');
+            analyzeImageContent(imageBase64, noteContent)
+            .then(async (analysis: any) => {
+              const updates: any = {
+                content: analysis.enhancedContent || noteContent,
+                aiEnhanced: true,
+                aiSuggestion: analysis.suggestion,
+                aiContext: analysis.context,
+                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                isProcessing: false,
+              };
+              
+              await storage.updateNote(note.id, updates);
+              
+              // Create todos from analysis
+              if (analysis.todos && analysis.todos.length > 0) {
+                for (const todo of analysis.todos) {
+                  if (typeof todo === 'string') {
+                    await storage.createTodo({ noteId: note.id, title: todo });
+                  }
+                }
               }
-            }
+            })
+            .catch((error: any) => {
+              console.error("Error analyzing image:", error);
+              storage.updateNote(note.id, { isProcessing: false });
+            });
+          } else {
+            // Fallback for when Claude is not available
+            storage.updateNote(note.id, { 
+              content: "Image Upload Complete",
+              isProcessing: false 
+            });
           }
-        })
-        .catch((error: any) => {
-          console.error("Error processing media note with AI:", error);
-        });
+        } else {
+          // Regular text/audio processing
+          const useOpenAI = isOpenAIAvailable();
+          
+          const miraInput: MiraAIInput = {
+            content: noteContent,
+            mode: noteData.mode as any,
+            timestamp: Date.now(),
+            context: {
+              timeOfDay: new Date().toLocaleTimeString(),
+              recentActivity: []
+            }
+          };
+
+          const aiAnalysisFunction = useOpenAI 
+            ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
+            : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
+
+          processMiraAIInput(miraInput, aiAnalysisFunction)
+            .then(async (analysis: any) => {
+              const cleanSuggestion = analysis.suggestion?.replace(/^["']|["']$/g, '');
+              
+              const updates: any = {
+                aiEnhanced: true,
+                aiSuggestion: cleanSuggestion,
+                aiContext: analysis.context || analysis.enhancedContent,
+                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                isProcessing: false,
+              };
+              
+              await storage.updateNote(note.id, updates);
+              
+              // Create todos
+              if (analysis.todos && analysis.todos.length > 0) {
+                for (const todo of analysis.todos) {
+                  if (typeof todo === 'string') {
+                    await storage.createTodo({ noteId: note.id, title: todo });
+                  } else if (todo.title) {
+                    await storage.createTodo({ noteId: note.id, title: todo.title });
+                  }
+                }
+              }
+            })
+            .catch((error: any) => {
+              console.error("Error processing regular note with AI:", error);
+              storage.updateNote(note.id, { isProcessing: false });
+            });
+        }
       }
       
       res.json(note);
