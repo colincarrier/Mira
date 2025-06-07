@@ -399,8 +399,15 @@ This profile was generated from your input and will help provide more personaliz
             cleanSuggestion = "";
           }
 
+          // Extract title from analysis but never overwrite original content
+          let noteTitle = "";
+          if (analysis.title && !analysis.title.includes("You are Mira")) {
+            noteTitle = analysis.title.substring(0, 100); // Limit title length
+          }
+
           // Update note with AI enhancements but preserve original content
           const updates: any = {
+            content: noteTitle || noteData.content, // Use AI title if valid, otherwise keep original
             aiEnhanced: true,
             aiSuggestion: cleanSuggestion,
             aiContext: analysis.context || analysis.enhancedContent,
@@ -409,7 +416,10 @@ This profile was generated from your input and will help provide more personaliz
             isProcessing: false,
           };
           
-          // DO NOT overwrite original content - keep user's exact input
+          // Ensure we never store AI prompt as content
+          if (updates.content && updates.content.includes("You are Mira")) {
+            updates.content = noteData.content; // Fallback to original content
+          }
           
           await storage.updateNote(note.id, updates);
           console.log("Note updated successfully with Mira AI analysis");
