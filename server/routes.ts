@@ -1200,9 +1200,8 @@ Respond with JSON:
               isProcessing: false,
             };
             
-            if (analysis.enhancedContent) {
-              updates.content = analysis.enhancedContent;
-            }
+            // NEVER overwrite original transcription with AI analysis
+            // The transcribed content must be preserved as the user's actual words
             
             await storage.updateNote(note.id, updates);
             
