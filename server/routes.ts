@@ -288,6 +288,25 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
+  // Utility endpoint to clean up AI suggestions
+  app.post("/api/notes/clean-suggestions", async (req, res) => {
+    try {
+      const notes = await storage.getNotes();
+      let cleaned = 0;
+      
+      for (const note of notes) {
+        if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
+          await storage.updateNote(note.id, { aiSuggestion: "" });
+          cleaned++;
+        }
+      }
+      
+      res.json({ message: `Cleaned ${cleaned} notes with problematic AI suggestions` });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clean suggestions" });
+    }
+  });
+
   // Notes endpoints
   app.get("/api/notes", async (req, res) => {
     try {
