@@ -216,20 +216,14 @@ function selectTemplate(input: MiraAIInput): string {
  * Enforce Structure Constraints
  */
 function enforceStructure(result: any): MiraAIOutput {
-  // Fix title if it's too long
+  // Get title from AI response
   let title = result.title || result.enhancedContent || "New Note";
   
   // Remove AI partner indicators
   title = title.replace(/^\[claude\]\s*/i, '').replace(/^\[openai\]\s*/i, '');
   
-  // Enforce 3-5 word limit
-  const words = title.trim().split(/\s+/);
-  if (words.length > 5) {
-    title = words.slice(0, 5).join(' ');
-  }
-  
-  // Ensure title is sentence case, not title case
-  title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+  // CRITICAL: Enforce newspaper headline style (3-5 words MAX)
+  title = createNewspaperTitle(title);
   
   return {
     title,
@@ -242,6 +236,30 @@ function enforceStructure(result: any): MiraAIOutput {
     richContext: result.richContext,
     collectionSuggestion: result.collectionSuggestion,
   };
+}
+
+/**
+ * Create Newspaper Headline Style Title (3-5 words MAX)
+ */
+function createNewspaperTitle(input: string): string {
+  // Clean input
+  const cleanInput = input.trim().replace(/['"]/g, '');
+  
+  // Split into words and filter out articles, prepositions
+  const words = cleanInput.split(/\s+/).filter(word => 
+    word.length > 0 && 
+    !['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'].includes(word.toLowerCase())
+  );
+  
+  // Take first 3-4 most important words
+  const titleWords = words.slice(0, 3);
+  
+  // Create proper case title
+  const title = titleWords
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+    
+  return title || 'New Note';
 }
 
 /**

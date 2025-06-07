@@ -85,6 +85,26 @@ let apiUsageStats = {
   totalRequests: 0
 };
 
+// Helper function to create newspaper-style titles
+function createNewspaperTitleFromContent(content: string): string {
+  // Clean input and split into words
+  const cleanInput = content.trim().replace(/['"]/g, '');
+  const words = cleanInput.split(/\s+/).filter(word => 
+    word.length > 0 && 
+    !['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'].includes(word.toLowerCase())
+  );
+  
+  // Take first 3 most important words
+  const titleWords = words.slice(0, 3);
+  
+  // Create proper case title
+  const title = titleWords
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+    
+  return title || 'New Note';
+}
+
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -376,9 +396,16 @@ This profile was generated from your input and will help provide more personaliz
           // Track usage
           apiUsageStats.totalRequests++;
           
-          // Update note with structured AI results - use title as content
+          // CRITICAL: Ensure newspaper-style title enforcement
+          let newspaperTitle = analysis.title;
+          if (!newspaperTitle || newspaperTitle === noteData.content) {
+            // AI didn't create a proper title, create one from content
+            newspaperTitle = createNewspaperTitleFromContent(noteData.content);
+          }
+          
+          // Update note with structured AI results
           const updates: any = {
-            content: analysis.title, // Replace with newspaper-style title
+            content: newspaperTitle, // Use enforced newspaper-style title
             aiEnhanced: true,
             aiSuggestion: analysis.suggestion || "",
             aiContext: analysis.context || "",
