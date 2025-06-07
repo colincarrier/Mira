@@ -423,13 +423,14 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         ) : null}
       </div>
 
-      {/* Media Display - Thumbnail for note cards */}
+      {/* Media Display - Enhanced thumbnail with hover controls */}
       {note.mediaUrl && (
-        <div className="mb-3">
+        <div className="mb-3 group">
           <MediaDisplay 
             mediaUrl={note.mediaUrl} 
-            className="max-h-32 w-auto rounded-lg"
-            showControls={false}
+            filename={note.mediaUrl.split('/').pop()}
+            className="max-h-32 w-auto rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+            showControls={true}
           />
         </div>
       )}
