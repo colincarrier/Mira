@@ -33,7 +33,7 @@ export default function MediaContextDialog({
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -313,100 +313,102 @@ export default function MediaContextDialog({
           {/* Media Preview */}
           {getMediaPreview()}
           
-          {/* AI Identification Display */}
-          {aiIdentification && (
+          {/* AI Analysis Display - Shows immediately when available */}
+          {(isAnalyzing || aiIdentification) && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <div className="text-sm text-blue-700 dark:text-blue-300">
-                <strong>AI Analysis:</strong> {aiIdentification}
+              {isAnalyzing ? (
+                <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  Analyzing image...
+                </div>
+              ) : (
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>AI Analysis:</strong> {aiIdentification}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Voice Recording Status */}
+          {isRecording && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                Recording voice context: {formatTime(recordingTime)}
               </div>
             </div>
           )}
           
-          {/* Text Context Input with integrated microphone */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Add context
-            </label>
-            <div className="relative">
-              <Textarea
+          {audioBlob && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Voice context recorded ({formatTime(recordingTime)})
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setAudioBlob(null);
+                    setRecordingTime(0);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Text Input Bar - Styled like main input bar */}
+          <div className="relative">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-2">
+              <input
                 ref={textareaRef}
                 value={contextText}
                 onChange={(e) => {
                   setContextText(e.target.value);
                   setUserHasTyped(true);
                 }}
-                placeholder="Describe what this media is about, add notes, or ask questions..."
-                className="min-h-[80px] resize-none pr-12"
+                placeholder="Add context about this media..."
+                className="flex-1 bg-transparent border-0 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
               />
-              <Button
+              
+              {/* Microphone button */}
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-                className={`absolute top-2 right-2 h-8 w-8 p-0 ${
+                className={`p-2 rounded-full transition-colors ${
                   isRecording 
                     ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400' 
-                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <Mic className={`w-4 h-4 ${isRecording ? 'animate-pulse' : ''}`} />
-              </Button>
+              </button>
+              
+              {/* Send button */}
+              <button
+                onClick={handleSubmit}
+                disabled={createMediaNoteMutation.isPending || (!contextText.trim() && !audioBlob)}
+                className="p-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors"
+              >
+                {createMediaNoteMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
             </div>
-            
-            {isRecording && (
-              <div className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                Recording: {formatTime(recordingTime)}
-              </div>
-            )}
-            
-            {audioBlob && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mic className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                      Voice context recorded ({formatTime(recordingTime)})
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setAudioBlob(null);
-                      setRecordingTime(0);
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <button
-              onClick={handleSubmit}
-              disabled={createMediaNoteMutation.isPending}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-4 py-2 flex items-center justify-center gap-2 transition-colors"
-            >
-              {createMediaNoteMutation.isPending ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              Create Note
-            </button>
           </div>
         </div>
       </DialogContent>

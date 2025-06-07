@@ -96,6 +96,12 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
           ) : (
             <>
               <button 
+                onClick={() => {/* TODO: Add media picker functionality */}}
+                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button 
                 onClick={onCameraCapture}
                 className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                 style={{ backgroundColor: '#a8bfa1' }}
