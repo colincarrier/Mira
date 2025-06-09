@@ -215,7 +215,7 @@ function sanitise(raw: any, input: MiraAIInput, uid: string, ts: string, fp: any
     entities: data.entities ?? [],
     suggestedLinks: data.suggestedLinks ?? [],
     collectionHint: data.collectionHint,
-    nextSteps: (intent === "simple-task" && fp.isShort) ? [] : (data.nextSteps ?? []),
+    nextSteps: (intent === "simple-task") ? [] : (data.nextSteps ?? []),
     _rawModelJSON: data
   };
 }
