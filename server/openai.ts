@@ -169,73 +169,108 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
 
 export async function analyzeImageContent(imageBase64: string, content: string): Promise<AIAnalysisResult> {
   try {
-    const imageAnalysisPrompt = `Analyze this image with precision. You are an expert visual identification system that can identify multiple items in a single image.
+    const imageAnalysisPrompt = `You are an expert visual analyst with exceptional OCR and object recognition capabilities. Analyze this image with the same level of detail and accuracy as ChatGPT's best image analysis.
 
-CRITICAL INSTRUCTIONS:
-1. IDENTIFY EVERY DISTINCT ITEM: Look for books, products, people, places, menu items, etc. If there are multiple items, identify each one specifically.
-2. READ ALL TEXT: Use OCR to extract titles, author names, brand names, prices, labels - everything visible.
-3. BE SPECIFIC: Don't say "Book 1, Book 2" - give actual titles like "The Design of Everyday Things by Don Norman"
-4. EXTRACT DETAILS: For each item, get: exact title/name, author/brand, publisher, price if visible, ISBN if visible
+COMPREHENSIVE ANALYSIS REQUIREMENTS:
 
-For BOOKS specifically:
-- Read the title exactly as shown on the cover
-- Identify the author name
-- Note the publisher if visible
-- Describe the cover design/theme
+🔍 VISUAL SCANNING:
+1. IDENTIFY EVERY VISIBLE ITEM: Books, products, documents, screens, signs, artwork, food, clothing, electronics, furniture, etc.
+2. READ ALL TEXT: Titles, author names, brand names, model numbers, prices, labels, signs, computer screens, handwritten notes
+3. EXTRACT METADATA: Publishers, ISBN numbers, product codes, dates, addresses, phone numbers
+4. DESCRIBE CONTEXT: Room type, lighting, arrangement, background elements, spatial relationships
 
-For PRODUCTS:
-- Exact product name and model
-- Brand name
-- Price if visible
-- Key features visible
+📚 FOR BOOKS & PUBLICATIONS:
+- Exact title (word-for-word from spine/cover)
+- Complete author name(s)  
+- Publisher name if visible
+- Edition/year if shown
+- ISBN if readable
+- Book condition and format (hardcover/paperback)
+- Cover art description and color scheme
+- Genre indicators from cover design
 
-User context: ${content}
+🛍️ FOR PRODUCTS & ITEMS:
+- Precise product name and model number
+- Brand/manufacturer 
+- Visible specifications or features
+- Price tags or labels
+- Condition assessment
+- Color, size, material descriptions
+- Packaging details if applicable
 
-If the user asks to "add to collection" or mentions collections, set collectionSuggestion based on the item type:
-- Books → "Books" collection
-- Design items → "Design & Coffee Table Books" collection  
-- Products → relevant category collection
+💡 CONTEXTUAL INTELLIGENCE:
+- Assess the setting (home office, bookstore, library, etc.)
+- Understand user intent from context: "${content}"
+- Identify organizational patterns
+- Suggest logical categorization
+- Recommend actionable next steps
 
-For multiple items, create individual extractedItems for each one:
+🎯 ENHANCED EXTRACTION:
+For each distinct item, provide:
+- Exact identification (not generic descriptions)
+- Purchasing information (where typically sold)
+- Related items or accessories
+- Estimated value range if recognizable
+- Condition and usability assessment
 
-Return JSON with this exact structure:
+The analysis should be as detailed and accurate as a direct ChatGPT conversation, extracting maximum value from the visual information.
+
+Return comprehensive JSON with this exact structure:
 {
-  "enhancedContent": "List of specific items identified (e.g., '1. The Design of Everyday Things 2. Don Norman's Book 3. Another Title')",
-  "suggestion": "Actionable next steps based on user request",
-  "context": "Category and context of items",
-  "complexityScore": 7,
+  "enhancedContent": "Detailed description of all identified items with complete titles, authors, and context. Be exhaustive in listing everything visible.",
+  "suggestion": "Specific actionable recommendations based on the items identified and user context",
+  "context": "Rich environmental and contextual description of the scene, setting, and item relationships",
+  "complexityScore": 8,
   "intentType": "research-inquiry",
   "urgencyLevel": "medium",
-  "todos": ["Research each item individually", "Find purchase links", "Add to appropriate collection"],
+  "todos": ["Specific tasks for each identified item", "Research and categorization actions", "Purchase or organization steps"],
   "extractedItems": [
     {
-      "title": "Exact title of item 1",
-      "description": "Author, publisher, or brand details",
-      "category": "book/product/etc",
-      "metadata": {"author": "...", "publisher": "...", "isbn": "...", "price": "..."}
+      "title": "Complete exact title as shown",
+      "description": "Detailed description including author, condition, distinguishing features",
+      "category": "book|product|document|electronics|artwork|food|clothing|furniture",
+      "metadata": {
+        "author": "Full author name if book",
+        "publisher": "Publisher name if visible", 
+        "isbn": "ISBN if readable",
+        "brand": "Brand name for products",
+        "model": "Model number if visible",
+        "price": "Price if shown",
+        "condition": "New/Used/Fair assessment",
+        "location": "Where in image (left shelf, center table, etc)",
+        "estimatedValue": "Price range estimate",
+        "purchaseLocations": ["Common places to buy this item"]
+      }
     }
   ],
   "collectionSuggestion": {
-    "name": "Appropriate Collection Name",
-    "icon": "📚",
-    "color": "#8B4513"
+    "name": "Specific collection name based on item types",
+    "icon": "Appropriate emoji",
+    "color": "Hex color code"
   },
   "richContext": {
+    "environmentalContext": "Detailed description of setting, lighting, organization",
+    "itemRelationships": "How items relate to each other",
+    "organizationalInsights": "Patterns in arrangement or categorization",
     "recommendedActions": [
       {
-        "title": "Find Purchase Links",
-        "description": "Search for where to buy each item",
-        "links": [{"title": "Amazon", "url": "https://amazon.com"}, {"title": "Barnes & Noble", "url": "https://barnesandnoble.com"}]
+        "title": "Specific action title",
+        "description": "Detailed explanation of recommended action",
+        "priority": "high|medium|low",
+        "estimatedTime": "Time estimate",
+        "links": [{"title": "Resource name", "url": "Relevant URL"}]
       }
     ],
     "researchResults": [
       {
-        "title": "Item Details",
-        "description": "Specifications and availability",
-        "keyPoints": ["Individual item analysis", "Pricing information", "Purchase recommendations"]
+        "title": "Item or topic research",
+        "description": "Detailed information about items",
+        "rating": "Assessment or rating",
+        "keyPoints": ["Specific insights", "Technical details", "Recommendations"],
+        "contact": "Relevant contact info if applicable"
       }
     ],
-    "quickInsights": ["Each item identified with specific details"]
+    "quickInsights": ["Detailed observations", "Key findings", "Actionable takeaways"]
   }
 }`;
 
@@ -252,14 +287,16 @@ Return JSON with this exact structure:
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`
+                url: `data:image/jpeg;base64,${imageBase64}`,
+                detail: "high"
               }
             }
           ]
         }
       ],
       response_format: { type: "json_object" },
-      max_tokens: 4000
+      max_tokens: 4000,
+      temperature: 0.1
     });
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
