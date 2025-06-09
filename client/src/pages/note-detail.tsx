@@ -405,7 +405,7 @@ export default function NoteDetail() {
                   updateNoteMutation.mutate({ content: editedContent });
                 }
               }}
-              className="w-full min-h-[200px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
+              className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-2"
               placeholder="Start writing..."
               style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
             />
@@ -824,7 +824,7 @@ export default function NoteDetail() {
         <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
           <textarea
             placeholder="Add/edit anything here..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-600 text-gray-900 resize-none overflow-hidden font-medium"
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-600 text-gray-900 resize-none overflow-hidden"
             value={inputValue}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}

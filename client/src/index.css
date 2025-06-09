@@ -36,6 +36,18 @@
   --pale-sage: 80 35% 85%; /* #DDEAD1 */
 }
 
+/* Custom placeholder styling for detail page input */
+.detail-input-placeholder::placeholder {
+  color: #6b7280;
+  font-style: normal;
+}
+
+.detail-input-placeholder::placeholder::after {
+  content: "";
+  font-weight: bold;
+  font-style: italic;
+}
+
 .dark {
   --background: 240 6% 10%;
   --foreground: 0 0% 98%;
