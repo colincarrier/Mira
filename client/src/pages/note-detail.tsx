@@ -6,6 +6,7 @@ import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { createCalendarEventFromContent, addToGoogleCalendar } from "@/lib/calendarUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
@@ -532,8 +533,17 @@ export default function NoteDetail() {
                       label: 'Add to Calendar',
                       icon: Calendar,
                       action: () => {
-                        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
-                        window.open(calendarUrl, '_blank');
+                        const calendarEvent = createCalendarEventFromContent(note.content, note.content);
+                        if (calendarEvent) {
+                          addToGoogleCalendar(calendarEvent);
+                          toast({
+                            description: "Opening Google Calendar with event details",
+                          });
+                        } else {
+                          // Fallback for notes without time information
+                          const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
+                          window.open(calendarUrl, '_blank');
+                        }
                       }
                     });
                   } else if (suggestion.includes('Reminder') || suggestion.includes('reminder')) {
@@ -956,6 +966,27 @@ export default function NoteDetail() {
                     <span className={`text-sm flex-1 ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
                       {todo.title}
                     </span>
+                    <button
+                      onClick={() => {
+                        const calendarEvent = createCalendarEventFromContent(todo.title, todo.title);
+                        if (calendarEvent) {
+                          addToGoogleCalendar(calendarEvent);
+                          toast({
+                            description: "Opening Google Calendar with event details",
+                          });
+                        } else {
+                          const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(todo.title)}&details=${encodeURIComponent(`From note: ${note.content}`)}`;
+                          window.open(calendarUrl, '_blank');
+                          toast({
+                            description: "Opening Google Calendar",
+                          });
+                        }
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Add to Google Calendar"
+                    >
+                      <Calendar className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => {
                         // TODO: Open reminder popup
