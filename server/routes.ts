@@ -384,6 +384,18 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
+  // Get items for a specific note
+  app.get("/api/notes/:id/items", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.id);
+      const items = await storage.getItemsByNoteId(noteId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      res.status(500).json({ message: "Failed to fetch items" });
+    }
+  });
+
   app.delete("/api/notes/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -851,7 +863,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                             await storage.updateItem(createdItem.id, {
                               detailedContent: JSON.stringify({
                                 shoppingLinks,
-                                searchQuery,
+                                searchQueries,
                                 lastUpdated: new Date().toISOString()
                               })
                             });
