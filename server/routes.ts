@@ -775,7 +775,7 @@ This profile was generated from your input and will help provide more personaliz
           const miraInput: MiraAIInput = {
             content: noteContent,
             mode: noteData.mode as any,
-            timestamp: Date.now(),
+            timestamp: new Date().toISOString(),
             context: {
               timeOfDay: new Date().toLocaleTimeString(),
               recentActivity: []
@@ -826,7 +826,7 @@ This profile was generated from your input and will help provide more personaliz
       
       console.log("Media note created successfully:", note.id);
       res.json(note);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Media note creation error:", error);
       console.error("Error stack:", error.stack);
       console.error("Request body keys:", Object.keys(req.body));
@@ -1188,8 +1188,11 @@ Respond with JSON:
         const miraInput: MiraAIInput = {
           content: transcription,
           mode: "voice",
-          timestamp: Date.now(),
-          context: new Date().toLocaleTimeString()
+          timestamp: new Date().toISOString(),
+          context: {
+            timeOfDay: new Date().toLocaleTimeString(),
+            recentActivity: []
+          }
         };
 
         const aiAnalysisFunction = (prompt: string) => safeAnalyzeWithClaude(prompt, "voice");
@@ -1400,18 +1403,29 @@ Respond with JSON:
         }
       }
 
-      analyzeWithOpenAI(fileContent, "file")
-        .then(async (analysis) => {
-          // Clean up suggestion to avoid storing prompt text
-          let cleanSuggestion = analysis.suggestion || "";
-          if (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200) {
-            cleanSuggestion = "";
-          }
+      const miraInput: MiraAIInput = {
+        content: fileContent,
+        mode: "file",
+        timestamp: new Date().toISOString(),
+        context: {
+          fileName: req.file?.originalname || "unknown",
+          fileType: req.file?.mimetype || "unknown"
+        }
+      };
 
+      processNote(miraInput)
+        .then(async (analysis: MiraAIResult) => {
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: cleanSuggestion,
-            aiContext: analysis.context,
+            aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+            aiContext: analysis.summary || "",
+            richContext: analysis.entities ? JSON.stringify({
+              entities: analysis.entities,
+              suggestedLinks: analysis.suggestedLinks,
+              nextSteps: analysis.nextSteps,
+              microQuestions: analysis.microQuestions
+            }) : null,
+            isProcessing: false
           };
           
           if (analysis.enhancedContent) {
@@ -1428,23 +1442,27 @@ Respond with JSON:
             });
           }
           
-          // Create collection if suggested
-          if (analysis.collectionSuggestion) {
+          // Create collection if suggested with v2.0 hints
+          if (analysis.collectionHint) {
             const collections = await storage.getCollections();
             const existingCollection = collections.find(
-              c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+              c => c.name.toLowerCase() === analysis.collectionHint!.name.toLowerCase()
             );
             
             let collectionId = existingCollection?.id;
             if (!existingCollection) {
-              const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+              const newCollection = await storage.createCollection({
+                name: analysis.collectionHint.name,
+                icon: analysis.collectionHint.icon || "folder",
+                color: analysis.collectionHint.colour || "#6366f1"
+              });
               collectionId = newCollection.id;
             }
             
             await storage.updateNote(note.id, { collectionId });
           }
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error("AI file analysis failed:", error);
         });
 
