@@ -93,6 +93,76 @@ export default function NoteDetail() {
     }
   });
 
+  // Rollback mutation
+  const rollbackMutation = useMutation({
+    mutationFn: async (targetVersion: number) => {
+      const response = await apiRequest("POST", `/api/notes/${id}/rollback`, { targetVersion });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      setShowVersionHistory(false);
+      toast({
+        title: "Rollback Successful",
+        description: "Note has been restored to the previous version",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Rollback Failed",
+        description: "Could not restore previous version",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Approve changes mutation
+  const approveChangesMutation = useMutation({
+    mutationFn: async ({ suggestedChanges, userApproved }: { suggestedChanges: string; userApproved: boolean }) => {
+      const response = await apiRequest("POST", `/api/notes/${id}/approve-changes`, { suggestedChanges, userApproved });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      setShowApprovalDialog(false);
+      setPendingChanges(null);
+      toast({
+        title: "Changes Applied",
+        description: "AI suggestions have been applied to your note",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Could not apply changes",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Clarification mutation  
+  const clarifyMutation = useMutation({
+    mutationFn: async ({ originalInstruction, clarification }: { originalInstruction: string; clarification: string }) => {
+      const response = await apiRequest("POST", `/api/notes/${id}/clarify`, { originalInstruction, clarification });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      setClarificationInput('');
+      toast({
+        title: "Clarification Applied",
+        description: "AI has updated the note based on your clarification",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Could not apply clarification",
+        variant: "destructive"
+      });
+    }
+  });
+
 
 
   useEffect(() => {
@@ -384,6 +454,10 @@ export default function NoteDetail() {
                 <DropdownMenuItem>
                   <Copy className="w-4 h-4 mr-2" />
                   Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowVersionHistory(true)}>
+                  <Undo2 className="w-4 h-4 mr-2" />
+                  Version History
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Archive className="w-4 h-4 mr-2" />
@@ -1096,6 +1170,160 @@ export default function NoteDetail() {
           )}
         </div>
       </div>
+
+      {/* Version History Dialog */}
+      {showVersionHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Version History</h3>
+              <button
+                onClick={() => setShowVersionHistory(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-3 overflow-y-auto max-h-96">
+              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">Current Version</div>
+                  <div className="text-xs text-gray-500">
+                    {note?.content?.substring(0, 100)}...
+                  </div>
+                </div>
+              </div>
+              
+              {versionHistory && versionHistory.map((version: any, index: number) => (
+                <div key={version.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">
+                      Version {version.version} - {version.changeType}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      {version.changeDescription} | {format(new Date(version.createdAt), 'MMM d, h:mm a')}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      {version.content?.substring(0, 80)}...
+                    </div>
+                    <button
+                      onClick={() => rollbackMutation.mutate(version.version)}
+                      disabled={rollbackMutation.isPending}
+                      className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {rollbackMutation.isPending ? 'Rolling back...' : 'Restore'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Dialog for High-Risk Changes */}
+      {showApprovalDialog && pendingChanges && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <h3 className="text-lg font-semibold">AI Wants to Make Changes</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowApprovalDialog(false);
+                  setPendingChanges(null);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4 overflow-y-auto max-h-96">
+              <div className="text-sm text-gray-600">
+                AI detected valuable content that could be affected by these changes. Please review before proceeding.
+              </div>
+              
+              {pendingChanges.warnings && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <div className="text-sm font-medium text-orange-800 mb-2">Protected Content:</div>
+                  <ul className="space-y-1">
+                    {pendingChanges.warnings.map((warning: string, index: number) => (
+                      <li key={index} className="text-xs text-orange-700">• {warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="border rounded-lg p-3">
+                <div className="text-sm font-medium mb-2">Suggested Changes:</div>
+                <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded max-h-32 overflow-y-auto">
+                  {pendingChanges.suggestedChanges}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Or clarify your instruction:</div>
+                <textarea
+                  value={clarificationInput}
+                  onChange={(e) => setClarificationInput(e.target.value)}
+                  placeholder="Explain what you meant in more detail..."
+                  className="w-full p-2 border rounded-lg text-sm resize-none"
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 p-4 border-t">
+              <button
+                onClick={() => {
+                  setShowApprovalDialog(false);
+                  setPendingChanges(null);
+                }}
+                className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              
+              {clarificationInput && (
+                <button
+                  onClick={() => {
+                    clarifyMutation.mutate({
+                      originalInstruction: pendingChanges.originalInstruction || '',
+                      clarification: clarificationInput
+                    });
+                    setShowApprovalDialog(false);
+                    setPendingChanges(null);
+                  }}
+                  disabled={clarifyMutation.isPending}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {clarifyMutation.isPending ? 'Clarifying...' : 'Clarify & Apply'}
+                </button>
+              )}
+              
+              <button
+                onClick={() => {
+                  approveChangesMutation.mutate({
+                    suggestedChanges: pendingChanges.suggestedChanges,
+                    userApproved: true
+                  });
+                }}
+                disabled={approveChangesMutation.isPending}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                <CheckCircle className="w-4 h-4 mr-1 inline" />
+                {approveChangesMutation.isPending ? 'Applying...' : 'Approve Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
