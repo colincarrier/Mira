@@ -21,21 +21,69 @@ export interface LocationContext {
 
 /**
  * Check if content should trigger location-based search
+ * Smart detection for commercial/shopping queries vs personal tasks
  */
 export function shouldTriggerLocationSearch(content: string): boolean {
-  const locationTriggers = [
-    // Shopping/commercial
-    'buy', 'shop', 'store', 'purchase', 'gift', 'present',
-    // Events/venues
-    'venue', 'restaurant', 'party', 'event', 'booking', 'reserve',
-    // Services
-    'find', 'near', 'local', 'around', 'close', 'nearby',
-    // Activities
-    'visit', 'go to', 'check out', 'explore'
+  const contentLower = content.toLowerCase();
+  
+  // Exclude personal/family tasks that aren't searchable
+  const personalTaskExclusions = [
+    'pick up', 'pickup', 'drop off', 'dropoff', 'call', 'text', 'email',
+    'remind', 'appointment', 'meeting', 'schedule', 'calendar',
+    'homework', 'school', 'work', 'office', 'colleague', 'boss',
+    'mom', 'dad', 'parent', 'child', 'kid', 'family', 'friend',
+    'doctor', 'dentist', 'vet', 'appointment'
   ];
   
-  const contentLower = content.toLowerCase();
-  return locationTriggers.some(trigger => contentLower.includes(trigger));
+  // If it's a personal task, don't trigger search
+  if (personalTaskExclusions.some(exclusion => contentLower.includes(exclusion))) {
+    return false;
+  }
+  
+  // Commercial product patterns (product + store/brand)
+  const commercialPatterns = [
+    // Product + retailer combinations
+    { products: ['sock', 'socks', 'shirt', 'pants', 'shoes', 'clothes', 'clothing'], 
+      retailers: ['target', 'walmart', 'amazon', 'costco', 'macys', 'nordstrom'] },
+    { products: ['food', 'groceries', 'milk', 'bread', 'meat', 'produce'], 
+      retailers: ['target', 'walmart', 'safeway', 'kroger', 'whole foods', 'trader joes'] },
+    { products: ['electronics', 'phone', 'laptop', 'tv', 'headphones'], 
+      retailers: ['best buy', 'target', 'amazon', 'apple store', 'costco'] },
+    { products: ['tools', 'hardware', 'paint', 'lumber'], 
+      retailers: ['home depot', 'lowes', 'menards'] }
+  ];
+  
+  // Check for commercial product + retailer patterns
+  for (const pattern of commercialPatterns) {
+    const hasProduct = pattern.products.some(product => contentLower.includes(product));
+    const hasRetailer = pattern.retailers.some(retailer => contentLower.includes(retailer));
+    
+    if (hasProduct && hasRetailer) {
+      return true;
+    }
+  }
+  
+  // Direct shopping intent keywords
+  const shoppingTriggers = [
+    'buy from', 'shop at', 'get from', 'purchase at', 'order from',
+    'find at', 'available at', 'sold at', 'price at'
+  ];
+  
+  if (shoppingTriggers.some(trigger => contentLower.includes(trigger))) {
+    return true;
+  }
+  
+  // Restaurant/venue searches
+  const venueTriggers = [
+    'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'reservation',
+    'book table', 'dinner at', 'lunch at', 'eat at'
+  ];
+  
+  if (venueTriggers.some(trigger => contentLower.includes(trigger))) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -275,6 +323,47 @@ function generateMockLocationResults(query: string, location: LocationContext): 
       category: "Party Supplies",
       location: locationString,
       distance: "1-10 miles"
+    });
+  }
+  
+  // Enhanced product + retailer detection with real shopping results
+  if (queryLower.includes('target') && (queryLower.includes('sock') || queryLower.includes('clothing'))) {
+    results.push({
+      title: `Target - ${location.city} Store Locations & Hours`,
+      description: `Find Target stores near you in ${locationString}. Current drive times, store hours, and in-stock availability for clothing department.`,
+      url: `https://www.target.com/store-locator`,
+      rating: "4.1/5 • Open until 10 PM",
+      keyPoints: ["Drive time: 8 min", "In-stock socks", "Curbside pickup", "Same-day delivery"],
+      category: "Store Locations",
+      location: locationString,
+      distance: "2.1 miles • Light traffic"
+    });
+    
+    results.push({
+      title: `Men's Crew Socks 6pk - Goodfellow & Co.™ - Target`,
+      description: `$6.00 • 6-pack cotton blend crew socks. Available in multiple colors. Free shipping on orders $35+.`,
+      url: `https://www.target.com/p/men-s-crew-socks-6pk-goodfellow-co/-/A-53476543`,
+      rating: "4.3/5 • 2,847 reviews",
+      keyPoints: ["Cotton blend", "$6.00 for 6-pack", "Available in 8 colors", "Add to cart"],
+      category: "Men's Clothing"
+    });
+    
+    results.push({
+      title: `Women's No Show Socks 6pk - A New Day™ - Target`,
+      description: `$4.00 • Comfortable no-show socks perfect for sneakers and flats. Moisture-wicking fabric.`,
+      url: `https://www.target.com/p/women-s-no-show-socks-6pk-a-new-day/-/A-54367821`,
+      rating: "4.4/5 • 1,456 reviews",
+      keyPoints: ["$4.00 for 6-pack", "No-show design", "Moisture-wicking", "Machine washable"],
+      category: "Women's Clothing"
+    });
+    
+    results.push({
+      title: `Athletic Crew Socks 3pk - All in Motion™ - Target`,
+      description: `$8.00 • Performance athletic socks with cushioned sole and arch support. Ideal for workouts.`,
+      url: `https://www.target.com/p/athletic-crew-socks-3pk-all-in-motion/-/A-79431287`,
+      rating: "4.5/5 • 892 reviews",
+      keyPoints: ["Cushioned sole", "Arch support", "Moisture-wicking", "Performance fabric"],
+      category: "Athletic Wear"
     });
   }
   

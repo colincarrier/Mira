@@ -429,6 +429,13 @@ export default function NoteDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+              title="Share note"
+            >
+              <Share2 className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
