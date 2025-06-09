@@ -9,18 +9,20 @@ async function testEnhancedImageAnalysis() {
   console.log('Testing Enhanced Image Analysis System...\n');
 
   try {
-    // Create test note with image to verify enhanced analysis
-    const testNote = {
-      content: "Books and items on my desk - identify everything visible",
-      mode: "capture",
-      mediaUrl: "/uploads/b48c6e25-1780-442b-b7cd-bc2607982a38.jpg"
-    };
+    // Read test image file and create proper FormData for media endpoint
+    const imagePath = './test.png';
+    const imageBuffer = fs.readFileSync(imagePath);
+    
+    const formData = new FormData();
+    formData.append('content', 'Books and items on my desk - identify everything visible');
+    formData.append('mode', 'image');
+    formData.append('userContext', 'Books and items on my desk - identify everything visible');
+    formData.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'test.png');
 
     console.log('Creating note with real image for analysis...');
-    const noteResponse = await fetch('http://localhost:5000/api/notes', {
+    const noteResponse = await fetch('http://localhost:5000/api/notes/media', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(testNote)
+      body: formData
     });
 
     if (!noteResponse.ok) {
@@ -34,7 +36,7 @@ async function testEnhancedImageAnalysis() {
     console.log('Monitoring AI processing...');
     let attempts = 0;
     const maxAttempts = 15;
-    let processedNote = null;
+    let processedNote = note; // Initialize with created note
 
     while (attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -64,7 +66,7 @@ async function testEnhancedImageAnalysis() {
     console.log('\n=== ENHANCED ANALYSIS RESULTS ===');
     
     console.log('\n1. CONTENT ENHANCEMENT:');
-    console.log(`Original: "${testNote.content}"`);
+    console.log(`Original: "Books and items on my desk - identify everything visible"`);
     console.log(`Enhanced: "${processedNote.content}"`);
     
     console.log('\n2. AI CONTEXT:');
