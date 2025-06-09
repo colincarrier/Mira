@@ -178,7 +178,7 @@ export default function TodoDetail() {
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900">Source Note</h3>
               <div 
-                onClick={() => setLocation(`/note/${sourceNote.id}`)}
+                onClick={() => setLocation(`/notes/${sourceNote.id}`)}
                 className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow touch-manipulation"
               >
                 <p className="text-sm text-gray-800 line-clamp-3">{sourceNote.content}</p>

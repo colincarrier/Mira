@@ -214,7 +214,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const progress = todoProgress();
 
   const handleCardClick = () => {
-    setLocation(`/note/${note.id}`);
+    setLocation(`/notes/${note.id}`);
   };
 
   // Mutation to delete note
