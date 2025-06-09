@@ -138,6 +138,49 @@ function extractSearchTerms(content: string): string[] {
 }
 
 /**
+ * Generate generic advice results when no location is available
+ */
+function generateGenericAdviceResults(query: string): WebSearchResult[] {
+  const results: WebSearchResult[] = [];
+  const queryLower = query.toLowerCase();
+  
+  if (queryLower.includes('party venue') || queryLower.includes('venue')) {
+    results.push({
+      title: "How to Choose the Perfect Party Venue",
+      description: "Complete guide to selecting birthday party venues: indoor vs outdoor options, capacity planning, catering considerations, and booking tips.",
+      url: "https://example.com/party-venue-guide",
+      rating: "4.8/5",
+      keyPoints: ["Capacity planning", "Budget considerations", "Amenities checklist", "Booking timeline"],
+      category: "Planning Guide"
+    });
+  }
+  
+  if (queryLower.includes('restaurant') || queryLower.includes('food')) {
+    results.push({
+      title: "Family Restaurant Selection Tips",
+      description: "Expert advice on choosing family-friendly restaurants: kid-friendly menus, outdoor seating, reservation strategies, and special occasion planning.",
+      url: "https://example.com/restaurant-guide",
+      rating: "4.6/5",
+      keyPoints: ["Kid-friendly options", "Outdoor seating benefits", "Reservation timing", "Special requests"],
+      category: "Dining Guide"
+    });
+  }
+  
+  if (queryLower.includes('gift') || queryLower.includes('present')) {
+    results.push({
+      title: "Age-Appropriate Gift Ideas & Shopping Tips",
+      description: "Comprehensive guide to selecting birthday gifts: age-appropriate toys, educational options, budget planning, and where to shop.",
+      url: "https://example.com/gift-guide",
+      rating: "4.7/5",
+      keyPoints: ["Age recommendations", "Educational value", "Safety considerations", "Budget planning"],
+      category: "Gift Guide"
+    });
+  }
+  
+  return results;
+}
+
+/**
  * Mock web search function (simulates Google/Bing results with location awareness)
  * In production, this would integrate with actual search APIs
  */
@@ -147,10 +190,15 @@ export async function performLocationWebSearch(
 ): Promise<WebSearchResult[]> {
   const results: WebSearchResult[] = [];
   
-  // Simulate location-aware search results
+  // Generate search results based on available location data
   for (const query of queries) {
-    const mockResults = generateMockLocationResults(query, location);
-    results.push(...mockResults);
+    if (location) {
+      const mockResults = generateMockLocationResults(query, location);
+      results.push(...mockResults);
+    } else {
+      const genericResults = generateGenericAdviceResults(query);
+      results.push(...genericResults);
+    }
   }
   
   // Remove duplicates and limit results
@@ -254,7 +302,7 @@ export async function getUserLocation(req?: any): Promise<LocationContext | null
           };
         }
       } catch (error) {
-        console.log(`IP geolocation failed for ${clientIp}:`, error.message);
+        console.log(`IP geolocation failed for ${clientIp}:`, (error as Error).message);
       }
     }
   }
