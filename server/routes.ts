@@ -786,15 +786,18 @@ This profile was generated from your input and will help provide more personaliz
             ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
             : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
 
-          processMiraInput(miraInput)
-            .then(async (analysis: any) => {
-              const cleanSuggestion = analysis.suggestion?.replace(/^["']|["']$/g, '');
-              
+          processNote(miraInput)
+            .then(async (analysis: MiraAIResult) => {
               const updates: any = {
                 aiEnhanced: true,
-                aiSuggestion: cleanSuggestion,
-                aiContext: analysis.context || analysis.enhancedContent,
-                richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+                aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+                aiContext: analysis.summary || "",
+                richContext: analysis.entities ? JSON.stringify({
+                  entities: analysis.entities,
+                  suggestedLinks: analysis.suggestedLinks,
+                  nextSteps: analysis.nextSteps,
+                  microQuestions: analysis.microQuestions
+                }) : null,
                 isProcessing: false,
               };
               
@@ -1191,32 +1194,26 @@ Respond with JSON:
 
         const aiAnalysisFunction = (prompt: string) => safeAnalyzeWithClaude(prompt, "voice");
 
-        processMiraInput(miraInput)
-          .then(async (analysis) => {
+        processNote(miraInput)
+          .then(async (analysis: MiraAIResult) => {
             console.log("Mira AI analysis successful for voice note:", note.id);
             
-            // DEBUG: Check if analysis contains prompt
-            if (analysis.enhancedContent && analysis.enhancedContent.includes("You are Mira")) {
-              console.error("CRITICAL: AI analysis contains prompt instead of results for note", note.id);
-              console.log("Analysis keys:", Object.keys(analysis));
-              return; // Skip updating note to prevent corruption
-            }
+            console.log("v2.0 Intelligence Layer analysis successful for voice note:", note.id);
             
             apiUsageStats.claude.requests++;
             apiUsageStats.totalRequests++;
             
-            // Clean up suggestion to avoid storing prompt text
-            let cleanSuggestion = analysis.title || analysis.description || analysis.suggestion || "";
-            if (cleanSuggestion && (cleanSuggestion.includes("You are Mira") || cleanSuggestion.length > 200)) {
-              cleanSuggestion = "";
-            }
-
+            // Use v2.0 structured results
             const updates: any = {
               aiEnhanced: true,
-              aiSuggestion: cleanSuggestion,
-              aiContext: analysis.context || analysis.enhancedContent,
-              richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : 
-                          analysis.priorityContext ? JSON.stringify(analysis.priorityContext) : null,
+              aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+              aiContext: analysis.summary || "",
+              richContext: analysis.entities ? JSON.stringify({
+                entities: analysis.entities,
+                suggestedLinks: analysis.suggestedLinks,
+                nextSteps: analysis.nextSteps,
+                microQuestions: analysis.microQuestions
+              }) : null,
               isProcessing: false,
             };
             
@@ -1225,46 +1222,44 @@ Respond with JSON:
             
             await storage.updateNote(note.id, updates);
             
-            // Create todos if found
-            console.log("Creating", analysis.todos?.length || 0, "todos for voice note:", note.id);
+            // Create v2.0 todos if found
+            console.log("Creating", analysis.todos?.length || 0, "v2.0 todos for voice note:", note.id);
             if (analysis.todos && analysis.todos.length > 0) {
               for (const todo of analysis.todos) {
-                const todoTitle = typeof todo === 'string' ? todo : todo.title || 'Untitled Task';
-                console.log("Creating todo with title:", todoTitle);
-                
                 const todoData: any = {
-                  title: todoTitle,
+                  title: todo.title,
                   noteId: note.id,
                 };
 
-                // Add enhanced todo properties if available
-                if (typeof todo === 'object' && todo !== null) {
-                  if (todo.itemType) todoData.itemType = todo.itemType;
-                  if (todo.priority) todoData.priority = todo.priority;
-                  if (todo.timeDue) todoData.timeDue = todo.timeDue;
-                  if (todo.timeDependency) todoData.timeDependency = todo.timeDependency;
-                  if (todo.plannedNotificationStructure) {
-                    todoData.plannedNotificationStructure = todo.plannedNotificationStructure;
-                  }
-                  if (todo.isActiveReminder !== undefined) {
-                    todoData.isActiveReminder = todo.isActiveReminder;
-                  }
+                // Add v2.0 enhanced todo properties
+                if (todo.due) {
+                  todoData.timeDue = new Date(todo.due);
+                }
+                if (todo.recurrence) {
+                  todoData.recurrenceRule = todo.recurrence; // RRULE format
+                }
+                if (todo.priority) {
+                  todoData.priority = todo.priority;
                 }
 
                 await storage.createTodo(todoData);
               }
             }
             
-            // Create collection if suggested
-            if (analysis.collectionSuggestion) {
+            // Create collection if suggested with v2.0 hints
+            if (analysis.collectionHint) {
               const collections = await storage.getCollections();
               const existingCollection = collections.find(
-                c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
+                c => c.name.toLowerCase() === analysis.collectionHint!.name.toLowerCase()
               );
               
               let collectionId = existingCollection?.id;
               if (!existingCollection) {
-                const newCollection = await storage.createCollection(analysis.collectionSuggestion);
+                const newCollection = await storage.createCollection({
+                  name: analysis.collectionHint.name,
+                  icon: analysis.collectionHint.icon || "folder",
+                  color: analysis.collectionHint.colour || "#6366f1"
+                });
                 collectionId = newCollection.id;
               }
               
