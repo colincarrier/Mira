@@ -674,9 +674,7 @@ This profile was generated from your input and will help provide more personaliz
         );
         mediaUrl = savedFile.url;
         
-        if (!noteContent.trim()) {
-          noteContent = "Reviewing image...";
-        }
+        // Don't set placeholder text - let AI analysis fill content when ready
       }
       
       // Process general file
@@ -720,15 +718,9 @@ This profile was generated from your input and will help provide more personaliz
         }
       }
       
-      // Ensure we have some content for the note
+      // Only use meaningful content - no placeholder text
       if (!noteContent || !noteContent.trim()) {
-        if (files.image && files.image[0]) {
-          noteContent = "📷 Image uploaded";
-        } else if (files.file && files.file[0]) {
-          noteContent = `📎 File: ${files.file[0].originalname}`;
-        } else {
-          noteContent = "📎 Media uploaded";
-        }
+        noteContent = ""; // Leave empty until AI analysis provides meaningful content
       }
       
       // Create note with media
@@ -1380,11 +1372,28 @@ Respond with JSON:
               }
             }
             
-            identification = parsed.headline || parsed.itemName || parsed.title || "Image captured";
-            suggestedContext = parsed.description || parsed.keyValue || "Please add context for this image";
+            // Only use AI identification if it's meaningful, not placeholder text
+            if (parsed.headline && parsed.headline !== "General content analysis") {
+              identification = parsed.headline;
+            } else if (parsed.itemName && parsed.itemName !== "General content analysis") {
+              identification = parsed.itemName;
+            } else if (parsed.title && parsed.title !== "General content analysis") {
+              identification = parsed.title;
+            } else {
+              identification = ""; // No placeholder text
+            }
+            
+            // Only use AI context if it's meaningful
+            if (parsed.description && parsed.description !== "General content analysis") {
+              suggestedContext = parsed.description;
+            } else if (parsed.keyValue && parsed.keyValue !== "General content analysis") {
+              suggestedContext = parsed.keyValue;
+            } else {
+              suggestedContext = ""; // No placeholder text
+            }
             
             // Generate meaningful web search results based on the identified item
-            if (parsed.itemName && parsed.itemName !== "Image captured") {
+            if (parsed.itemName && parsed.itemName !== "Image captured" && parsed.itemName !== "General content analysis") {
               const searchTerm = parsed.itemName;
               const category = parsed.category || "item";
               
@@ -1420,9 +1429,9 @@ Respond with JSON:
               };
             }
           } catch (parseError) {
-            // Fallback to original format if parsing fails
-            identification = analysisResult.context || "Image captured";
-            suggestedContext = analysisResult.suggestion || "Please add context for this image";
+            // Only use meaningful AI results, no placeholder text
+            identification = (analysisResult.context && analysisResult.context !== "General content analysis") ? analysisResult.context : "";
+            suggestedContext = (analysisResult.suggestion && analysisResult.suggestion !== "General content analysis") ? analysisResult.suggestion : "";
           }
           
         } catch (error) {
