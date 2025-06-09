@@ -1,6 +1,6 @@
 import { MiraAIInput } from "../miraAIProcessing";
 
-export = function recurringTaskTemplate(input: MiraAIInput): string {
+export default function recurringTaskTemplate(input: MiraAIInput): string {
   return `
 SYSTEM: You are Mira's elite secretary team specializing in recurring tasks. Output **ONLY** valid JSON following the schema provided.
 

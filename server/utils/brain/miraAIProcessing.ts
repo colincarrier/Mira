@@ -100,7 +100,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const fp = fingerprint(input);
 
   /* 2 ▸ Compose LLM prompt */
-  const prompt = composePrompt(input, fp);
+  const prompt = await composePrompt(input, fp);
 
   /* 3 ▸ Model call */
   const rawModelJSON = await callLLM(input, prompt);
@@ -113,14 +113,6 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
 
 /* ----------  INTERNALS  ---------- */
 
-import SIMPLE from "./promptTemplates/simpleTask";
-import RECUR from "./promptTemplates/recurringTask";
-import EVENT from "./promptTemplates/scheduledEvent";
-import COMPLEX from "./promptTemplates/complexProject";
-import IMAGE from "./promptTemplates/image";
-import VOICE from "./promptTemplates/voice";
-import Fallback from "./promptTemplates/fallback";
-
 function fingerprint({ content, mode }: MiraAIInput) {
   const c = content.toLowerCase();
   const isShort = c.length < 60;
@@ -129,14 +121,33 @@ function fingerprint({ content, mode }: MiraAIInput) {
   return { isShort, hasDate, recur, mode };
 }
 
-function composePrompt(input: MiraAIInput, fp: any) {
-  if (fp.mode === "image") return IMAGE(input);
-  if (fp.mode === "voice")  return VOICE(input);
-  if (fp.recur)             return RECUR(input);
-  if (fp.hasDate)           return EVENT(input);
-  if (fp.isShort)           return SIMPLE(input);
-  if (input.content.length > 180) return COMPLEX(input);
-  return SIMPLE(input);
+async function composePrompt(input: MiraAIInput, fp: any) {
+  if (fp.mode === "image") {
+    const template = await import("./promptTemplates/image");
+    return template.default(input);
+  }
+  if (fp.mode === "voice") {
+    const template = await import("./promptTemplates/voice");
+    return template.default(input);
+  }
+  if (fp.recur) {
+    const template = await import("./promptTemplates/recurringTask");
+    return template.default(input);
+  }
+  if (fp.hasDate) {
+    const template = await import("./promptTemplates/scheduledEvent");
+    return template.default(input);
+  }
+  if (fp.isShort) {
+    const template = await import("./promptTemplates/simpleTask");
+    return template.default(input);
+  }
+  if (input.content.length > 180) {
+    const template = await import("./promptTemplates/complexProject");
+    return template.default(input);
+  }
+  const template = await import("./promptTemplates/simpleTask");
+  return template.default(input);
 }
 
 async function callLLM(input: MiraAIInput, prompt: string) {
