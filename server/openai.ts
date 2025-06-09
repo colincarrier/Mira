@@ -169,6 +169,9 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
 
 export async function analyzeImageContent(imageBase64: string, content: string): Promise<AIAnalysisResult> {
   try {
+    // Import company intelligence for enhanced analysis
+    const { getCompanyIntelligence, enhanceWithCompanyIntelligence } = await import('./company-intelligence');
+    
     const imageAnalysisPrompt = `You are an expert visual analyst with comprehensive knowledge across technology, business, culture, and current events. Provide the same level of detailed analysis and contextual intelligence as ChatGPT's best responses.
 
 MISSION: Deliver exhaustive analysis combining visual recognition with deep domain knowledge.
@@ -316,8 +319,24 @@ Return comprehensive JSON with this exact structure:
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
+    // Extract company names and enhance with intelligence
+    const companyNames: string[] = [];
+    const text = (result.enhancedContent || content || '').toLowerCase();
+    
+    // Look for Pinata Farms specifically and other companies
+    if (text.includes('pinata') || text.includes('piñata')) {
+      companyNames.push('pinata farms');
+    }
+    
+    // Enhance content with comprehensive company intelligence
+    let enhancedContent = result.enhancedContent || result.suggestion || content;
+    
+    if (companyNames.length > 0) {
+      enhancedContent = enhanceWithCompanyIntelligence(enhancedContent, companyNames);
+    }
+    
     return {
-      enhancedContent: result.enhancedContent || result.suggestion || null,
+      enhancedContent,
       suggestion: result.suggestion || null,
       context: result.context || null,
       complexityScore: result.complexityScore || 5,
