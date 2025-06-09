@@ -126,11 +126,33 @@ export default function NoteDetail() {
 
   const handleSendMessage = () => {
     if (inputValue.trim()) {
-      // TODO: Send the message for note update
       console.log("Sending message for note update:", inputValue);
+      
+      // Create context-aware update with full note context
+      const fullContext = {
+        currentContent: note.content,
+        todos: note.todos || [],
+        richContext: note.richContext,
+        aiContext: note.aiContext,
+        userModification: inputValue.trim()
+      };
+      
+      // Send context-aware update request
+      updateNoteMutation.mutate({ 
+        content: note.content, 
+        updateInstruction: `User wants to modify this note: "${inputValue.trim()}". 
+        Current note context: ${JSON.stringify(fullContext)}. 
+        Please intelligently update the note content, todos, priorities, timing, or other aspects based on the user's intent.
+        If they're adding items, add them. If removing, remove them. If checking off todos, mark them complete.
+        If changing details, priorities, or timing, update accordingly.`
+      });
+      
       setInputValue("");
       setIsTyping(false);
-      // Handle input focus
+      
+      toast({
+        description: "Updating note with AI assistance...",
+      });
     }
   };
 
@@ -383,7 +405,7 @@ export default function NoteDetail() {
                   updateNoteMutation.mutate({ content: editedContent });
                 }
               }}
-              className="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-10"
+              className="w-full min-h-[200px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
               placeholder="Start writing..."
               style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
             />
@@ -400,7 +422,7 @@ export default function NoteDetail() {
             <div className="flex flex-wrap gap-2">
               {(() => {
                 const actions = [];
-                const suggestions = note.aiSuggestion.split(',').map(s => s.trim());
+                const suggestions = note.aiSuggestion.split(',').map((s: string) => s.trim());
                 
                 for (const suggestion of suggestions) {
                   if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
@@ -412,13 +434,6 @@ export default function NoteDetail() {
                         const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
                         window.open(calendarUrl, '_blank');
                       }
-                    });
-                  } else if (suggestion.includes('Share') || suggestion.includes('share')) {
-                    actions.push({
-                      type: 'share',
-                      label: 'Share Note',
-                      icon: Share2,
-                      action: () => handleShare()
                     });
                   } else if (suggestion.includes('Reminder') || suggestion.includes('reminder')) {
                     actions.push({
@@ -457,27 +472,7 @@ export default function NoteDetail() {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <>
-                    {/* Next Steps Section - v2.0 Format */}
-                    {richData.nextSteps && richData.nextSteps.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <ArrowRight className="w-5 h-5 text-[hsl(var(--primary))]" />
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Next Steps</h3>
-                          </div>
-                          <div className="space-y-3">
-                            {richData.nextSteps.map((step: string, index: number) => (
-                              <div key={index} className="flex items-start gap-3 p-4 bg-[hsl(var(--accent))] rounded-lg border border-[hsl(var(--border))]">
-                                <div className="w-6 h-6 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-xs text-[hsl(var(--primary-foreground))] font-medium">{index + 1}</span>
-                                </div>
-                                <p className="text-sm text-[hsl(var(--foreground))] flex-1 leading-relaxed">{step}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+
 
                     {/* Entities Section - v2.0 Format */}
                     {richData.entities && richData.entities.length > 0 && (
@@ -570,79 +565,47 @@ export default function NoteDetail() {
                       </div>
                     )}
 
-                    {/* Next Steps Section */}
-                    {richData.nextSteps && richData.nextSteps.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="w-5 h-5 bg-purple-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">→</span>
-                            </div>
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Next Steps</h3>
+                    {/* Next Steps - Consolidated Section */}
+                    {(richData.nextSteps || richData.recommendedActions) && (
+                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
+                        <div className="px-4 py-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ArrowRight className="w-4 h-4 text-[hsl(var(--primary))]" />
+                            <h3 className="font-medium text-[hsl(var(--foreground))]">Next Steps</h3>
                           </div>
                           <div className="space-y-2">
-                            {richData.nextSteps.map((step: string, index: number) => (
-                              <div key={index} className="flex items-start gap-3 p-3 bg-[hsl(var(--muted))] rounded-lg">
-                                <span className="text-sm font-medium text-purple-600 mt-0.5">{index + 1}.</span>
+                            {richData.nextSteps && richData.nextSteps.map((step: string, index: number) => (
+                              <div key={`step-${index}`} className="flex items-start gap-3 p-3 bg-[hsl(var(--accent))] rounded-lg">
+                                <div className="w-5 h-5 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <span className="text-xs text-[hsl(var(--primary-foreground))] font-medium">{index + 1}</span>
+                                </div>
                                 <p className="text-sm text-[hsl(var(--foreground))] flex-1">{step}</p>
                               </div>
                             ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Key Insights Section */}
-                    {richData.keyInsights && richData.keyInsights.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="w-5 h-5 bg-orange-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">💡</span>
-                            </div>
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Key Insights</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {richData.keyInsights.map((insight: string, index: number) => (
-                              <div key={index} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg">
-                                <p className="text-sm text-[hsl(var(--foreground))]">{insight}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Recommended Actions */}
-                    {richData.recommendedActions && richData.recommendedActions.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">1</span>
-                            </div>
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Recommended Next Steps</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {richData.recommendedActions.map((action: any, index: number) => (
-                              <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
-                                <div className="text-sm text-blue-800 mb-2">{action.description}</div>
-                                {action.links && action.links.length > 0 && (
-                                  <div className="space-y-1">
-                                    {action.links.map((link: any, linkIndex: number) => (
-                                      <a 
-                                        key={linkIndex} 
-                                        href={link.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                                      >
-                                        {link.title}
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
+                            {richData.recommendedActions && richData.recommendedActions.map((action: any, index: number) => (
+                              <div key={`action-${index}`} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <span className="text-xs text-white font-medium">{(richData.nextSteps?.length || 0) + index + 1}</span>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
+                                  <div className="text-sm text-blue-800">{action.description}</div>
+                                  {action.links && action.links.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {action.links.map((link: any, linkIndex: number) => (
+                                        <a 
+                                          key={linkIndex} 
+                                          href={link.url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                          {link.title}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -860,8 +823,8 @@ export default function NoteDetail() {
       >
         <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
           <textarea
-            placeholder="Add/edit anything..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
+            placeholder="Add/edit anything here..."
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-600 text-gray-900 resize-none overflow-hidden font-medium"
             value={inputValue}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
