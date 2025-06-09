@@ -1052,9 +1052,19 @@ Respond with JSON:
           
           // Parse the structured response
           try {
-            const parsed = JSON.parse(analysisResult.enhancedContent || analysisResult.context || '{}');
-            identification = parsed.headline || parsed.itemName || "Image captured";
-            suggestedContext = parsed.description || "Please add context for this image";
+            // First try to parse the main content, then fall back to raw response
+            let parsed = {};
+            if (analysisResult.enhancedContent) {
+              try {
+                parsed = JSON.parse(analysisResult.enhancedContent);
+              } catch {
+                // If enhancedContent isn't JSON, try context or suggestion
+                parsed = JSON.parse(analysisResult.context || analysisResult.suggestion || '{}');
+              }
+            }
+            
+            identification = parsed.headline || parsed.itemName || parsed.title || "Image captured";
+            suggestedContext = parsed.description || parsed.keyValue || "Please add context for this image";
             
             // Generate meaningful web search results based on the identified item
             if (parsed.itemName && parsed.itemName !== "Image captured") {
