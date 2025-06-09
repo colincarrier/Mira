@@ -45,7 +45,7 @@ export function shouldTriggerLocationSearch(content: string): boolean {
 /**
  * Generate location-aware search queries
  */
-export function generateLocationSearchQueries(content: string, location?: LocationContext): string[] {
+export function generateLocationSearchQueries(content: string, location?: LocationContext | null): string[] {
   const queries: string[] = [];
   const contentLower = content.toLowerCase();
   
@@ -83,11 +83,23 @@ export function generateLocationSearchQueries(content: string, location?: Locati
       queries.push(`party supply stores ${locationString}`);
     }
   } else {
-    // Generic searches without location
+    // Generic searches when no location is available
     searchTerms.forEach(term => {
-      queries.push(`${term} online`);
-      queries.push(`best ${term}`);
+      queries.push(`${term} guide`);
+      queries.push(`best ${term} reviews`);
+      queries.push(`how to find ${term}`);
     });
+    
+    // Add generic location-agnostic advice
+    if (contentLower.includes('venue') || contentLower.includes('party')) {
+      queries.push('party venue selection tips');
+      queries.push('birthday party venue ideas');
+    }
+    
+    if (contentLower.includes('restaurant')) {
+      queries.push('family restaurant selection guide');
+      queries.push('restaurant booking tips');
+    }
   }
   
   return queries.slice(0, 5); // Limit to 5 queries
@@ -131,7 +143,7 @@ function extractSearchTerms(content: string): string[] {
  */
 export async function performLocationWebSearch(
   queries: string[], 
-  location?: LocationContext
+  location?: LocationContext | null
 ): Promise<WebSearchResult[]> {
   const results: WebSearchResult[] = [];
   
@@ -216,57 +228,38 @@ function generateMockLocationResults(query: string, location?: LocationContext):
 }
 
 /**
- * Get user's location from IP geolocation or browser geolocation
+ * Get user's location from IP geolocation or user profile
  */
-export async function getUserLocation(req?: any): Promise<LocationContext> {
-  // Try to get location from request headers (IP-based geolocation)
+export async function getUserLocation(req?: any): Promise<LocationContext | null> {
   if (req) {
     const forwardedFor = req.headers['x-forwarded-for'];
     const realIp = req.headers['x-real-ip'];
     const clientIp = forwardedFor || realIp || req.connection.remoteAddress;
     
-    // In production, you would use a service like ip-api.com or ipinfo.io
-    // For now, try to detect common geographic indicators
-    const userAgent = req.headers['user-agent'] || '';
-    const acceptLanguage = req.headers['accept-language'] || '';
-    
-    // Basic location detection from language/timezone hints
-    if (acceptLanguage.includes('en-GB') || acceptLanguage.includes('en-UK')) {
-      return {
-        city: "London",
-        state: "England",
-        country: "UK",
-        coordinates: { lat: 51.5074, lng: -0.1278 }
-      };
-    }
-    
-    if (acceptLanguage.includes('en-CA')) {
-      return {
-        city: "Toronto",
-        state: "ON",
-        country: "CA",
-        coordinates: { lat: 43.6532, lng: -79.3832 }
-      };
-    }
-    
-    if (acceptLanguage.includes('en-AU')) {
-      return {
-        city: "Sydney",
-        state: "NSW",
-        country: "AU",
-        coordinates: { lat: -33.8688, lng: 151.2093 }
-      };
+    if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1') {
+      try {
+        // Use free IP geolocation service
+        const response = await fetch(`http://ip-api.com/json/${clientIp}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          return {
+            city: data.city,
+            state: data.regionName,
+            country: data.countryCode,
+            coordinates: {
+              lat: data.lat,
+              lng: data.lon
+            }
+          };
+        }
+      } catch (error) {
+        console.log(`IP geolocation failed for ${clientIp}:`, error.message);
+      }
     }
   }
   
-  // Default to major US metropolitan area
-  return {
-    city: "New York",
-    state: "NY", 
-    country: "US",
-    coordinates: {
-      lat: 40.7128,
-      lng: -74.0060
-    }
-  };
+  // Return null if no location can be determined
+  // This prevents arbitrary defaults and forces generic searches
+  return null;
 }
