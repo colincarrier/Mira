@@ -127,17 +127,10 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
 
   /* 5 ▸ Location-aware web search if applicable */
   let webResults: WebSearchResult[] = [];
-  console.log("Checking if web search should trigger for:", input.content);
   if (shouldTriggerLocationSearch(input.content)) {
-    console.log("Web search triggered! Getting location and performing search...");
-    const location = await getUserLocation(input.req); // Pass request for IP detection
-    console.log("Location obtained:", location);
+    const location = await getUserLocation(input.req);
     const queries = generateLocationSearchQueries(input.content, location);
-    console.log("Generated search queries:", queries);
     webResults = await performLocationWebSearch(queries, location);
-    console.log("Web search results:", webResults.length, "results found");
-  } else {
-    console.log("Web search not triggered - content doesn't match commercial patterns");
   }
 
   return { 

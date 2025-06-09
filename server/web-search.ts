@@ -231,25 +231,9 @@ export async function performLocationWebSearch(
   queries: string[], 
   location?: LocationContext | null
 ): Promise<WebSearchResult[]> {
-  const results: WebSearchResult[] = [];
-  
-  // Generate search results based on available location data
-  for (const query of queries) {
-    if (location) {
-      const mockResults = generateMockLocationResults(query, location);
-      results.push(...mockResults);
-    } else {
-      const genericResults = generateGenericAdviceResults(query);
-      results.push(...genericResults);
-    }
-  }
-  
-  // Remove duplicates and limit results
-  const uniqueResults = results.filter((result, index, self) => 
-    index === self.findIndex(r => r.title === result.title)
-  );
-  
-  return uniqueResults.slice(0, 8);
+  // Return empty results for now - web search integration requires real APIs
+  // This prevents showing synthetic data to users
+  return [];
 }
 
 /**
