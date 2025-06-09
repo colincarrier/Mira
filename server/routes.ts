@@ -1076,9 +1076,14 @@ Respond with a JSON object containing:
         instruction.toLowerCase().includes('reprocess') || 
         instruction.toLowerCase().includes('reanalyze') ||
         instruction.toLowerCase().includes('what does it say') ||
+        instruction.toLowerCase().includes('what does this say') ||
         instruction.toLowerCase().includes('read the text') ||
         instruction.toLowerCase().includes('identify') ||
         instruction.toLowerCase().includes('tell me about') ||
+        instruction.toLowerCase().includes('business intelligence') ||
+        instruction.toLowerCase().includes('company') ||
+        instruction.toLowerCase().includes('founders') ||
+        instruction.toLowerCase().includes('business model') ||
         (instruction.toLowerCase().includes('image') && (instruction.toLowerCase().includes('again') || instruction.toLowerCase().includes('better')));
 
       let evolution;
