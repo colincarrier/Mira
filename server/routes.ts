@@ -3,12 +3,15 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemSchema } from "@shared/schema";
 import { saveAudioFile } from "./file-storage";
+import * as fs from "fs";
+import * as path from "path";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
 let analyzeWithClaude: any = null;
+let analyzeImageContent: any = null;
 
 // Helper functions to safely check AI availability
 function isOpenAIAvailable(): boolean {
@@ -49,6 +52,7 @@ async function initializeAI() {
     const openaiModule = await import("./openai");
     analyzeWithOpenAI = openaiModule.analyzeWithOpenAI;
     transcribeAudio = openaiModule.transcribeAudio;
+    analyzeImageContent = openaiModule.analyzeImageContent;
     console.log("OpenAI module loaded successfully");
   } catch (error) {
     console.warn("OpenAI module failed to load - AI features disabled:", error);
@@ -62,6 +66,33 @@ async function initializeAI() {
     console.warn("Anthropic module failed to load - AI features disabled:", error);
   }
 }
+
+// Helper function to convert stored image to base64 for reprocessing
+async function getImageAsBase64(mediaUrl: string): Promise<string | null> {
+  try {
+    // Extract filename from URL (e.g., "/uploads/filename.jpg" -> "filename.jpg")
+    const filename = mediaUrl.split('/').pop();
+    if (!filename) return null;
+    
+    const imagePath = path.join(process.cwd(), 'uploads', filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(imagePath)) {
+      console.log(`Image file not found: ${imagePath}`);
+      return null;
+    }
+    
+    // Read file and convert to base64
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64 = imageBuffer.toString('base64');
+    
+    return base64;
+  } catch (error) {
+    console.error("Error converting image to base64:", error);
+    return null;
+  }
+}
+
 // Import the legacy Mira AI processing system (deprecated)
 // import { processMiraInput, type MiraAIInput } from "./utils/miraAIProcessing";
 import multer from "multer";
@@ -954,8 +985,38 @@ Respond with a JSON object containing:
 
       console.log("Evolving note with instruction:", instruction);
 
-      // Use Claude for intelligent evolution
-      const evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+      // Check if this is a media reprocessing request
+      const isMediaReprocessRequest = instruction.toLowerCase().includes('rerun') || 
+        instruction.toLowerCase().includes('reprocess') || 
+        instruction.toLowerCase().includes('reanalyze') ||
+        (instruction.toLowerCase().includes('image') && (instruction.toLowerCase().includes('again') || instruction.toLowerCase().includes('better')));
+
+      let evolution;
+      
+      if (isMediaReprocessRequest && note.mediaUrl) {
+        console.log("Media reprocessing request detected for note with image");
+        
+        // Combine original content with new instruction for reprocessing
+        const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
+        
+        try {
+          // Re-analyze the image with combined instructions
+          const imageBase64 = await getImageAsBase64(note.mediaUrl);
+          if (imageBase64) {
+            evolution = await analyzeImageContent(imageBase64, combinedInstructions);
+            console.log("Media reprocessing completed with enhanced results");
+          } else {
+            // Fallback to text evolution if image retrieval fails
+            evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+          }
+        } catch (error) {
+          console.error("Media reprocessing failed, falling back to text evolution:", error);
+          evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+        }
+      } else {
+        // Regular text evolution
+        evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+      }
       
       // Apply the evolution to the note
       const updates: any = {
