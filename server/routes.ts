@@ -5,6 +5,7 @@ import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemS
 import { saveAudioFile } from "./file-storage";
 import * as fs from "fs";
 import * as path from "path";
+import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
@@ -1018,9 +1019,39 @@ Respond with a JSON object containing:
         evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
       }
       
-      // Apply the evolution to the note
+      // Analyze instruction for safety before applying changes
+      const isMinorChange = DataProtectionService.isMinorChange(instruction);
+      const isRiskyChange = DataProtectionService.isRiskyChange(instruction);
+      
+      // Use data protection for content changes
+      const protectionResult = await DataProtectionService.safeApplyAIChanges(
+        noteId,
+        existingContent,
+        evolution,
+        {
+          changedBy: "ai_claude",
+          userApproved: isMinorChange, // Auto-approve minor changes
+          changeType: "ai_enhancement"
+        }
+      );
+
+      if (!protectionResult.success) {
+        // Return suggestions without applying changes for high-risk modifications
+        return res.json({
+          id: noteId,
+          content: existingContent,
+          aiSuggestion: evolution.suggestion,
+          aiContext: evolution.context,
+          warnings: protectionResult.warnings,
+          requiresApproval: true,
+          suggestedChanges: evolution.enhancedContent,
+          riskLevel: "high"
+        });
+      }
+
+      // Apply the protected changes
       const updates: any = {
-        content: evolution.enhancedContent || existingContent,
+        content: protectionResult.appliedChanges,
         aiEnhanced: true
       };
 
@@ -1034,8 +1065,11 @@ Respond with a JSON object containing:
       if (evolution.richContext) {
         updates.richContext = JSON.stringify(evolution.richContext);
       }
+      if (protectionResult.warnings.length > 0) {
+        updates.aiContext = (updates.aiContext || "") + "\n\nData Protection Warnings: " + protectionResult.warnings.join("; ");
+      }
 
-      // Update the note
+      // Update the note with protected content
       await storage.updateNote(noteId, updates);
 
       // Create new todos from AI analysis
@@ -1081,6 +1115,170 @@ Respond with a JSON object containing:
     } catch (error) {
       console.error("Note evolution error:", error);
       res.status(500).json({ message: "Failed to evolve note" });
+    }
+  });
+
+  // Quick rollback endpoint for reverting AI changes
+  app.post("/api/notes/:noteId/rollback", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.noteId);
+      const { targetVersion } = req.body;
+      
+      if (!targetVersion) {
+        return res.status(400).json({ message: "Target version is required" });
+      }
+
+      const success = await DataProtectionService.rollbackToVersion(noteId, targetVersion);
+      
+      if (success) {
+        const updatedNote = await storage.getNote(noteId);
+        res.json({ 
+          success: true, 
+          note: updatedNote,
+          message: `Rolled back to version ${targetVersion}`
+        });
+      } else {
+        res.status(400).json({ message: "Rollback failed" });
+      }
+    } catch (error) {
+      console.error("Rollback error:", error);
+      res.status(500).json({ message: "Failed to rollback note" });
+    }
+  });
+
+  // Get version history for a note
+  app.get("/api/notes/:noteId/versions", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.noteId);
+      const versions = await DataProtectionService.getVersionHistory(noteId);
+      res.json(versions);
+    } catch (error) {
+      console.error("Version history error:", error);
+      res.status(500).json({ message: "Failed to get version history" });
+    }
+  });
+
+  // Approve pending AI changes
+  app.post("/api/notes/:noteId/approve-changes", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.noteId);
+      const { suggestedChanges, userApproved } = req.body;
+      
+      if (!suggestedChanges) {
+        return res.status(400).json({ message: "Suggested changes are required" });
+      }
+
+      // Get current note content
+      const note = await storage.getNote(noteId);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+
+      // Apply the changes with user approval
+      const protectionResult = await DataProtectionService.safeApplyAIChanges(
+        noteId,
+        note.content,
+        { enhancedContent: suggestedChanges },
+        {
+          changedBy: "ai_claude",
+          userApproved: userApproved,
+          changeType: "ai_suggestion_applied"
+        }
+      );
+
+      if (protectionResult.success) {
+        await storage.updateNote(noteId, { 
+          content: protectionResult.appliedChanges,
+          aiEnhanced: true 
+        });
+        
+        const updatedNote = await storage.getNote(noteId);
+        res.json({ 
+          success: true, 
+          note: updatedNote,
+          warnings: protectionResult.warnings
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          warnings: protectionResult.warnings 
+        });
+      }
+    } catch (error) {
+      console.error("Approve changes error:", error);
+      res.status(500).json({ message: "Failed to approve changes" });
+    }
+  });
+
+  // Re-clarify instruction endpoint for when AI misunderstood
+  app.post("/api/notes/:noteId/clarify", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.noteId);
+      const { originalInstruction, clarification } = req.body;
+      
+      if (!clarification) {
+        return res.status(400).json({ message: "Clarification is required" });
+      }
+
+      // Get the note
+      const note = await storage.getNote(noteId);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+
+      // Combine original instruction with clarification
+      const enhancedInstruction = `Previous instruction: ${originalInstruction}\n\nClarification: ${clarification}\n\nPlease apply the clarified instruction accurately.`;
+      
+      // Process the clarified instruction (similar to note evolution)
+      const evolutionPrompt = `You are helping enhance a note based on user clarification.
+      
+Current Note Content:
+${note.content}
+
+User's Clarified Instruction:
+${enhancedInstruction}
+
+Please provide an enhanced version that follows the clarified instruction precisely. Be conservative and only make the specific changes requested.
+
+Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what you changed", "todos": ["new todos if any"]}`;
+
+      const evolution = await safeAnalyzeWithClaude(evolutionPrompt, "clarification");
+      
+      // Apply with higher confidence since user provided clarification
+      const protectionResult = await DataProtectionService.safeApplyAIChanges(
+        noteId,
+        note.content,
+        evolution,
+        {
+          changedBy: "ai_claude",
+          userApproved: true, // User provided clarification, so approve
+          changeType: "ai_enhancement"
+        }
+      );
+
+      if (protectionResult.success) {
+        await storage.updateNote(noteId, { 
+          content: protectionResult.appliedChanges,
+          aiEnhanced: true,
+          aiSuggestion: evolution.suggestion
+        });
+        
+        const updatedNote = await storage.getNote(noteId);
+        res.json({ 
+          success: true, 
+          note: updatedNote,
+          message: "Clarification applied successfully"
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          warnings: protectionResult.warnings 
+        });
+      }
+      
+    } catch (error) {
+      console.error("Clarification error:", error);
+      res.status(500).json({ message: "Failed to apply clarification" });
     }
   });
 

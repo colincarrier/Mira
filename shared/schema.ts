@@ -22,6 +22,34 @@ export const notes = pgTable("notes", {
   richContext: text("rich_context"), // JSON string containing Google-style organized information
   isProcessing: boolean("is_processing").default(false), // True while AI is processing
   collectionId: integer("collection_id").references(() => collections.id),
+  
+  // Version control and data protection
+  version: integer("version").default(1).notNull(),
+  originalContent: text("original_content"), // Preserve original user input
+  lastUserEdit: timestamp("last_user_edit").defaultNow(), // Track manual edits
+  protectedContent: json("protected_content").$type<{
+    userSections: string[]; // Content sections that should be preserved
+    manualEdits: { timestamp: Date; content: string; }[];
+    aiModifications: { timestamp: Date; type: string; description: string; }[];
+  }>(),
+});
+
+// Note versions for complete changelog and rollback capability
+export const noteVersions = pgTable("note_versions", {
+  id: serial("id").primaryKey(),
+  noteId: integer("note_id").notNull().references(() => notes.id, { onDelete: 'cascade' }),
+  version: integer("version").notNull(),
+  content: text("content").notNull(),
+  changeType: text("change_type").notNull(), // 'user_edit', 'ai_enhancement', 'ai_suggestion_applied', 'manual_rollback'
+  changeDescription: text("change_description"), // Human-readable description of what changed
+  changedBy: text("changed_by").default("user"), // 'user', 'ai_openai', 'ai_claude', 'system'
+  preservedSections: json("preserved_sections").$type<string[]>(), // Content sections that were protected
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // Metadata about the change
+  confidence: integer("confidence"), // AI confidence level (1-100) for AI changes
+  userApproved: boolean("user_approved"), // Whether user explicitly approved AI changes
+  riskLevel: text("risk_level").default("low"), // 'low', 'medium', 'high' - based on content value analysis
 });
 
 export const todos = pgTable("todos", {
@@ -172,6 +200,9 @@ export type InsertItem = z.infer<typeof insertItemSchema>;
 export type Item = typeof items.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+export type InsertNoteVersion = typeof noteVersions.$inferInsert;
+export type NoteVersion = typeof noteVersions.$inferSelect;
 
 // Relations
 export const notesRelations = relations(notes, ({ one, many }) => ({
