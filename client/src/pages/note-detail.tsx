@@ -836,7 +836,7 @@ export default function NoteDetail() {
                   // Show next steps as optional todos if they exist and aren't already todos
                   const existingTodoTitles = note.todos.map((t: Todo) => t.title.toLowerCase());
                   const optionalTodos = nextSteps.filter((step: string) => 
-                    !existingTodoTitles.some(todoTitle => 
+                    !existingTodoTitles.some((todoTitle: string) => 
                       todoTitle.includes(step.toLowerCase().slice(0, 15)) ||
                       step.toLowerCase().includes(todoTitle.slice(0, 15))
                     )
@@ -852,11 +852,31 @@ export default function NoteDetail() {
                             <span className="text-sm text-gray-700 flex-1">{step}</span>
                             <div className="flex gap-1">
                               <button
-                                onClick={() => {
-                                  // TODO: Add to todos
-                                  toast({
-                                    description: "Adding to todos...",
-                                  });
+                                onClick={async () => {
+                                  try {
+                                    await apiRequest('/api/todos/add-optional', {
+                                      method: 'POST',
+                                      body: JSON.stringify({
+                                        title: step,
+                                        noteId: note.id
+                                      }),
+                                      headers: {
+                                        'Content-Type': 'application/json'
+                                      }
+                                    });
+                                    
+                                    // Refresh the note to show the new todo
+                                    queryClient.invalidateQueries({ queryKey: ['/api/notes', note.id] });
+                                    
+                                    toast({
+                                      description: "Added to todos",
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      description: "Failed to add todo",
+                                      variant: "destructive"
+                                    });
+                                  }
                                 }}
                                 className="p-1 text-gray-400 hover:text-green-600 transition-colors"
                                 title="Add to todos"
@@ -865,9 +885,29 @@ export default function NoteDetail() {
                               </button>
                               <button
                                 onClick={() => {
-                                  // TODO: Open reminder popup
-                                  toast({
-                                    description: "Reminder functionality coming soon!",
+                                  const reminderTime = new Date();
+                                  reminderTime.setHours(reminderTime.getHours() + 1);
+                                  
+                                  apiRequest('/api/reminders', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                      title: `Reminder: ${step}`,
+                                      description: `From note: ${note.content.slice(0, 50)}...`,
+                                      reminderTime: reminderTime.toISOString(),
+                                      noteId: note.id
+                                    }),
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    }
+                                  }).then(() => {
+                                    toast({
+                                      description: "Reminder set for 1 hour",
+                                    });
+                                  }).catch(() => {
+                                    toast({
+                                      description: "Failed to set reminder",
+                                      variant: "destructive"
+                                    });
                                   });
                                 }}
                                 className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"

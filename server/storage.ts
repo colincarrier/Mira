@@ -1,4 +1,4 @@
-import { notes, todos, collections, users, items, type Note, type Todo, type Collection, type User, type Item, type InsertNote, type InsertTodo, type InsertCollection, type InsertItem, type UpsertUser, type NoteWithTodos } from "@shared/schema";
+import { notes, todos, collections, users, items, reminders, type Note, type Todo, type Collection, type User, type Item, type Reminder, type InsertNote, type InsertTodo, type InsertCollection, type InsertItem, type InsertReminder, type UpsertUser, type NoteWithTodos } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
@@ -35,6 +35,10 @@ export interface IStorage {
   getItemsByCollectionId(collectionId: number): Promise<Item[]>;
   updateItem(id: number, updates: Partial<Item>): Promise<Item>;
   deleteItem(id: number): Promise<void>;
+
+  // Reminders
+  createReminder(reminder: InsertReminder): Promise<Reminder>;
+  getReminders(): Promise<Reminder[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -271,6 +275,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteItem(id: number): Promise<void> {
     await db.delete(items).where(eq(items.id, id));
+  }
+
+  // Reminder operations
+  async createReminder(insertReminder: InsertReminder): Promise<Reminder> {
+    const [reminder] = await db
+      .insert(reminders)
+      .values(insertReminder)
+      .returning();
+    return reminder;
+  }
+
+  async getReminders(): Promise<Reminder[]> {
+    return await db
+      .select()
+      .from(reminders)
+      .where(eq(reminders.isCompleted, false))
+      .orderBy(reminders.reminderTime);
   }
 }
 

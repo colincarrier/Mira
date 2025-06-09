@@ -2205,8 +2205,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
       const { title, noteId, description } = req.body;
       const todo = await storage.createTodo({
         title,
-        noteId,
-        description
+        noteId
       });
       res.json(todo);
     } catch (error) {
