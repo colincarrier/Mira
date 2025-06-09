@@ -383,8 +383,8 @@ export default function NoteDetail() {
         </div>
 
         {/* Document Body - Editable like iOS Notes */}
-        <div className="flex-1 bg-white min-h-screen">
-          <div className="px-4 py-6 space-y-6">
+        <div className="flex-1 bg-white">
+          <div className="px-4 py-3 space-y-2">
             {/* Media Display - Full functionality with sharing and download */}
             {note.mediaUrl && (
               <div className="mb-6">
@@ -474,46 +474,36 @@ export default function NoteDetail() {
                   <>
 
 
-                    {/* Entities Section - v2.0 Format */}
-                    {richData.entities && richData.entities.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <Info className="w-5 h-5 text-[hsl(var(--primary))]" />
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Entities</h3>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {richData.entities.map((entity: any, index: number) => (
-                              <div key={index} className="px-3 py-2 bg-[hsl(var(--muted))] rounded-lg border border-[hsl(var(--border))]">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-[hsl(var(--muted-foreground))] capitalize">{entity.type}</span>
-                                  <span className="text-sm text-[hsl(var(--foreground))] font-medium">{entity.value}</span>
+                    {/* Clarifying Questions - Non-redundant only */}
+                    {richData.microQuestions && richData.microQuestions.length > 0 && (() => {
+                      // Filter out questions that are redundant with next steps or existing todos
+                      const nextStepsText = (richData.nextSteps || []).join(' ').toLowerCase();
+                      const todosText = (note.todos || []).map((t: any) => t.title).join(' ').toLowerCase();
+                      
+                      const uniqueQuestions = richData.microQuestions.filter((question: string) => {
+                        const questionLower = question.toLowerCase();
+                        return !nextStepsText.includes(questionLower.slice(0, 20)) && 
+                               !todosText.includes(questionLower.slice(0, 20));
+                      });
+                      
+                      return uniqueQuestions.length > 0 ? (
+                        <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
+                          <div className="px-4 py-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <MessageSquare className="w-4 h-4 text-[hsl(var(--primary))]" />
+                              <h3 className="font-medium text-[hsl(var(--foreground))]">Consider</h3>
+                            </div>
+                            <div className="space-y-2">
+                              {uniqueQuestions.map((question: string, index: number) => (
+                                <div key={index} className="p-2 bg-[hsl(var(--secondary))] rounded text-sm text-[hsl(var(--foreground))]">
+                                  {question}
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Micro Questions Section - v2.0 Format */}
-                    {richData.microQuestions && richData.microQuestions.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <MessageSquare className="w-5 h-5 text-[hsl(var(--primary))]" />
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Clarifying Questions</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {richData.microQuestions.map((question: string, index: number) => (
-                              <div key={index} className="p-3 bg-[hsl(var(--secondary))] rounded-lg border border-[hsl(var(--border))]">
-                                <p className="text-sm text-[hsl(var(--foreground))]">{question}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      ) : null;
+                    })()}
 
                     {/* From the Web Section */}
                     {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
@@ -801,6 +791,26 @@ export default function NoteDetail() {
             </div>
           </div>
         )}
+
+        {/* Subtle Entities Section at Bottom */}
+        {note.richContext && (() => {
+          try {
+            const richData = JSON.parse(note.richContext);
+            return richData.entities && richData.entities.length > 0 ? (
+              <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
+                <div className="flex flex-wrap gap-1">
+                  {richData.entities.map((entity: any, index: number) => (
+                    <span key={index} className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {entity.value}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          } catch {
+            return null;
+          }
+        })()}
 
         {/* Document Metadata - Bottom of page */}
         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">

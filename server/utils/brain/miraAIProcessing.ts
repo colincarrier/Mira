@@ -23,6 +23,14 @@
 
 import { analyzeWithOpenAI, analyzeImageContent } from "../../openai";
 import { v4 as uuid } from "uuid";
+import { 
+  shouldTriggerLocationSearch, 
+  generateLocationSearchQueries, 
+  performLocationWebSearch, 
+  getDefaultLocation,
+  type WebSearchResult,
+  type LocationContext 
+} from "../../web-search";
 
 /* ----------  TYPES  ---------- */
 
@@ -52,6 +60,8 @@ export interface MiraAIResult {
   entities?: GraphEntity[];             // persons, orgs, places, dates, etc.
   suggestedLinks?: string[];            // existing note-IDs to link/display
   collectionHint?: { name: string; icon?: string; colour?: string };
+  /* WEB SEARCH RESULTS */
+  fromTheWeb?: WebSearchResult[];       // location-aware web search results
   /* PREDICTIVE */
   nextSteps?: string[];
   /* RAW */
