@@ -118,26 +118,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
-    // Filter out undefined values and ensure we have something to update
-    const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, value]) => value !== undefined)
-    );
-    
-    if (Object.keys(cleanUpdates).length === 0) {
-      // If no valid updates, just return the existing note
-      const existingNote = await this.getNote(id);
-      if (!existingNote) throw new Error("Note not found");
-      return existingNote;
+    try {
+      // Filter out undefined and null values to prevent SQL errors
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined && value !== null)
+      );
+      
+      if (Object.keys(cleanUpdates).length === 0) {
+        // If no valid updates, just return the existing note
+        const existingNote = await this.getNote(id);
+        if (!existingNote) throw new Error("Note not found");
+        return existingNote;
+      }
+      
+      const [note] = await db
+        .update(notes)
+        .set(cleanUpdates)
+        .where(eq(notes.id, id))
+        .returning();
+      
+      if (!note) throw new Error("Note not found");
+      return note;
+    } catch (error: any) {
+      console.error("Database update error:", error);
+      throw new Error(`Failed to update note: ${error.message}`);
     }
-    
-    const [note] = await db
-      .update(notes)
-      .set(cleanUpdates)
-      .where(eq(notes.id, id))
-      .returning();
-    
-    if (!note) throw new Error("Note not found");
-    return note;
   }
 
   async deleteNote(id: number): Promise<void> {

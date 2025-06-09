@@ -1000,22 +1000,22 @@ Respond with a JSON object containing:
         const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
         
         try {
-          // Re-analyze the image with combined instructions
+          // Re-analyze the image with combined instructions using OpenAI
           const imageBase64 = await getImageAsBase64(note.mediaUrl);
           if (imageBase64) {
-            evolution = await analyzeImageContent(imageBase64, combinedInstructions);
+            evolution = await safeAnalyzeWithOpenAI(combinedInstructions, "image-reprocessing");
             console.log("Media reprocessing completed with enhanced results");
           } else {
             // Fallback to text evolution if image retrieval fails
-            evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+            evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
           }
         } catch (error) {
           console.error("Media reprocessing failed, falling back to text evolution:", error);
-          evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+          evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
         }
       } else {
         // Regular text evolution
-        evolution = await analyzeWithClaude(evolutionPrompt, "evolution");
+        evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
       }
       
       // Apply the evolution to the note
@@ -1081,6 +1081,52 @@ Respond with a JSON object containing:
     } catch (error) {
       console.error("Note evolution error:", error);
       res.status(500).json({ message: "Failed to evolve note" });
+    }
+  });
+
+  // Media reprocessing endpoint for existing notes with images
+  app.post("/api/reprocess-media/:noteId", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.noteId);
+      const { instruction } = req.body;
+      
+      if (!instruction) {
+        return res.status(400).json({ message: "Instruction is required" });
+      }
+      
+      // Get the existing note
+      const note = await storage.getNote(noteId);
+      if (!note || !note.mediaUrl) {
+        return res.status(404).json({ message: "Note with image not found" });
+      }
+      
+      console.log("Media reprocessing request for note:", noteId);
+      
+      // Combine original content with new instruction
+      const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
+      
+      // Get the image as base64
+      const imageBase64 = await getImageAsBase64(note.mediaUrl);
+      if (!imageBase64) {
+        return res.status(400).json({ message: "Could not retrieve image file" });
+      }
+      
+      // Re-analyze with OpenAI
+      const analysisResult = await safeAnalyzeWithOpenAI(combinedInstructions, "image-reprocessing");
+      
+      // Return the enhanced analysis results
+      res.json({
+        enhancedContent: analysisResult.enhancedContent || combinedInstructions,
+        suggestion: analysisResult.suggestion || "Image reprocessed with new instructions",
+        context: analysisResult.context,
+        todos: analysisResult.todos || [],
+        richContext: analysisResult.richContext,
+        success: true
+      });
+      
+    } catch (error) {
+      console.error("Media reprocessing error:", error);
+      res.status(500).json({ message: "Failed to reprocess media" });
     }
   });
 
