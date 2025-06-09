@@ -1131,8 +1131,23 @@ Respond with a JSON object containing:
           evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
         }
       } else {
-        // Regular text evolution
-        evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
+        // Check if this is a business intelligence or company research request
+        const isBusinessIntelligenceRequest = instruction.toLowerCase().includes('business intelligence') ||
+          instruction.toLowerCase().includes('company') ||
+          instruction.toLowerCase().includes('market positioning') ||
+          instruction.toLowerCase().includes('funding') ||
+          instruction.toLowerCase().includes('anthropic') ||
+          instruction.toLowerCase().includes('openai') ||
+          instruction.toLowerCase().includes('competitive') ||
+          instruction.toLowerCase().includes('recent developments');
+        
+        if (isBusinessIntelligenceRequest && isOpenAIAvailable()) {
+          console.log("Using enhanced OpenAI analysis with company intelligence for evolution");
+          evolution = await safeAnalyzeWithOpenAI(evolutionPrompt, "evolution");
+        } else {
+          // Regular text evolution
+          evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
+        }
       }
       
       // Analyze instruction for safety before applying changes
