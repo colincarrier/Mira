@@ -23,6 +23,7 @@ export default function NoteDetail() {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   
@@ -90,6 +91,15 @@ export default function NoteDetail() {
       setEditedTitle(note.content.split('\n')[0] || 'Untitled Note');
     }
   }, [note]);
+
+  // Auto-resize textarea when content changes
+  useEffect(() => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+  }, [editedContent]);
 
   const handleQuestionClick = (question: string) => {
     setInputValue(question);
@@ -397,17 +407,33 @@ export default function NoteDetail() {
             )}
 
             <textarea
+              ref={textareaRef}
               value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
+              onChange={(e) => {
+                setEditedContent(e.target.value);
+                // Auto-expand textarea
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
               onBlur={() => {
                 // Auto-save on blur if content changed
                 if (editedContent !== note.content) {
                   updateNoteMutation.mutate({ content: editedContent });
                 }
               }}
+              onInput={(e) => {
+                // Ensure textarea expands properly on all input events
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
               className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-2"
               placeholder="Start writing..."
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+              style={{ 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                overflow: 'hidden'
+              }}
             />
           </div>
         </div>
