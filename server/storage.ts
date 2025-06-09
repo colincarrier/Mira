@@ -157,7 +157,7 @@ export class DatabaseStorage implements IStorage {
   async createTodo(insertTodo: InsertTodo): Promise<Todo> {
     const [todo] = await db
       .insert(todos)
-      .values([insertTodo])
+      .values(insertTodo)
       .returning();
     return todo;
   }
