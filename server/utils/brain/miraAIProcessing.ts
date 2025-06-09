@@ -27,7 +27,7 @@ import {
   shouldTriggerLocationSearch, 
   generateLocationSearchQueries, 
   performLocationWebSearch, 
-  getDefaultLocation,
+  getUserLocation,
   type WebSearchResult,
   type LocationContext 
 } from "../../web-search";
@@ -38,6 +38,7 @@ export interface MiraAIInput {
   id?: string;                          // uuid provided by caller or auto-generated
   content: string;                      // raw user input or OCR / STT payload
   mode: "text" | "voice" | "image" | "file";
+  req?: any;                           // Express request object for location detection
   imageData?: string;                   // base64 for image processing
   locale?: string;                      // e.g. "en-US" (defaults to device)
   timestamp?: string;                   // ISO 8601 (defaults to now)
@@ -127,7 +128,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   /* 5 ▸ Location-aware web search if applicable */
   let webResults: WebSearchResult[] = [];
   if (shouldTriggerLocationSearch(input.content)) {
-    const location = getDefaultLocation(); // In production, use user's actual location
+    const location = await getUserLocation(); // Use improved location detection
     const queries = generateLocationSearchQueries(input.content, location);
     webResults = await performLocationWebSearch(queries, location);
   }

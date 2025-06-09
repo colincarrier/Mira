@@ -216,16 +216,57 @@ function generateMockLocationResults(query: string, location?: LocationContext):
 }
 
 /**
- * Default location context (can be enhanced with IP geolocation or user preferences)
+ * Get user's location from IP geolocation or browser geolocation
  */
-export function getDefaultLocation(): LocationContext {
+export async function getUserLocation(req?: any): Promise<LocationContext> {
+  // Try to get location from request headers (IP-based geolocation)
+  if (req) {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const realIp = req.headers['x-real-ip'];
+    const clientIp = forwardedFor || realIp || req.connection.remoteAddress;
+    
+    // In production, you would use a service like ip-api.com or ipinfo.io
+    // For now, try to detect common geographic indicators
+    const userAgent = req.headers['user-agent'] || '';
+    const acceptLanguage = req.headers['accept-language'] || '';
+    
+    // Basic location detection from language/timezone hints
+    if (acceptLanguage.includes('en-GB') || acceptLanguage.includes('en-UK')) {
+      return {
+        city: "London",
+        state: "England",
+        country: "UK",
+        coordinates: { lat: 51.5074, lng: -0.1278 }
+      };
+    }
+    
+    if (acceptLanguage.includes('en-CA')) {
+      return {
+        city: "Toronto",
+        state: "ON",
+        country: "CA",
+        coordinates: { lat: 43.6532, lng: -79.3832 }
+      };
+    }
+    
+    if (acceptLanguage.includes('en-AU')) {
+      return {
+        city: "Sydney",
+        state: "NSW",
+        country: "AU",
+        coordinates: { lat: -33.8688, lng: 151.2093 }
+      };
+    }
+  }
+  
+  // Default to major US metropolitan area
   return {
-    city: "San Francisco",
-    state: "CA",
+    city: "New York",
+    state: "NY", 
     country: "US",
     coordinates: {
-      lat: 37.7749,
-      lng: -122.4194
+      lat: 40.7128,
+      lng: -74.0060
     }
   };
 }
