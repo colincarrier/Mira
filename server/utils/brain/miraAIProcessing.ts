@@ -55,6 +55,7 @@ export interface MiraAIResult {
   /* NEXT-STEP MAGIC */
   microQuestions?: string[];            // clarification prompts for toast UI
   todos?: ToDoItem[];                   // extracted, structured actions
+  optionalTodos?: OptionalTodoItem[];   // suggested todos user can optionally add
   smartActions?: SmartAction[];         // UI chips (Share, Summarise…)
   /* KNOWLEDGE LAYER */
   entities?: GraphEntity[];             // persons, orgs, places, dates, etc.
@@ -84,6 +85,11 @@ export interface ToDoItem {
   due?: string;                         // ISO
   recurrence?: string;                  // RRULE
   priority?: Urgency;
+}
+
+export interface OptionalTodoItem {
+  title: string;
+  description?: string;
 }
 
 export interface SmartAction {
