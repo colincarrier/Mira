@@ -822,14 +822,45 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               if (analysis.extractedItems && analysis.extractedItems.length > 0) {
                 for (const item of analysis.extractedItems) {
                   try {
-                    await storage.createItem({
-                      noteId: note.id,
+                    // Create the item first
+                    const createdItem = await storage.createItem({
                       title: item.title,
+                      type: item.category || "item",
                       description: item.description || "",
-                      category: item.category || "item",
-                      metadata: item.metadata ? JSON.stringify(item.metadata) : null,
+                      context: `Extracted from image analysis`,
+                      sourceNoteId: note.id,
                       collectionId: collectionId
                     });
+
+                    // Auto-generate shopping links for products
+                    if (item.category === 'product' || item.category === 'book') {
+                      setTimeout(async () => {
+                        try {
+                          const { performLocationWebSearch } = await import('./web-search');
+                          const searchQueries = [`${item.title} buy online`, `${item.title} shop`, `where to buy ${item.title}`];
+                          const searchResults = await performLocationWebSearch(searchQueries);
+                          
+                          if (searchResults && searchResults.length > 0) {
+                            const shoppingLinks = searchResults.map((result: any) => ({
+                              title: result.title,
+                              url: result.url,
+                              description: result.description
+                            }));
+                            
+                            // Update item with shopping links
+                            await storage.updateItem(createdItem.id, {
+                              detailedContent: JSON.stringify({
+                                shoppingLinks,
+                                searchQuery,
+                                lastUpdated: new Date().toISOString()
+                              })
+                            });
+                          }
+                        } catch (error) {
+                          console.error("Error generating shopping links:", error);
+                        }
+                      }, 1000); // Delay to avoid overwhelming the search API
+                    }
                   } catch (error) {
                     console.error("Error creating item:", error);
                   }

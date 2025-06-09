@@ -1097,6 +1097,36 @@ export default function NoteDetail() {
                         )}
                       </div>
                     </div>
+                    {/* Shopping Links Display */}
+                    {item.detailedContent && (() => {
+                      try {
+                        const details = typeof item.detailedContent === 'string' ? JSON.parse(item.detailedContent) : item.detailedContent;
+                        return details.shoppingLinks && details.shoppingLinks.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-green-100">
+                            <div className="text-xs text-gray-600 mb-2">🛒 Shopping Links:</div>
+                            <div className="space-y-1">
+                              {details.shoppingLinks.slice(0, 3).map((link: any, linkIndex: number) => (
+                                <a
+                                  key={linkIndex}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200 transition-colors"
+                                >
+                                  <div className="font-medium truncate">{link.title}</div>
+                                  {link.description && (
+                                    <div className="text-gray-500 truncate mt-1">{link.description.slice(0, 80)}...</div>
+                                  )}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                    
                     {item.metadata && (() => {
                       try {
                         const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
