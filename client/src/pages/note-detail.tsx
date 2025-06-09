@@ -494,30 +494,39 @@ export default function NoteDetail() {
               value={editedContent}
               onChange={(e) => {
                 setEditedContent(e.target.value);
-                // Auto-expand textarea
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = 'auto';
                 target.style.height = target.scrollHeight + 'px';
               }}
               onBlur={() => {
-                // Auto-save on blur if content changed
                 if (editedContent !== note.content) {
                   updateNoteMutation.mutate({ content: editedContent });
                 }
               }}
               onInput={(e) => {
-                // Ensure textarea expands properly on all input events
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = 'auto';
                 target.style.height = target.scrollHeight + 'px';
               }}
-              className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-2"
+              className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
               placeholder="Start writing..."
               style={{ 
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 overflow: 'hidden'
               }}
             />
+
+            {/* AI Enhanced Content - ChatGPT Style within iOS Notes */}
+            {note.aiEnhanced && note.aiContext && note.aiContext !== "Note processed" && (
+              <div className="border-t border-gray-200 pt-4 mb-4">
+                <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
+                <div className="prose prose-gray max-w-none">
+                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
+                    {note.aiContext}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -582,7 +591,7 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* AI Research Results */}
+        {/* Web Search Results - Clean Display */}
         {note.richContext && (
           <div className="space-y-0">
             {(() => {
@@ -590,38 +599,6 @@ export default function NoteDetail() {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <>
-
-
-                    {/* Clarifying Questions - Non-redundant only */}
-                    {richData.microQuestions && richData.microQuestions.length > 0 && (() => {
-                      // Filter out questions that are redundant with next steps or existing todos
-                      const nextStepsText = (richData.nextSteps || []).join(' ').toLowerCase();
-                      const todosText = (note.todos || []).map((t: any) => t.title).join(' ').toLowerCase();
-                      
-                      const uniqueQuestions = richData.microQuestions.filter((question: string) => {
-                        const questionLower = question.toLowerCase();
-                        return !nextStepsText.includes(questionLower.slice(0, 20)) && 
-                               !todosText.includes(questionLower.slice(0, 20));
-                      });
-                      
-                      return uniqueQuestions.length > 0 ? (
-                        <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-                          <div className="px-4 py-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              <MessageSquare className="w-4 h-4 text-[hsl(var(--primary))]" />
-                              <h3 className="font-medium text-[hsl(var(--foreground))]">Consider</h3>
-                            </div>
-                            <div className="space-y-2">
-                              {uniqueQuestions.map((question: string, index: number) => (
-                                <div key={index} className="p-2 bg-[hsl(var(--secondary))] rounded text-sm text-[hsl(var(--foreground))]">
-                                  {question}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ) : null;
-                    })()}
 
                     {/* From the Web Section */}
                     {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
@@ -673,53 +650,7 @@ export default function NoteDetail() {
                       </div>
                     )}
 
-                    {/* Next Steps - Consolidated Section */}
-                    {(richData.nextSteps || richData.recommendedActions) && (
-                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-                        <div className="px-4 py-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <ArrowRight className="w-4 h-4 text-[hsl(var(--primary))]" />
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Next Steps</h3>
-                          </div>
-                          <div className="space-y-2">
-                            {richData.nextSteps && richData.nextSteps.map((step: string, index: number) => (
-                              <div key={`step-${index}`} className="flex items-start gap-3 p-3 bg-[hsl(var(--accent))] rounded-lg">
-                                <div className="w-5 h-5 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-xs text-[hsl(var(--primary-foreground))] font-medium">{index + 1}</span>
-                                </div>
-                                <p className="text-sm text-[hsl(var(--foreground))] flex-1">{step}</p>
-                              </div>
-                            ))}
-                            {richData.recommendedActions && richData.recommendedActions.map((action: any, index: number) => (
-                              <div key={`action-${index}`} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-xs text-white font-medium">{(richData.nextSteps?.length || 0) + index + 1}</span>
-                                </div>
-                                <div className="flex-1">
-                                  <div className="font-medium text-sm text-blue-900 mb-1">{action.title}</div>
-                                  <div className="text-sm text-blue-800">{action.description}</div>
-                                  {action.links && action.links.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                      {action.links.map((link: any, linkIndex: number) => (
-                                        <a 
-                                          key={linkIndex} 
-                                          href={link.url} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                                        >
-                                          {link.title}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+
 
                     {/* Research Results */}
                     {richData.researchResults && richData.researchResults.length > 0 && (
