@@ -387,6 +387,7 @@ This profile was generated from your input and will help provide more personaliz
         const miraInput: MiraAIInput = {
           content: noteData.content,
           mode: noteData.mode as any,
+          req: req, // Pass request for location detection
         };
 
         processNote(miraInput)
@@ -602,13 +603,25 @@ This profile was generated from your input and will help provide more personaliz
         return res.status(400).json({ message: "No files provided" });
       }
       
-      // Build note content from AI analysis and user context separately
+      // PRIORITY: User instructions heavily weighted - they indicate high intent
       let noteContent = '';
-      if (aiAnalysis && typeof aiAnalysis === 'string' && aiAnalysis.trim()) {
-        noteContent = aiAnalysis.trim();
-      }
+      let userInstructions = '';
+      
+      // Extract and prioritize user instructions
       if (userContext && typeof userContext === 'string' && userContext.trim()) {
-        noteContent = noteContent ? `${noteContent}\n\n**Your Notes:**\n${userContext.trim()}` : userContext.trim();
+        userInstructions = userContext.trim();
+        noteContent = userInstructions; // User instructions take priority
+      }
+      
+      // Add AI analysis as supplementary context only
+      if (aiAnalysis && typeof aiAnalysis === 'string' && aiAnalysis.trim()) {
+        if (userInstructions) {
+          // User provided instructions - AI analysis becomes supporting context
+          noteContent = `${userInstructions}\n\n[AI Context: ${aiAnalysis.trim()}]`;
+        } else {
+          // No user instructions - use AI analysis as primary
+          noteContent = aiAnalysis.trim();
+        }
       }
       
       // Fallback to legacy content field if new fields not provided
@@ -712,14 +725,28 @@ This profile was generated from your input and will help provide more personaliz
           const imageBase64 = files.image[0].buffer.toString('base64');
           console.log("Base64 length:", imageBase64.length);
           
-          // Use specialized image analysis with GPT-4o (superior visual recognition)
+          // Use specialized image analysis with user instruction priority
           if (isOpenAIAvailable() && imageBase64.length > 0) {
             console.log("Using GPT-4o for image analysis");
             const { analyzeImageContent } = await import('./openai');
-            analyzeImageContent(imageBase64, noteContent)
+            
+            // Create enhanced prompt that prioritizes user instructions
+            let analysisPrompt = noteContent;
+            if (userInstructions) {
+              analysisPrompt = `USER INSTRUCTIONS (HIGH PRIORITY): ${userInstructions}
+              
+Please analyze this image specifically according to the user's instructions above. Their specific request should heavily influence your analysis, todos, and suggestions. Focus on what they asked for rather than general image description.
+
+${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
+            }
+            
+            analyzeImageContent(imageBase64, analysisPrompt)
             .then(async (analysis: any) => {
               const updates: any = {
-                content: analysis.enhancedContent || noteContent,
+                // Preserve user instructions in final content, enhance with AI insights
+                content: userInstructions ? 
+                  `${userInstructions}${analysis.enhancedContent ? `\n\n[AI Analysis: ${analysis.enhancedContent}]` : ''}` : 
+                  (analysis.enhancedContent || noteContent),
                 aiEnhanced: true,
                 aiSuggestion: analysis.suggestion,
                 aiContext: analysis.context,

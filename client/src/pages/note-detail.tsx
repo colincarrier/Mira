@@ -722,8 +722,78 @@ export default function NoteDetail() {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <div className="p-4 space-y-4">
-                    {/* Research Results */}
-                    {richData.researchResults && richData.researchResults.length > 0 && (
+                    {/* Enhanced Web Search Results */}
+                    {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 text-base flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">🌐</span>
+                          </div>
+                          Location-Based Research Results
+                        </h4>
+                        <div className="space-y-3">
+                          {richData.fromTheWeb.map((result: any, index: number) => (
+                            <div 
+                              key={index} 
+                              className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer shadow-sm" 
+                              onClick={() => window.open(result.url, '_blank')}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <h5 className="font-medium text-blue-600 hover:text-blue-800 text-sm">{result.title}</h5>
+                                <div className="flex items-center gap-2">
+                                  {result.rating && (
+                                    <div className="text-xs text-yellow-600 flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
+                                      <span>★</span>
+                                      <span>{result.rating}</span>
+                                    </div>
+                                  )}
+                                  {result.category && (
+                                    <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                      {result.category}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-3">{result.description}</p>
+                              
+                              {result.location && result.distance && (
+                                <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded inline-block mb-2">
+                                  📍 {result.location} • {result.distance}
+                                </div>
+                              )}
+                              
+                              {result.keyPoints && result.keyPoints.length > 0 && (
+                                <div className="mb-3">
+                                  <div className="text-xs font-medium text-gray-700 mb-1">Key Features:</div>
+                                  <ul className="grid grid-cols-2 gap-1">
+                                    {result.keyPoints.map((point: string, pointIndex: number) => (
+                                      <li key={pointIndex} className="text-xs text-gray-600 flex items-start gap-1">
+                                        <span className="text-green-500 mt-0.5">•</span>
+                                        <span>{point}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {result.contact && (
+                                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-2">
+                                  📞 Contact: {result.contact}
+                                </div>
+                              )}
+                              
+                              <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                <span>🔗</span>
+                                <span className="truncate">{result.url}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Legacy Research Results (fallback) */}
+                    {!richData.fromTheWeb && richData.researchResults && richData.researchResults.length > 0 && (
                       <div>
                         <h4 className="font-medium text-gray-900 mb-3 text-base">Research Findings</h4>
                         <div className="space-y-3">
