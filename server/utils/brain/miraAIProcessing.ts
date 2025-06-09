@@ -25,9 +25,9 @@ import { analyzeWithOpenAI, analyzeImageContent } from "../../openai";
 import { v4 as uuid } from "uuid";
 import { 
   shouldTriggerLocationSearch, 
-  generateLocationSearchQueries, 
-  performLocationWebSearch, 
   getUserLocation,
+  generateLocationSearchQueries, 
+  performLocationWebSearch,
   type WebSearchResult,
   type LocationContext 
 } from "../../web-search";
