@@ -1428,18 +1428,34 @@ Respond with JSON:
             isProcessing: false
           };
           
-          if (analysis.enhancedContent) {
-            updates.content = analysis.enhancedContent;
+          // Use v2.0 title as content if available
+          if (analysis.title && analysis.title !== fileContent.substring(0, 100)) {
+            updates.content = analysis.title;
           }
           
           await storage.updateNote(note.id, updates);
           
-          // Create todos if found
-          for (const todoTitle of analysis.todos) {
-            await storage.createTodo({
-              title: todoTitle,
-              noteId: note.id,
-            });
+          // Create v2.0 todos if found
+          if (analysis.todos && analysis.todos.length > 0) {
+            for (const todo of analysis.todos) {
+              const todoData: any = {
+                title: todo.title,
+                noteId: note.id,
+              };
+              
+              // Add v2.0 enhanced todo properties
+              if (todo.due) {
+                todoData.timeDue = new Date(todo.due);
+              }
+              if (todo.recurrence) {
+                todoData.recurrenceRule = todo.recurrence;
+              }
+              if (todo.priority) {
+                todoData.priority = todo.priority;
+              }
+              
+              await storage.createTodo(todoData);
+            }
           }
           
           // Create collection if suggested with v2.0 hints
