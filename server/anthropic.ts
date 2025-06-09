@@ -163,7 +163,7 @@ export async function analyzeNote(content: string, mode: string): Promise<AIAnal
     return {
       enhancedContent: cleanEnhancedContent || content,
       suggestion: cleanSuggestion,
-      context: result.context || "General content analysis.",
+      context: result.context || "",
       complexityScore: result.complexityScore || 5,
       intentType: result.intentType || 'personal-reflection',
       urgencyLevel: result.urgencyLevel || 'medium',

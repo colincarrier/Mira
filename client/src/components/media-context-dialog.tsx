@@ -313,22 +313,28 @@ export default function MediaContextDialog({
           {getMediaPreview()}
           
           {/* AI Analysis Display - Only show if meaningful results */}
-          {(isAnalyzing || aiIdentification) && (
+          {isAnalyzing && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 AI Analysis
               </label>
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 min-h-[60px]">
-                {isAnalyzing ? (
-                  <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    Analyzing image...
-                  </div>
-                ) : (
-                  <div className="text-sm text-blue-700 dark:text-blue-300">
-                    {aiIdentification}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  Processing...
+                </div>
+              </div>
+            </div>
+          )}
+          {!isAnalyzing && aiIdentification && aiIdentification.trim() && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                AI Analysis
+              </label>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 min-h-[60px]">
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  {aiIdentification}
+                </div>
               </div>
             </div>
           )}
