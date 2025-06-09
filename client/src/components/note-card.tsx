@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2 } from "lucide-react";
+import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -261,6 +261,61 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     });
   };
 
+  // Parse rich context data
+  const parseRichContext = (richContext: string | null) => {
+    if (!richContext) return null;
+    try {
+      return JSON.parse(richContext);
+    } catch {
+      return null;
+    }
+  };
+
+  const richContextData = parseRichContext(note.richContext);
+
+  // Parse smart actions from aiSuggestion
+  const parseSmartActions = (aiSuggestion: string | null) => {
+    if (!aiSuggestion) return [];
+    
+    const actions = [];
+    const suggestions = aiSuggestion.split(',').map(s => s.trim());
+    
+    for (const suggestion of suggestions) {
+      if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
+        actions.push({ type: 'calendar', label: 'Add to Calendar', icon: Calendar });
+      } else if (suggestion.includes('Share') || suggestion.includes('share')) {
+        actions.push({ type: 'share', label: 'Share', icon: Share2 });
+      } else if (suggestion.includes('Reminder') || suggestion.includes('reminder')) {
+        actions.push({ type: 'reminder', label: 'Set Reminder', icon: Bell });
+      }
+    }
+    
+    return actions;
+  };
+
+  const smartActions = parseSmartActions(note.aiSuggestion);
+
+  const handleSmartAction = (action: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    switch (action.type) {
+      case 'calendar':
+        // Create calendar event
+        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
+        window.open(calendarUrl, '_blank');
+        break;
+      case 'share':
+        handleShare(e);
+        break;
+      case 'reminder':
+        // Set reminder logic
+        toast({
+          description: "Reminder functionality coming soon!",
+        });
+        break;
+    }
+  };
+
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
@@ -445,6 +500,96 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             <div className="h-1 bg-[hsl(var(--border))] rounded-full w-[70%]"></div>
           </div>
           <span className="text-xs text-[hsl(var(--muted-foreground))]">0:45</span>
+        </div>
+      )}
+
+      {/* Smart Action Buttons */}
+      {smartActions.length > 0 && (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-2">
+            {smartActions.map((action, index) => (
+              <button
+                key={index}
+                onClick={(e) => handleSmartAction(action, e)}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-medium hover:bg-[hsl(var(--primary))]/90 transition-colors"
+              >
+                <action.icon className="w-3 h-3" />
+                <span>{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Next Steps from Rich Context */}
+      {richContextData?.nextSteps && richContextData.nextSteps.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center space-x-1 mb-2">
+            <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Next Steps</span>
+          </div>
+          <div className="space-y-1">
+            {richContextData.nextSteps.map((step: string, index: number) => (
+              <div
+                key={index}
+                className="flex items-start space-x-2 text-xs p-2 bg-[hsl(var(--accent))] rounded-md"
+              >
+                <Zap className="w-3 h-3 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" />
+                <span className="text-[hsl(var(--foreground))]">{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Actions with Links */}
+      {richContextData?.recommendedActions && richContextData.recommendedActions.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center space-x-1 mb-2">
+            <Info className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Suggestions</span>
+          </div>
+          <div className="space-y-2">
+            {richContextData.recommendedActions.map((action: any, index: number) => (
+              <div key={index} className="p-2 bg-[hsl(var(--muted))] rounded-md">
+                <h4 className="text-xs font-medium text-[hsl(var(--foreground))] mb-1">{action.title}</h4>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{action.description}</p>
+                {action.links && action.links.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {action.links.map((link: any, linkIndex: number) => (
+                      <button
+                        key={linkIndex}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(link.url, '_blank');
+                        }}
+                        className="flex items-center space-x-1 px-2 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded text-xs hover:bg-[hsl(var(--primary))]/90 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>{link.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Insights */}
+      {richContextData?.quickInsights && richContextData.quickInsights.length > 0 && (
+        <div className="mb-3">
+          <div className="space-y-1">
+            {richContextData.quickInsights.map((insight: string, index: number) => (
+              <div
+                key={index}
+                className="text-xs px-2 py-1 bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] rounded-md italic"
+              >
+                💡 {insight}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
