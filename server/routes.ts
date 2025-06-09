@@ -461,8 +461,13 @@ This profile was generated from your input and will help provide more personaliz
             isProcessing: false
           };
           
-          await storage.updateNote(note.id, updates);
-          console.log("Note updated successfully with Mira AI analysis");
+          try {
+            await storage.updateNote(note.id, updates);
+            console.log("Note updated successfully with Mira AI analysis");
+          } catch (updateError) {
+            console.error("Failed to update note with AI analysis:", updateError);
+            // Continue processing without crashing
+          }
           
           // Create todos from Mira AI v2.0 analysis
           if (analysis.todos && analysis.todos.length > 0) {
@@ -1481,7 +1486,7 @@ Respond with JSON:
           // Parse the structured response
           try {
             // First try to parse the main content, then fall back to raw response
-            let parsed = {};
+            let parsed: any = {};
             if (analysisResult.enhancedContent) {
               try {
                 parsed = JSON.parse(analysisResult.enhancedContent);
@@ -1511,7 +1516,7 @@ Respond with JSON:
               suggestedContext = ""; // No placeholder text
             }
             
-            // Generate meaningful web search results based on the identified item
+            // Generate meaningful web search results based on the identified item  
             if (parsed.itemName && parsed.itemName !== "Image captured" && parsed.itemName !== "General content analysis") {
               const searchTerm = parsed.itemName;
               const category = parsed.category || "item";
@@ -2181,7 +2186,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
           aiContext: aiResult.enhancedContent || aiResult.suggestion,
           insights: [
             aiResult.context,
-            ...aiResult.todos.filter(t => t !== todo.title).map(t => `Related: ${t}`)
+            ...aiResult.todos.filter((t: string) => t !== todo.title).map((t: string) => `Related: ${t}`)
           ].filter(Boolean),
           relatedTodos
         };

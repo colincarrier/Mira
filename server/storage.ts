@@ -131,14 +131,16 @@ export class DatabaseStorage implements IStorage {
         return existingNote;
       }
       
-      const [note] = await db
+      const updatedNotes = await db
         .update(notes)
         .set(cleanUpdates)
         .where(eq(notes.id, id))
         .returning();
       
-      if (!note) throw new Error("Note not found");
-      return note;
+      if (!updatedNotes || updatedNotes.length === 0) {
+        throw new Error("Note not found");
+      }
+      return updatedNotes[0];
     } catch (error: any) {
       console.error("Database update error:", error);
       throw new Error(`Failed to update note: ${error.message}`);
