@@ -406,12 +406,13 @@ This profile was generated from your input and will help provide more personaliz
             aiEnhanced: true,
             aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
             aiContext: analysis.summary || "",
-            richContext: analysis.entities ? JSON.stringify({
-              entities: analysis.entities,
-              suggestedLinks: analysis.suggestedLinks,
-              nextSteps: analysis.nextSteps,
-              microQuestions: analysis.microQuestions
-            }) : null,
+            richContext: JSON.stringify({
+              entities: analysis.entities || [],
+              suggestedLinks: analysis.suggestedLinks || [],
+              nextSteps: analysis.nextSteps || [],
+              microQuestions: analysis.microQuestions || [],
+              fromTheWeb: analysis.fromTheWeb || []
+            }),
             isProcessing: false
           };
           

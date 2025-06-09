@@ -118,7 +118,19 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   /* 4 ▸ Post-process, enforce schema, fallback if needed */
   const result = sanitise(rawModelJSON, input, uid, ts, fp);
 
-  return { ...result, _rawModelJSON: rawModelJSON };
+  /* 5 ▸ Location-aware web search if applicable */
+  let webResults: WebSearchResult[] = [];
+  if (shouldTriggerLocationSearch(input.content)) {
+    const location = getDefaultLocation(); // In production, use user's actual location
+    const queries = generateLocationSearchQueries(input.content, location);
+    webResults = await performLocationWebSearch(queries, location);
+  }
+
+  return { 
+    ...result, 
+    fromTheWeb: webResults.length > 0 ? webResults : undefined,
+    _rawModelJSON: rawModelJSON 
+  };
 }
 
 /* ----------  INTERNALS  ---------- */
