@@ -1021,12 +1021,16 @@ Respond with a JSON object containing:
       // Apply the evolution to the note
       const updates: any = {
         content: evolution.enhancedContent || existingContent,
-        aiSuggestion: evolution.suggestion,
-        aiContext: evolution.context,
         aiEnhanced: true
       };
 
-      // Add rich context if provided
+      // Only add fields if they have values
+      if (evolution.suggestion) {
+        updates.aiSuggestion = evolution.suggestion;
+      }
+      if (evolution.context) {
+        updates.aiContext = evolution.context;
+      }
       if (evolution.richContext) {
         updates.richContext = JSON.stringify(evolution.richContext);
       }
@@ -1042,6 +1046,14 @@ Respond with a JSON object containing:
           await storage.createTodo({
             title: todoTitle,
             noteId: noteId,
+            dependsOnTodoIds: [],
+            triggersTodoIds: [],
+            plannedNotificationStructure: {
+              enabled: false,
+              reminderCategory: "not_set",
+              repeatPattern: "none",
+              leadTimeNotifications: []
+            }
           });
         }
       }

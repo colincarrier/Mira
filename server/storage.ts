@@ -118,10 +118,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
-    // Filter out undefined values to prevent SQL errors
+    // Filter out undefined values and ensure we have something to update
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
+    
+    if (Object.keys(cleanUpdates).length === 0) {
+      // If no valid updates, just return the existing note
+      const existingNote = await this.getNote(id);
+      if (!existingNote) throw new Error("Note not found");
+      return existingNote;
+    }
     
     const [note] = await db
       .update(notes)

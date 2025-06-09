@@ -36,8 +36,8 @@ export const todos = pgTable("todos", {
   itemType: text("item_type").default("todo"), // "todo", "reminder"
   timeDue: timestamp("time_due"), // Specific due date/time (nullable for "not set")
   timeDependency: text("time_dependency"), // "none", "sequential", "parallel", "contingent"
-  dependsOnTodoIds: json("depends_on_todo_ids").$type<number[]>().default([]), // Array of todo IDs this depends on
-  triggersTodoIds: json("triggers_todo_ids").$type<number[]>().default([]), // Array of todo IDs triggered by completion
+  dependsOnTodoIds: json("depends_on_todo_ids").$type<number[]>(), // Array of todo IDs this depends on
+  triggersTodoIds: json("triggers_todo_ids").$type<number[]>(), // Array of todo IDs triggered by completion
   
   // Sophisticated notification structure
   plannedNotificationStructure: json("planned_notification_structure").$type<{
