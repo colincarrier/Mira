@@ -443,14 +443,14 @@ This profile was generated from your input and will help provide more personaliz
             }
           }
           
-          // Create collection if suggested with smart mapping
-          if (analysis.collectionSuggestion) {
-            console.log("Processing collection suggestion:", analysis.collectionSuggestion.name);
+          // Create collection if suggested with v2.0 smart mapping
+          if (analysis.collectionHint) {
+            console.log("Processing v2.0 collection hint:", analysis.collectionHint.name);
             const collections = await storage.getCollections();
             
             // Smart collection mapping to existing categories
-            const suggestedName = analysis.collectionSuggestion.name.toLowerCase();
-            let finalCollectionName = analysis.collectionSuggestion.name;
+            const suggestedName = analysis.collectionHint.name.toLowerCase();
+            let finalCollectionName = analysis.collectionHint.name;
             
             // Map overly specific collections to existing ones
             if (suggestedName.includes('personal') || suggestedName.includes('communication') || 
@@ -493,8 +493,8 @@ This profile was generated from your input and will help provide more personaliz
               // Only create new collections for broad categories, not specific ones
               const newCollection = await storage.createCollection({
                 name: finalCollectionName,
-                icon: analysis.collectionSuggestion.icon,
-                color: analysis.collectionSuggestion.color
+                icon: analysis.collectionHint.icon || "folder",
+                color: analysis.collectionHint.colour || "#6366f1"
               });
               collectionId = newCollection.id;
               console.log("Created new broad collection:", finalCollectionName);
@@ -510,43 +510,16 @@ This profile was generated from your input and will help provide more personaliz
             }
           }
           
-          // Extract and create individual items from extractedItems field
-          if (analysis.extractedItems && analysis.extractedItems.length > 0) {
-            for (const item of analysis.extractedItems) {
-              await storage.createItem({
-                title: item.title,
-                description: item.description || '',
-                type: item.category,
-                sourceNoteId: note.id,
-                collectionId: note.collectionId || null
-              });
-            }
-            console.log(`Extracted ${analysis.extractedItems.length} individual items from note`);
+          // Handle v2.0 knowledge graph entities
+          if (analysis.entities && analysis.entities.length > 0) {
+            console.log(`Processing ${analysis.entities.length} v2.0 entities`);
+            // Future: Store entities in knowledge graph
           }
           
-          // Also extract items from richContext.researchResults (fallback for AI inconsistency)
-          if (analysis.richContext?.researchResults && analysis.richContext.researchResults.length > 0) {
-            for (const research of analysis.richContext.researchResults) {
-              // Determine item type based on collection or content
-              let itemType = 'concept';
-              const collectionName = note.collection?.name?.toLowerCase() || '';
-              if (collectionName.includes('movie') || collectionName.includes('tv')) {
-                itemType = 'movie';
-              } else if (collectionName.includes('book')) {
-                itemType = 'book';
-              } else if (collectionName.includes('restaurant') || collectionName.includes('food')) {
-                itemType = 'restaurant';
-              }
-              
-              await storage.createItem({
-                title: research.title,
-                description: research.description || '',
-                type: itemType,
-                sourceNoteId: note.id,
-                collectionId: note.collectionId || null
-              });
-            }
-            console.log(`Extracted ${analysis.richContext.researchResults.length} items from research results`);
+          // Handle smart actions for UI
+          if (analysis.smartActions && analysis.smartActions.length > 0) {
+            console.log(`Generated ${analysis.smartActions.length} smart actions`);
+            // These are stored in aiSuggestion field for UI consumption
           }
         })
         .catch(async (error) => {
