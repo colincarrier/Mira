@@ -1071,10 +1071,14 @@ Respond with a JSON object containing:
 
       console.log("Evolving note with instruction:", instruction);
 
-      // Check if this is a media reprocessing request
+      // Check if this is a media reprocessing request or image analysis request
       const isMediaReprocessRequest = instruction.toLowerCase().includes('rerun') || 
         instruction.toLowerCase().includes('reprocess') || 
         instruction.toLowerCase().includes('reanalyze') ||
+        instruction.toLowerCase().includes('what does it say') ||
+        instruction.toLowerCase().includes('read the text') ||
+        instruction.toLowerCase().includes('identify') ||
+        instruction.toLowerCase().includes('tell me about') ||
         (instruction.toLowerCase().includes('image') && (instruction.toLowerCase().includes('again') || instruction.toLowerCase().includes('better')));
 
       let evolution;
@@ -1086,17 +1090,34 @@ Respond with a JSON object containing:
         const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
         
         try {
-          // Re-analyze the image with combined instructions using OpenAI
+          // Re-analyze the image with combined instructions using specialized image analysis
           const imageBase64 = await getImageAsBase64(note.mediaUrl);
-          if (imageBase64) {
-            evolution = await safeAnalyzeWithOpenAI(combinedInstructions, "image-reprocessing");
-            console.log("Media reprocessing completed with enhanced results");
+          if (imageBase64 && isOpenAIAvailable()) {
+            console.log("Using specialized OpenAI image analysis for evolution");
+            console.log("Image base64 length:", imageBase64.length);
+            const { analyzeImageContent } = await import('./openai');
+            const imageAnalysis = await analyzeImageContent(imageBase64, combinedInstructions);
+            
+            // Convert image analysis to evolution format
+            evolution = {
+              enhancedContent: imageAnalysis.enhancedContent || combinedInstructions,
+              suggestion: imageAnalysis.suggestion || "Image reanalyzed with new instructions",
+              context: imageAnalysis.context || "",
+              todos: imageAnalysis.todos || [],
+              todoUpdates: [],
+              collectionSuggestion: imageAnalysis.collectionSuggestion || null,
+              richContext: imageAnalysis.richContext || null
+            };
+            console.log("Specialized image analysis completed for evolution");
           } else {
+            console.log("Image base64 not available or OpenAI not available, falling back to text evolution");
+            console.log("imageBase64 length:", imageBase64 ? imageBase64.length : "null");
+            console.log("OpenAI available:", isOpenAIAvailable());
             // Fallback to text evolution if image retrieval fails
             evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
           }
         } catch (error) {
-          console.error("Media reprocessing failed, falling back to text evolution:", error);
+          console.error("Image analysis failed, falling back to text evolution:", error);
           evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
         }
       } else {
