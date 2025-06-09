@@ -754,7 +754,7 @@ This profile was generated from your input and will help provide more personaliz
       
       // Process with AI if content exists
       if (noteContent.trim()) {
-        // Special handling for image analysis
+        // Special handling for image analysis - BYPASS regular text processing
         if (files.image && files.image[0]) {
           console.log("Processing image with specialized visual recognition");
           console.log("Image buffer size:", files.image[0].buffer.length);
@@ -910,6 +910,9 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               isProcessing: false 
             });
           }
+          
+          // Skip regular text processing for image notes - they're handled above
+          return res.json(note);
         } else {
           // Regular text/audio processing
           const useOpenAI = isOpenAIAvailable();
