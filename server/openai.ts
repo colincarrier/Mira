@@ -169,53 +169,73 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
 
 export async function analyzeImageContent(imageBase64: string, content: string): Promise<AIAnalysisResult> {
   try {
-    const imageAnalysisPrompt = `You've received an image from the user. Your job is to fully decode and surface valuable insight from it, as if you're a visual detective and shopping concierge combined.
+    const imageAnalysisPrompt = `Analyze this image with precision. You are an expert visual identification system that can identify multiple items in a single image.
 
-1. Identify any objects, logos, text, products, or landmarks in the image.
-2. Use OCR to extract any readable text or symbols.
-3. Interpret what the item is — include category, potential use, or style cues.
-4. Run a web search to locate:
-    - Brand or manufacturer
-    - Product name or collection
-    - Purchase links (Google, Amazon, Grailed, brand sites, etc.)
-    - Price or resale value
-    - Comparable alternatives
-5. If it's a location, return links to Google Maps, Yelp, or the official site.
-6. Format your response as a concise but rich recommendation card with embedded links.
+CRITICAL INSTRUCTIONS:
+1. IDENTIFY EVERY DISTINCT ITEM: Look for books, products, people, places, menu items, etc. If there are multiple items, identify each one specifically.
+2. READ ALL TEXT: Use OCR to extract titles, author names, brand names, prices, labels - everything visible.
+3. BE SPECIFIC: Don't say "Book 1, Book 2" - give actual titles like "The Design of Everyday Things by Don Norman"
+4. EXTRACT DETAILS: For each item, get: exact title/name, author/brand, publisher, price if visible, ISBN if visible
 
-NEVER reply with "I can't tell." Always extract partial clues and make a best effort guess, followed by web-based confirmation.
+For BOOKS specifically:
+- Read the title exactly as shown on the cover
+- Identify the author name
+- Note the publisher if visible
+- Describe the cover design/theme
 
-Generate a meaningful, specific title (3-5 words max) about what you actually see in the image. Examples:
-- "Nike Air Force 1s"
-- "Starbucks Menu Board"
-- "iPhone 15 Pro Max"
-- "Toyota Camry 2024"
+For PRODUCTS:
+- Exact product name and model
+- Brand name
+- Price if visible
+- Key features visible
+
+User context: ${content}
+
+If the user asks to "add to collection" or mentions collections, set collectionSuggestion based on the item type:
+- Books → "Books" collection
+- Design items → "Design & Coffee Table Books" collection  
+- Products → relevant category collection
+
+For multiple items, create individual extractedItems for each one:
 
 Return JSON with this exact structure:
 {
-  "enhancedContent": "Brief specific title of what's in the image",
-  "suggestion": "Detailed analysis and recommendations",
-  "context": "Category and usage context",
-  "complexityScore": 5,
-  "intentType": "reference-material",
-  "urgencyLevel": "low",
-  "todos": [],
+  "enhancedContent": "List of specific items identified (e.g., '1. The Design of Everyday Things 2. Don Norman's Book 3. Another Title')",
+  "suggestion": "Actionable next steps based on user request",
+  "context": "Category and context of items",
+  "complexityScore": 7,
+  "intentType": "research-inquiry",
+  "urgencyLevel": "medium",
+  "todos": ["Research each item individually", "Find purchase links", "Add to appropriate collection"],
+  "extractedItems": [
+    {
+      "title": "Exact title of item 1",
+      "description": "Author, publisher, or brand details",
+      "category": "book/product/etc",
+      "metadata": {"author": "...", "publisher": "...", "isbn": "...", "price": "..."}
+    }
+  ],
+  "collectionSuggestion": {
+    "name": "Appropriate Collection Name",
+    "icon": "📚",
+    "color": "#8B4513"
+  },
   "richContext": {
     "recommendedActions": [
       {
-        "title": "Shop Similar Items",
-        "description": "Find where to buy this product",
-        "links": [{"title": "Brand Website", "url": "https://example.com"}]
+        "title": "Find Purchase Links",
+        "description": "Search for where to buy each item",
+        "links": [{"title": "Amazon", "url": "https://amazon.com"}, {"title": "Barnes & Noble", "url": "https://barnesandnoble.com"}]
       }
     ],
     "researchResults": [
       {
-        "title": "Product Details",
-        "description": "Specifications and pricing",
-        "keyPoints": ["Price range", "Availability", "Reviews"]
+        "title": "Item Details",
+        "description": "Specifications and availability",
+        "keyPoints": ["Individual item analysis", "Pricing information", "Purchase recommendations"]
       }
     ],
-    "quickInsights": ["Key facts about the item"]
+    "quickInsights": ["Each item identified with specific details"]
   }
 }`;
 

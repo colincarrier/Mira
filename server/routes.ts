@@ -788,6 +788,53 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   }
                 }
               }
+              
+              // Handle collection suggestion and item extraction
+              let collectionId = null;
+              if (analysis.collectionSuggestion) {
+                try {
+                  // Create or find the suggested collection
+                  const existingCollections = await storage.getCollections();
+                  let targetCollection = existingCollections.find(c => 
+                    c.name.toLowerCase().includes(analysis.collectionSuggestion.name.toLowerCase()) ||
+                    analysis.collectionSuggestion.name.toLowerCase().includes(c.name.toLowerCase())
+                  );
+                  
+                  if (!targetCollection) {
+                    targetCollection = await storage.createCollection({
+                      name: analysis.collectionSuggestion.name,
+                      icon: analysis.collectionSuggestion.icon || "📚",
+                      color: analysis.collectionSuggestion.color || "#8B4513"
+                    });
+                  }
+                  
+                  collectionId = targetCollection.id;
+                  
+                  // Update note to belong to this collection
+                  await storage.updateNote(note.id, { collectionId });
+                  
+                } catch (error) {
+                  console.error("Error creating/assigning collection:", error);
+                }
+              }
+              
+              // Create individual items from extracted items
+              if (analysis.extractedItems && analysis.extractedItems.length > 0) {
+                for (const item of analysis.extractedItems) {
+                  try {
+                    await storage.createItem({
+                      noteId: note.id,
+                      title: item.title,
+                      description: item.description || "",
+                      category: item.category || "item",
+                      metadata: item.metadata ? JSON.stringify(item.metadata) : null,
+                      collectionId: collectionId
+                    });
+                  } catch (error) {
+                    console.error("Error creating item:", error);
+                  }
+                }
+              }
             })
             .catch((error: any) => {
               console.error("Error analyzing image:", error);

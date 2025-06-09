@@ -1071,6 +1071,66 @@ export default function NoteDetail() {
           </div>
         )}
 
+        {/* Extracted Items Display */}
+        {note.items && note.items.length > 0 && (
+          <div className="bg-green-50 mx-4 mb-4 rounded-lg border border-green-200">
+            <div className="p-4">
+              <h4 className="font-medium text-gray-900 mb-3 text-base flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                Items Added to Collection
+              </h4>
+              <div className="space-y-3">
+                {note.items.map((item: any, index: number) => (
+                  <div key={item.id || index} className="bg-white rounded-lg p-3 border border-green-100">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm text-gray-900">{item.title}</div>
+                        {item.description && (
+                          <div className="text-xs text-gray-600 mt-1">{item.description}</div>
+                        )}
+                        {item.category && (
+                          <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded inline-block mt-2">
+                            {item.category}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {item.metadata && (() => {
+                      try {
+                        const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+                        return Object.keys(metadata).length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-green-100">
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(metadata).map(([key, value]: [string, any]) => (
+                                value && (
+                                  <span key={key} className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                    {key}: {String(value)}
+                                  </span>
+                                )
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </div>
+                ))}
+              </div>
+              {note.collection && (
+                <div className="mt-3 pt-3 border-t border-green-200">
+                  <div className="text-sm text-green-700">
+                    📚 Added to "{note.collection.name}" collection
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Subtle Entities Section at Bottom */}
         {note.richContext && (() => {
           try {
