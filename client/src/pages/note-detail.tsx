@@ -790,12 +790,12 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* Todos */}
+        {/* Consolidated Todos with Optional Additions */}
         {note.todos && note.todos.length > 0 && (
           <div className="bg-yellow-50 mx-4 mb-4 rounded-lg border border-yellow-200">
             <div className="p-4">
               <h4 className="font-medium text-gray-900 mb-3 text-base">Action Items</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {note.todos.map((todo: Todo) => (
                   <div key={todo.id} className="flex items-center gap-3">
                     <button
@@ -808,9 +808,21 @@ export default function NoteDetail() {
                     >
                       {todo.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </button>
-                    <span className={`text-sm ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                    <span className={`text-sm flex-1 ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
                       {todo.title}
                     </span>
+                    <button
+                      onClick={() => {
+                        // TODO: Open reminder popup
+                        toast({
+                          description: "Reminder functionality coming soon!",
+                        });
+                      }}
+                      className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
+                      title="Set reminder"
+                    >
+                      <Bell className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

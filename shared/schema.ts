@@ -77,6 +77,17 @@ export const collections = pgTable("collections", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const reminders = pgTable("reminders", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  reminderTime: timestamp("reminder_time").notNull(),
+  isCompleted: boolean("is_completed").default(false),
+  todoId: integer("todo_id").references(() => todos.id, { onDelete: 'cascade' }),
+  noteId: integer("note_id").references(() => notes.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const items = pgTable("items", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -192,6 +203,17 @@ export const collectionsRelations = relations(collections, ({ many }) => ({
   items: many(items),
 }));
 
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  todo: one(todos, {
+    fields: [reminders.todoId],
+    references: [todos.id],
+  }),
+  note: one(notes, {
+    fields: [reminders.noteId],
+    references: [notes.id],
+  }),
+}));
+
 export const itemsRelations = relations(items, ({ one }) => ({
   sourceNote: one(notes, {
     fields: [items.sourceNoteId],
@@ -208,3 +230,7 @@ export type NoteWithTodos = Note & {
   collection?: Collection;
   items?: Item[];
 };
+
+// Additional type exports for new tables
+export type Reminder = typeof reminders.$inferSelect;
+export type InsertReminder = typeof reminders.$inferInsert;

@@ -209,6 +209,7 @@ function sanitise(raw: any, input: MiraAIInput, uid: string, ts: string, fp: any
     complexity: clamp(data.complexity ?? 1, 1, 10),
     microQuestions: data.microQuestions ?? [],
     todos: data.todos ?? [],
+    optionalTodos: data.optionalTodos ?? [],
     smartActions: data.smartActions ?? defaultSmartActions(intent),
     entities: data.entities ?? [],
     suggestedLinks: data.suggestedLinks ?? [],
