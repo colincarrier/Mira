@@ -1,14 +1,10 @@
-/**
- * Location-aware web search for contextual results
- */
-
 export interface WebSearchResult {
   title: string;
   description: string;
   url: string;
   rating?: string;
-  keyPoints: string[];
-  category: string;
+  keyPoints?: string[];
+  category?: string;
   location?: string;
   distance?: string;
 }
@@ -17,14 +13,14 @@ export interface LocationContext {
   city: string;
   state: string;
   country: string;
-  coordinates?: {
+  coordinates: {
     lat: number;
     lng: number;
   };
 }
 
 /**
- * Determines if content should trigger location-aware web search
+ * Check if content should trigger location-based search
  */
 export function shouldTriggerLocationSearch(content: string): boolean {
   const locationTriggers = [
@@ -181,8 +177,7 @@ function generateGenericAdviceResults(query: string): WebSearchResult[] {
 }
 
 /**
- * Mock web search function (simulates Google/Bing results with location awareness)
- * In production, this would integrate with actual search APIs
+ * Web search function with location awareness
  */
 export async function performLocationWebSearch(
   queries: string[], 
@@ -212,64 +207,75 @@ export async function performLocationWebSearch(
 /**
  * Generate realistic mock search results based on location context
  */
-function generateMockLocationResults(query: string, location?: LocationContext): WebSearchResult[] {
+function generateMockLocationResults(query: string, location: LocationContext): WebSearchResult[] {
   const results: WebSearchResult[] = [];
   const queryLower = query.toLowerCase();
   
-  if (location) {
-    const locationString = `${location.city}, ${location.state}`;
-    
-    if (queryLower.includes('party venue') || queryLower.includes('event space')) {
-      results.push({
-        title: `Top 10 Party Venues in ${location.city}`,
-        description: `Best event spaces and party venues for birthdays, celebrations, and special events in ${locationString}.`,
-        url: `https://example.com/party-venues-${location.city.toLowerCase()}`,
-        rating: "4.5/5",
-        keyPoints: ["Indoor/outdoor options", "Catering available", "Kid-friendly", "Booking required"],
-        category: "Venues",
-        location: locationString,
-        distance: "2-15 miles"
-      });
-    }
-    
-    if (queryLower.includes('gift') || queryLower.includes('toy')) {
-      results.push({
-        title: `Best Gift Shops in ${location.city}`,
-        description: `Top-rated toy stores and gift shops for children's presents and birthday gifts in ${locationString}.`,
-        url: `https://example.com/gift-shops-${location.city.toLowerCase()}`,
-        rating: "4.3/5",
-        keyPoints: ["Age-appropriate toys", "Gift wrapping", "Local favorites", "Online ordering"],
-        category: "Shopping",
-        location: locationString,
-        distance: "1-8 miles"
-      });
-    }
-    
-    if (queryLower.includes('cake') || queryLower.includes('bakery')) {
-      results.push({
-        title: `Custom Birthday Cakes - ${location.city} Bakeries`,
-        description: `Local bakeries offering custom birthday cakes, cupcakes, and desserts for celebrations in ${locationString}.`,
-        url: `https://example.com/birthday-cakes-${location.city.toLowerCase()}`,
-        rating: "4.7/5",
-        keyPoints: ["Custom designs", "Advance ordering", "Allergy-friendly options", "Delivery available"],
-        category: "Food & Bakery",
-        location: locationString,
-        distance: "0.5-12 miles"
-      });
-    }
-    
-    if (queryLower.includes('decoration') || queryLower.includes('party supply')) {
-      results.push({
-        title: `Party City & Local Party Supply Stores - ${location.city}`,
-        description: `Party decorations, balloons, and supplies for birthday parties and celebrations in ${locationString}.`,
-        url: `https://example.com/party-supplies-${location.city.toLowerCase()}`,
-        rating: "4.2/5",
-        keyPoints: ["Theme decorations", "Balloon arrangements", "Same-day pickup", "Bulk discounts"],
-        category: "Party Supplies",
-        location: locationString,
-        distance: "1-10 miles"
-      });
-    }
+  const locationString = `${location.city}, ${location.state}`;
+  
+  if (queryLower.includes('party venue') || queryLower.includes('event space')) {
+    results.push({
+      title: `Top 10 Party Venues in ${location.city}`,
+      description: `Best event spaces and party venues for birthdays, celebrations, and special events in ${locationString}.`,
+      url: `https://example.com/party-venues-${location.city.toLowerCase()}`,
+      rating: "4.5/5",
+      keyPoints: ["Indoor/outdoor options", "Catering available", "Kid-friendly", "Booking required"],
+      category: "Venues",
+      location: locationString,
+      distance: "2-15 miles"
+    });
+  }
+  
+  if (queryLower.includes('gift') || queryLower.includes('toy')) {
+    results.push({
+      title: `Best Gift Shops in ${location.city}`,
+      description: `Top-rated toy stores and gift shops for children's presents and birthday gifts in ${locationString}.`,
+      url: `https://example.com/gift-shops-${location.city.toLowerCase()}`,
+      rating: "4.3/5",
+      keyPoints: ["Age-appropriate toys", "Educational games", "Gift wrapping", "Local favorites"],
+      category: "Shopping",
+      location: locationString,
+      distance: "1-8 miles"
+    });
+  }
+  
+  if (queryLower.includes('restaurant') || queryLower.includes('food')) {
+    results.push({
+      title: `Family Restaurants with Outdoor Seating - ${location.city}`,
+      description: `Family-friendly restaurants featuring outdoor dining, kids menus, and birthday party accommodations in ${locationString}.`,
+      url: `https://example.com/restaurants-${location.city.toLowerCase()}`,
+      rating: "4.4/5",
+      keyPoints: ["Outdoor seating", "Kids menu", "Birthday celebrations", "Reservations recommended"],
+      category: "Dining",
+      location: locationString,
+      distance: "0.5-12 miles"
+    });
+  }
+  
+  if (queryLower.includes('cake') || queryLower.includes('bakery')) {
+    results.push({
+      title: `Custom Birthday Cakes - ${location.city} Bakeries`,
+      description: `Local bakeries specializing in custom birthday cakes, themed designs, and special dietary options in ${locationString}.`,
+      url: `https://example.com/bakeries-${location.city.toLowerCase()}`,
+      rating: "4.6/5",
+      keyPoints: ["Custom designs", "Dietary options", "Advance ordering", "Themed cakes"],
+      category: "Bakeries",
+      location: locationString,
+      distance: "2-10 miles"
+    });
+  }
+  
+  if (queryLower.includes('decoration') || queryLower.includes('party supply')) {
+    results.push({
+      title: `Party City & Local Party Supply Stores - ${location.city}`,
+      description: `Party decorations, balloons, and supplies for birthday parties and celebrations in ${locationString}.`,
+      url: `https://example.com/party-supplies-${location.city.toLowerCase()}`,
+      rating: "4.2/5",
+      keyPoints: ["Theme decorations", "Balloon arrangements", "Same-day pickup", "Bulk discounts"],
+      category: "Party Supplies",
+      location: locationString,
+      distance: "1-10 miles"
+    });
   }
   
   return results;

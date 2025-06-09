@@ -245,9 +245,9 @@ Return JSON with this exact structure:
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
     return {
-      enhancedContent: result.enhancedContent || "Visual Analysis Complete",
-      suggestion: result.suggestion || "Image processed but detailed analysis unavailable",
-      context: result.context || "Image content review",
+      enhancedContent: result.enhancedContent || result.suggestion || null,
+      suggestion: result.suggestion || null,
+      context: result.context || null,
       complexityScore: result.complexityScore || 5,
       intentType: result.intentType || 'reference-material',
       urgencyLevel: result.urgencyLevel || 'low',

@@ -1104,10 +1104,14 @@ Respond with JSON:
       }
       
       if (analyzeOnly === 'true') {
+        // Only return identification if it's meaningful (not generic placeholder)
+        const meaningfulIdentification = (identification === "Image captured" || identification === "General content analysis") 
+          ? "" : (identification || "");
+        
         return res.json({
-          identification,
-          suggestedContext,
-          webResults
+          identification: meaningfulIdentification || "",
+          suggestedContext: meaningfulIdentification ? suggestedContext : "",
+          webResults: meaningfulIdentification ? webResults : null
         });
       }
       
