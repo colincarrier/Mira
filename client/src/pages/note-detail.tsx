@@ -397,7 +397,7 @@ export default function NoteDetail() {
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
       <div className="w-full">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] bg-[#f5f5f5]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] bg-[#f5f5f5]">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation("/")}
@@ -412,9 +412,8 @@ export default function NoteDetail() {
                 onChange={(e) => setEditedTitle(e.target.value)}
                 onBlur={() => {
                   // Update note with new title if changed
-                  if (editedTitle !== note.content.split('\n')[0]) {
-                    const newContent = editedTitle + '\n' + note.content.split('\n').slice(1).join('\n');
-                    updateNoteMutation.mutate({ content: newContent });
+                  if (editedTitle !== note.content) {
+                    updateNoteMutation.mutate({ content: editedTitle });
                   }
                 }}
                 className="text-lg font-semibold bg-transparent border-none outline-none focus:bg-white focus:border focus:border-blue-300 rounded px-2 py-1"
@@ -1278,7 +1277,7 @@ export default function NoteDetail() {
                 </div>
               </div>
               
-              {versionHistory && versionHistory.map((version: any, index: number) => (
+              {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version: any, index: number) => (
                 <div key={version.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                   <div className="flex-1">

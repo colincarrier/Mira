@@ -450,7 +450,7 @@ This profile was generated from your input and will help provide more personaliz
             content: newspaperTitle, // v2.0 enforced newspaper-style title
             aiEnhanced: true,
             aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
-            aiContext: analysis.summary || "",
+            aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || ""),
             richContext: JSON.stringify({
               entities: analysis.entities || [],
               suggestedLinks: analysis.suggestedLinks || [],
