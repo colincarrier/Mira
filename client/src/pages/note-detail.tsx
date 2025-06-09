@@ -854,15 +854,9 @@ export default function NoteDetail() {
                               <button
                                 onClick={async () => {
                                   try {
-                                    await apiRequest('/api/todos/add-optional', {
-                                      method: 'POST',
-                                      body: JSON.stringify({
-                                        title: step,
-                                        noteId: note.id
-                                      }),
-                                      headers: {
-                                        'Content-Type': 'application/json'
-                                      }
+                                    await apiRequest('/api/todos/add-optional', 'POST', {
+                                      title: step,
+                                      noteId: note.id
                                     });
                                     
                                     // Refresh the note to show the new todo
@@ -888,17 +882,11 @@ export default function NoteDetail() {
                                   const reminderTime = new Date();
                                   reminderTime.setHours(reminderTime.getHours() + 1);
                                   
-                                  apiRequest('/api/reminders', {
-                                    method: 'POST',
-                                    body: JSON.stringify({
-                                      title: `Reminder: ${step}`,
-                                      description: `From note: ${note.content.slice(0, 50)}...`,
-                                      reminderTime: reminderTime.toISOString(),
-                                      noteId: note.id
-                                    }),
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    }
+                                  apiRequest('/api/reminders', 'POST', {
+                                    title: `Reminder: ${step}`,
+                                    description: `From note: ${note.content.slice(0, 50)}...`,
+                                    reminderTime: reminderTime.toISOString(),
+                                    noteId: note.id
                                   }).then(() => {
                                     toast({
                                       description: "Reminder set for 1 hour",
