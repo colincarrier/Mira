@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemSchema } from "@shared/schema";
 import { saveAudioFile } from "./file-storage";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
+import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -61,8 +62,8 @@ async function initializeAI() {
     console.warn("Anthropic module failed to load - AI features disabled:", error);
   }
 }
-// Import the new Mira AI processing system
-import { processMiraInput, type MiraAIInput } from "./utils/miraAIProcessing";
+// Import the legacy Mira AI processing system (deprecated)
+// import { processMiraInput, type MiraAIInput } from "./utils/miraAIProcessing";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -388,68 +389,56 @@ This profile was generated from your input and will help provide more personaliz
           mode: noteData.mode as any,
         };
 
-        processMiraInput(miraInput)
-        .then(async (analysis) => {
-          console.log("Mira AI analysis successful for note:", note.id);
+        processNote(miraInput)
+        .then(async (analysis: MiraAIResult) => {
+          console.log("Mira AI v2.0 analysis successful for note:", note.id);
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
           
           // Track usage
           apiUsageStats.totalRequests++;
           
-          // CRITICAL: Ensure newspaper-style title enforcement
-          let newspaperTitle = analysis.title;
-          if (!newspaperTitle || newspaperTitle === noteData.content) {
-            // AI didn't create a proper title, create one from content
-            newspaperTitle = createNewspaperTitleFromContent(noteData.content);
-          }
+          // CRITICAL: Ensure newspaper-style title enforcement (v2.0 handles this automatically)
+          const newspaperTitle = analysis.title;
           
-          // Update note with structured AI results
+          // Update note with v2.0 structured AI results
           const updates: any = {
-            content: newspaperTitle, // Use enforced newspaper-style title
+            content: newspaperTitle, // v2.0 enforced newspaper-style title
             aiEnhanced: true,
-            aiSuggestion: analysis.suggestion || "",
-            aiContext: analysis.context || "",
-            richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
+            aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+            aiContext: analysis.summary || "",
+            richContext: analysis.entities ? JSON.stringify({
+              entities: analysis.entities,
+              suggestedLinks: analysis.suggestedLinks,
+              nextSteps: analysis.nextSteps,
+              microQuestions: analysis.microQuestions
+            }) : null,
             isProcessing: false
           };
           
           await storage.updateNote(note.id, updates);
           console.log("Note updated successfully with Mira AI analysis");
           
-          // Create todos from Mira AI analysis
+          // Create todos from Mira AI v2.0 analysis
           if (analysis.todos && analysis.todos.length > 0) {
-            console.log("Creating", analysis.todos.length, "todos for note:", note.id);
+            console.log("Creating", analysis.todos.length, "v2.0 todos for note:", note.id);
             for (const todo of analysis.todos) {
-              // Handle both string and object format todos
-              let todoTitle: string;
-              let todoData: any = {
+              const todoData: any = {
                 noteId: note.id,
+                title: todo.title,
               };
               
-              if (typeof todo === 'string') {
-                todoTitle = todo;
-                todoData.title = todoTitle;
-              } else if (typeof todo === 'object' && (todo as any).title) {
-                todoTitle = (todo as any).title;
-                todoData.title = todoTitle;
-                
-                // Add enhanced todo properties from Mira AI
-                if ((todo as any).itemType === 'reminder') {
-                  todoData.itemType = 'reminder';
-                  todoData.isActiveReminder = (todo as any).isActiveReminder || false;
-                }
-                if ((todo as any).timeDue) {
-                  todoData.timeDue = new Date((todo as any).timeDue);
-                }
-                if ((todo as any).plannedNotificationStructure) {
-                  todoData.plannedNotificationStructure = (todo as any).plannedNotificationStructure;
-                }
-              } else {
-                console.log("Skipping invalid todo format:", todo);
-                continue;
+              // Add v2.0 enhanced todo properties
+              if (todo.due) {
+                todoData.timeDue = new Date(todo.due);
+              }
+              if (todo.recurrence) {
+                todoData.recurrenceRule = todo.recurrence; // RRULE format
+              }
+              if (todo.priority) {
+                todoData.priority = todo.priority;
               }
               
-              console.log("Creating todo with title:", todoTitle);
+              console.log("Creating v2.0 todo with title:", todo.title);
               await storage.createTodo(todoData);
             }
           }
