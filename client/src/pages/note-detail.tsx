@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -390,6 +390,65 @@ export default function NoteDetail() {
           </div>
         </div>
 
+        {/* Smart Action Buttons */}
+        {note.aiSuggestion && (
+          <div className="bg-white border-t border-[hsl(var(--border))] px-4 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-4 h-4 text-[hsl(var(--primary))]" />
+              <span className="text-sm font-medium text-[hsl(var(--foreground))]">Quick Actions</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(() => {
+                const actions = [];
+                const suggestions = note.aiSuggestion.split(',').map(s => s.trim());
+                
+                for (const suggestion of suggestions) {
+                  if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
+                    actions.push({
+                      type: 'calendar',
+                      label: 'Add to Calendar',
+                      icon: Calendar,
+                      action: () => {
+                        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
+                        window.open(calendarUrl, '_blank');
+                      }
+                    });
+                  } else if (suggestion.includes('Share') || suggestion.includes('share')) {
+                    actions.push({
+                      type: 'share',
+                      label: 'Share Note',
+                      icon: Share2,
+                      action: () => handleShare()
+                    });
+                  } else if (suggestion.includes('Reminder') || suggestion.includes('reminder')) {
+                    actions.push({
+                      type: 'reminder',
+                      label: 'Set Reminder',
+                      icon: Bell,
+                      action: () => {
+                        toast({
+                          description: "Reminder functionality coming soon!",
+                        });
+                      }
+                    });
+                  }
+                }
+                
+                return actions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={action.action}
+                    className="flex items-center space-x-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-sm font-medium hover:bg-[hsl(var(--primary))]/90 transition-colors"
+                  >
+                    <action.icon className="w-4 h-4" />
+                    <span>{action.label}</span>
+                  </button>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
+
         {/* AI Research Results */}
         {note.richContext && (
           <div className="space-y-0">
@@ -398,6 +457,69 @@ export default function NoteDetail() {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <>
+                    {/* Next Steps Section - v2.0 Format */}
+                    {richData.nextSteps && richData.nextSteps.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <ArrowRight className="w-5 h-5 text-[hsl(var(--primary))]" />
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Next Steps</h3>
+                          </div>
+                          <div className="space-y-3">
+                            {richData.nextSteps.map((step: string, index: number) => (
+                              <div key={index} className="flex items-start gap-3 p-4 bg-[hsl(var(--accent))] rounded-lg border border-[hsl(var(--border))]">
+                                <div className="w-6 h-6 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <span className="text-xs text-[hsl(var(--primary-foreground))] font-medium">{index + 1}</span>
+                                </div>
+                                <p className="text-sm text-[hsl(var(--foreground))] flex-1 leading-relaxed">{step}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Entities Section - v2.0 Format */}
+                    {richData.entities && richData.entities.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Info className="w-5 h-5 text-[hsl(var(--primary))]" />
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Entities</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {richData.entities.map((entity: any, index: number) => (
+                              <div key={index} className="px-3 py-2 bg-[hsl(var(--muted))] rounded-lg border border-[hsl(var(--border))]">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))] capitalize">{entity.type}</span>
+                                  <span className="text-sm text-[hsl(var(--foreground))] font-medium">{entity.value}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Micro Questions Section - v2.0 Format */}
+                    {richData.microQuestions && richData.microQuestions.length > 0 && (
+                      <div className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
+                        <div className="px-4 py-6">
+                          <div className="flex items-center gap-2 mb-4">
+                            <MessageSquare className="w-5 h-5 text-[hsl(var(--primary))]" />
+                            <h3 className="font-semibold text-[hsl(var(--foreground))]">Clarifying Questions</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {richData.microQuestions.map((question: string, index: number) => (
+                              <div key={index} className="p-3 bg-[hsl(var(--secondary))] rounded-lg border border-[hsl(var(--border))]">
+                                <p className="text-sm text-[hsl(var(--foreground))]">{question}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* From the Web Section */}
                     {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
                       <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
