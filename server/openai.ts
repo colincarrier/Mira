@@ -169,15 +169,22 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
 
 export async function analyzeImageContent(imageBase64: string, content: string): Promise<AIAnalysisResult> {
   try {
-    const imageAnalysisPrompt = `You are an expert visual analyst with exceptional OCR and object recognition capabilities. Analyze this image with the same level of detail and accuracy as ChatGPT's best image analysis.
+    const imageAnalysisPrompt = `You are an expert visual analyst with comprehensive knowledge across technology, business, culture, and current events. Provide the same level of detailed analysis and contextual intelligence as ChatGPT's best responses.
 
-COMPREHENSIVE ANALYSIS REQUIREMENTS:
+MISSION: Deliver exhaustive analysis combining visual recognition with deep domain knowledge.
 
-🔍 VISUAL SCANNING:
-1. IDENTIFY EVERY VISIBLE ITEM: Books, products, documents, screens, signs, artwork, food, clothing, electronics, furniture, etc.
-2. READ ALL TEXT: Titles, author names, brand names, model numbers, prices, labels, signs, computer screens, handwritten notes
-3. EXTRACT METADATA: Publishers, ISBN numbers, product codes, dates, addresses, phone numbers
-4. DESCRIBE CONTEXT: Room type, lighting, arrangement, background elements, spatial relationships
+🎯 ENHANCED ANALYSIS PROTOCOL:
+1. PRECISE TEXT EXTRACTION: Read all visible text word-for-word, including subtle details, fonts, styling, foreign languages
+2. ENTITY RECOGNITION WITH INTELLIGENCE: Identify brands, companies, products with comprehensive background research
+3. BUSINESS INTELLIGENCE: For any company/brand mentioned, provide detailed profiles including:
+   - Core business model and primary products/services
+   - Industry position, competitive landscape, market cap/valuation
+   - Founding story, key executives, notable investors
+   - Recent developments, product launches, strategic direction
+   - Cultural significance, brand positioning, target demographics
+   - Technical architecture or unique differentiators
+4. CONTEXTUAL RESEARCH: Connect visual elements to broader trends, cultural movements, or industry insights
+5. COMPREHENSIVE SCENE ANALYSIS: Environmental details, composition, artistic choices, implied narratives
 
 📚 FOR BOOKS & PUBLICATIONS:
 - Exact title (word-for-word from spine/cover)
@@ -213,17 +220,25 @@ For each distinct item, provide:
 - Estimated value range if recognizable
 - Condition and usability assessment
 
-The analysis should be as detailed and accurate as a direct ChatGPT conversation, extracting maximum value from the visual information.
+Provide the same depth and intelligence as ChatGPT's most comprehensive image analysis responses.
+
+SPECIAL FOCUS: If any company names, brands, or business entities are visible, provide extensive business intelligence including:
+- Complete company profile with founding details, key personnel, funding history
+- Business model, primary products/services, target market, competitive position
+- Recent developments, strategic direction, cultural significance
+- Technical architecture, unique differentiators, industry impact
+
+USER QUERY CONTEXT: "${content}"
 
 Return comprehensive JSON with this exact structure:
 {
-  "enhancedContent": "Detailed description of all identified items with complete titles, authors, and context. Be exhaustive in listing everything visible.",
-  "suggestion": "Specific actionable recommendations based on the items identified and user context",
-  "context": "Rich environmental and contextual description of the scene, setting, and item relationships",
-  "complexityScore": 8,
-  "intentType": "research-inquiry",
+  "enhancedContent": "Exhaustive analysis combining visual details with deep business intelligence. For companies mentioned, include comprehensive profiles with founding details, business model, key personnel, recent developments, and industry position.",
+  "suggestion": "Specific actionable recommendations based on identified entities and deep contextual understanding",
+  "context": "Rich environmental analysis plus comprehensive business context for any companies/brands identified",
+  "complexityScore": 9,
+  "intentType": "research-inquiry", 
   "urgencyLevel": "medium",
-  "todos": ["Specific tasks for each identified item", "Research and categorization actions", "Purchase or organization steps"],
+  "todos": ["Deep research tasks for identified companies", "Specific investigation actions", "Business intelligence gathering steps"],
   "extractedItems": [
     {
       "title": "Complete exact title as shown",
