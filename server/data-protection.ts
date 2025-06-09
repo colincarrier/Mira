@@ -228,7 +228,6 @@ export class DataProtectionService {
         .select()
         .from(noteVersions)
         .where(eq(noteVersions.noteId, noteId))
-        .where(eq(noteVersions.version, targetVersion))
         .limit(1);
 
       if (versionData.length === 0) {

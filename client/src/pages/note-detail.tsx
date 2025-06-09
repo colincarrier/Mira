@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight, Undo2, AlertTriangle, CheckCircle, X } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,10 @@ export default function NoteDetail() {
   const [editedTitle, setEditedTitle] = useState('');
   const [contextInput, setContextInput] = useState('');
   const [showContextDialog, setShowContextDialog] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<any>(null);
+  const [clarificationInput, setClarificationInput] = useState('');
 
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -37,6 +41,12 @@ export default function NoteDetail() {
   });
 
   const note = Array.isArray(noteData) ? noteData[0] : noteData;
+
+  // Get version history
+  const { data: versionHistory } = useQuery({
+    queryKey: [`/api/notes/${id}/versions`],
+    enabled: !!id && showVersionHistory,
+  });
 
   // Mutations
   const updateNoteMutation = useMutation({

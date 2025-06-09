@@ -82,7 +82,7 @@ export class DatabaseStorage implements IStorage {
   async createNote(insertNote: InsertNote): Promise<Note> {
     const [note] = await db
       .insert(notes)
-      .values(insertNote)
+      .values([insertNote])
       .returning();
     return note;
   }
@@ -155,7 +155,7 @@ export class DatabaseStorage implements IStorage {
   async createTodo(insertTodo: InsertTodo): Promise<Todo> {
     const [todo] = await db
       .insert(todos)
-      .values(insertTodo)
+      .values([insertTodo])
       .returning();
     return todo;
   }
