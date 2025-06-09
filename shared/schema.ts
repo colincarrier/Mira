@@ -231,6 +231,6 @@ export type NoteWithTodos = Note & {
   items?: Item[];
 };
 
-// Additional type exports for new tables
+// Additional type exports for new tables  
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = typeof reminders.$inferInsert;

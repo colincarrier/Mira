@@ -826,6 +826,65 @@ export default function NoteDetail() {
                   </div>
                 ))}
               </div>
+
+              {/* Optional Todo Suggestions */}
+              {note.richContext && (() => {
+                try {
+                  const richData = JSON.parse(note.richContext);
+                  const nextSteps = richData.nextSteps || [];
+                  
+                  // Show next steps as optional todos if they exist and aren't already todos
+                  const existingTodoTitles = note.todos.map((t: Todo) => t.title.toLowerCase());
+                  const optionalTodos = nextSteps.filter((step: string) => 
+                    !existingTodoTitles.some(todoTitle => 
+                      todoTitle.includes(step.toLowerCase().slice(0, 15)) ||
+                      step.toLowerCase().includes(todoTitle.slice(0, 15))
+                    )
+                  );
+
+                  return optionalTodos.length > 0 ? (
+                    <div className="mt-4 pt-3 border-t border-yellow-200">
+                      <h5 className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Suggested</h5>
+                      <div className="space-y-2">
+                        {optionalTodos.slice(0, 3).map((step: string, index: number) => (
+                          <div key={`optional-${index}`} className="flex items-center gap-3 p-2 bg-yellow-25 rounded border border-yellow-100">
+                            <div className="w-4 h-4 border border-gray-300 rounded opacity-50"></div>
+                            <span className="text-sm text-gray-700 flex-1">{step}</span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  // TODO: Add to todos
+                                  toast({
+                                    description: "Adding to todos...",
+                                  });
+                                }}
+                                className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                title="Add to todos"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // TODO: Open reminder popup
+                                  toast({
+                                    description: "Reminder functionality coming soon!",
+                                  });
+                                }}
+                                className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
+                                title="Set reminder"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                } catch (e) {
+                  return null;
+                }
+              })()}
             </div>
           </div>
         )}

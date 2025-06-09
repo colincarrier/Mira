@@ -2171,6 +2171,50 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
+  // Reminder endpoints for consolidated todo approach
+  app.post("/api/reminders", async (req, res) => {
+    try {
+      const { title, description, reminderTime, todoId, noteId } = req.body;
+      const reminder = await storage.createReminder({
+        title,
+        description,
+        reminderTime: new Date(reminderTime),
+        todoId,
+        noteId
+      });
+      res.json(reminder);
+    } catch (error) {
+      console.error("Failed to create reminder:", error);
+      res.status(500).json({ message: "Failed to create reminder" });
+    }
+  });
+
+  app.get("/api/reminders", async (req, res) => {
+    try {
+      const reminders = await storage.getReminders();
+      res.json(reminders);
+    } catch (error) {
+      console.error("Failed to fetch reminders:", error);
+      res.status(500).json({ message: "Failed to fetch reminders" });
+    }
+  });
+
+  // Add optional todo to main todos list
+  app.post("/api/todos/add-optional", async (req, res) => {
+    try {
+      const { title, noteId, description } = req.body;
+      const todo = await storage.createTodo({
+        title,
+        noteId,
+        description
+      });
+      res.json(todo);
+    } catch (error) {
+      console.error("Failed to add optional todo:", error);
+      res.status(500).json({ message: "Failed to add optional todo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
