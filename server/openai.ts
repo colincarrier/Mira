@@ -120,50 +120,17 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
           },
           {
             role: "user", 
-            content: `Research and analyze: "${userQuery}"
+            content: `Analyze: "${userQuery}"
 
-Create a comprehensive product guide with MARKDOWN FORMATTING and CLICKABLE LINKS:
+Generate detailed product research with actual content, not instructions.
 
-FORMAT REQUIREMENTS:
-- Use **bold** for product names and prices
-- Use [Link Text](URL) format for all external links
-- Include [Amazon](https://amazon.com/s?k=product+name) links for each product
-- Include [TechRadar](https://techradar.com) and [WIRED](https://wired.com) expert review links
-- Use markdown tables with | separators
-- Use ### for section headers
-
-CONTENT STRUCTURE:
-1. PREMIUM OPTIONS (🏆): 2-3 top-tier models with [Amazon](URL) links
-2. VALUE OPTIONS (💼): 2-3 mid-range models with shopping links
-3. BUDGET OPTIONS (💰): 2-3 affordable models with purchase links
-4. COMPARISON TABLE: | Model | Price | Features | [Amazon](URL) |
-5. USE CASE RECOMMENDATIONS with expert review links
-
-EXAMPLE FORMAT:
-### 🏆 Premium Options
-1. **Sony WH-1000XM5**
-   - **Price**: $399
-   - **Link**: [Amazon](https://amazon.com/s?k=Sony+WH-1000XM5)
-   - **Expert Review**: [TechRadar](https://techradar.com) rates 4.8/5
-
-Respond with JSON:
+Respond with JSON containing actual enhanced content in this format:
 {
-  "title": "Product category (3-5 words)",
-  "summary": "Brief analysis summary (1-2 sentences only)",
-  "enhancedContent": "COMPREHENSIVE MARKDOWN CONTENT with **bold** text, ### headers, [clickable links](URLs), comparison tables, and detailed product analysis (400+ words). Include specific product recommendations with Amazon links and expert reviews.",
+  "title": "Concise product category (3-5 words)",
+  "summary": "Product analysis completed with recommendations",
+  "enhancedContent": "# ${userQuery} - Complete Guide\n\n## Top Recommendations\n\n### 🏆 Premium Choice\n**[Top Model Name]** - $X99\n- Key features here\n- [Buy on Amazon](https://amazon.com/s?k=product)\n- Expert Rating: 4.8/5\n\n### 💼 Best Value\n**[Mid-range Model]** - $X99\n- Value features here\n- [Check Price](https://amazon.com/s?k=product)\n- Expert Rating: 4.5/5\n\n### 💰 Budget Pick\n**[Budget Model]** - $X99\n- Budget features here\n- [Amazon Link](https://amazon.com/s?k=product)\n- Rating: 4.2/5\n\n## Comparison Table\n| Model | Price | Key Features | Link |\n|-------|-------|-------------|------|\n| Premium | $X99 | Feature list | [Amazon](URL) |\n| Value | $X99 | Feature list | [Amazon](URL) |\n| Budget | $X99 | Feature list | [Amazon](URL) |\n\n## Buying Guide\n- Important considerations\n- What to look for\n- [Expert Reviews](https://techradar.com)\n\nGenerate real product recommendations with actual models, prices, and detailed analysis (400+ words).",
   "intent": "product-query",
-  "complexity": 8,
-  "todos": [
-    {"title": "Research specific models mentioned", "priority": "medium"},
-    {"title": "Compare prices across retailers", "priority": "medium"},
-    {"title": "Check expert reviews", "priority": "medium"}
-  ],
-  "smartActions": [
-    {"label": "Amazon Search", "action": "openLink", "url": "https://amazon.com/s?k=${userQuery.replace(/\s/g, '+')}"},
-    {"label": "Review Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025"},
-    {"label": "Price Check", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison"}
-  ],
-  "assistantAddendum": "I've provided comprehensive product analysis with clickable Amazon links and expert review sources for easy shopping and research."
+  "complexity": 6
 }`
           }
         ];
@@ -203,11 +170,23 @@ Respond with JSON:
       cleanSuggestion = "";
     }
 
+    // Clean up context to avoid instruction text
+    let cleanContext = result.summary || "Analysis completed";
+    if (cleanContext.includes("Generate comprehensive") || cleanContext.includes("FORMAT REQUIREMENTS") || cleanContext.length > 100) {
+      cleanContext = "Product research and recommendations completed";
+    }
+
+    // Use enhancedContent if available, otherwise use title
+    let displayContent = result.enhancedContent || result.title || content;
+    if (displayContent.includes("COMPREHENSIVE MARKDOWN CONTENT") || displayContent.includes("Generate comprehensive")) {
+      displayContent = result.title || content;
+    }
+
     // Return complete AIAnalysisResult structure
     return {
-      enhancedContent: result.title || result.enhancedContent || content,
+      enhancedContent: displayContent,
       suggestion: cleanSuggestion,
-      context: result.summary || result.context || "Note processed successfully.",
+      context: cleanContext,
       complexityScore: result.complexityScore || result.complexity || 5,
       intentType: result.intentType || result.intent || 'simple-task',
       urgencyLevel: result.urgencyLevel || 'medium',
