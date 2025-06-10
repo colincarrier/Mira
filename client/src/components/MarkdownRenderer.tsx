@@ -148,31 +148,31 @@ function LinkPreview({ href, children }: LinkPreviewProps) {
 
 export function MarkdownRenderer({ content, className = "" }: MarkdownRendererProps) {
   return (
-    <div className={`prose prose-sm max-w-none ${className}`}>
+    <div className={`max-w-none leading-7 ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          // Enhanced table styling with rich visuals
+          // ChatGPT-style table formatting
           table: ({ children }) => (
-            <div className="overflow-x-auto my-6 rounded-lg border border-gray-200 shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="my-8 overflow-hidden rounded-lg border border-gray-300 shadow-sm">
+              <table className="min-w-full border-collapse bg-white">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gray-50 border-b border-gray-200">
               {children}
             </thead>
           ),
           th: ({ children }) => (
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50">
+            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-r border-gray-200 last:border-r-0">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-6 py-4 text-sm text-gray-900 border-b border-gray-100 whitespace-nowrap hover:bg-gray-50 transition-colors">
+            <td className="px-4 py-3 text-sm text-gray-800 border-r border-gray-200 border-b border-gray-100 last:border-r-0">
               {children}
             </td>
           ),
@@ -182,77 +182,104 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
               {children}
             </LinkPreview>
           ),
-          // Custom heading styling
+          // ChatGPT-style heading hierarchy
           h1: ({ children }) => (
-            <h1 className="text-xl font-bold text-gray-900 mt-6 mb-3 first:mt-0">
+            <h1 className="text-2xl font-bold text-gray-900 mt-8 mb-4 first:mt-0 leading-tight">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-lg font-semibold text-gray-900 mt-5 mb-2">
+            <h2 className="text-xl font-bold text-gray-900 mt-7 mb-3 leading-tight">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-base font-semibold text-gray-900 mt-4 mb-2">
+            <h3 className="text-lg font-bold text-gray-900 mt-6 mb-3 leading-tight">
               {children}
             </h3>
           ),
-          // Custom paragraph styling
+          h4: ({ children }) => (
+            <h4 className="text-base font-bold text-gray-900 mt-5 mb-2 leading-tight">
+              {children}
+            </h4>
+          ),
+          // ChatGPT-style paragraph spacing and typography
           p: ({ children }) => (
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+            <p className="text-[15px] text-gray-800 mb-4 leading-7 font-normal">
               {children}
             </p>
           ),
-          // Custom list styling
+          // Enhanced list styling matching ChatGPT
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-sm text-gray-700 mb-3 space-y-1">
+            <ul className="mb-4 pl-6 space-y-2">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-sm text-gray-700 mb-3 space-y-1">
+            <ol className="mb-4 pl-6 space-y-2 list-decimal">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="ml-2">
+            <li className="text-[15px] text-gray-800 leading-7 marker:text-gray-600 pl-1">
               {children}
             </li>
           ),
-          // Custom code styling
+          // ChatGPT-style code blocks
           code: ({ children, ...props }) => {
             const isInline = !String(props.className).includes('language-');
             if (isInline) {
               return (
-                <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-xs">
+                <code className="bg-gray-100 text-gray-900 px-1.5 py-0.5 rounded text-sm font-mono border">
                   {children}
                 </code>
               );
             }
             return (
-              <pre className="bg-gray-100 text-gray-800 p-3 rounded text-xs overflow-x-auto">
-                <code>{children}</code>
-              </pre>
+              <div className="my-5 rounded-lg border border-gray-200 overflow-hidden">
+                <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
+                  <span className="text-xs font-medium text-gray-600">Code</span>
+                </div>
+                <pre className="bg-gray-50 text-gray-900 p-4 overflow-x-auto text-sm font-mono leading-6">
+                  <code>{children}</code>
+                </pre>
+              </div>
             );
           },
-          // Custom blockquote styling
+          // ChatGPT-style blockquotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-3">
-              {children}
+            <blockquote className="border-l-4 border-gray-300 pl-6 py-2 my-6 bg-gray-50 rounded-r-lg">
+              <div className="text-gray-700 italic font-medium">
+                {children}
+              </div>
             </blockquote>
           ),
-          // Custom strong/bold styling
+          // Enhanced strong/bold styling
           strong: ({ children }) => (
-            <strong className="font-semibold text-gray-900">
+            <strong className="font-bold text-gray-900">
               {children}
             </strong>
           ),
-          // Custom emphasis/italic styling
+          // Enhanced emphasis/italic styling  
           em: ({ children }) => (
-            <em className="italic text-gray-700">
+            <em className="italic text-gray-800">
               {children}
             </em>
+          ),
+          // Horizontal rule styling
+          hr: () => (
+            <hr className="my-8 border-0 border-t border-gray-200" />
+          ),
+          // Enhanced pre styling for code blocks
+          pre: ({ children }) => (
+            <div className="my-5 rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
+                <span className="text-xs font-medium text-gray-600">Code</span>
+              </div>
+              <pre className="bg-gray-50 text-gray-900 p-4 overflow-x-auto text-sm font-mono leading-6">
+                {children}
+              </pre>
+            </div>
           )
         }}
       >

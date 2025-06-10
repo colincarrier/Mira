@@ -149,7 +149,7 @@ EXAMPLE FORMAT:
 Respond with JSON:
 {
   "title": "Product category (3-5 words)",
-  "summary": "MARKDOWN formatted content with clickable [Amazon](https://amazon.com/s?k=product) links, [TechRadar](https://techradar.com) expert reviews, and comparison tables. Use proper markdown syntax throughout (400+ words).",
+  "summary": "Generate comprehensive ChatGPT-style markdown content with proper formatting: Use **bold** for product names, ### headings for sections, bullet points with - for lists, | tables | with | separators |, and [clickable links](URLs). Include comparison tables, expert review links, and detailed analysis (400+ words).",
   "intent": "product-query",
   "complexity": 8,
   "todos": [
