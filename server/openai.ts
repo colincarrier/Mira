@@ -112,53 +112,44 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
         const queryMatch = content.match(/USER_QUERY: "([^"]+)"/);
         const userQuery = queryMatch ? queryMatch[1] : content;
         
-        // Create an enhanced prompt for detailed product analysis
+        // Create comprehensive product analysis prompt
         messages = [
           {
             role: "system",
-            content: "You are an expert product research assistant. Provide comprehensive, detailed product recommendations with specific models, current pricing, and actionable insights. Be as detailed and helpful as ChatGPT would be. Always respond with valid JSON."
+            content: "You are an expert product research assistant. Generate comprehensive, detailed product analysis with specific models, exact pricing, expert reviews, and organized comparisons. Match ChatGPT's depth and quality. Always respond with valid JSON only."
           },
           {
             role: "user", 
-            content: `Analyze this product query and provide comprehensive shopping assistance: "${userQuery}"
+            content: `Research and analyze: "${userQuery}"
 
-Provide detailed analysis including:
-- Specific product model names and numbers
-- Current pricing estimates for June 2025
-- Key features and comparisons between options
-- Expert review insights and ratings
-- Organized by priority: premium, value, budget options
-- Actionable shopping steps
+Create a comprehensive product guide with:
 
-Respond with JSON in this exact format:
+1. PREMIUM OPTIONS (🏆): 2-3 top-tier models with specific names, exact prices, key features, expert ratings
+2. VALUE OPTIONS (💼): 2-3 mid-range models balancing price/performance 
+3. BUDGET OPTIONS (💰): 2-3 affordable models with good value
+4. COMPARISON TABLE: Model | Price | Battery | Key Features | Rating
+5. USE CASE RECOMMENDATIONS: Best for travel, work, gaming, etc.
+6. EXPERT INSIGHTS: Mention review sources like WIRED, TechRadar
+
+Include specific model numbers, exact pricing, battery life, ANC ratings, codec support, and detailed feature comparisons. Use emojis for visual organization.
+
+Respond with JSON:
 {
-  "title": "Product Category (3-5 words)",
-  "summary": "COMPREHENSIVE DETAILED ANALYSIS (minimum 500 words) - Format with markdown-style structure including: 🏆 Premium Options section with 2-3 specific models, detailed specs, expert review citations, exact pricing. 💼 Value Options section with 2-3 models, battery life, features, pricing. 💰 Budget Options section with 2-3 affordable models. 🔍 Comparison Chart with Model | Price | Battery | Key Features | Rating columns. 🏷️ Use Case Recommendations section. Include specific model numbers, exact pricing, battery hours, expert review sources (WIRED, TechRadar, etc.), and detailed feature comparisons. Use emojis for visual organization. Be as comprehensive and detailed as ChatGPT.",
-  "intent": "product-query", 
-  "urgency": "medium",
+  "title": "Product category (3-5 words)",
+  "summary": "Write a comprehensive 400+ word analysis with sections for premium options, value picks, budget choices, comparison details, and use case recommendations. Include specific model names, exact prices, detailed features, expert review mentions, and organized structure with emojis. Be as detailed as ChatGPT.",
+  "intent": "product-query",
   "complexity": 8,
   "todos": [
     {"title": "Research specific models mentioned", "priority": "medium"},
-    {"title": "Compare prices across retailers", "priority": "medium"}, 
-    {"title": "Read expert reviews from WIRED, TechRadar", "priority": "medium"},
-    {"title": "Check current availability and discounts", "priority": "low"}
+    {"title": "Compare prices across retailers", "priority": "medium"},
+    {"title": "Check expert reviews", "priority": "medium"}
   ],
   "smartActions": [
-    {"label": "Search Amazon", "action": "openLink", "url": "https://amazon.com/s?k=${userQuery.replace(/\s/g, '+')}"},
-    {"label": "Compare Reviews", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025+WIRED+TechRadar"},
-    {"label": "Price Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison+best+deals"},
-    {"label": "Tech Specs", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+specifications+comparison+2025"}
+    {"label": "Amazon Search", "action": "openLink", "url": "https://amazon.com/s?k=${userQuery.replace(/\s/g, '+')}"},
+    {"label": "Review Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025"},
+    {"label": "Price Check", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison"}
   ],
-  "assistantAddendum": "DETAILED PRODUCT BREAKDOWN (minimum 300 words) - Include specific recommendations by use case (travel, work, gaming, audiophile), budget tiers ($50-100, $100-300, $300+), feature priorities (ANC, battery, sound quality), brand comparisons, and expert buying advice. Mention specific model advantages, disadvantages, and best purchase timing.",
-  "enrichments": {
-    "products": [
-      {"name": "🏆 Premium: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
-      {"name": "💼 Value: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
-      {"name": "💰 Budget: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
-      {"name": "🔥 Specialist: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
-      {"name": "🎮 Gaming: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."}
-    ]
-  }
+  "assistantAddendum": "Write 200+ words covering specific use case recommendations, budget tier breakdowns, feature priorities, brand comparisons, and expert buying advice with model advantages and disadvantages."
 }`
           }
         ];
