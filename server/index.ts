@@ -64,13 +64,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Use Replit's assigned PORT for preview pane compatibility, fallback to dynamic port
-  const port = Number(process.env.PORT) || 0; // 0 means find any available port
+  // Use Replit's assigned PORT for preview pane compatibility, fallback to 5000
+  const port = Number(process.env.PORT) || 5000;
   server.listen({
     port,
     host: "0.0.0.0",
   }, () => {
-    const actualPort = (server.address() as any)?.port || port;
-    log(`serving on port ${actualPort}`);
+    log(`serving on port ${port}`);
   });
 })();

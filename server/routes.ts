@@ -445,7 +445,7 @@ This profile was generated from your input and will help provide more personaliz
           const updates: any = {
             content: newspaperTitle, // v2.0 enforced newspaper-style title
             aiEnhanced: true,
-            aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
             aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || ""),
             richContext: JSON.stringify({
               entities: analysis.entities || [],
@@ -940,7 +940,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               
               const updates: any = {
                 aiEnhanced: true,
-                aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+                aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
                 aiContext: enhancedContent, // Use the rich enhanced content instead of just summary
                 richContext: analysis.entities ? JSON.stringify({
                   entities: analysis.entities,
@@ -1716,7 +1716,7 @@ Respond with JSON:
             // Use v2.0 structured results
             const updates: any = {
               aiEnhanced: true,
-              aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+              aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
               aiContext: analysis.summary || "",
               richContext: analysis.entities ? JSON.stringify({
                 entities: analysis.entities,
@@ -1924,7 +1924,7 @@ Respond with JSON:
         .then(async (analysis: MiraAIResult) => {
           const updates: any = {
             aiEnhanced: true,
-            aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
+            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
             aiContext: analysis.summary || "",
             richContext: analysis.entities ? JSON.stringify({
               entities: analysis.entities,

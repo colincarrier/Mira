@@ -159,7 +159,7 @@ OUTPUT ONLY JSON:`;
     }
     
     // Use the actual enhanced content from OpenAI instead of fallback summary
-    let enhancedContent = result.enhancedContent || result.summary || "Product analysis completed";
+    let enhancedContent = result.enhancedContent || "Product analysis completed";
     
     // Clean only if it contains instruction text, but preserve rich content
     if (enhancedContent.includes("Generate comprehensive") || enhancedContent.includes("COMPREHENSIVE MARKDOWN CONTENT")) {
