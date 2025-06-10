@@ -94,8 +94,6 @@ async function getImageAsBase64(mediaUrl: string): Promise<string | null> {
   }
 }
 
-// Import the legacy Mira AI processing system (deprecated)
-// import { processMiraInput, type MiraAIInput } from "./utils/miraAIProcessing";
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
@@ -434,6 +432,8 @@ This profile was generated from your input and will help provide more personaliz
           req: req, // Pass request for location detection
         };
 
+        // Use new orthogonal AI processing
+        const { processNote } = await import('./brain/miraAIProcessing');
         processNote(miraInput)
         .then(async (analysis: MiraAIResult) => {
           console.log("Mira AI v2.0 analysis successful for note:", note.id);
