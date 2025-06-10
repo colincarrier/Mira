@@ -24,7 +24,7 @@ function isClaudeAvailable(): boolean {
 }
 
 function isAnyAIAvailable(): boolean {
-  return isOpenAIAvailable() || isClaudeAvailable();
+  return isOpenAIAvailable(); // Only OpenAI - Claude disabled per user request
 }
 
 async function safeAnalyzeWithOpenAI(content: string, mode: string) {
@@ -34,12 +34,7 @@ async function safeAnalyzeWithOpenAI(content: string, mode: string) {
   return analyzeWithOpenAI(content, mode);
 }
 
-async function safeAnalyzeWithClaude(content: string, mode: string) {
-  if (!isClaudeAvailable()) {
-    throw new Error("Claude not available - AI processing disabled");
-  }
-  return analyzeWithClaude(content, mode);
-}
+// Claude functions removed - OpenAI only per user request
 
 async function safeTranscribeAudio(buffer: Buffer) {
   if (!isOpenAIAvailable()) {
@@ -54,18 +49,12 @@ async function initializeAI() {
     analyzeWithOpenAI = openaiModule.analyzeWithOpenAI;
     transcribeAudio = openaiModule.transcribeAudio;
     analyzeImageContent = openaiModule.analyzeImageContent;
-    console.log("OpenAI module loaded successfully");
+    console.log("OpenAI module loaded successfully - Claude disabled per user request");
   } catch (error) {
     console.warn("OpenAI module failed to load - AI features disabled:", error);
   }
 
-  try {
-    const anthropicModule = await import("./anthropic");
-    analyzeWithClaude = anthropicModule.analyzeNote;
-    console.log("Anthropic module loaded successfully");
-  } catch (error) {
-    console.warn("Anthropic module failed to load - AI features disabled:", error);
-  }
+  // Claude module loading removed - OpenAI only per user request
 }
 
 // Helper function to convert stored image to base64 for reprocessing
