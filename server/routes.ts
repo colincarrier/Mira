@@ -7,7 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
-import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
+import { processNote as legacyProcessNote, type MiraAIInput as LegacyMiraAIInput, type MiraAIResult as LegacyMiraAIResult } from "./utils/brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -426,16 +426,17 @@ This profile was generated from your input and will help provide more personaliz
         const useOpenAI = isOpenAIAvailable();
         console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
         
-        const miraInput: MiraAIInput = {
+        // Import and use new orthogonal AI processing
+        const miraModule = await import('./brain/miraAIProcessing');
+        
+        const miraInput = {
           content: noteData.content,
-          mode: noteData.mode as any,
+          mode: noteData.mode === 'file' ? 'text' : (noteData.mode as 'text' | 'image' | 'voice'),
           req: req, // Pass request for location detection
         };
 
-        // Use new orthogonal AI processing
-        const { processNote } = await import('./brain/miraAIProcessing');
-        processNote(miraInput)
-        .then(async (analysis: MiraAIResult) => {
+        miraModule.processNote(miraInput)
+        .then(async (analysis: any) => {
           console.log("Mira AI v2.0 analysis successful for note:", note.id);
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
           

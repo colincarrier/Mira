@@ -147,22 +147,32 @@ OUTPUT ONLY JSON:`;
   try {
     const result = await openaiModule.analyzeWithOpenAI(commercePrompt, 'enhanced');
     
+    // Try to parse JSON response from enhancedContent
+    let parsedResult = null;
+    try {
+      if (result.enhancedContent) {
+        parsedResult = JSON.parse(result.enhancedContent);
+      }
+    } catch (parseError) {
+      console.log('Could not parse commerce JSON, using fallback');
+    }
+    
     return {
       uid: '',
       timestamp: '',
-      title: result.enhancedContent || extractProductTitle(input.content),
-      summary: result.context || "Product query analyzed",
-      intent: 'product-query',
-      urgency: 'medium',
-      complexity: 6,
+      title: parsedResult?.title || extractProductTitle(input.content),
+      summary: parsedResult?.summary || result.context || "Product query analyzed",
+      intent: parsedResult?.intent || 'product-query',
+      urgency: parsedResult?.urgency || 'medium',
+      complexity: parsedResult?.complexity || 6,
       confidence: 0.8,
-      todos: [{title: `Research ${input.content}`, priority: 'medium'}],
-      smartActions: [{
+      todos: parsedResult?.todos || [{title: `Research ${input.content}`, priority: 'medium'}],
+      smartActions: parsedResult?.smartActions || [{
         label: 'Research Online',
         action: 'openLink',
         url: `https://www.google.com/search?q=${encodeURIComponent(input.content + ' buy review')}`
       }],
-      assistantAddendum: `I can help you research and find the best options for: ${input.content}`,
+      assistantAddendum: parsedResult?.assistantAddendum || `I can help you research and find the best options for: ${input.content}`,
       enrichments: {
         products: [{
           name: `Research needed for: ${input.content}`,
@@ -213,17 +223,27 @@ OUTPUT ONLY JSON:`;
   try {
     const result = await openaiModule.analyzeWithOpenAI(memoryPrompt, 'simple');
     
+    // Try to parse JSON response
+    let parsedResult = null;
+    try {
+      if (result.enhancedContent) {
+        parsedResult = JSON.parse(result.enhancedContent);
+      }
+    } catch (parseError) {
+      console.log('Could not parse memory JSON, using fallback');
+    }
+    
     return {
       uid: '',
       timestamp: '',
-      title: result.enhancedContent || extractMemoryTitle(input.content),
-      summary: result.context || "Note processed",
-      intent: 'simple-task',
-      urgency: determineUrgency(input.content),
-      complexity: 2,
+      title: parsedResult?.title || extractMemoryTitle(input.content),
+      summary: parsedResult?.summary || result.context || "Note processed",
+      intent: parsedResult?.intent || 'simple-task',
+      urgency: parsedResult?.urgency || determineUrgency(input.content),
+      complexity: parsedResult?.complexity || 2,
       confidence: 0.7,
-      todos: [{title: input.content.trim(), priority: 'medium'}],
-      smartActions: [{label: 'Set Reminder', action: 'reminder'}],
+      todos: parsedResult?.todos || [{title: input.content.trim(), priority: 'medium'}],
+      smartActions: parsedResult?.smartActions || [{label: 'Set Reminder', action: 'reminder'}],
       processingPath: 'memory',
       classificationScores: { memory: 0.7 },
       _rawModelJSON: result
