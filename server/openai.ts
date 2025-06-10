@@ -108,11 +108,54 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
       console.log("OpenAI analysis with enhanced Mira Brain prompt");
       
       if (content.includes("SYSTEM:") && content.includes("REQUIRED_JSON_OUTPUT:")) {
-        // This is already a structured prompt from the orthogonal AI system
+        // This is a structured prompt from the orthogonal AI system - extract the core query and enhance it
+        const queryMatch = content.match(/USER_QUERY: "([^"]+)"/);
+        const userQuery = queryMatch ? queryMatch[1] : content;
+        
+        // Create an enhanced prompt for detailed product analysis
         messages = [
           {
-            role: "user",
-            content: content
+            role: "system",
+            content: "You are an expert product research assistant. Provide comprehensive, detailed product recommendations with specific models, current pricing, and actionable insights. Be as detailed and helpful as ChatGPT would be. Always respond with valid JSON."
+          },
+          {
+            role: "user", 
+            content: `Analyze this product query and provide comprehensive shopping assistance: "${userQuery}"
+
+Provide detailed analysis including:
+- Specific product model names and numbers
+- Current pricing estimates for June 2025
+- Key features and comparisons between options
+- Expert review insights and ratings
+- Organized by priority: premium, value, budget options
+- Actionable shopping steps
+
+Respond with JSON in this exact format:
+{
+  "title": "Product Category (3-5 words)",
+  "summary": "Comprehensive product analysis with specific models, pricing, comparisons, and expert insights (minimum 200 words with specific product names, features, and actionable recommendations)",
+  "intent": "product-query",
+  "urgency": "medium",
+  "complexity": 7,
+  "todos": [
+    {"title": "Research specific models mentioned", "priority": "medium"},
+    {"title": "Compare prices across retailers", "priority": "medium"},
+    {"title": "Read expert reviews", "priority": "low"}
+  ],
+  "smartActions": [
+    {"label": "Search Amazon", "action": "openLink", "url": "https://amazon.com/s?k=${userQuery.replace(/\s/g, '+')}"},
+    {"label": "Compare Reviews", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025"},
+    {"label": "Price Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison"}
+  ],
+  "assistantAddendum": "Detailed product breakdown with specific recommendations, model comparisons, pricing insights, and shopping guidance (minimum 150 words)",
+  "enrichments": {
+    "products": [
+      {"name": "Premium Option - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.5/5 stars", "keyFeatures": "list key features"},
+      {"name": "Value Pick - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.3/5 stars", "keyFeatures": "list key features"},
+      {"name": "Budget Choice - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.0/5 stars", "keyFeatures": "list key features"}
+    ]
+  }
+}`
           }
         ];
       } else {

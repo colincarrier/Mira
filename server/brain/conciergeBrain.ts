@@ -14,39 +14,55 @@ export async function conciergeBrain(
   // Import OpenAI for product analysis
   const openaiModule = await import('../openai');
   
-  // Create commerce-focused prompt
+  // Create commerce-focused prompt for comprehensive product research
   const commercePrompt = `
-SYSTEM: You are Mira's shopping concierge. Analyze this product query and provide comprehensive shopping assistance.
+SYSTEM: You are an expert product research assistant. Analyze this query and provide comprehensive, detailed product recommendations with specific models, current pricing, and actionable insights - similar to what ChatGPT would provide.
 
 USER_QUERY: "${input.content}"
 
-ANALYSIS_FOCUS:
-- Extract product specifications and requirements
-- Identify shopping intent and urgency
-- Suggest specific products with pricing research
-- Generate actionable shopping steps
+INSTRUCTIONS:
+1. Identify the specific product category and user requirements
+2. Research current top-rated models (June 2025) with specific names and model numbers
+3. Provide detailed comparisons including pros/cons, pricing, and key features
+4. Include expert review insights and ratings
+5. Suggest specific shopping actions with direct links
+6. Organize by priority: premium, value, budget options
+7. Be comprehensive and detailed - provide dense, helpful information
 
 REQUIRED_JSON_OUTPUT:
 {
   "title": "string (3-5 words, product-focused headline)",
-  "summary": "string (shopping analysis summary)",
+  "summary": "string (comprehensive product analysis with specific models, pricing, comparisons, and expert insights - minimum 200 words)",
   "intent": "product-query",
-  "urgency": "low|medium|high|critical",
-  "complexity": "number (1-10)",
-  "todos": [{"title": "actionable shopping step", "priority": "urgency"}],
-  "smartActions": [{"label": "action name", "action": "openLink|compare|research", "url": "optional"}],
-  "assistantAddendum": "detailed product analysis and recommendations",
+  "urgency": "medium",
+  "complexity": 7,
+  "todos": [
+    {"title": "Research specific models mentioned", "priority": "medium"},
+    {"title": "Compare prices across retailers", "priority": "medium"},
+    {"title": "Read expert reviews", "priority": "low"}
+  ],
+  "smartActions": [
+    {"label": "Search Amazon", "action": "openLink", "url": "https://amazon.com/s?k=PRODUCT_QUERY"},
+    {"label": "Compare Reviews", "action": "openLink", "url": "https://www.google.com/search?q=PRODUCT_QUERY+reviews+2025"},
+    {"label": "Price Comparison", "action": "openLink", "url": "https://www.google.com/search?q=PRODUCT_QUERY+price+comparison"}
+  ],
+  "assistantAddendum": "string (detailed product breakdown with specific recommendations, model comparisons, pricing insights, and shopping guidance - minimum 150 words)",
   "enrichments": {
-    "products": [{"name": "product name", "price": "estimated range", "url": "shopping link", "rating": "4.5 stars"}]
+    "products": [
+      {"name": "Premium Option - Specific Model Name", "price": "$XXX-XXX range", "url": "shopping link", "rating": "4.5/5 stars", "keyFeatures": "list key features"},
+      {"name": "Value Pick - Specific Model Name", "price": "$XXX-XXX range", "url": "shopping link", "rating": "4.3/5 stars", "keyFeatures": "list key features"},
+      {"name": "Budget Choice - Specific Model Name", "price": "$XXX-XXX range", "url": "shopping link", "rating": "4.0/5 stars", "keyFeatures": "list key features"}
+    ]
   }
 }
 
-For product queries:
-- Research current market prices and availability
-- Compare top options in the category
-- Include direct shopping links when possible
-- Provide specific model recommendations
-- Consider user's implied budget constraints
+QUALITY REQUIREMENTS:
+- Summary must be detailed and comprehensive (200+ words)
+- Include specific product model names and numbers
+- Provide current pricing estimates
+- Mention key features and comparisons
+- Reference expert reviews when possible
+- Be as detailed and helpful as ChatGPT would be
 
 OUTPUT ONLY JSON:
 `;
@@ -55,25 +71,52 @@ OUTPUT ONLY JSON:
     // Process through OpenAI for product intelligence
     const result = await openaiModule.analyzeWithOpenAI(commercePrompt, 'enhanced');
     
-    // Enhance with commerce-specific features
+    console.log('Commerce brain - OpenAI result:', JSON.stringify(result, null, 2));
+    
+    // Extract structured commerce response - check for detailed analysis in various fields
+    const detailedSummary = result.context || result.summary || result.assistantAddendum || "Product query processed";
+    const productTitle = result.title || result.enhancedContent || extractProductTitle(input.content);
+    
+    // Extract todos from OpenAI response
+    let todosList = [];
+    if (Array.isArray(result.todos)) {
+      todosList = result.todos.map(todo => ({
+        title: typeof todo === 'string' ? todo : todo.title || `Research ${input.content}`,
+        priority: typeof todo === 'object' ? todo.priority || 'medium' : 'medium'
+      }));
+    } else {
+      todosList = generateShoppingTodos(input.content);
+    }
+    
+    // Extract smart actions from OpenAI response
+    let smartActionsList = [];
+    if (Array.isArray(result.smartActions)) {
+      smartActionsList = result.smartActions;
+    } else {
+      smartActionsList = generateCommerceActions(input.content, result);
+    }
+    
+    // Extract enrichments from OpenAI response
+    let enrichmentsList = { products: [] };
+    if (result.enrichments && result.enrichments.products) {
+      enrichmentsList = result.enrichments;
+    } else {
+      enrichmentsList = { products: generateProductSuggestions(input.content) };
+    }
+    
     const enhancedResult: MiraAIResult = {
       uid: '',
       timestamp: '',
-      title: result.enhancedContent || extractProductTitle(input.content),
-      summary: result.context || "Product query analyzed",
+      title: productTitle,
+      summary: detailedSummary,
       intent: 'product-query',
-      urgency: result.urgencyLevel || 'medium',
-      complexity: Math.max(result.complexityScore || 5, 5), // Commerce queries are inherently complex
+      urgency: result.urgencyLevel || result.urgency || 'medium',
+      complexity: Math.max(result.complexityScore || result.complexity || 7, 7), // Commerce queries are complex
       confidence: classification.confidence,
-      todos: result.todos?.map(todo => ({
-        title: todo,
-        priority: result.urgencyLevel || 'medium'
-      })) || generateShoppingTodos(input.content),
-      smartActions: generateCommerceActions(input.content, result),
-      assistantAddendum: generateProductAnalysis(input.content, result),
-      enrichments: {
-        products: generateProductSuggestions(input.content)
-      },
+      todos: todosList,
+      smartActions: smartActionsList,
+      assistantAddendum: result.assistantAddendum || generateProductAnalysis(input.content, result),
+      enrichments: enrichmentsList,
       processingPath: 'commerce',
       classificationScores: classification.scores,
       _rawModelJSON: result
