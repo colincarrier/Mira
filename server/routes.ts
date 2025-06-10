@@ -459,6 +459,8 @@ This profile was generated from your input and will help provide more personaliz
               microQuestions: analysis.microQuestions || [],
               fromTheWeb: analysis.fromTheWeb || []
             }),
+            processingPath: analysis.processingPath,
+            classificationScores: analysis.classificationScores,
             isProcessing: false
           };
           

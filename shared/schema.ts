@@ -32,6 +32,10 @@ export const notes = pgTable("notes", {
     manualEdits: { timestamp: Date; content: string; }[];
     aiModifications: { timestamp: Date; type: string; description: string; }[];
   }>(),
+  
+  // Orthogonal AI upgrade metadata
+  processingPath: text("processing_path"), // 'commerce' | 'memory'
+  classificationScores: json("classification_scores").$type<Record<string, number>>(),
 });
 
 // Note versions for complete changelog and rollback capability

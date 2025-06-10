@@ -82,10 +82,11 @@ function commerceClassifier(content: string): {
   
   // Commerce keywords weighted by specificity
   const commerceKeywords = {
-    buy: 0.9, purchase: 0.9, order: 0.8, shopping: 0.8, store: 0.7,
-    price: 0.8, cost: 0.7, sale: 0.8, discount: 0.7, deals: 0.7,
-    best: 0.6, cheap: 0.6, affordable: 0.6, review: 0.5, compare: 0.6,
-    tv: 0.5, laptop: 0.5, phone: 0.5, headphones: 0.4, shoes: 0.4
+    buy: 1.0, purchase: 1.0, order: 0.9, shopping: 0.9, store: 0.8,
+    price: 0.9, cost: 0.8, sale: 0.9, discount: 0.8, deals: 0.8,
+    best: 0.7, cheap: 0.7, affordable: 0.7, review: 0.6, compare: 0.7,
+    headphones: 0.8, laptop: 0.8, phone: 0.8, tv: 0.8, shoes: 0.7,
+    wireless: 0.6, bluetooth: 0.6, under: 0.5, dollars: 0.7, budget: 0.6
   };
   
   let commerceScore = 0;
@@ -112,10 +113,10 @@ function commerceClassifier(content: string): {
   const confidence = Math.min(Math.max(commerceScore / Math.max(totalMatches, 1), 0), 1);
   
   return {
-    isCommerce: commerceScore > 0.6,
+    isCommerce: commerceScore > 0.4,
     confidence,
     scores: { commerce: commerceScore },
-    primaryIntent: commerceScore > 0.6 ? 'product-query' : 'simple-task'
+    primaryIntent: commerceScore > 0.4 ? 'product-query' : 'simple-task'
   };
 }
 
