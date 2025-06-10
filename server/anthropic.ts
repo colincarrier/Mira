@@ -84,14 +84,47 @@ export interface AIAnalysisResult {
 
 export async function analyzeNote(content: string, mode: string): Promise<AIAnalysisResult> {
   try {
-    const prompt = `Analyze this content and provide structured analysis: ${content}`;
+    const prompt = `Analyze and enhance: "${content}"
+
+Generate comprehensive analysis with MARKDOWN FORMATTING and CLICKABLE LINKS:
+
+FORMAT REQUIREMENTS:
+- Use **bold** for important terms and names
+- Use [Link Text](URL) format for all external links
+- Include [Amazon](https://amazon.com/s?k=item) links when relevant
+- Include [Expert Review](https://techradar.com) links for product content
+- Use markdown tables with | separators
+- Use ### for section headers
+- Use proper bullet points with -
+
+CONTENT STRUCTURE:
+1. Enhanced content with proper markdown formatting
+2. Comprehensive analysis with sections and subsections
+3. Clickable links where appropriate
+4. Comparison tables if relevant
+5. Use case recommendations
+
+Respond with JSON:
+{
+  "enhancedContent": "MARKDOWN formatted content with clickable links, headers, tables, and comprehensive analysis. Use proper markdown syntax throughout.",
+  "suggestion": "Brief action suggestion",
+  "context": "Detailed context analysis",
+  "complexityScore": 5,
+  "intentType": "simple-task",
+  "urgencyLevel": "medium",
+  "todos": ["actionable items"],
+  "richContext": {
+    "recommendedActions": [{"title": "Action", "description": "Details"}],
+    "quickInsights": ["insight1", "insight2"]
+  }
+}`;
 
     console.log("Claude analysis with enhanced Mira Brain prompt");
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      system: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt.",
-      max_tokens: 4000,
+      system: "You are an expert analysis assistant. Generate comprehensive, well-formatted markdown content with proper links, tables, and structure. Always respond with valid JSON only.",
+      max_tokens: 8000,
       messages: [
         {
           role: "user",
