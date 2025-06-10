@@ -601,23 +601,20 @@ This profile was generated from your input and will help provide more personaliz
         });
       }
 
-      // Process with both AI services (both now use Mira Brain prompt)
-      const [openAIResult, claudeResult] = await Promise.allSettled([
-        safeAnalyzeWithOpenAI(content, mode),
-        safeAnalyzeWithClaude(content, mode)
-      ]);
+      // Process with OpenAI only per user request
+      const openAIResult = await safeAnalyzeWithOpenAI(content, mode);
 
       const response = {
         original: content,
         openAI: {
-          success: openAIResult.status === 'fulfilled',
-          result: openAIResult.status === 'fulfilled' ? openAIResult.value : null,
-          error: openAIResult.status === 'rejected' ? openAIResult.reason?.message : null
+          success: true,
+          result: openAIResult,
+          error: null
         },
         claude: {
-          success: claudeResult.status === 'fulfilled',
-          result: claudeResult.status === 'fulfilled' ? claudeResult.value : null,
-          error: claudeResult.status === 'rejected' ? claudeResult.reason?.message : null
+          success: false,
+          result: null,
+          error: "Claude disabled per user request - OpenAI only"
         }
       };
 

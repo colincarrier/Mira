@@ -158,11 +158,17 @@ OUTPUT ONLY JSON:`;
       console.log('Could not parse commerce JSON, using fallback');
     }
     
+    // Clean the summary to avoid instruction text appearing in UI
+    let cleanSummary = parsedResult?.summary || "Product analysis completed";
+    if (cleanSummary.includes("Generate comprehensive") || cleanSummary.length > 100) {
+      cleanSummary = "Product research and comparison analysis completed";
+    }
+
     return {
       uid: '',
       timestamp: '',
       title: parsedResult?.title || extractProductTitle(input.content),
-      summary: parsedResult?.summary || result.context || "Product query analyzed",
+      summary: cleanSummary,
       intent: parsedResult?.intent || 'product-query',
       urgency: parsedResult?.urgency || 'medium',
       complexity: parsedResult?.complexity || 6,
@@ -234,11 +240,17 @@ OUTPUT ONLY JSON:`;
       console.log('Could not parse memory JSON, using fallback');
     }
     
+    // Clean the summary to avoid instruction text appearing in UI
+    let cleanSummary = parsedResult?.summary || "Note processed successfully";
+    if (cleanSummary.includes("Generate comprehensive") || cleanSummary.length > 100) {
+      cleanSummary = "Personal note organized and processed";
+    }
+
     return {
       uid: '',
       timestamp: '',
       title: parsedResult?.title || extractMemoryTitle(input.content),
-      summary: parsedResult?.summary || result.context || "Note processed",
+      summary: cleanSummary,
       intent: parsedResult?.intent || 'simple-task',
       urgency: parsedResult?.urgency || determineUrgency(input.content),
       complexity: parsedResult?.complexity || 2,
