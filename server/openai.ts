@@ -104,21 +104,31 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
         }
       ];
     } else {
-      // Handle text analysis using enhanced Mira Brain prompt
-      const prompt = `Analyze this content and provide structured analysis: ${content}`;
-      
+      // Handle text analysis - use the content as-is if it's already a structured prompt
       console.log("OpenAI analysis with enhanced Mira Brain prompt");
       
-      messages = [
-        {
-          role: "system",
-          content: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ];
+      if (content.includes("SYSTEM:") && content.includes("REQUIRED_JSON_OUTPUT:")) {
+        // This is already a structured prompt from the orthogonal AI system
+        messages = [
+          {
+            role: "user",
+            content: content
+          }
+        ];
+      } else {
+        // Legacy general analysis
+        const prompt = `Analyze this content and provide structured analysis: ${content}`;
+        messages = [
+          {
+            role: "system",
+            content: "You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ];
+      }
     }
 
     const response = await openai.chat.completions.create({
@@ -143,11 +153,11 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
 
     // Return complete AIAnalysisResult structure
     return {
-      enhancedContent: result.enhancedContent || content,
+      enhancedContent: result.title || result.enhancedContent || content,
       suggestion: cleanSuggestion,
-      context: result.context || "General content analysis.",
-      complexityScore: result.complexityScore || 5,
-      intentType: result.intentType || 'simple-task',
+      context: result.summary || result.context || "Note processed successfully.",
+      complexityScore: result.complexityScore || result.complexity || 5,
+      intentType: result.intentType || result.intent || 'simple-task',
       urgencyLevel: result.urgencyLevel || 'medium',
       todos: Array.isArray(result.todos) ? result.todos : [],
       taskHierarchy: result.taskHierarchy,
