@@ -34,7 +34,7 @@ async function safeAnalyzeWithOpenAI(content: string, mode: string) {
   return analyzeWithOpenAI(content, mode);
 }
 
-// Claude functions removed - OpenAI only per user request
+// Claude functions removed - handled within registerRoutes scope
 
 async function safeTranscribeAudio(buffer: Buffer) {
   if (!isOpenAIAvailable()) {
@@ -130,6 +130,12 @@ function createNewspaperTitleFromContent(content: string): string {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize AI modules safely - never crash if AI fails
   await initializeAI();
+  
+  // Define Claude fallback function within scope
+  async function safeAnalyzeWithClaude(content: string, mode: string) {
+    // Fallback to OpenAI since Claude is disabled
+    return safeAnalyzeWithOpenAI(content, mode);
+  }
   
   // API Stats endpoint
   app.get("/api/stats/api-usage", async (req, res) => {
