@@ -133,26 +133,30 @@ Provide detailed analysis including:
 Respond with JSON in this exact format:
 {
   "title": "Product Category (3-5 words)",
-  "summary": "Comprehensive product analysis with specific models, pricing, comparisons, and expert insights (minimum 200 words with specific product names, features, and actionable recommendations)",
-  "intent": "product-query",
+  "summary": "COMPREHENSIVE DETAILED ANALYSIS (minimum 500 words) - Format with markdown-style structure including: 🏆 Premium Options section with 2-3 specific models, detailed specs, expert review citations, exact pricing. 💼 Value Options section with 2-3 models, battery life, features, pricing. 💰 Budget Options section with 2-3 affordable models. 🔍 Comparison Chart with Model | Price | Battery | Key Features | Rating columns. 🏷️ Use Case Recommendations section. Include specific model numbers, exact pricing, battery hours, expert review sources (WIRED, TechRadar, etc.), and detailed feature comparisons. Use emojis for visual organization. Be as comprehensive and detailed as ChatGPT.",
+  "intent": "product-query", 
   "urgency": "medium",
-  "complexity": 7,
+  "complexity": 8,
   "todos": [
     {"title": "Research specific models mentioned", "priority": "medium"},
-    {"title": "Compare prices across retailers", "priority": "medium"},
-    {"title": "Read expert reviews", "priority": "low"}
+    {"title": "Compare prices across retailers", "priority": "medium"}, 
+    {"title": "Read expert reviews from WIRED, TechRadar", "priority": "medium"},
+    {"title": "Check current availability and discounts", "priority": "low"}
   ],
   "smartActions": [
     {"label": "Search Amazon", "action": "openLink", "url": "https://amazon.com/s?k=${userQuery.replace(/\s/g, '+')}"},
-    {"label": "Compare Reviews", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025"},
-    {"label": "Price Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison"}
+    {"label": "Compare Reviews", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025+WIRED+TechRadar"},
+    {"label": "Price Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison+best+deals"},
+    {"label": "Tech Specs", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+specifications+comparison+2025"}
   ],
-  "assistantAddendum": "Detailed product breakdown with specific recommendations, model comparisons, pricing insights, and shopping guidance (minimum 150 words)",
+  "assistantAddendum": "DETAILED PRODUCT BREAKDOWN (minimum 300 words) - Include specific recommendations by use case (travel, work, gaming, audiophile), budget tiers ($50-100, $100-300, $300+), feature priorities (ANC, battery, sound quality), brand comparisons, and expert buying advice. Mention specific model advantages, disadvantages, and best purchase timing.",
   "enrichments": {
     "products": [
-      {"name": "Premium Option - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.5/5 stars", "keyFeatures": "list key features"},
-      {"name": "Value Pick - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.3/5 stars", "keyFeatures": "list key features"},
-      {"name": "Budget Choice - Specific Model Name", "price": "Price range", "url": "shopping link", "rating": "4.0/5 stars", "keyFeatures": "list key features"}
+      {"name": "🏆 Premium: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
+      {"name": "💼 Value: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
+      {"name": "💰 Budget: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
+      {"name": "🔥 Specialist: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."},
+      {"name": "🎮 Gaming: [Specific Model Name]", "price": "$XXX exact price", "url": "https://amazon.com/s?k=model+name", "rating": "X.X/5 stars (Source)", "keyFeatures": "Detailed features: battery hours, ANC rating, codec support, etc."}
     ]
   }
 }`
@@ -179,7 +183,7 @@ Respond with JSON in this exact format:
       messages: messages,
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 4000
+      max_tokens: 8000  // Increased for comprehensive product analysis
     });
 
     console.log("OpenAI raw response:", (response.choices[0].message.content || '').substring(0, 200) + "...");
