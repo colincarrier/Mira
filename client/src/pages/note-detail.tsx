@@ -591,290 +591,42 @@ export default function NoteDetail() {
           </div>
         )}
 
-        {/* Web Search Results - Clean Display */}
+        {/* Web Search Results - Minimal Display */}
         {note.richContext && (
-          <div className="space-y-0">
+          <div className="px-4 mb-4">
             {(() => {
               try {
                 const richData = JSON.parse(note.richContext);
                 return (
                   <>
-
-                    {/* From the Web Section */}
+                    {/* From the Web Section - Streamlined */}
                     {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">🌐</span>
-                            </div>
-                            <h3 className="font-semibold text-[hsl(var(--foreground))]">From the Web</h3>
-                          </div>
-                          <div className="space-y-4">
-                            {richData.fromTheWeb.map((item: any, index: number) => (
-                              <div 
-                                key={index} 
-                                className="p-4 bg-[hsl(var(--muted))] rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] cursor-pointer transition-colors"
-                                onClick={() => item.url && window.open(item.url, '_blank')}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-medium text-[hsl(var(--foreground))] line-clamp-2">{item.title}</h4>
-                                  {item.rating && (
-                                    <span className="text-xs text-[hsl(var(--muted-foreground))] bg-yellow-100 px-2 py-1 rounded-full ml-2 whitespace-nowrap">
-                                      ⭐ {item.rating}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-[hsl(var(--muted-foreground))] mb-3 line-clamp-2">
-                                  {item.description}
-                                </p>
-                                {item.keyPoints && item.keyPoints.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mb-2">
-                                    {item.keyPoints.slice(0, 3).map((point: string, pointIndex: number) => (
-                                      <span key={pointIndex} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                        {point}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                                {item.source && (
-                                  <div className="flex justify-between items-center text-xs text-[hsl(var(--muted-foreground))]">
-                                    <span>{item.source}</span>
-                                    {item.lastUpdated && <span>{item.lastUpdated}</span>}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-
-
-                    {/* Research Results */}
-                    {richData.researchResults && richData.researchResults.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">2</span>
-                            </div>
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Research & Options</h3>
-                          </div>
-                          <div className="space-y-3">
-                            {richData.researchResults.map((result: any, index: number) => (
-                              <div key={index} className="border border-[hsl(var(--border))] rounded-lg p-3 hover:border-[hsl(var(--accent))] transition-colors cursor-pointer" onClick={() => handleQuestionClick(result.title)}>
-                                <div className="flex items-start justify-between mb-2">
-                                  <h4 className="font-medium text-sm text-blue-600 hover:text-blue-800">{result.title}</h4>
-                                  {result.rating && (
-                                    <div className="text-xs text-yellow-600 flex items-center gap-1">
-                                      <span>★</span>
-                                      <span>{result.rating}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-sm text-[hsl(var(--muted-foreground))] mb-2">{result.description}</p>
-                                {result.keyPoints && (
-                                  <ul className="space-y-1 mb-2">
-                                    {result.keyPoints.map((point: string, pointIndex: number) => (
-                                      <li key={pointIndex} className="text-xs text-[hsl(var(--muted-foreground))] flex items-start gap-1">
-                                        <span className="text-green-500">•</span>
-                                        {point}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                                {result.contact && (
-                                  <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                    Contact: {result.contact}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Follow-up Questions */}
-                    {richData.quickInsights && richData.quickInsights.length > 0 && (
-                      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-                        <div className="px-4 py-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 bg-orange-500 rounded flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">?</span>
-                            </div>
-                            <h3 className="font-medium text-[hsl(var(--foreground))]">Next Steps</h3>
-                          </div>
-                          <div className="grid gap-2">
-                            {richData.quickInsights.map((insight: string, index: number) => {
-                              // Convert insights to actionable questions
-                              const question = insight.includes('?') ? insight : `${insight}?`;
-                              const questionText = question.replace('?', '');
-                              
-                              return (
-                                <button
-                                  key={index}
-                                  onClick={() => setInputValue(`${questionText}:`)}
-                                  className="text-sm p-3 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-left"
-                                >
-                                  <span className="text-orange-600 mr-2">→</span>
-                                  {question}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                );
-              } catch (e) {
-                return null;
-              }
-            })()}
-          </div>
-        )}
-
-        {/* AI Research Results - Embedded in document flow */}
-        {note.richContext && (
-          <div className="bg-gray-50 mx-4 mb-4 rounded-lg border border-gray-200">
-            {(() => {
-              try {
-                const richData = JSON.parse(note.richContext);
-                return (
-                  <div className="p-4 space-y-4">
-                    {/* Enhanced Web Search Results */}
-                    {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3 text-base flex items-center gap-2">
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs">🌐</span>
-                          </div>
-                          Location-Based Research Results
-                        </h4>
-                        <div className="space-y-3">
-                          {richData.fromTheWeb.map((result: any, index: number) => (
-                            <div 
-                              key={index} 
-                              className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer shadow-sm" 
-                              onClick={() => window.open(result.url, '_blank')}
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <h5 className="font-medium text-blue-600 hover:text-blue-800 text-sm">{result.title}</h5>
-                                <div className="flex items-center gap-2">
-                                  {result.rating && (
-                                    <div className="text-xs text-yellow-600 flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-                                      <span>★</span>
-                                      <span>{result.rating}</span>
-                                    </div>
-                                  )}
-                                  {result.category && (
-                                    <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                      {result.category}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{result.description}</p>
-                              
-                              {result.location && result.distance && (
-                                <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded inline-block mb-2">
-                                  📍 {result.location} • {result.distance}
-                                </div>
-                              )}
-                              
-                              {result.keyPoints && result.keyPoints.length > 0 && (
-                                <div className="mb-3">
-                                  <div className="text-xs font-medium text-gray-700 mb-1">Key Features:</div>
-                                  <ul className="grid grid-cols-2 gap-1">
-                                    {result.keyPoints.map((point: string, pointIndex: number) => (
-                                      <li key={pointIndex} className="text-xs text-gray-600 flex items-start gap-1">
-                                        <span className="text-green-500 mt-0.5">•</span>
-                                        <span>{point}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              
-                              {result.contact && (
-                                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-2">
-                                  📞 Contact: {result.contact}
-                                </div>
-                              )}
-                              
-                              <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                <span>🔗</span>
-                                <span className="truncate">{result.url}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Legacy Research Results (fallback) */}
-                    {!richData.fromTheWeb && richData.researchResults && richData.researchResults.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3 text-base">Research Findings</h4>
-                        <div className="space-y-3">
-                          {richData.researchResults.map((result: any, index: number) => (
-                            <div 
-                              key={index} 
-                              className="p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer" 
-                              onClick={() => handleQuestionClick(result.title)}
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <h5 className="font-medium text-blue-600 hover:text-blue-800 text-sm">{result.title}</h5>
-                                {result.rating && (
-                                  <div className="text-xs text-yellow-600 flex items-center gap-1">
-                                    <span>★</span>
-                                    <span>{result.rating}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{result.description}</p>
-                              {result.keyPoints && (
-                                <ul className="space-y-1 mb-2">
-                                  {result.keyPoints.map((point: string, pointIndex: number) => (
-                                    <li key={pointIndex} className="text-xs text-gray-500 flex items-start gap-1">
-                                      <span className="text-green-500">•</span>
-                                      {point}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                              {result.contact && (
-                                <div className="text-xs text-gray-500 mt-2">
-                                  Contact: {result.contact}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Follow-up Questions */}
-                    {richData.quickInsights && richData.quickInsights.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3 text-base">Next Questions</h4>
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="text-sm text-gray-500 mb-3 font-medium">Related Results:</div>
                         <div className="space-y-2">
-                          {richData.quickInsights.map((insight: string, index: number) => (
-                            <button
-                              key={index}
-                              onClick={() => handleQuestionClick(insight)}
-                              className="block w-full text-left p-3 bg-blue-50 border border-blue-200 rounded-lg hover:border-blue-300 transition-colors text-sm text-blue-800"
+                          {richData.fromTheWeb.slice(0, 3).map((item: any, index: number) => (
+                            <div 
+                              key={index} 
+                              className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors"
+                              onClick={() => item.url && window.open(item.url, '_blank')}
                             >
-                              {insight}
-                            </button>
+                              <h4 className="font-medium text-gray-900 text-sm mb-1">{item.title}</h4>
+                              <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                              {item.rating && (
+                                <span className="text-xs text-yellow-600 mt-1 inline-block">
+                                  ⭐ {item.rating}
+                                </span>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
+
+
+
+
+                  </>
                 );
               } catch (e) {
                 return null;
