@@ -122,21 +122,34 @@ export async function analyzeWithOpenAI(content: string, mode: string): Promise<
             role: "user", 
             content: `Research and analyze: "${userQuery}"
 
-Create a comprehensive product guide with:
+Create a comprehensive product guide with MARKDOWN FORMATTING and CLICKABLE LINKS:
 
-1. PREMIUM OPTIONS (🏆): 2-3 top-tier models with specific names, exact prices, key features, expert ratings
-2. VALUE OPTIONS (💼): 2-3 mid-range models balancing price/performance 
-3. BUDGET OPTIONS (💰): 2-3 affordable models with good value
-4. COMPARISON TABLE: Model | Price | Battery | Key Features | Rating
-5. USE CASE RECOMMENDATIONS: Best for travel, work, gaming, etc.
-6. EXPERT INSIGHTS: Mention review sources like WIRED, TechRadar
+FORMAT REQUIREMENTS:
+- Use **bold** for product names and prices
+- Use [Link Text](URL) format for all external links
+- Include [Amazon](https://amazon.com/s?k=product+name) links for each product
+- Include [TechRadar](https://techradar.com) and [WIRED](https://wired.com) expert review links
+- Use markdown tables with | separators
+- Use ### for section headers
 
-Include specific model numbers, exact pricing, battery life, ANC ratings, codec support, and detailed feature comparisons. Use emojis for visual organization.
+CONTENT STRUCTURE:
+1. PREMIUM OPTIONS (🏆): 2-3 top-tier models with [Amazon](URL) links
+2. VALUE OPTIONS (💼): 2-3 mid-range models with shopping links
+3. BUDGET OPTIONS (💰): 2-3 affordable models with purchase links
+4. COMPARISON TABLE: | Model | Price | Features | [Amazon](URL) |
+5. USE CASE RECOMMENDATIONS with expert review links
+
+EXAMPLE FORMAT:
+### 🏆 Premium Options
+1. **Sony WH-1000XM5**
+   - **Price**: $399
+   - **Link**: [Amazon](https://amazon.com/s?k=Sony+WH-1000XM5)
+   - **Expert Review**: [TechRadar](https://techradar.com) rates 4.8/5
 
 Respond with JSON:
 {
   "title": "Product category (3-5 words)",
-  "summary": "Write a comprehensive 400+ word analysis with sections for premium options, value picks, budget choices, comparison details, and use case recommendations. Include specific model names, exact prices, detailed features, expert review mentions, and organized structure with emojis. Be as detailed as ChatGPT.",
+  "summary": "MARKDOWN formatted content with clickable [Amazon](https://amazon.com/s?k=product) links, [TechRadar](https://techradar.com) expert reviews, and comparison tables. Use proper markdown syntax throughout (400+ words).",
   "intent": "product-query",
   "complexity": 8,
   "todos": [
@@ -149,7 +162,7 @@ Respond with JSON:
     {"label": "Review Comparison", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+reviews+2025"},
     {"label": "Price Check", "action": "openLink", "url": "https://www.google.com/search?q=${userQuery.replace(/\s/g, '+')}+price+comparison"}
   ],
-  "assistantAddendum": "Write 200+ words covering specific use case recommendations, budget tier breakdowns, feature priorities, brand comparisons, and expert buying advice with model advantages and disadvantages."
+  "assistantAddendum": "I've provided comprehensive product analysis with clickable Amazon links and expert review sources for easy shopping and research."
 }`
           }
         ];
