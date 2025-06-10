@@ -7,7 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
-import { processNote as legacyProcessNote, type MiraAIInput as LegacyMiraAIInput, type MiraAIResult as LegacyMiraAIResult } from "./utils/brain/miraAIProcessing";
+import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
