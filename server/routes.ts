@@ -584,7 +584,9 @@ This profile was generated from your input and will help provide more personaliz
         });
       }
       
-      res.json(note);
+      // Return the note with any updated metadata from AI processing
+      const finalNote = await storage.getNote(note.id);
+      res.json(finalNote);
     } catch (error) {
       res.status(400).json({ message: "Invalid note data" });
     }
