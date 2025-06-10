@@ -158,17 +158,19 @@ OUTPUT ONLY JSON:`;
       console.log('Could not parse commerce JSON, using fallback');
     }
     
-    // Clean the summary to avoid instruction text appearing in UI
-    let cleanSummary = parsedResult?.summary || "Product analysis completed";
-    if (cleanSummary.includes("Generate comprehensive") || cleanSummary.length > 100) {
-      cleanSummary = "Product research and comparison analysis completed";
+    // Use the actual enhanced content from OpenAI instead of fallback summary
+    let enhancedContent = result.enhancedContent || result.summary || "Product analysis completed";
+    
+    // Clean only if it contains instruction text, but preserve rich content
+    if (enhancedContent.includes("Generate comprehensive") || enhancedContent.includes("COMPREHENSIVE MARKDOWN CONTENT")) {
+      enhancedContent = "Product research and comparison analysis completed";
     }
 
     return {
       uid: '',
       timestamp: '',
       title: parsedResult?.title || extractProductTitle(input.content),
-      summary: cleanSummary,
+      summary: enhancedContent, // Use the rich enhanced content here
       intent: parsedResult?.intent || 'product-query',
       urgency: parsedResult?.urgency || 'medium',
       complexity: parsedResult?.complexity || 6,

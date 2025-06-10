@@ -929,10 +929,13 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
 
           processNote(miraInput)
             .then(async (analysis: MiraAIResult) => {
+              // Get enhanced content from the raw AI response
+              const enhancedContent = analysis._rawModelJSON?.enhancedContent || analysis.summary || "";
+              
               const updates: any = {
                 aiEnhanced: true,
                 aiSuggestion: analysis.smartActions?.map(a => `${a.label}: ${a.action}`).join(", ") || "",
-                aiContext: analysis.summary || "",
+                aiContext: enhancedContent, // Use the rich enhanced content instead of just summary
                 richContext: analysis.entities ? JSON.stringify({
                   entities: analysis.entities,
                   suggestedLinks: analysis.suggestedLinks,
