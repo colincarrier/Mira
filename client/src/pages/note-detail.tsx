@@ -10,6 +10,7 @@ import { createCalendarEventFromContent, addToGoogleCalendar } from "@/lib/calen
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -516,15 +517,14 @@ export default function NoteDetail() {
               }}
             />
 
-            {/* AI Enhanced Content - ChatGPT Style within iOS Notes */}
+            {/* AI Enhanced Content - ChatGPT Style with Rich Formatting */}
             {note.aiEnhanced && note.aiContext && note.aiContext !== "Note processed" && (
               <div className="border-t border-gray-200 pt-4 mb-4">
                 <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
-                <div className="prose prose-gray max-w-none">
-                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
-                    {note.aiContext}
-                  </div>
-                </div>
+                <MarkdownRenderer 
+                  content={note.aiContext}
+                  className="text-gray-800"
+                />
               </div>
             )}
           </div>
