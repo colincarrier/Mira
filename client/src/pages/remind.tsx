@@ -396,7 +396,7 @@ export default function Remind() {
                 {remindPopup.todo.isActiveReminder && remindPopup.todo.timeDue ? (
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                     <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Current reminder: {formatDistanceToNow(new Date(remindPopup.todo.dueDate), { addSuffix: true })}
+                      Current reminder: {formatDistanceToNow(new Date(remindPopup.todo.timeDue), { addSuffix: true })}
                     </p>
                   </div>
                 ) : (
