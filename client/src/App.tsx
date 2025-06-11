@@ -33,6 +33,7 @@ export default function App() {
           <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
               <Route path="/" component={Notes} />
+              <Route path="/notes" component={Notes} />
               <Route path="/todos" component={TodosView} />
               <Route path="/collections" component={CollectionsView} />
               <Route path="/profile" component={Profile} />
