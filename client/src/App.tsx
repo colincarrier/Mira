@@ -1,16 +1,20 @@
-
 import React from "react";
 import { Router, Route, Switch } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Notes from "@/pages/notes";
-import NoteDetail from "@/pages/note-detail";
-import TodoDetail from "@/pages/todo-detail";
-import CollectionDetail from "@/pages/collection-detail";
-import Remind from "@/pages/remind";
-import Profile from "@/pages/profile";
-import NotFound from "@/pages/not-found";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
+
+// Import pages
+import ActivityFeed from "@/components/activity-feed";
+import TodosView from "@/components/todos-view";
+import CollectionsView from "@/components/collections-view";
+import Profile from "@/pages/profile";
+import NoteDetail from "@/pages/note-detail";
+import CollectionDetail from "@/pages/collection-detail";
+import TodoDetail from "@/pages/todo-detail";
+import Remind from "@/pages/remind";
+import NotFound from "@/pages/not-found";
+import BottomNavigation from "@/components/bottom-navigation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,8 +32,10 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <Router>
           <Switch>
-            <Route path="/" component={Notes} />
-            <Route path="/notes" component={Notes} />
+            <Route path="/" component={ActivityFeed} />
+            <Route path="/todos" component={TodosView} />
+            <Route path="/collections" component={CollectionsView} />
+            <Route path="/profile" component={Profile} />
             <Route path="/note/:id" component={NoteDetail} />
             <Route path="/notes/:id" component={NoteDetail} />
             <Route path="/collection/:id" component={CollectionDetail} />
@@ -37,7 +43,6 @@ export default function App() {
             <Route path="/todo/:id" component={TodoDetail} />
             <Route path="/todos/:id" component={TodoDetail} />
             <Route path="/remind" component={Remind} />
-            <Route path="/profile" component={Profile} />
             <Route component={NotFound} />
           </Switch>
         </Router>
