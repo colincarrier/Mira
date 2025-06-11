@@ -167,7 +167,7 @@ export class DatabaseStorage implements IStorage {
         .insert(todos)
         .values({
           title: todoData.title,
-          isCompleted: todoData.completed || false,
+          completed: todoData.completed || false,
           priority: todoData.priority || 'medium',
           due: todoData.due,
           timeDue: todoData.timeDue,
