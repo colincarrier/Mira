@@ -48,6 +48,25 @@
   font-style: italic;
 }
 
+.tab-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.5rem;
+  color: #6b7280;
+  transition: color 0.2s;
+  min-width: 3rem;
+}
+
+.tab-button:hover {
+  color: #374151;
+}
+
+.tab-button.active {
+  color: #059669;
+}
+
 .dark {
   --background: 240 6% 10%;
   --foreground: 0 0% 98%;

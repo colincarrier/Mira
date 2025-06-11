@@ -907,9 +907,10 @@ export default function NoteDetail() {
         style={{ 
           zIndex: 9999,
           position: 'fixed',
-          bottom: '6rem',
+          bottom: 'calc(3.5rem + 16px)', // Match other input bars
           left: '1rem',
-          right: '1rem'
+          right: '1rem',
+          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
         }}
       >
         <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">

@@ -617,7 +617,7 @@ export default function InputBar({
         style={{ 
           zIndex: 9999,
           position: 'fixed',
-          bottom: 'calc(4.8rem + 16px)', // Adjusted for 20% shorter nav + more separation
+          bottom: 'calc(3.5rem + 16px)', // Adjusted for significantly shorter nav + separation
           left: '1rem',
           right: '1rem',
           filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
