@@ -57,14 +57,14 @@ const getIconComponent = (iconName: string) => {
 
 
 
-export default function CollectionsView() {
+export default function CollectionsView({ embedded = false }: { embedded?: boolean } = {}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "recent" | "count">("recent");
   const [draggedCollection, setDraggedCollection] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  
+
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
     queryKey: ["/api/collections"],
   });
@@ -76,19 +76,19 @@ export default function CollectionsView() {
         id: collection.id,
         displayOrder: index
       }));
-      
+
       return apiRequest("POST", "/api/collections/reorder", { updates });
     },
     onMutate: async (reorderedCollections) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/collections"] });
-      
+
       // Snapshot previous value
       const previousCollections = queryClient.getQueryData(["/api/collections"]);
-      
+
       // Optimistically update to new value
       queryClient.setQueryData(["/api/collections"], reorderedCollections);
-      
+
       return { previousCollections };
     },
     onError: (err, newCollections, context) => {
@@ -150,109 +150,115 @@ export default function CollectionsView() {
   }
 
   return (
-    <div className="space-y-4 px-4">
-      <div className="flex items-center justify-between mb-4 pt-6">
-        <h2 className="text-2xl font-serif font-medium">Collections</h2>
-        <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-            <Search size={18} />
-          </button>
-          <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-            <Plus size={18} />
-          </button>
+    <div className="space-y-6">
+      {!embedded && (
+        <div className="flex items-center justify-between px-4 pt-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
+              Collections
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+              <Search size={18} />
+            </button>
+            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+              <Filter size={18} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
+      <div className={`${embedded ? 'px-0' : 'px-4'} space-y-4`}>
+        <div className="grid grid-cols-3 gap-2">
+          {filteredAndSortedCollections.map((collection, index) => {
+            const IconComponent = getIconComponent(collection.icon);
+            const colors = getCollectionColor(collection.color);
 
-
-      <div className="grid grid-cols-3 gap-2">
-        {filteredAndSortedCollections.map((collection, index) => {
-          const IconComponent = getIconComponent(collection.icon);
-          const colors = getCollectionColor(collection.color);
-          
-          return (
-            <div 
-              key={collection.id} 
-              draggable
-              onDragStart={(e) => {
-                setDraggedCollection(collection.id);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-              onDragEnd={() => {
-                setDraggedCollection(null);
-                setDragOverIndex(null);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragOverIndex(index);
-              }}
-              onDragLeave={(e) => {
-                e.stopPropagation();
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            return (
+              <div 
+                key={collection.id} 
+                draggable
+                onDragStart={(e) => {
+                  setDraggedCollection(collection.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnd={() => {
+                  setDraggedCollection(null);
                   setDragOverIndex(null);
-                }
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (draggedCollection && draggedCollection !== collection.id) {
-                  const draggedIndex = filteredAndSortedCollections.findIndex(c => c.id === draggedCollection);
-                  const targetIndex = index;
-                  
-                  if (draggedIndex !== -1 && targetIndex !== -1) {
-                    const reorderedCollections = [...filteredAndSortedCollections];
-                    const [draggedItem] = reorderedCollections.splice(draggedIndex, 1);
-                    reorderedCollections.splice(targetIndex, 0, draggedItem);
-                    
-                    reorderMutation.mutate(reorderedCollections);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverIndex(index);
+                }}
+                onDragLeave={(e) => {
+                  e.stopPropagation();
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverIndex(null);
                   }
-                }
-                setDraggedCollection(null);
-                setDragOverIndex(null);
-              }}
-              onClick={() => setLocation(`/collection/${collection.id}`)}
-              className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation h-32 ${
-                draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
-              } ${
-                dragOverIndex === index && draggedCollection !== collection.id 
-                  ? 'border-blue-400 border-2 bg-blue-50 dark:bg-blue-950 scale-105 shadow-lg' 
-                  : 'border-[hsl(var(--border))]'
-              } rounded-lg p-3 hover:shadow-sm`}
-            >
-              <div className="flex flex-col items-center text-center space-y-1">
-                <div className="w-8 h-8 flex items-center justify-center">
-                  {collection.iconUrl ? (
-                    <img 
-                      src={collection.iconUrl} 
-                      alt={collection.name}
-                      className="w-6 h-6 rounded object-cover"
-                      onError={(e) => {
-                        // Fallback to icon if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : (
-                    <IconComponent className={`w-6 h-6 ${colors.text}`} />
-                  )}
-                </div>
-                <div className="space-y-1 flex-1 flex flex-col justify-end">
-                  <h3 className="font-bold text-sm leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center text-center">{collection.name}</h3>
-                  <div className="space-y-0 min-h-[2rem] flex flex-col justify-center">
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))] leading-tight">
-                      {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
-                    </p>
-                    {collection.openTodoCount > 0 && (
-                      <p className="text-[10px] text-orange-600 font-medium leading-tight">
-                        {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
-                      </p>
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedCollection && draggedCollection !== collection.id) {
+                    const draggedIndex = filteredAndSortedCollections.findIndex(c => c.id === draggedCollection);
+                    const targetIndex = index;
+
+                    if (draggedIndex !== -1 && targetIndex !== -1) {
+                      const reorderedCollections = [...filteredAndSortedCollections];
+                      const [draggedItem] = reorderedCollections.splice(draggedIndex, 1);
+                      reorderedCollections.splice(targetIndex, 0, draggedItem);
+
+                      reorderMutation.mutate(reorderedCollections);
+                    }
+                  }
+                  setDraggedCollection(null);
+                  setDragOverIndex(null);
+                }}
+                onClick={() => setLocation(`/collection/${collection.id}`)}
+                className={`bg-[hsl(var(--card))] border transition-all cursor-pointer touch-manipulation h-32 ${
+                  draggedCollection === collection.id ? 'opacity-50 scale-95' : ''
+                } ${
+                  dragOverIndex === index && draggedCollection !== collection.id 
+                    ? 'border-blue-400 border-2 bg-blue-50 dark:bg-blue-950 scale-105 shadow-lg' 
+                    : 'border-[hsl(var(--border))]'
+                } rounded-lg p-3 hover:shadow-sm`}
+              >
+                <div className="flex flex-col items-center text-center space-y-1">
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    {collection.iconUrl ? (
+                      <img 
+                        src={collection.iconUrl} 
+                        alt={collection.name}
+                        className="w-6 h-6 rounded object-cover"
+                        onError={(e) => {
+                          // Fallback to icon if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : (
+                      <IconComponent className={`w-6 h-6 ${colors.text}`} />
                     )}
+                  </div>
+                  <div className="space-y-1 flex-1 flex flex-col justify-end">
+                    <h3 className="font-bold text-sm leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center text-center">{collection.name}</h3>
+                    <div className="space-y-0 min-h-[2rem] flex flex-col justify-center">
+                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] leading-tight">
+                        {collection.noteCount} {collection.noteCount === 1 ? 'note' : 'notes'}
+                      </p>
+                      {collection.openTodoCount > 0 && (
+                        <p className="text-[10px] text-orange-600 font-medium leading-tight">
+                          {collection.openTodoCount} to-do{collection.openTodoCount === 1 ? '' : 's'}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

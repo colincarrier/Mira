@@ -6,9 +6,18 @@ import { useToast } from "@/hooks/use-toast";
 interface SimpleTextInputProps {
   onCameraCapture?: () => void;
   onNewNote?: () => void;
+  onTextSubmit?: (text: string) => void;
+  placeholder?: string;
+  context?: "notes" | "remind" | "note_detail";
 }
 
-export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTextInputProps = {}) {
+export default function SimpleTextInput({ 
+  onCameraCapture, 
+  onNewNote, 
+  onTextSubmit,
+  placeholder = "What's on your mind?",
+  context = "notes"
+}: SimpleTextInputProps) {
   const [text, setText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -24,11 +33,11 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
         }),
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -52,7 +61,11 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
 
   const handleSubmit = () => {
     if (text.trim()) {
-      createNoteMutation.mutate(text.trim());
+      if (onTextSubmit) {
+        onTextSubmit(text.trim());
+      } else {
+        createNoteMutation.mutate(text.trim());
+      }
       setText("");
     }
   };
@@ -72,7 +85,7 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add/edit anything..."
+            placeholder={placeholder}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none"
             rows={1}
             style={{
