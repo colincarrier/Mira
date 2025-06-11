@@ -16,6 +16,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -27,14 +28,17 @@ function App() {
         <Router>
           <Switch>
             <Route path="/" component={Notes} />
+            <Route path="/notes" component={Notes} />
             <Route path="/remind" component={Remind} />
             <Route path="/profile" component={Profile} />
             <Route path="/note/:id" component={NoteDetail} />
+            <Route path="/notes/:id" component={NoteDetail} />
             <Route path="/collection/:id" component={CollectionDetail} />
             <Route path="/todo/:id" component={TodoDetail} />
             <Route component={NotFound} />
           </Switch>
         </Router>
+        <Toaster />
       </QueryClientProvider>
     </ErrorBoundary>
   );
