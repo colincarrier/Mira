@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -46,5 +46,3 @@ function App() {
     </ErrorBoundary>
   );
 }
-
-export default App;
