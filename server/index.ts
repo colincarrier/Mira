@@ -47,7 +47,7 @@ app.use((req, res, next) => {
   // Initialize database with default collections
   await initializeDatabase();
   await initializeStandardCollections();
-  
+
   const server = await registerRoutes(app);
 
   if (app.get("env") === "development") {

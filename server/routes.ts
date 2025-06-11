@@ -2840,6 +2840,48 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
+  // Notification system endpoints
+  app.get("/api/notifications/status", async (req, res) => {
+    try {
+      const { notificationSystem } = await import('./notification-system');
+      const status = notificationSystem.getNotificationStatus();
+      res.json(status);
+    } catch (error) {
+      console.error("Failed to get notification status:", error);
+      res.status(500).json({ message: "Failed to get notification status" });
+    }
+  });
+
+  app.post("/api/notifications/refresh", async (req, res) => {
+    try {
+      const { notificationSystem } = await import('./notification-system');
+      await notificationSystem.refreshNotifications();
+      const status = notificationSystem.getNotificationStatus();
+      res.json({ message: "Notifications refreshed", status });
+    } catch (error) {
+      console.error("Failed to refresh notifications:", error);
+      res.status(500).json({ message: "Failed to refresh notifications" });
+    }
+  });
+
+  app.post("/api/todos/:id/toggle", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const todo = await storage.updateTodo(id, { completed: !req.body.completed });
+      
+      // If completing a reminder, refresh notification schedules
+      if (todo.isActiveReminder) {
+        const { notificationSystem } = await import('./notification-system');
+        await notificationSystem.refreshNotifications();
+      }
+      
+      res.json(todo);
+    } catch (error) {
+      console.error("Failed to toggle todo:", error);
+      res.status(500).json({ message: "Failed to toggle todo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

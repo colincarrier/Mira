@@ -1,4 +1,3 @@
-
 /**
  * Enhanced time detection for reminder creation
  */
@@ -9,13 +8,13 @@ function detectTimeReferences(content: string): {
   shouldCreateReminder: boolean;
 } {
   const contentLower = content.toLowerCase();
-  
+
   // Explicit reminder phrases
   const reminderPhrases = [
     'remind me', 'reminder', 'don\'t forget', 'remember to', 'make sure to',
     'need to remember', 'schedule', 'appointment', 'meeting'
   ];
-  
+
   // Time expressions
   const timeExpressions = [
     'tomorrow', 'today', 'tonight', 'this morning', 'this afternoon', 'this evening',
@@ -23,28 +22,28 @@ function detectTimeReferences(content: string): {
     'friday', 'saturday', 'sunday', 'in \\d+ (hours?|days?|weeks?)', 
     'at \\d+:?\\d*\\s*(am|pm)?', 'by \\w+', 'before \\w+', 'after \\w+'
   ];
-  
+
   // Urgency indicators
   const urgencyWords = [
     'urgent', 'important', 'deadline', 'due', 'asap', 'immediately', 
     'critical', 'priority', 'must', 'need to'
   ];
-  
+
   const hasExplicitReminder = reminderPhrases.some(phrase => 
     contentLower.includes(phrase)
   );
-  
+
   const extractedTimes = timeExpressions.filter(pattern => 
     new RegExp(pattern, 'i').test(content)
   );
-  
+
   const isUrgent = urgencyWords.some(word => 
     contentLower.includes(word)
   );
-  
+
   const hasTimeReference = extractedTimes.length > 0 || hasExplicitReminder;
   const shouldCreateReminder = hasExplicitReminder || (hasTimeReference && isUrgent);
-  
+
   return {
     hasTimeReference,
     extractedTimes,
@@ -86,34 +85,34 @@ export interface MiraAIResult {
   urgency: 'low' | 'medium' | 'high' | 'critical';
   complexity: number;
   confidence: number;
-  
+
   // Core outputs
   todos: Array<{
     title: string;
     priority: string;
     due?: string;
   }>;
-  
+
   // New: Separate reminders with time instructions
   reminders?: Array<{
     title: string;
     datetime: string;
     type: 'reminder';
   }>;
-  
+
   smartActions: Array<{
     label: string;
     action: string;
     url?: string;
   }>;
-  
+
   // New: Time instructions for Mira to understand
   timeInstructions?: {
     hasTimeReference: boolean;
     extractedTimes: string[];
     scheduledItems: string[];
   };
-  
+
   // Enhanced outputs
   assistantAddendum?: string;
   enrichments?: {
@@ -129,11 +128,11 @@ export interface MiraAIResult {
       distance: string;
     }>;
   };
-  
+
   // Routing metadata
   processingPath: 'commerce' | 'memory';
   classificationScores: Record<string, number>;
-  
+
   // Legacy compatibility
   fromTheWeb?: any[];
   _rawModelJSON?: any;
@@ -149,7 +148,7 @@ function commerceClassifier(content: string): {
   primaryIntent: string;
 } {
   const contentLower = content.toLowerCase();
-  
+
   // Commerce keywords weighted by specificity
   const commerceKeywords = {
     buy: 1.0, purchase: 1.0, order: 0.9, shopping: 0.9, store: 0.8,
@@ -158,10 +157,10 @@ function commerceClassifier(content: string): {
     headphones: 0.8, laptop: 0.8, phone: 0.8, tv: 0.8, shoes: 0.7,
     wireless: 0.6, bluetooth: 0.6, under: 0.5, dollars: 0.7, budget: 0.6
   };
-  
+
   let commerceScore = 0;
   let totalMatches = 0;
-  
+
   // Score commerce keywords
   for (const [keyword, weight] of Object.entries(commerceKeywords)) {
     if (contentLower.includes(keyword)) {
@@ -169,19 +168,19 @@ function commerceClassifier(content: string): {
       totalMatches++;
     }
   }
-  
+
   // Boost for price patterns ($X, €X, £X)
   if (/[\$€£¥]\s*[\d,]+/.test(content)) {
     commerceScore += 0.7;
   }
-  
+
   // Boost for comparison language
   if (/\b(vs|versus|compared? to|better than)\b/.test(contentLower)) {
     commerceScore += 0.5;
   }
-  
+
   const confidence = Math.min(Math.max(commerceScore / Math.max(totalMatches, 1), 0), 1);
-  
+
   return {
     isCommerce: commerceScore > 0.4,
     confidence,
@@ -195,7 +194,7 @@ function commerceClassifier(content: string): {
  */
 async function processCommerceQuery(input: MiraAIInput): Promise<MiraAIResult> {
   const openaiModule = await import('../openai');
-  
+
   const commercePrompt = `
 SYSTEM: You are Mira's shopping assistant. Analyze this product query and provide shopping assistance.
 
@@ -217,7 +216,7 @@ OUTPUT ONLY JSON:`;
 
   try {
     const result = await openaiModule.analyzeWithOpenAI(commercePrompt, 'enhanced');
-    
+
     // Try to parse JSON response from enhancedContent
     let parsedResult = null;
     try {
@@ -227,10 +226,10 @@ OUTPUT ONLY JSON:`;
     } catch (parseError) {
       console.log('Could not parse commerce JSON, using fallback');
     }
-    
+
     // Use the actual enhanced content from OpenAI instead of fallback summary
     let enhancedContent = result.enhancedContent || "Product analysis completed";
-    
+
     // Clean only if it contains instruction text, but preserve rich content
     if (enhancedContent.includes("Generate comprehensive") || enhancedContent.includes("COMPREHENSIVE MARKDOWN CONTENT")) {
       enhancedContent = "Product research and comparison analysis completed";
@@ -275,7 +274,7 @@ OUTPUT ONLY JSON:`;
  */
 async function processMemoryTask(input: MiraAIInput): Promise<MiraAIResult> {
   const openaiModule = await import('../openai');
-  
+
   const memoryPrompt = `
 SYSTEM: You are Mira's intelligent memory assistant. Extract todos and reminders with precise time information.
 
@@ -329,7 +328,7 @@ OUTPUT ONLY JSON:`;
 
   try {
     const result = await openaiModule.analyzeWithOpenAI(memoryPrompt, 'simple');
-    
+
     // Try to parse JSON response
     let parsedResult = null;
     try {
@@ -339,7 +338,7 @@ OUTPUT ONLY JSON:`;
     } catch (parseError) {
       console.log('Could not parse memory JSON, using fallback');
     }
-    
+
     // Clean the summary to avoid instruction text appearing in UI
     let cleanSummary = parsedResult?.summary || "Note processed successfully";
     if (cleanSummary.includes("Generate comprehensive") || cleanSummary.length > 100) {
@@ -379,14 +378,14 @@ OUTPUT ONLY JSON:`;
 export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const uid = input.id ?? uuid();
   const timestamp = input.timestamp ?? new Date().toISOString();
-  
+
   try {
     // Fast classification
     const classification = commerceClassifier(input.content);
-    
+
     // Route to appropriate processor
     let result: MiraAIResult;
-    
+
     if (classification.isCommerce && classification.confidence > 0.6) {
       result = await processCommerceQuery(input);
       result.processingPath = 'commerce';
@@ -394,15 +393,15 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       result = await processMemoryTask(input);
       result.processingPath = 'memory';
     }
-    
+
     // Add metadata
     result.uid = uid;
     result.timestamp = timestamp;
     result.confidence = classification.confidence;
     result.classificationScores = classification.scores;
-    
+
     return result;
-    
+
   } catch (error) {
     console.error('Mira AI processing error:', error);
     return createFallbackResult(input, 'memory');

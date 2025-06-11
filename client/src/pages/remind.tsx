@@ -81,8 +81,25 @@ export default function Remind() {
   };
 
   const toggleComplete = useMutation({
-    mutationFn: (todoId: number) => apiRequest(`/api/todos/${todoId}/toggle`, "PATCH"),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/todos"] }),
+    mutationFn: async (todoId: number) => {
+      const response = await fetch(`/api/todos/${todoId}/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: true }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to toggle todo");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      // Refresh notification schedules
+      fetch('/api/notifications/refresh', { method: 'POST' });
+    },
   });
 
   const setReminder = useMutation({

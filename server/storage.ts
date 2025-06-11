@@ -160,26 +160,41 @@ export class DatabaseStorage implements IStorage {
         title: todoData.title,
         isActiveReminder: todoData.isActiveReminder,
         timeDue: todoData.timeDue,
-        due: todoData.due
+        priority: todoData.priority
       });
+
+      // Create the todo values object, only including defined fields
+      const todoValues: any = {
+        title: todoData.title,
+        completed: todoData.completed || false,
+        priority: todoData.priority || 'medium',
+        noteId: todoData.noteId,
+        isActiveReminder: todoData.isActiveReminder || false,
+        pinned: todoData.pinned || false,
+        archived: todoData.archived || false
+      };
+
+      // Only add timeDue if it's provided
+      if (todoData.timeDue) {
+        todoValues.timeDue = todoData.timeDue;
+      }
+
+      // Add notification structure if provided
+      if (todoData.plannedNotificationStructure) {
+        todoValues.plannedNotificationStructure = todoData.plannedNotificationStructure;
+      } else if (todoData.isActiveReminder) {
+        // Default notification structure for reminders
+        todoValues.plannedNotificationStructure = {
+          enabled: true,
+          reminderCategory: "today",
+          repeatPattern: "none",
+          leadTimeNotifications: ["15 minutes before"]
+        };
+      }
 
       const [newTodo] = await db
         .insert(todos)
-        .values({
-          title: todoData.title,
-          completed: todoData.completed || false,
-          priority: todoData.priority || 'medium',
-          due: todoData.due,
-          timeDue: todoData.timeDue,
-          noteId: todoData.noteId,
-          isTimeDependent: todoData.isTimeDependent || false,
-          isActiveReminder: todoData.isActiveReminder || false,
-          notificationSchedule: todoData.notificationSchedule || [],
-          reminderType: todoData.reminderType || 'not_set',
-          reminderCategory: todoData.reminderCategory || 'not_set',
-          repeatPattern: todoData.repeatPattern || 'none',
-          leadTimeNotifications: todoData.leadTimeNotifications || []
-        })
+        .values(todoValues)
         .returning();
 
       console.log("Successfully created todo/reminder:", newTodo);
