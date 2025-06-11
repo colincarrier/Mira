@@ -390,8 +390,8 @@ export default function Remind() {
                 </p>
                 
                 {remindPopup.todo.isActiveReminder && remindPopup.todo.dueDate ? (
-                  <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-md">
-                    <p className="text-sm text-orange-700 dark:text-orange-300">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       Current reminder: {formatDistanceToNow(new Date(remindPopup.todo.dueDate), { addSuffix: true })}
                     </p>
                   </div>
@@ -403,7 +403,7 @@ export default function Remind() {
                         value={remindInput}
                         onChange={(e) => setRemindInput(e.target.value)}
                         placeholder="e.g., 'in 2 hours', 'tomorrow at 9am', 'next Monday'"
-                        className="w-full pl-3 pr-20 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full pl-3 pr-20 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
                         autoFocus
                       />
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
@@ -412,14 +412,14 @@ export default function Remind() {
                             // TODO: Implement voice input
                             console.log('Voice input clicked');
                           }}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <Mic className="w-4 h-4" />
                         </button>
                         {remindInput.trim() && (
                           <button
                             onClick={handleRemindSubmit}
-                            className="p-2 text-blue-600 hover:text-blue-700 transition-colors rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="p-2 text-gray-600 hover:text-gray-800 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <Send className="w-4 h-4" />
                           </button>
