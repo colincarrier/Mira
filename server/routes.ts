@@ -588,7 +588,7 @@ This profile was generated from your input and will help provide more personaliz
   });
 
   // Enhanced AI comparison endpoint with Mira Brain
-  app.post("/api/compare-ai", aiRateLimit, async (req, res) => {
+  app.post("/api/compare-ai", async (req, res) => {
     try {
       const { content, mode = 'quick' } = req.body;
       
@@ -1007,7 +1007,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
   });
 
   // Intelligent Note Evolution Endpoint
-  app.post("/api/notes/:id/evolve", aiRateLimit, async (req, res) => {
+  app.post("/api/notes/:id/evolve", async (req, res) => {
     try {
       const noteId = parseInt(req.params.id);
       const { instruction, existingContent, existingContext, existingTodos, existingRichContext } = req.body;
@@ -1699,7 +1699,7 @@ Respond with JSON:
     }
   });
 
-  app.post("/api/notes/voice", aiRateLimit, upload.single("audio"), async (req, res) => {
+  app.post("/api/notes/voice", upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No audio file provided" });
@@ -1837,7 +1837,7 @@ Respond with JSON:
     }
   });
 
-  app.post("/api/notes/image", aiRateLimit, upload.single("image"), async (req, res) => {
+  app.post("/api/notes/image", upload.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
@@ -1919,7 +1919,7 @@ Respond with JSON:
     }
   });
 
-  app.post("/api/notes/file", aiRateLimit, upload.single("file"), async (req, res) => {
+  app.post("/api/notes/file", upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file provided" });
