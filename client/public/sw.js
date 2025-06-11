@@ -1,28 +1,57 @@
-const CACHE_NAME = 'mira-offline-v1';
-const STATIC_CACHE = 'mira-static-v1';
-const API_CACHE = 'mira-api-v1';
+// Development vs Production cache strategy
+const isDevelopment = location.hostname === 'localhost' || location.hostname.includes('replit');
+const CACHE_VERSION = isDevelopment ? `dev-${Date.now()}` : 'v1.0.0';
+const CACHE_NAME = `mira-offline-${CACHE_VERSION}`;
+const STATIC_CACHE = `mira-static-${CACHE_VERSION}`;
+const API_CACHE = `mira-api-${CACHE_VERSION}`;
+
+// Cache duration strategies
+const CACHE_STRATEGIES = {
+  development: {
+    static: 5 * 60 * 1000, // 5 minutes
+    api: 2 * 60 * 1000,    // 2 minutes
+    images: 10 * 60 * 1000 // 10 minutes
+  },
+  production: {
+    static: 24 * 60 * 60 * 1000, // 24 hours
+    api: 30 * 60 * 1000,         // 30 minutes
+    images: 7 * 24 * 60 * 60 * 1000 // 7 days
+  }
+};
+
+const cacheStrategy = isDevelopment ? CACHE_STRATEGIES.development : CACHE_STRATEGIES.production;
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/src/main.tsx',
-  '/src/index.css'
+  '/mira-icon.svg',
+  '/mira-logo.svg'
 ];
 
-// API endpoints to cache
-const API_ENDPOINTS = [
-  '/api/notes',
-  '/api/collections',
-  '/api/todos'
-];
+// API endpoints to cache with different strategies
+const API_ENDPOINTS = {
+  critical: ['/api/notes', '/api/collections', '/api/todos'], // Always cache
+  optional: ['/api/stats', '/api/profile'], // Cache only when available
+  realtime: ['/api/sync', '/api/notifications'] // Never cache
+};
+
+// Helper function to check if cache entry is stale
+function isCacheStale(response, maxAge) {
+  if (!response.headers.get('sw-cached-at')) return true;
+  const cachedAt = parseInt(response.headers.get('sw-cached-at'));
+  return Date.now() - cachedAt > maxAge;
+}
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
+  console.log(`SW Install: ${isDevelopment ? 'Development' : 'Production'} mode`);
   event.waitUntil(
     Promise.all([
       caches.open(STATIC_CACHE).then(cache => {
-        return cache.addAll(STATIC_ASSETS);
+        return cache.addAll(STATIC_ASSETS).catch(err => {
+          console.warn('Failed to cache static assets:', err);
+        });
       }),
       caches.open(API_CACHE).then(cache => {
         // Pre-cache will be handled by fetch events
@@ -33,14 +62,25 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - aggressive cache cleanup in development
 self.addEventListener('activate', (event) => {
+  console.log('SW Activate: Cleaning up old caches');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE && cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+          // In development, clear all old caches aggressively
+          if (isDevelopment) {
+            if (!cacheName.includes(CACHE_VERSION)) {
+              console.log('Deleting old dev cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          } else {
+            // In production, only clear caches not matching current version
+            if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE && cacheName !== CACHE_NAME) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
           }
         })
       );
@@ -49,51 +89,220 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - handle requests with caching strategy
+// Enhanced fetch event handler with intelligent caching
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-
-  // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(handleAPIRequest(request));
+  
+  // Skip non-GET requests and external URLs
+  if (request.method !== 'GET' || !url.origin.includes(location.origin)) {
+    return;
   }
-  // Handle static assets
-  else if (request.destination === 'document' || 
-           request.destination === 'script' || 
-           request.destination === 'style' ||
-           request.destination === 'image') {
-    event.respondWith(handleStaticRequest(request));
+
+  // Handle different types of requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(request, url));
+  } else if (url.pathname.startsWith('/uploads/')) {
+    event.respondWith(handleMediaRequest(request, url));
+  } else {
+    event.respondWith(handleStaticRequest(request, url));
   }
 });
 
-// API request handler - Network first, then cache
-async function handleAPIRequest(request) {
-  const cache = await caches.open(API_CACHE);
+// Handle API requests with smart caching
+async function handleApiRequest(request, url) {
+  const isCriticalApi = API_ENDPOINTS.critical.some(endpoint => url.pathname.startsWith(endpoint));
+  const isRealtimeApi = API_ENDPOINTS.realtime.some(endpoint => url.pathname.startsWith(endpoint));
   
+  // Never cache realtime APIs
+  if (isRealtimeApi) {
+    return fetch(request).catch(() => new Response('{"error": "Network unavailable"}', {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+
+  const cache = await caches.open(API_CACHE);
+  const cachedResponse = await cache.match(request);
+
+  // In development, check cache staleness more aggressively
+  if (cachedResponse && !isCacheStale(cachedResponse, cacheStrategy.api)) {
+    // Return cached data but also fetch fresh data in background for critical APIs
+    if (isCriticalApi && !isDevelopment) {
+      fetch(request).then(response => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          const headers = new Headers(responseClone.headers);
+          headers.set('sw-cached-at', Date.now().toString());
+          
+          const newResponse = new Response(responseClone.body, {
+            status: responseClone.status,
+            statusText: responseClone.statusText,
+            headers: headers
+          });
+          
+          cache.put(request, newResponse);
+        }
+      }).catch(() => {}); // Silent background update
+    }
+    return cachedResponse;
+  }
+
+  // Fetch fresh data
   try {
-    // Try network first
-    const networkResponse = await fetch(request);
-    
-    // Cache successful GET requests
-    if (request.method === 'GET' && networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+    const response = await fetch(request);
+    if (response.ok) {
+      const responseClone = response.clone();
+      const headers = new Headers(responseClone.headers);
+      headers.set('sw-cached-at', Date.now().toString());
+      
+      const newResponse = new Response(responseClone.body, {
+        status: responseClone.status,
+        statusText: responseClone.statusText,
+        headers: headers
+      });
+      
+      cache.put(request, newResponse);
+      return response;
+    } else {
+      // Return cached response if available, even if stale
+      return cachedResponse || response;
     }
-    
-    return networkResponse;
   } catch (error) {
-    // Network failed, try cache for GET requests
-    if (request.method === 'GET') {
-      const cachedResponse = await cache.match(request);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    // Network error - return cached response if available
+    if (cachedResponse) {
+      return cachedResponse;
     }
     
-    // Return offline response for failed requests
-    return createOfflineResponse(request);
+    // Return offline response for critical APIs
+    if (isCriticalApi) {
+      return new Response(JSON.stringify({
+        error: 'Offline',
+        cached: false,
+        message: 'This data will be available when you reconnect'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    throw error;
   }
 }
+
+// Handle media/image requests
+async function handleMediaRequest(request, url) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cachedResponse = await cache.match(request);
+
+  if (cachedResponse && !isCacheStale(cachedResponse, cacheStrategy.images)) {
+    return cachedResponse;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const responseClone = response.clone();
+      const headers = new Headers(responseClone.headers);
+      headers.set('sw-cached-at', Date.now().toString());
+      
+      const newResponse = new Response(responseClone.body, {
+        status: responseClone.status,
+        statusText: responseClone.statusText,
+        headers: headers
+      });
+      
+      cache.put(request, newResponse);
+      return response;
+    }
+    return cachedResponse || response;
+  } catch (error) {
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    // Return placeholder for missing images
+    return new Response('', { status: 404 });
+  }
+}
+
+// Handle static asset requests
+async function handleStaticRequest(request, url) {
+  const cache = await caches.open(STATIC_CACHE);
+  
+  // In development, always check network first for static assets
+  if (isDevelopment) {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        const responseClone = response.clone();
+        const headers = new Headers(responseClone.headers);
+        headers.set('sw-cached-at', Date.now().toString());
+        
+        const newResponse = new Response(responseClone.body, {
+          status: responseClone.status,
+          statusText: responseClone.statusText,
+          headers: headers
+        });
+        
+        cache.put(request, newResponse);
+        return response;
+      }
+    } catch (error) {
+      // Fall back to cache in development if network fails
+    }
+  }
+
+  const cachedResponse = await cache.match(request);
+  
+  if (cachedResponse && !isCacheStale(cachedResponse, cacheStrategy.static)) {
+    return cachedResponse;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const responseClone = response.clone();
+      const headers = new Headers(responseClone.headers);
+      headers.set('sw-cached-at', Date.now().toString());
+      
+      const newResponse = new Response(responseClone.body, {
+        status: responseClone.status,
+        statusText: responseClone.statusText,
+        headers: headers
+      });
+      
+      cache.put(request, newResponse);
+      return response;
+    }
+    return cachedResponse || response;
+  } catch (error) {
+    return cachedResponse || new Response('Offline', { status: 503 });
+  }
+}
+
+// Development cache busting utilities
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    console.log('Force clearing all caches for development');
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+    }).then(() => {
+      event.ports[0].postMessage({ success: true });
+    });
+  }
+  
+  if (event.data && event.data.type === 'GET_CACHE_STATUS') {
+    caches.keys().then(cacheNames => {
+      event.ports[0].postMessage({ 
+        caches: cacheNames,
+        isDevelopment: isDevelopment,
+        version: CACHE_VERSION
+      });
+    });
+  }
+});
 
 // Static request handler - Cache first, then network
 async function handleStaticRequest(request) {
