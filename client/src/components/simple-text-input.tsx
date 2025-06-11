@@ -78,6 +78,7 @@ export default function SimpleTextInput({
   };
 
   return (
+    
     <div className="fixed bottom-24 left-4 right-4 z-50">
       <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
         <div className="flex items-center gap-2">

@@ -617,9 +617,10 @@ export default function InputBar({
         style={{ 
           zIndex: 9999,
           position: 'fixed',
-          bottom: 'calc(6rem + 2px)',
+          bottom: 'calc(4.8rem + 16px)', // Adjusted for 20% shorter nav + more separation
           left: '1rem',
-          right: '1rem'
+          right: '1rem',
+          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
         }}
       >
         <div className="relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
