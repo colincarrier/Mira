@@ -126,8 +126,8 @@ export default function Remind() {
 
   const handleRemindClick = (todo: Todo) => {
     setRemindPopup({ isOpen: true, todo });
-    if (todo.isActiveReminder && todo.dueDate) {
-      setRemindInput(`Reminder set for ${formatDistanceToNow(new Date(todo.dueDate), { addSuffix: true })}`);
+    if (todo.isActiveReminder && todo.timeDue) {
+      setRemindInput(`Reminder set for ${formatDistanceToNow(new Date(todo.timeDue), { addSuffix: true })}`);
     } else {
       setRemindInput('');
     }
@@ -160,8 +160,8 @@ export default function Remind() {
     const yearStart = new Date(now.getFullYear(), 0, 1);
 
     return items.filter(item => {
-      if (!item.dueDate) return activeReminderFilter === 'today';
-      const dueDate = new Date(item.dueDate);
+      if (!item.timeDue) return activeReminderFilter === 'today';
+      const dueDate = new Date(item.timeDue);
       
       switch (activeReminderFilter) {
         case 'today':
@@ -269,9 +269,9 @@ export default function Remind() {
                         {reminder.title}
                       </span>
                       <div className="flex items-center gap-1 text-xs text-orange-600 ml-2">
-                        {reminder.dueDate && (
+                        {reminder.timeDue && (
                           <span>
-                            {formatDistanceToNow(new Date(reminder.dueDate), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(reminder.timeDue), { addSuffix: true })}
                           </span>
                         )}
                         {reminder.priority === 'urgent' && <AlertCircle className="w-3 h-3" />}
@@ -347,9 +347,9 @@ export default function Remind() {
                         {todo.title}
                       </span>
                       <div className="flex items-center gap-1 text-xs text-gray-500 ml-2">
-                        {todo.dueDate && (
+                        {todo.timeDue && (
                           <span>
-                            {formatDistanceToNow(new Date(todo.dueDate), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(todo.timeDue), { addSuffix: true })}
                           </span>
                         )}
                         {todo.priority === 'urgent' && <AlertCircle className="w-3 h-3 text-red-500" />}
@@ -393,7 +393,7 @@ export default function Remind() {
                   {remindPopup.todo.title}
                 </p>
                 
-                {remindPopup.todo.isActiveReminder && remindPopup.todo.dueDate ? (
+                {remindPopup.todo.isActiveReminder && remindPopup.todo.timeDue ? (
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       Current reminder: {formatDistanceToNow(new Date(remindPopup.todo.dueDate), { addSuffix: true })}
