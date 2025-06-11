@@ -32,7 +32,7 @@ export default function NoteDetail() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  
+
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
@@ -219,7 +219,7 @@ export default function NoteDetail() {
   const handleSendMessage = () => {
     if (inputValue.trim()) {
       console.log("Sending message for note update:", inputValue);
-      
+
       // Create context-aware update with full note context
       const fullContext = {
         currentContent: note.content,
@@ -228,7 +228,7 @@ export default function NoteDetail() {
         aiContext: note.aiContext,
         userModification: inputValue.trim()
       };
-      
+
       // Send context-aware update request
       updateNoteMutation.mutate({ 
         content: note.content, 
@@ -238,10 +238,10 @@ export default function NoteDetail() {
         If they're adding items, add them. If removing, remove them. If checking off todos, mark them complete.
         If changing details, priorities, or timing, update accordingly.`
       });
-      
+
       setInputValue("");
       setIsTyping(false);
-      
+
       toast({
         description: "Updating note with AI assistance...",
       });
@@ -257,15 +257,15 @@ export default function NoteDetail() {
 
   const formatNoteForSharing = (note: NoteWithTodos) => {
     let shareText = `📝 ${note.content}\n\n`;
-    
+
     if (note.aiContext) {
       shareText += `💡 Context:\n${note.aiContext}\n\n`;
     }
-    
+
     if (note.aiSuggestion) {
       shareText += `🤔 Follow-up:\n${note.aiSuggestion}\n\n`;
     }
-    
+
     if (note.todos && note.todos.length > 0) {
       shareText += `✅ Action Items:\n`;
       note.todos.forEach((todo) => {
@@ -274,13 +274,13 @@ export default function NoteDetail() {
       });
       shareText += '\n';
     }
-    
+
     if (note.collection) {
       shareText += `📁 Collection: ${note.collection.name}\n\n`;
     }
-    
+
     shareText += `Shared from Mira`;
-    
+
     return shareText;
   };
 
@@ -288,12 +288,12 @@ export default function NoteDetail() {
   const renderEnhancedContent = (content: string) => {
     const lines = content.split('\n');
     const elements: JSX.Element[] = [];
-    
+
     lines.forEach((line, index) => {
       const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s]*)?/gi;
       const videoRegex = /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv)(\?[^\s]*)?/gi;
       const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/gi;
-      
+
       if (imageRegex.test(line)) {
         const imageUrls = line.match(imageRegex);
         imageUrls?.forEach((url, imgIndex) => {
@@ -356,7 +356,7 @@ export default function NoteDetail() {
         );
       }
     });
-    
+
     return elements;
   };
 
@@ -541,7 +541,7 @@ export default function NoteDetail() {
               {(() => {
                 const actions = [];
                 const suggestions = note.aiSuggestion.split(',').map((s: string) => s.trim());
-                
+
                 for (const suggestion of suggestions) {
                   if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
                     actions.push({
@@ -575,7 +575,7 @@ export default function NoteDetail() {
                     });
                   }
                 }
-                
+
                 return actions.map((action, index) => (
                   <button
                     key={index}
@@ -679,9 +679,26 @@ export default function NoteDetail() {
                     </button>
                     <button
                       onClick={() => {
-                        // TODO: Open reminder popup
-                        toast({
-                          description: "Reminder functionality coming soon!",
+                        const reminderText = `Set reminder for: ${note.content.slice(0, 50)}...`;
+                        fetch("/api/notes", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ 
+                            content: reminderText,
+                            mode: "text",
+                            context: "reminder_creation"
+                          }),
+                        }).then(() => {
+                          toast({
+                            title: "Reminder created",
+                            description: "Your reminder has been processed.",
+                          });
+                        }).catch(() => {
+                          toast({
+                            title: "Error",
+                            description: "Failed to create reminder.",
+                            variant: "destructive",
+                          });
                         });
                       }}
                       className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
@@ -698,7 +715,7 @@ export default function NoteDetail() {
                 try {
                   const richData = JSON.parse(note.richContext);
                   const nextSteps = richData.nextSteps || [];
-                  
+
                   // Show next steps as optional todos if they exist and aren't already todos
                   const existingTodoTitles = note.todos.map((t: Todo) => t.title.toLowerCase());
                   const optionalTodos = nextSteps.filter((step: string) => 
@@ -724,10 +741,10 @@ export default function NoteDetail() {
                                       title: step,
                                       noteId: note.id
                                     });
-                                    
+
                                     // Refresh the note to show the new todo
                                     queryClient.invalidateQueries({ queryKey: ['/api/notes', note.id] });
-                                    
+
                                     toast({
                                       description: "Added to todos",
                                     });
@@ -747,7 +764,7 @@ export default function NoteDetail() {
                                 onClick={() => {
                                   const reminderTime = new Date();
                                   reminderTime.setHours(reminderTime.getHours() + 1);
-                                  
+
                                   apiRequest('/api/reminders', 'POST', {
                                     title: `Reminder: ${step}`,
                                     description: `From note: ${note.content.slice(0, 50)}...`,
@@ -838,7 +855,7 @@ export default function NoteDetail() {
                         return null;
                       }
                     })()}
-                    
+
                     {item.metadata && (() => {
                       try {
                         const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
@@ -988,7 +1005,7 @@ export default function NoteDetail() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="p-4 space-y-3 overflow-y-auto max-h-96">
               <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -999,7 +1016,7 @@ export default function NoteDetail() {
                   </div>
                 </div>
               </div>
-              
+
               {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version: any, index: number) => (
                 <div key={version.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -1047,12 +1064,12 @@ export default function NoteDetail() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="p-4 space-y-4 overflow-y-auto max-h-96">
               <div className="text-sm text-gray-600">
                 AI detected valuable content that could be affected by these changes. Please review before proceeding.
               </div>
-              
+
               {pendingChanges.warnings && (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                   <div className="text-sm font-medium text-orange-800 mb-2">Protected Content:</div>
@@ -1082,7 +1099,7 @@ export default function NoteDetail() {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2 p-4 border-t">
               <button
                 onClick={() => {
@@ -1093,7 +1110,7 @@ export default function NoteDetail() {
               >
                 Cancel
               </button>
-              
+
               {clarificationInput && (
                 <button
                   onClick={() => {
@@ -1110,7 +1127,7 @@ export default function NoteDetail() {
                   {clarifyMutation.isPending ? 'Clarifying...' : 'Clarify & Apply'}
                 </button>
               )}
-              
+
               <button
                 onClick={() => {
                   approveChangesMutation.mutate({

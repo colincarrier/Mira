@@ -210,8 +210,8 @@ export default function Remind() {
   };
 
   // Separate and filter reminders and todos
-  const allReminders = todos?.filter(t => t.isActiveReminder && !t.completed && !t.archived) || [];
-  const allTodos = todos?.filter(t => !t.isActiveReminder && !t.completed && !t.archived) || [];
+  const allReminders = todos?.filter(t => t.isActiveReminder === true && !t.completed && !t.archived) || [];
+  const allTodos = todos?.filter(t => (t.isActiveReminder === false || t.isActiveReminder === undefined || t.isActiveReminder === null) && !t.completed && !t.archived) || [];
   
   // Debug logging
   console.log("All todos from API:", todos);

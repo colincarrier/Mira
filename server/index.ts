@@ -69,7 +69,15 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
+
+    // Initialize notification system
+    try {
+      const { initializeNotificationSystem } = await import('./notification-system');
+      await initializeNotificationSystem();
+    } catch (error) {
+      console.error("Failed to initialize notification system:", error);
+    }
   });
 })();

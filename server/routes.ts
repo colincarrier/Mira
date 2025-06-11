@@ -1012,7 +1012,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   const defaultReminderTime = new Date();
                   defaultReminderTime.setDate(defaultReminderTime.getDate() + 1);
                   defaultReminderTime.setHours(9, 0, 0, 0);
-                  
+
                   const reminderData = {
                     title: `Reminder: ${content.slice(0, 50)}...`,
                     isCompleted: false,
@@ -1743,7 +1743,7 @@ Respond with JSON:
       } else if (type === "file") {
         // Use filename and type to generate meaningful context
         const extension = fileName.split('.').pop()?.toLowerCase() || '';
-        const contextPrompt = `Generate a concise, meaningful title for a file the user is uploading. Filename: "${fileName}", Type: "${mimeType}". Consider why someone would save this type of file and what it might contain. Respond with just the title, no quotes or extra text. Make it human and contextual.`;
+        const contextPrompt = `Generate a concise, meaningful title for a file the user is uploading. Filename: "${fileName}",Type: "${mimeType}". Consider why someone would save this type of file and what it might contain. Respond with just the title, no quotes or extra text. Make it human and contextual.`;
 
         try {
           const titleResponse = await analyzeWithOpenAI(contextPrompt, "title-generation");
@@ -2646,7 +2646,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
         collectionDescription = "Places to eat and food recommendations";
         collectionContent = collectionItems.length > 0 
           ? `🍽️ Restaurants & Food:\n${collectionItems.map(item => `• ${item.title}${item.description ? ` - ${item.description}` : ''}`).join('\n')}`
-          : "No restaurants have been extracted yet. Add notes mentioning specific places to eat to see them here.";
+          : "No restaurants have beenextracted yet. Add notes mentioning specific places to eat to see them here.";
       } else if (collectionName.includes('product')) {
         collectionDescription = "Products and items of interest";
         collectionContent = collectionItems.length > 0 
@@ -2868,13 +2868,13 @@ Provide a concise, actionable response that adds value beyond just the task titl
     try {
       const id = parseInt(req.params.id);
       const todo = await storage.updateTodo(id, { completed: !req.body.completed });
-      
+
       // If completing a reminder, refresh notification schedules
       if (todo.isActiveReminder) {
         const { notificationSystem } = await import('./notification-system');
         await notificationSystem.refreshNotifications();
       }
-      
+
       res.json(todo);
     } catch (error) {
       console.error("Failed to toggle todo:", error);
@@ -2882,6 +2882,51 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
-}
+  // Enhanced todo creation for reminders
+  app.post("/api/todos", async (req, res) => {
+    try {
+      const todoData = insertTodoSchema.parse(req.body);
+
+      // Ensure isActiveReminder defaults to false if not specified
+      const enhancedTodoData = {
+        ...todoData,
+        isActiveReminder: todoData.isActiveReminder || false,
+        completed: todoData.completed || false,
+        archived: todoData.archived || false
+      };
+
+      const todo = await storage.createTodo(enhancedTodoData);
+
+      // If this is an active reminder, schedule notifications
+      if (todo.isActiveReminder && todo.timeDue) {
+        const { notificationSystem } = await import('./notification-system');
+        await notificationSystem.scheduleNotifications(todo);
+      }
+
+      res.json(todo);
+    } catch (error) {
+      console.error("Failed to create todo:", error);
+      res.status(400).json({ message: "Invalid todo data" });
+    }
+  });
+
+  // Create todo/reminder
+  const createTodoMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          content: text,
+          mode: "text",
+          context: "reminder_creation"
+        }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create todo/reminder");
+      }
+
+      return response.json();
+    },
