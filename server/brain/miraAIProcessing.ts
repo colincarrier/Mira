@@ -38,11 +38,25 @@ export interface MiraAIResult {
     due?: string;
   }>;
   
+  // New: Separate reminders with time instructions
+  reminders?: Array<{
+    title: string;
+    datetime: string;
+    type: 'reminder';
+  }>;
+  
   smartActions: Array<{
     label: string;
     action: string;
     url?: string;
   }>;
+  
+  // New: Time instructions for Mira to understand
+  timeInstructions?: {
+    hasTimeReference: boolean;
+    extractedTimes: string[];
+    scheduledItems: string[];
+  };
   
   // Enhanced outputs
   assistantAddendum?: string;
@@ -207,25 +221,50 @@ async function processMemoryTask(input: MiraAIInput): Promise<MiraAIResult> {
   const openaiModule = await import('../openai');
   
   const memoryPrompt = `
-SYSTEM: You are Mira's memory assistant. Process this personal note focusing on task organization.
+SYSTEM: You are Mira's intelligent memory assistant. Extract todos and reminders with precise time information.
 
 USER_INPUT: "${input.content}"
+
+EXTRACT TODOS AND REMINDERS:
+- TODOS: Actionable tasks without specific times
+- REMINDERS: Time-sensitive items with specific dates/times
+- Parse time expressions like "tomorrow", "next week", "at 2pm", "in 3 days"
+- Convert relative times to specific dates/times when possible
 
 REQUIRED_JSON_OUTPUT:
 {
   "title": "string (3-5 words, newspaper style)",
-  "summary": "string (brief note)",
+  "summary": "string (brief processing note)",
   "intent": "simple-task",
-  "urgency": "low",
-  "complexity": 2,
-  "todos": [{"title": "exact user words", "priority": "medium"}],
-  "smartActions": [{"label": "Set Reminder", "action": "reminder"}]
+  "urgency": "low|medium|high|critical",
+  "complexity": "number (1-5)",
+  "todos": [
+    {
+      "title": "exact user words for actionable task",
+      "priority": "low|medium|high",
+      "due": "ISO date if deadline mentioned"
+    }
+  ],
+  "reminders": [
+    {
+      "title": "exact reminder text",
+      "datetime": "ISO datetime when reminder should trigger",
+      "type": "reminder"
+    }
+  ],
+  "smartActions": [{"label": "Set Reminder", "action": "reminder"}],
+  "timeInstructions": {
+    "hasTimeReference": "boolean",
+    "extractedTimes": ["array of time expressions found"],
+    "scheduledItems": ["items that need scheduling"]
+  }
 }
 
-RULES:
+PROCESSING_RULES:
 - Preserve user's exact phrasing
-- Keep complexity low (1-5)
-- Extract only explicit actions
+- Extract BOTH todos and reminders separately
+- Include time instructions for Mira to understand
+- Mark urgency based on time sensitivity
 
 OUTPUT ONLY JSON:`;
 
@@ -258,7 +297,13 @@ OUTPUT ONLY JSON:`;
       complexity: parsedResult?.complexity || 2,
       confidence: 0.7,
       todos: parsedResult?.todos || [{title: input.content.trim(), priority: 'medium'}],
+      reminders: parsedResult?.reminders || [],
       smartActions: parsedResult?.smartActions || [{label: 'Set Reminder', action: 'reminder'}],
+      timeInstructions: parsedResult?.timeInstructions || {
+        hasTimeReference: false,
+        extractedTimes: [],
+        scheduledItems: []
+      },
       processingPath: 'memory',
       classificationScores: { memory: 0.7 },
       _rawModelJSON: result

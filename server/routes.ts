@@ -63,19 +63,19 @@ async function getImageAsBase64(mediaUrl: string): Promise<string | null> {
     // Extract filename from URL (e.g., "/uploads/filename.jpg" -> "filename.jpg")
     const filename = mediaUrl.split('/').pop();
     if (!filename) return null;
-    
+
     const imagePath = path.join(process.cwd(), 'uploads', filename);
-    
+
     // Check if file exists
     if (!fs.existsSync(imagePath)) {
       console.log(`Image file not found: ${imagePath}`);
       return null;
     }
-    
+
     // Read file and convert to base64
     const imageBuffer = fs.readFileSync(imagePath);
     const base64 = imageBuffer.toString('base64');
-    
+
     return base64;
   } catch (error) {
     console.error("Error converting image to base64:", error);
@@ -113,15 +113,15 @@ function createNewspaperTitleFromContent(content: string): string {
     word.length > 0 && 
     !['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'].includes(word.toLowerCase())
   );
-  
+
   // Take first 3 most important words
   const titleWords = words.slice(0, 3);
-  
+
   // Create proper case title
   const title = titleWords
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
-    
+
   return title || 'New Note';
 }
 
@@ -130,13 +130,13 @@ function createNewspaperTitleFromContent(content: string): string {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize AI modules safely - never crash if AI fails
   await initializeAI();
-  
+
   // Define Claude fallback function within scope
   async function safeAnalyzeWithClaude(content: string, mode: string) {
     // Fallback to OpenAI since Claude is disabled
     return safeAnalyzeWithOpenAI(content, mode);
   }
-  
+
   // API Stats endpoint
   app.get("/api/stats/api-usage", async (req, res) => {
     res.json(apiUsageStats);
@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/profile/onboarding", async (req, res) => {
     try {
       const { onboardingData, userId } = req.body;
-      
+
       // Generate bio using AI for assistant context
       const bioPrompt = `You are creating a comprehensive user profile for an AI assistant. Based on the following user responses, create a detailed bio that will help the AI assistant understand how to best serve this person.
 
@@ -216,7 +216,7 @@ Core values and motivations extracted from responses about principles and suppor
 Assistance preferences based on stated support needs and learning style.
 
 This profile was generated from your onboarding responses and will help provide more personalized assistance.`;
-      
+
       // Update user with bio and preferences
       await storage.updateUser(userId || "demo", {
         personalBio: bioContent,
@@ -237,7 +237,7 @@ This profile was generated from your onboarding responses and will help provide 
   app.post("/api/profile/quick", async (req, res) => {
     try {
       const { profileData, userId } = req.body;
-      
+
       // Generate comprehensive bio from quick profile data
       const bioPrompt = `You are creating a comprehensive user profile for an AI assistant. Based on the provided information, create a detailed bio that will help the AI assistant understand how to best serve this person.
 
@@ -279,7 +279,7 @@ Create a structured bio that includes (extract and infer from the provided infor
 Write this as a comprehensive profile that an AI assistant would reference to provide personalized help. Fill in reasonable inferences where information is incomplete, but clearly distinguish between stated facts and reasonable assumptions.`;
 
       console.log("Starting profile generation...");
-      
+
       // Create structured profile from user data
       const bioContent = `# AI Assistant Profile
 
@@ -302,7 +302,7 @@ Quality craftsmanship, continuous learning, and building effective applications.
 Most valuable assistance areas: technical guidance, best practices, architecture decisions, and staying updated with industry trends.
 
 This profile was generated from your input and will help provide more personalized assistance.`;
-      
+
       // Update user with bio
       console.log("Updating user profile...", userId);
       await storage.updateUser(userId || "demo", {
@@ -340,14 +340,14 @@ This profile was generated from your input and will help provide more personaliz
     try {
       const notes = await storage.getNotes();
       let cleaned = 0;
-      
+
       for (const note of notes) {
         if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
           await storage.updateNote(note.id, { aiSuggestion: "" });
           cleaned++;
         }
       }
-      
+
       res.json({ message: `Cleaned ${cleaned} notes with problematic AI suggestions` });
     } catch (error) {
       res.status(500).json({ error: "Failed to clean suggestions" });
@@ -406,24 +406,24 @@ This profile was generated from your input and will help provide more personaliz
   app.post("/api/notes", async (req, res) => {
     try {
       const noteData = insertNoteSchema.parse(req.body);
-      
+
       // Create the note with processing flag set
       const note = await storage.createNote({
         ...noteData,
         isProcessing: noteData.content ? true : false
       });
-      
+
       // Process with available AI (single analysis for speed)
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
-        
+
         // Use OpenAI if available, fallback to Claude
         const useOpenAI = isOpenAIAvailable();
         console.log("Using AI service:", useOpenAI ? "OpenAI" : "Claude");
-        
+
         // Import and use new orthogonal AI processing
         const miraModule = await import('./brain/miraAIProcessing');
-        
+
         const miraInput = {
           content: noteData.content,
           mode: noteData.mode === 'file' ? 'text' : (noteData.mode as 'text' | 'image' | 'voice'),
@@ -434,13 +434,13 @@ This profile was generated from your input and will help provide more personaliz
         .then(async (analysis: any) => {
           console.log("Mira AI v2.0 analysis successful for note:", note.id);
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
-          
+
           // Track usage
           apiUsageStats.totalRequests++;
-          
+
           // CRITICAL: Ensure newspaper-style title enforcement (v2.0 handles this automatically)
           const newspaperTitle = analysis.title;
-          
+
           // Update note with v2.0 structured AI results
           const updates: any = {
             content: newspaperTitle, // v2.0 enforced newspaper-style title
@@ -458,7 +458,7 @@ This profile was generated from your input and will help provide more personaliz
             classificationScores: analysis.classificationScores,
             isProcessing: false
           };
-          
+
           try {
             await storage.updateNote(note.id, updates);
             console.log("Note updated successfully with Mira AI analysis");
@@ -466,7 +466,7 @@ This profile was generated from your input and will help provide more personaliz
             console.error("Failed to update note with AI analysis:", updateError);
             // Continue processing without crashing
           }
-          
+
           // Create todos from Mira AI v2.0 analysis
           if (analysis.todos && analysis.todos.length > 0) {
             console.log("Creating", analysis.todos.length, "v2.0 todos for note:", note.id);
@@ -475,7 +475,7 @@ This profile was generated from your input and will help provide more personaliz
                 noteId: note.id,
                 title: todo.title,
               };
-              
+
               // Add v2.0 enhanced todo properties
               if (todo.due) {
                 todoData.timeDue = new Date(todo.due);
@@ -486,21 +486,21 @@ This profile was generated from your input and will help provide more personaliz
               if (todo.priority) {
                 todoData.priority = todo.priority;
               }
-              
+
               console.log("Creating v2.0 todo with title:", todo.title);
               await storage.createTodo(todoData);
             }
           }
-          
+
           // Create collection if suggested with v2.0 smart mapping
           if (analysis.collectionHint) {
             console.log("Processing v2.0 collection hint:", analysis.collectionHint.name);
             const collections = await storage.getCollections();
-            
+
             // Smart collection mapping to existing categories
             const suggestedName = analysis.collectionHint.name.toLowerCase();
             let finalCollectionName = analysis.collectionHint.name;
-            
+
             // Map overly specific collections to existing ones
             if (suggestedName.includes('personal') || suggestedName.includes('communication') || 
                 suggestedName.includes('family') || suggestedName.includes('healthcare') || 
@@ -531,12 +531,12 @@ This profile was generated from your input and will help provide more personaliz
               // Default to Other for overly specific suggestions
               finalCollectionName = "Other";
             }
-            
+
             // Find or create the final collection
             const targetCollection = collections.find(
               c => c.name.toLowerCase() === finalCollectionName.toLowerCase()
             );
-            
+
             let collectionId = targetCollection?.id;
             if (!targetCollection && finalCollectionName !== "Other") {
               // Only create new collections for broad categories, not specific ones
@@ -552,19 +552,19 @@ This profile was generated from your input and will help provide more personaliz
               const otherCollection = collections.find(c => c.name.toLowerCase() === "other");
               collectionId = otherCollection?.id;
             }
-            
+
             if (collectionId) {
               await storage.updateNote(note.id, { collectionId });
               console.log("Assigned note to collection:", finalCollectionName);
             }
           }
-          
+
           // Handle v2.0 knowledge graph entities
           if (analysis.entities && analysis.entities.length > 0) {
             console.log(`Processing ${analysis.entities.length} v2.0 entities`);
             // Future: Store entities in knowledge graph
           }
-          
+
           // Handle smart actions for UI
           if (analysis.smartActions && analysis.smartActions.length > 0) {
             console.log(`Generated ${analysis.smartActions.length} smart actions`);
@@ -578,7 +578,7 @@ This profile was generated from your input and will help provide more personaliz
           await storage.updateNote(note.id, { isProcessing: false });
         });
       }
-      
+
       // Return the note with any updated metadata from AI processing
       const finalNote = await storage.getNote(note.id);
       res.json(finalNote);
@@ -591,7 +591,7 @@ This profile was generated from your input and will help provide more personaliz
   app.post("/api/compare-ai", async (req, res) => {
     try {
       const { content, mode = 'quick' } = req.body;
-      
+
       if (!content) {
         return res.status(400).json({ message: "Content required for AI comparison" });
       }
@@ -640,25 +640,25 @@ This profile was generated from your input and will help provide more personaliz
       console.log("Media upload request received");
       console.log("Body fields:", Object.keys(req.body));
       console.log("Files:", req.files ? Object.keys(req.files) : 'none');
-      
+
       const { content, mode, hasVoiceContext, aiAnalysis, userContext } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
+
       // Validate we have at least one file
       if (!files || Object.keys(files).length === 0) {
         return res.status(400).json({ message: "No files provided" });
       }
-      
+
       // PRIORITY: User instructions heavily weighted - they indicate high intent
       let noteContent = '';
       let userInstructions = '';
-      
+
       // Extract and prioritize user instructions
       if (userContext && typeof userContext === 'string' && userContext.trim()) {
         userInstructions = userContext.trim();
         noteContent = userInstructions; // User instructions take priority
       }
-      
+
       // Add AI analysis as supplementary context only
       if (aiAnalysis && typeof aiAnalysis === 'string' && aiAnalysis.trim()) {
         if (userInstructions) {
@@ -669,16 +669,16 @@ This profile was generated from your input and will help provide more personaliz
           noteContent = aiAnalysis.trim();
         }
       }
-      
+
       // Fallback to legacy content field if new fields not provided
       if (!noteContent && content && typeof content === 'string') {
         noteContent = content.trim();
       }
-      
+
       // Handle media files
       let mediaUrl = null;
       let audioUrl = null;
-      
+
       // Process image
       if (files.image && files.image[0]) {
         const savedFile = await saveAudioFile(
@@ -687,20 +687,20 @@ This profile was generated from your input and will help provide more personaliz
           files.image[0].mimetype || 'image/jpeg'
         );
         mediaUrl = savedFile.url;
-        
+
         // Don't set placeholder text - let AI analysis fill content when ready
       }
-      
+
       // Process general file
       if (files.file && files.file[0]) {
         const savedFile = await saveAudioFile(files.file[0].buffer, files.file[0].originalname);
         mediaUrl = savedFile.url;
-        
+
         if (!noteContent.trim()) {
           noteContent = `File uploaded: ${files.file[0].originalname}`;
         }
       }
-      
+
       // Process voice context with proper error handling
       if (files.audio && files.audio[0]) {
         try {
@@ -708,13 +708,13 @@ This profile was generated from your input and will help provide more personaliz
           const savedAudio = await saveAudioFile(files.audio[0].buffer, `context-${Date.now()}.webm`);
           audioUrl = savedAudio.url;
           console.log("Voice context saved:", audioUrl);
-          
+
           // Transcribe voice context if available
           if (isOpenAIAvailable()) {
             try {
               const transcription = await safeTranscribeAudio(files.audio[0].buffer);
               console.log("Voice context transcribed:", transcription.substring(0, 100));
-              
+
               // Add transcribed voice context to note content
               if (transcription && transcription.trim()) {
                 noteContent = noteContent ? 
@@ -731,12 +731,12 @@ This profile was generated from your input and will help provide more personaliz
           // Continue without audio
         }
       }
-      
+
       // Only use meaningful content - no placeholder text
       if (!noteContent || !noteContent.trim()) {
         noteContent = ""; // Leave empty until AI analysis provides meaningful content
       }
-      
+
       // Create note with media
       const noteData = {
         content: noteContent,
@@ -745,15 +745,15 @@ This profile was generated from your input and will help provide more personaliz
         mediaUrl: mediaUrl,
         isProcessing: !!noteContent.trim()
       };
-      
+
       console.log("Creating note with data:", { 
         contentLength: noteContent.length, 
         hasAudio: !!audioUrl, 
         hasMedia: !!mediaUrl 
       });
-      
+
       const note = await storage.createNote(noteData);
-      
+
       // Process with AI if content exists
       if (noteContent.trim()) {
         // Special handling for image analysis - BYPASS regular text processing
@@ -762,22 +762,22 @@ This profile was generated from your input and will help provide more personaliz
           console.log("Image buffer size:", files.image[0].buffer.length);
           const imageBase64 = files.image[0].buffer.toString('base64');
           console.log("Base64 length:", imageBase64.length);
-          
+
           // Use specialized image analysis with user instruction priority
           if (isOpenAIAvailable() && imageBase64.length > 0) {
             console.log("Using GPT-4o for image analysis");
             const { analyzeImageContent } = await import('./openai');
-            
+
             // Create enhanced prompt that prioritizes user instructions
             let analysisPrompt = noteContent;
             if (userInstructions) {
               analysisPrompt = `USER INSTRUCTIONS (HIGH PRIORITY): ${userInstructions}
-              
+
 Please analyze this image specifically according to the user's instructions above. Their specific request should heavily influence your analysis, todos, and suggestions. Focus on what they asked for rather than general image description.
 
 ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
             }
-            
+
             analyzeImageContent(imageBase64, analysisPrompt)
             .then(async (analysis: any) => {
               const updates: any = {
@@ -791,9 +791,9 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
                 isProcessing: false,
               };
-              
+
               await storage.updateNote(note.id, updates);
-              
+
               // Create todos from analysis
               if (analysis.todos && analysis.todos.length > 0) {
                 for (const todo of analysis.todos) {
@@ -802,7 +802,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   }
                 }
               }
-              
+
               // Handle collection suggestion and item extraction
               let collectionId = null;
               if (analysis.collectionSuggestion) {
@@ -813,7 +813,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                     c.name.toLowerCase().includes(analysis.collectionSuggestion.name.toLowerCase()) ||
                     analysis.collectionSuggestion.name.toLowerCase().includes(c.name.toLowerCase())
                   );
-                  
+
                   if (!targetCollection) {
                     targetCollection = await storage.createCollection({
                       name: analysis.collectionSuggestion.name,
@@ -821,17 +821,17 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                       color: analysis.collectionSuggestion.color || "#8B4513"
                     });
                   }
-                  
+
                   collectionId = targetCollection.id;
-                  
+
                   // Update note to belong to this collection
                   await storage.updateNote(note.id, { collectionId });
-                  
+
                 } catch (error) {
                   console.error("Error creating/assigning collection:", error);
                 }
               }
-              
+
               // Create individual items from extracted items
               if (analysis.extractedItems && analysis.extractedItems.length > 0) {
                 for (const item of analysis.extractedItems) {
@@ -853,14 +853,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                           const { performLocationWebSearch } = await import('./web-search');
                           const searchQueries = [`${item.title} buy online`, `${item.title} shop`, `where to buy ${item.title}`];
                           const searchResults = await performLocationWebSearch(searchQueries);
-                          
+
                           if (searchResults && searchResults.length > 0) {
                             const shoppingLinks = searchResults.map((result: any) => ({
                               title: result.title,
                               url: result.url,
                               description: result.description
                             }));
-                            
+
                             // Update item with shopping links
                             await storage.updateItem(createdItem.id, {
                               detailedContent: JSON.stringify({
@@ -898,7 +898,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 richContext: analysis.richContext ? JSON.stringify(analysis.richContext) : null,
                 isProcessing: false,
               };
-              
+
               await storage.updateNote(note.id, updates);
             })
             .catch((error: any) => {
@@ -912,13 +912,13 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               isProcessing: false 
             });
           }
-          
+
           // Skip regular text processing for image notes - they're handled above
           return res.json(note);
         } else {
           // Regular text/audio processing
           const useOpenAI = isOpenAIAvailable();
-          
+
           const miraInput: MiraAIInput = {
             content: noteContent,
             mode: noteData.mode as any,
@@ -934,36 +934,76 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
             : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
 
           processNote(miraInput)
-            .then(async (analysis: MiraAIResult) => {
-              // Get enhanced content from the raw AI response
-              const enhancedContent = analysis._rawModelJSON?.enhancedContent || analysis.summary || "";
-              
-              const updates: any = {
-                aiEnhanced: true,
-                aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
-                aiContext: enhancedContent, // Use the rich enhanced content instead of just summary
-                richContext: analysis.entities ? JSON.stringify({
-                  entities: analysis.entities,
-                  suggestedLinks: analysis.suggestedLinks,
-                  nextSteps: analysis.nextSteps,
-                  microQuestions: analysis.microQuestions
-                }) : null,
-                isProcessing: false,
-              };
-              
-              await storage.updateNote(note.id, updates);
-              
-              // Create todos
-              if (analysis.todos && analysis.todos.length > 0) {
-                for (const todo of analysis.todos) {
-                  if (typeof todo === 'string') {
-                    await storage.createTodo({ noteId: note.id, title: todo });
-                  } else if (todo.title) {
-                    await storage.createTodo({ noteId: note.id, title: todo.title });
-                  }
+          .then(async (analysis: MiraAIResult) => {
+            console.log("Mira AI analysis successful for note:", note.id);
+
+            apiUsageStats.claude.requests++;
+            apiUsageStats.totalRequests++;
+
+            // Use v2.0 structured results
+            const updates: any = {
+              aiEnhanced: true,
+              aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
+              aiContext: analysis.summary || "",
+              richContext: analysis.entities ? JSON.stringify({
+                entities: analysis.entities,
+                suggestedLinks: analysis.suggestedLinks,
+                nextSteps: analysis.nextSteps,
+                microQuestions: analysis.microQuestions,
+                timeInstructions: analysis.timeInstructions
+              }) : null,
+              isProcessing: false,
+            };
+
+            await storage.updateNote(note.id, updates);
+
+            // Create todos if found
+            if (analysis.todos && analysis.todos.length > 0) {
+              for (const todo of analysis.todos) {
+                try {
+                  const todoData = {
+                    title: todo.title,
+                    isCompleted: false,
+                    priority: todo.priority || 'medium',
+                    due: todo.due || null,
+                    noteId: note.id,
+                    isTimeDependent: !!todo.due,
+                    notificationSchedule: todo.due ? [todo.due] : null
+                  };
+
+                  await storage.createTodo(todoData);
+                  console.log("Created todo:", todo.title);
+                } catch (todoError) {
+                  console.error("Error creating todo:", todoError);
                 }
               }
-            })
+            }
+
+            // Create reminders if found
+            if (analysis.reminders && analysis.reminders.length > 0) {
+              for (const reminder of analysis.reminders) {
+                try {
+                  const reminderData = {
+                    title: reminder.title,
+                    isCompleted: false,
+                    priority: 'high',
+                    due: reminder.datetime,
+                    noteId: note.id,
+                    isTimeDependent: true,
+                    notificationSchedule: [reminder.datetime],
+                    reminderType: 'time-based'
+                  };
+
+                  await storage.createTodo(reminderData);
+                  console.log("Created reminder:", reminder.title, "for", reminder.datetime);
+                } catch (reminderError) {
+                  console.error("Error creating reminder:", reminderError);
+                }
+              }
+            }
+
+            console.log("Note updated with AI analysis:", note.id);
+          })
             .catch((error: any) => {
               console.error("Error processing regular note with AI:", error);
               storage.updateNote(note.id, { isProcessing: false });
@@ -973,7 +1013,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
         // If no content to process, just mark as not processing
         await storage.updateNote(note.id, { isProcessing: false });
       }
-      
+
       console.log("Media note created successfully:", note.id);
       res.json(note);
     } catch (error: any) {
@@ -981,13 +1021,13 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
       console.error("Error stack:", error.stack);
       console.error("Request body keys:", Object.keys(req.body));
       console.error("Files received:", req.files ? Object.keys(req.files) : 'none');
-      
+
       // Provide specific error details for mobile debugging
       let errorMessage = "Failed to create media note";
       if (error.message) {
         errorMessage += `: ${error.message}`;
       }
-      
+
       res.status(500).json({ 
         message: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -1011,7 +1051,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
     try {
       const noteId = parseInt(req.params.id);
       const { instruction, existingContent, existingContext, existingTodos, existingRichContext } = req.body;
-      
+
       if (!instruction || !existingContent) {
         return res.status(400).json({ message: "Instruction and existing content required" });
       }
@@ -1092,13 +1132,13 @@ Respond with a JSON object containing:
         (instruction.toLowerCase().includes('image') && (instruction.toLowerCase().includes('again') || instruction.toLowerCase().includes('better')));
 
       let evolution;
-      
+
       if (isMediaReprocessRequest && note.mediaUrl) {
         console.log("Media reprocessing request detected for note with image");
-        
+
         // Combine original content with new instruction for reprocessing
         const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
-        
+
         try {
           // Re-analyze the image with combined instructions using specialized image analysis
           const imageBase64 = await getImageAsBase64(note.mediaUrl);
@@ -1107,7 +1147,7 @@ Respond with a JSON object containing:
             console.log("Image base64 length:", imageBase64.length);
             const { analyzeImageContent } = await import('./openai');
             const imageAnalysis = await analyzeImageContent(imageBase64, combinedInstructions);
-            
+
             // Convert image analysis to evolution format
             evolution = {
               enhancedContent: imageAnalysis.enhancedContent || combinedInstructions,
@@ -1140,7 +1180,7 @@ Respond with a JSON object containing:
           instruction.toLowerCase().includes('openai') ||
           instruction.toLowerCase().includes('competitive') ||
           instruction.toLowerCase().includes('recent developments');
-        
+
         if (isBusinessIntelligenceRequest && isOpenAIAvailable()) {
           console.log("Using enhanced OpenAI analysis with company intelligence for evolution");
           evolution = await safeAnalyzeWithOpenAI(evolutionPrompt, "evolution");
@@ -1149,11 +1189,11 @@ Respond with a JSON object containing:
           evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
         }
       }
-      
+
       // Analyze instruction for safety before applying changes
       const isMinorChange = DataProtectionService.isMinorChange(instruction);
       const isRiskyChange = DataProtectionService.isRiskyChange(instruction);
-      
+
       // Use data protection for content changes
       const protectionResult = await DataProtectionService.safeApplyAIChanges(
         noteId,
@@ -1229,13 +1269,13 @@ Respond with a JSON object containing:
         const existingCollection = collections.find(
           c => c.name.toLowerCase() === evolution.collectionSuggestion!.name.toLowerCase()
         );
-        
+
         let collectionId = existingCollection?.id;
         if (!existingCollection) {
           const newCollection = await storage.createCollection(evolution.collectionSuggestion);
           collectionId = newCollection.id;
         }
-        
+
         await storage.updateNote(noteId, { collectionId });
       }
 
@@ -1254,13 +1294,13 @@ Respond with a JSON object containing:
     try {
       const noteId = parseInt(req.params.noteId);
       const { targetVersion } = req.body;
-      
+
       if (!targetVersion) {
         return res.status(400).json({ message: "Target version is required" });
       }
 
       const success = await DataProtectionService.rollbackToVersion(noteId, targetVersion);
-      
+
       if (success) {
         const updatedNote = await storage.getNote(noteId);
         res.json({ 
@@ -1294,7 +1334,7 @@ Respond with a JSON object containing:
     try {
       const noteId = parseInt(req.params.noteId);
       const { suggestedChanges, userApproved } = req.body;
-      
+
       if (!suggestedChanges) {
         return res.status(400).json({ message: "Suggested changes are required" });
       }
@@ -1322,7 +1362,7 @@ Respond with a JSON object containing:
           content: protectionResult.appliedChanges,
           aiEnhanced: true 
         });
-        
+
         const updatedNote = await storage.getNote(noteId);
         res.json({ 
           success: true, 
@@ -1346,7 +1386,7 @@ Respond with a JSON object containing:
     try {
       const noteId = parseInt(req.params.noteId);
       const { originalInstruction, clarification } = req.body;
-      
+
       if (!clarification) {
         return res.status(400).json({ message: "Clarification is required" });
       }
@@ -1359,10 +1399,10 @@ Respond with a JSON object containing:
 
       // Combine original instruction with clarification
       const enhancedInstruction = `Previous instruction: ${originalInstruction}\n\nClarification: ${clarification}\n\nPlease apply the clarified instruction accurately.`;
-      
+
       // Process the clarified instruction (similar to note evolution)
       const evolutionPrompt = `You are helping enhance a note based on user clarification.
-      
+
 Current Note Content:
 ${note.content}
 
@@ -1374,7 +1414,7 @@ Please provide an enhanced version that follows the clarified instruction precis
 Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what you changed", "todos": ["new todos if any"]}`;
 
       const evolution = await safeAnalyzeWithClaude(evolutionPrompt, "clarification");
-      
+
       // Apply with higher confidence since user provided clarification
       const protectionResult = await DataProtectionService.safeApplyAIChanges(
         noteId,
@@ -1393,7 +1433,7 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
           aiEnhanced: true,
           aiSuggestion: evolution.suggestion
         });
-        
+
         const updatedNote = await storage.getNote(noteId);
         res.json({ 
           success: true, 
@@ -1406,7 +1446,7 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
           warnings: protectionResult.warnings 
         });
       }
-      
+
     } catch (error) {
       console.error("Clarification error:", error);
       res.status(500).json({ message: "Failed to apply clarification" });
@@ -1418,31 +1458,31 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
     try {
       const noteId = parseInt(req.params.noteId);
       const { instruction } = req.body;
-      
+
       if (!instruction) {
         return res.status(400).json({ message: "Instruction is required" });
       }
-      
+
       // Get the existing note
       const note = await storage.getNote(noteId);
       if (!note || !note.mediaUrl) {
         return res.status(404).json({ message: "Note with image not found" });
       }
-      
+
       console.log("Media reprocessing request for note:", noteId);
-      
+
       // Combine original content with new instruction
       const combinedInstructions = `Original context: ${note.content}\n\nNew instructions: ${instruction}`;
-      
+
       // Get the image as base64
       const imageBase64 = await getImageAsBase64(note.mediaUrl);
       if (!imageBase64) {
         return res.status(400).json({ message: "Could not retrieve image file" });
       }
-      
+
       // Re-analyze with OpenAI
       const analysisResult = await safeAnalyzeWithOpenAI(combinedInstructions, "image-reprocessing");
-      
+
       // Return the enhanced analysis results
       res.json({
         enhancedContent: analysisResult.enhancedContent || combinedInstructions,
@@ -1452,7 +1492,7 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
         richContext: analysisResult.richContext,
         success: true
       });
-      
+
     } catch (error) {
       console.error("Media reprocessing error:", error);
       res.status(500).json({ message: "Failed to reprocess media" });
@@ -1464,7 +1504,7 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
     try {
       const file = req.file;
       const { analyzeOnly } = req.body;
-      
+
       if (!file) {
         return res.status(400).json({ error: "No image file provided" });
       }
@@ -1472,7 +1512,7 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
       let identification = "Image captured";
       let suggestedContext = "Please add context for this image";
       let webResults = null;
-      
+
       if (isOpenAIAvailable()) {
         try {
           const analysisPrompt = `Analyze this image and provide valuable insights. Focus on:
@@ -1495,9 +1535,9 @@ Respond with JSON:
   "category": "book/product/food/etc",
   "keyValue": "main valuable insight"
 }`;
-          
+
           const analysisResult = await safeAnalyzeWithOpenAI(analysisPrompt, "image-analysis");
-          
+
           // Parse the structured response
           try {
             // First try to parse the main content, then fall back to raw response
@@ -1510,7 +1550,7 @@ Respond with JSON:
                 parsed = JSON.parse(analysisResult.context || analysisResult.suggestion || '{}');
               }
             }
-            
+
             // Only use AI identification if it's meaningful, not placeholder text
             if (parsed.headline && parsed.headline !== "General content analysis") {
               identification = parsed.headline;
@@ -1521,7 +1561,7 @@ Respond with JSON:
             } else {
               identification = ""; // No placeholder text
             }
-            
+
             // Only use AI context if it's meaningful
             if (parsed.description && parsed.description !== "General content analysis") {
               suggestedContext = parsed.description;
@@ -1530,12 +1570,12 @@ Respond with JSON:
             } else {
               suggestedContext = ""; // No placeholder text
             }
-            
+
             // Generate meaningful web search results based on the identified item  
             if (parsed.itemName && parsed.itemName !== "Image captured" && parsed.itemName !== "General content analysis") {
               const searchTerm = parsed.itemName;
               const category = parsed.category || "item";
-              
+
               webResults = {
                 fromTheWeb: [
                   {
@@ -1572,26 +1612,26 @@ Respond with JSON:
             identification = (analysisResult.context && analysisResult.context !== "General content analysis") ? analysisResult.context : "";
             suggestedContext = (analysisResult.suggestion && analysisResult.suggestion !== "General content analysis") ? analysisResult.suggestion : "";
           }
-          
+
         } catch (error) {
           console.error("AI image analysis failed:", error);
         }
       }
-      
+
       if (analyzeOnly === 'true') {
         // Only return identification if it's meaningful (not generic placeholder)
         const meaningfulIdentification = (identification === "Image captured" || identification === "General content analysis") 
           ? "" : (identification || "");
-        
+
         return res.json({
           identification: meaningfulIdentification || "",
           suggestedContext: meaningfulIdentification ? suggestedContext : "",
           webResults: meaningfulIdentification ? webResults : null
         });
       }
-      
+
       return res.json({ success: true });
-      
+
     } catch (error) {
       console.error("Media analysis error:", error);
       res.status(500).json({ error: "Failed to analyze media" });
@@ -1602,14 +1642,14 @@ Respond with JSON:
   app.post("/api/storage/upload", async (req, res) => {
     try {
       const { filename, content, contentType = 'text/plain' } = req.body;
-      
+
       if (!filename || !content) {
         return res.status(400).json({ error: "Filename and content required" });
       }
 
       const { ReplitStorage } = await import('./replit-storage');
       const downloadUrl = await ReplitStorage.saveForChatGPT(filename, content);
-      
+
       res.json({ 
         success: true, 
         filename, 
@@ -1649,10 +1689,10 @@ Respond with JSON:
   app.post("/api/notes/placeholder", async (req, res) => {
     try {
       const { type, fileName, fileSize, mimeType, duration, content } = req.body;
-      
+
       let placeholderContent = content || "";
       let aiTitle = "";
-      
+
       // Generate AI title based on type and context
       if (type === "voice") {
         aiTitle = "Voice Recording";
@@ -1660,30 +1700,30 @@ Respond with JSON:
       } else if (type === "image") {
         // Use AI to generate meaningful title from file context
         const contextPrompt = `Generate a concise, meaningful title for an image file. The user is saving this image for a reason. Based on the filename "${fileName}" and type "${mimeType}", suggest what this image might be about and why they're saving it. Respond with just the title, no quotes or extra text. Make it human and contextual, not technical.`;
-        
+
         try {
           const titleResponse = await analyzeWithOpenAI(contextPrompt, "title-generation");
           aiTitle = titleResponse.enhancedContent || titleResponse.suggestion || "Image Upload";
         } catch (error) {
           aiTitle = "Image Upload";
         }
-        
+
         placeholderContent = `📸 Processing image...`;
       } else if (type === "file") {
         // Use filename and type to generate meaningful context
         const extension = fileName.split('.').pop()?.toLowerCase() || '';
         const contextPrompt = `Generate a concise, meaningful title for a file the user is uploading. Filename: "${fileName}", Type: "${mimeType}". Consider why someone would save this type of file and what it might contain. Respond with just the title, no quotes or extra text. Make it human and contextual.`;
-        
+
         try {
           const titleResponse = await analyzeWithOpenAI(contextPrompt, "title-generation");
           aiTitle = titleResponse.enhancedContent || titleResponse.suggestion || fileName;
         } catch (error) {
           aiTitle = fileName;
         }
-        
+
         placeholderContent = `📄 Processing file...`;
       }
-      
+
       // Create placeholder note
       const note = await storage.createNote({
         content: placeholderContent,
@@ -1691,7 +1731,7 @@ Respond with JSON:
         aiSuggestion: aiTitle,
         isProcessing: true
       });
-      
+
       res.json(note);
     } catch (error) {
       console.error("Failed to create placeholder note:", error);
@@ -1754,12 +1794,12 @@ Respond with JSON:
         processNote(miraInput)
           .then(async (analysis: MiraAIResult) => {
             console.log("Mira AI analysis successful for voice note:", note.id);
-            
+
             console.log("v2.0 Intelligence Layer analysis successful for voice note:", note.id);
-            
+
             apiUsageStats.claude.requests++;
             apiUsageStats.totalRequests++;
-            
+
             // Use v2.0 structured results
             const updates: any = {
               aiEnhanced: true,
@@ -1769,16 +1809,17 @@ Respond with JSON:
                 entities: analysis.entities,
                 suggestedLinks: analysis.suggestedLinks,
                 nextSteps: analysis.nextSteps,
-                microQuestions: analysis.microQuestions
+                microQuestions: analysis.microQuestions,
+                timeInstructions: analysis.timeInstructions
               }) : null,
               isProcessing: false,
             };
-            
+
             // NEVER overwrite original transcription with AI analysis
             // The transcribed content must be preserved as the user's actual words
-            
+
             await storage.updateNote(note.id, updates);
-            
+
             // Create v2.0 todos if found
             console.log("Creating", analysis.todos?.length || 0, "v2.0 todos for voice note:", note.id);
             if (analysis.todos && analysis.todos.length > 0) {
@@ -1802,14 +1843,14 @@ Respond with JSON:
                 await storage.createTodo(todoData);
               }
             }
-            
+
             // Create collection if suggested with v2.0 hints
             if (analysis.collectionHint) {
               const collections = await storage.getCollections();
               const existingCollection = collections.find(
                 c => c.name.toLowerCase() === analysis.collectionHint!.name.toLowerCase()
               );
-              
+
               let collectionId = existingCollection?.id;
               if (!existingCollection) {
                 const newCollection = await storage.createCollection({
@@ -1819,7 +1860,7 @@ Respond with JSON:
                 });
                 collectionId = newCollection.id;
               }
-              
+
               await storage.updateNote(note.id, { collectionId });
             }
           })
@@ -1848,7 +1889,7 @@ Respond with JSON:
 
       // Convert image to base64 for AI analysis
       const imageBase64 = req.file.buffer.toString('base64');
-      
+
       if (noteId) {
         // Update existing placeholder note
         note = await storage.updateNote(parseInt(noteId), {
@@ -1874,13 +1915,13 @@ Respond with JSON:
             aiSuggestion: analysis.suggestion,
             aiContext: analysis.context,
           };
-          
+
           if (analysis.enhancedContent) {
             updates.content = analysis.enhancedContent;
           }
-          
+
           await storage.updateNote(note.id, updates);
-          
+
           // Create todos if found
           for (const todoTitle of analysis.todos) {
             await storage.createTodo({
@@ -1888,20 +1929,20 @@ Respond with JSON:
               noteId: note.id,
             });
           }
-          
+
           // Create collection if suggested
           if (analysis.collectionSuggestion) {
             const collections = await storage.getCollections();
             const existingCollection = collections.find(
               c => c.name.toLowerCase() === analysis.collectionSuggestion!.name.toLowerCase()
             );
-            
+
             let collectionId = existingCollection?.id;
             if (!existingCollection) {
               const newCollection = await storage.createCollection(analysis.collectionSuggestion);
               collectionId = newCollection.id;
             }
-            
+
             await storage.updateNote(note.id, { collectionId });
           }
         })
@@ -1944,7 +1985,7 @@ Respond with JSON:
 
       // Analyze file content with AI in the background
       let fileContent = `File: ${req.file.originalname} (${req.file.mimetype}, ${Math.round(req.file.size / 1024)}KB)`;
-      
+
       // For text files, try to read content
       if (req.file.mimetype.startsWith('text/') || 
           req.file.mimetype === 'application/json' ||
@@ -1977,18 +2018,19 @@ Respond with JSON:
               entities: analysis.entities,
               suggestedLinks: analysis.suggestedLinks,
               nextSteps: analysis.nextSteps,
-              microQuestions: analysis.microQuestions
+              microQuestions: analysis.microQuestions,
+              timeInstructions: analysis.timeInstructions
             }) : null,
             isProcessing: false
           };
-          
+
           // Use v2.0 title as content if available
           if (analysis.title && analysis.title !== fileContent.substring(0, 100)) {
             updates.content = analysis.title;
           }
-          
+
           await storage.updateNote(note.id, updates);
-          
+
           // Create v2.0 todos if found
           if (analysis.todos && analysis.todos.length > 0) {
             for (const todo of analysis.todos) {
@@ -1996,7 +2038,7 @@ Respond with JSON:
                 title: todo.title,
                 noteId: note.id,
               };
-              
+
               // Add v2.0 enhanced todo properties
               if (todo.due) {
                 todoData.timeDue = new Date(todo.due);
@@ -2007,18 +2049,18 @@ Respond with JSON:
               if (todo.priority) {
                 todoData.priority = todo.priority;
               }
-              
+
               await storage.createTodo(todoData);
             }
           }
-          
+
           // Create collection if suggested with v2.0 hints
           if (analysis.collectionHint) {
             const collections = await storage.getCollections();
             const existingCollection = collections.find(
               c => c.name.toLowerCase() === analysis.collectionHint!.name.toLowerCase()
             );
-            
+
             let collectionId = existingCollection?.id;
             if (!existingCollection) {
               const newCollection = await storage.createCollection({
@@ -2028,7 +2070,7 @@ Respond with JSON:
               });
               collectionId = newCollection.id;
             }
-            
+
             await storage.updateNote(note.id, { collectionId });
           }
         })
@@ -2048,7 +2090,7 @@ Respond with JSON:
     try {
       const noteId = parseInt(req.params.id);
       const { content, updateInstruction, contextUpdate, ...otherUpdates } = req.body;
-      
+
       // Get the existing note
       const existingNote = await storage.getNote(noteId);
       if (!existingNote) {
@@ -2058,7 +2100,7 @@ Respond with JSON:
       // If there's an updateInstruction, use AI to intelligently modify the note
       if (updateInstruction) {
         console.log("Processing context-aware note update:", updateInstruction);
-        
+
         try {
           // Create comprehensive context for AI
           const fullContext = {
@@ -2159,13 +2201,13 @@ Respond with a JSON object containing:
             const existingCollection = collections.find(
               c => c.name.toLowerCase() === evolution.collectionSuggestion!.name.toLowerCase()
             );
-            
+
             let collectionId = existingCollection?.id;
             if (!existingCollection) {
               const newCollection = await storage.createCollection(evolution.collectionSuggestion);
               collectionId = newCollection.id;
             }
-            
+
             await storage.updateNote(noteId, { collectionId });
           }
 
@@ -2216,14 +2258,14 @@ Respond with a JSON object containing:
       const id = parseInt(req.params.id);
       const todos = await storage.getTodos();
       const todo = todos.find(t => t.id === id);
-      
+
       if (!todo) {
         return res.status(404).json({ message: "Todo not found" });
       }
 
       // Get the source note for this todo
       const sourceNote = await storage.getNote(todo.noteId);
-      
+
       // Get related todos from the same note
       const relatedTodos = todos.filter(t => t.noteId === todo.noteId && t.id !== todo.id);
 
@@ -2241,7 +2283,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
 
       try {
         const aiResult = await analyzeWithOpenAI(prompt, "todo-context");
-        
+
         const todoContext = {
           todo,
           sourceNote,
@@ -2284,13 +2326,13 @@ Provide a concise, actionable response that adds value beyond just the task titl
             note.content.trim().length > 10 && 
             !note.content.startsWith('🎉 Welcome to Mira')
           );
-          
+
           // Count open todos for this collection
           const openTodoCount = notes.reduce((count, note) => {
             const openTodos = note.todos.filter(todo => !todo.completed);
             return count + openTodos.length;
           }, 0);
-          
+
           return { 
             ...collection, 
             noteCount: meaningfulNotes.length,
@@ -2335,9 +2377,9 @@ Provide a concise, actionable response that adds value beyond just the task titl
       if (!collection) {
         return res.status(404).json({ message: "Collection not found" });
       }
-      
+
       const notes = await storage.getNotesByCollectionId(id);
-      
+
       // Handle empty collections
       if (notes.length === 0) {
         const superNoteData = {
@@ -2398,14 +2440,14 @@ Provide a concise, actionable response that adds value beyond just the task titl
 
       // Get all todos from meaningful notes
       const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
-      
+
       // Get all items from this collection
       const collectionItems = await storage.getItemsByCollectionId(id);
-      
+
       // Create aggregated content based on collection type
       let collectionContent = '';
       let collectionDescription = '';
-      
+
       if (collectionItems.length > 0) {
         // Group items by type for better organization
         const itemsByType = collectionItems.reduce((acc: any, item) => {
@@ -2492,9 +2534,9 @@ Provide a concise, actionable response that adds value beyond just the task titl
       if (!collection) {
         return res.status(404).json({ message: "Collection not found" });
       }
-      
+
       const notes = await storage.getNotesByCollectionId(id);
-      
+
       // Handle empty collections
       if (notes.length === 0) {
         const superNoteData = {
@@ -2552,13 +2594,13 @@ Provide a concise, actionable response that adds value beyond just the task titl
       // Get individual items extracted from notes in this collection
       const collectionItems = await storage.getItemsByCollectionId(id);
       const allTodos = meaningfulNotes.flatMap(note => note.todos || []);
-      
+
       // Create collection-specific content based on type
       let collectionContent = "";
       let collectionDescription = "";
-      
+
       const collectionName = collection.name.toLowerCase();
-      
+
       if (collectionName.includes('book')) {
         collectionDescription = "Your reading list and book recommendations";
         collectionContent = collectionItems.length > 0 
@@ -2651,7 +2693,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
   app.post("/api/collections/reorder", async (req, res) => {
     try {
       const { updates } = req.body;
-      
+
       if (!updates || !Array.isArray(updates)) {
         return res.status(400).json({ message: "Updates array required" });
       }
@@ -2660,7 +2702,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
       for (const update of updates) {
         await storage.updateCollection(update.id, { displayOrder: update.displayOrder });
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Collection reorder error:", error);
