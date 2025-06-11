@@ -1598,6 +1598,53 @@ Respond with JSON:
     }
   });
 
+  // Object Storage endpoints for ChatGPT integration
+  app.post("/api/storage/upload", async (req, res) => {
+    try {
+      const { filename, content, contentType = 'text/plain' } = req.body;
+      
+      if (!filename || !content) {
+        return res.status(400).json({ error: "Filename and content required" });
+      }
+
+      const { ReplitStorage } = await import('./replit-storage');
+      const downloadUrl = await ReplitStorage.saveForChatGPT(filename, content);
+      
+      res.json({ 
+        success: true, 
+        filename, 
+        downloadUrl,
+        message: "File saved to Replit Object Storage" 
+      });
+    } catch (error) {
+      console.error("Storage upload error:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  app.get("/api/storage/files", async (req, res) => {
+    try {
+      const { ReplitStorage } = await import('./replit-storage');
+      const files = await ReplitStorage.listFiles();
+      res.json({ files });
+    } catch (error) {
+      console.error("Storage list error:", error);
+      res.status(500).json({ error: "Failed to list files" });
+    }
+  });
+
+  app.get("/api/storage/download/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const { ReplitStorage } = await import('./replit-storage');
+      const content = await ReplitStorage.downloadFile(filename);
+      res.json({ filename, content });
+    } catch (error) {
+      console.error("Storage download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
   // Placeholder note creation endpoint
   app.post("/api/notes/placeholder", async (req, res) => {
     try {
