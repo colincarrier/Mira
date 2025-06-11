@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Router, Route, Switch } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -29,12 +30,12 @@ function App() {
           <Switch>
             <Route path="/" component={Notes} />
             <Route path="/notes" component={Notes} />
-            <Route path="/remind" component={Remind} />
-            <Route path="/profile" component={Profile} />
             <Route path="/note/:id" component={NoteDetail} />
             <Route path="/notes/:id" component={NoteDetail} />
             <Route path="/collection/:id" component={CollectionDetail} />
             <Route path="/todo/:id" component={TodoDetail} />
+            <Route path="/remind" component={Remind} />
+            <Route path="/profile" component={Profile} />
             <Route component={NotFound} />
           </Switch>
         </Router>

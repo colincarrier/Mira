@@ -65,12 +65,17 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     try {
       console.log('Starting camera...');
       
-      // First try with back camera preference
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported');
+      }
+
+      // Simple constraints first
       let constraints = { 
         video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          facingMode: 'environment'
         },
         audio: false 
       };
@@ -80,12 +85,9 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch (backCameraError) {
         console.log('Back camera failed, trying any camera:', backCameraError);
-        // Fallback to any available camera
+        // Fallback to basic camera
         constraints = { 
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
+          video: true,
           audio: false 
         };
         stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -96,32 +98,35 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
         
-        // Add event listeners for debugging
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          console.log('Video metadata loaded');
-        });
+        // Set video attributes
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.autoplay = true;
         
-        videoRef.current.addEventListener('canplay', () => {
-          console.log('Video can play');
-        });
+        // Wait for metadata and play
+        videoRef.current.onloadedmetadata = async () => {
+          console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+          try {
+            await videoRef.current?.play();
+            console.log('Video playing successfully');
+          } catch (playError) {
+            console.error('Video play error:', playError);
+            // Force play on user interaction
+            videoRef.current?.addEventListener('click', () => {
+              videoRef.current?.play();
+            }, { once: true });
+          }
+        };
         
-        videoRef.current.addEventListener('error', (e) => {
+        videoRef.current.onerror = (e) => {
           console.error('Video element error:', e);
-        });
-        
-        // Manually trigger play
-        try {
-          await videoRef.current.play();
-          console.log('Video playing successfully');
-        } catch (playError) {
-          console.error('Video play error:', playError);
-        }
+        };
       }
     } catch (error) {
       console.error('Camera access error:', error);
       toast({
         title: "Camera Error",
-        description: "Could not access camera. Please check permissions and ensure you're using HTTPS.",
+        description: `Could not access camera: ${error.message}. Please check permissions.`,
         variant: "destructive",
       });
     }
@@ -342,11 +347,26 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             className="w-full h-full object-cover bg-gray-900"
             style={{ 
               minHeight: '100vh',
-              minWidth: '100vw'
+              minWidth: '100vw',
+              transform: 'scaleX(-1)' // Mirror the video for selfie-style
             }}
-            onLoadedMetadata={() => console.log('Video metadata loaded - dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)}
-            onCanPlay={() => console.log('Video can play')}
+            onLoadedMetadata={() => {
+              console.log('Video metadata loaded - dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+              // Ensure video starts playing
+              if (videoRef.current?.paused) {
+                videoRef.current.play().catch(console.error);
+              }
+            }}
+            onCanPlay={() => {
+              console.log('Video can play');
+              // Auto-play when ready
+              if (videoRef.current?.paused) {
+                videoRef.current.play().catch(console.error);
+              }
+            }}
             onError={(e) => console.error('Video error:', e)}
+            onPlay={() => console.log('Video started playing')}
+            onPause={() => console.log('Video paused')}
           />
           <canvas ref={canvasRef} className="hidden" />
           
