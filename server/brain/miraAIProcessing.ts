@@ -1,3 +1,59 @@
+
+/**
+ * Enhanced time detection for reminder creation
+ */
+function detectTimeReferences(content: string): {
+  hasTimeReference: boolean;
+  extractedTimes: string[];
+  isUrgent: boolean;
+  shouldCreateReminder: boolean;
+} {
+  const contentLower = content.toLowerCase();
+  
+  // Explicit reminder phrases
+  const reminderPhrases = [
+    'remind me', 'reminder', 'don\'t forget', 'remember to', 'make sure to',
+    'need to remember', 'schedule', 'appointment', 'meeting'
+  ];
+  
+  // Time expressions
+  const timeExpressions = [
+    'tomorrow', 'today', 'tonight', 'this morning', 'this afternoon', 'this evening',
+    'next week', 'next month', 'monday', 'tuesday', 'wednesday', 'thursday', 
+    'friday', 'saturday', 'sunday', 'in \\d+ (hours?|days?|weeks?)', 
+    'at \\d+:?\\d*\\s*(am|pm)?', 'by \\w+', 'before \\w+', 'after \\w+'
+  ];
+  
+  // Urgency indicators
+  const urgencyWords = [
+    'urgent', 'important', 'deadline', 'due', 'asap', 'immediately', 
+    'critical', 'priority', 'must', 'need to'
+  ];
+  
+  const hasExplicitReminder = reminderPhrases.some(phrase => 
+    contentLower.includes(phrase)
+  );
+  
+  const extractedTimes = timeExpressions.filter(pattern => 
+    new RegExp(pattern, 'i').test(content)
+  );
+  
+  const isUrgent = urgencyWords.some(word => 
+    contentLower.includes(word)
+  );
+  
+  const hasTimeReference = extractedTimes.length > 0 || hasExplicitReminder;
+  const shouldCreateReminder = hasExplicitReminder || (hasTimeReference && isUrgent);
+  
+  return {
+    hasTimeReference,
+    extractedTimes,
+    isUrgent,
+    shouldCreateReminder
+  };
+}
+
+
 /**
  * Mira AI Processing - Orthogonal Upgrade
  * Universal dispatcher with commerce/memory path routing
@@ -225,11 +281,13 @@ SYSTEM: You are Mira's intelligent memory assistant. Extract todos and reminders
 
 USER_INPUT: "${input.content}"
 
-EXTRACT TODOS AND REMINDERS:
-- TODOS: Actionable tasks without specific times
-- REMINDERS: Time-sensitive items with specific dates/times
-- Parse time expressions like "tomorrow", "next week", "at 2pm", "in 3 days"
-- Convert relative times to specific dates/times when possible
+ANALYZE FOR TIME REFERENCES:
+- Look for explicit time words: "remind me", "tomorrow", "next week", "at 2pm", "in 3 days", "by Friday"
+- Look for implicit urgency: "don't forget", "important", "deadline", "due"
+- Look for dates: "June 15", "Monday", "this weekend"
+- Convert relative times to specific ISO datetimes when possible
+
+CURRENT_TIME_CONTEXT: ${new Date().toISOString()}
 
 REQUIRED_JSON_OUTPUT:
 {
@@ -261,10 +319,11 @@ REQUIRED_JSON_OUTPUT:
 }
 
 PROCESSING_RULES:
-- Preserve user's exact phrasing
-- Extract BOTH todos and reminders separately
-- Include time instructions for Mira to understand
-- Mark urgency based on time sensitivity
+1. If user says "remind me" or similar, create a reminder entry
+2. If time words are present, mark hasTimeReference as true
+3. For urgent/time-sensitive items, create both todo AND reminder
+4. Default reminder time: if no specific time, use tomorrow 9am
+5. Preserve user's exact phrasing in titles
 
 OUTPUT ONLY JSON:`;
 

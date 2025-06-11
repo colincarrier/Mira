@@ -7,27 +7,27 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
-  
+
   // Notes
   createNote(note: InsertNote): Promise<Note>;
   getNotes(userId?: string): Promise<NoteWithTodos[]>;
   getNote(id: number): Promise<NoteWithTodos | undefined>;
   updateNote(id: number, updates: Partial<Note>): Promise<Note>;
   deleteNote(id: number): Promise<void>;
-  
+
   // Todos
   createTodo(todo: InsertTodo): Promise<Todo>;
   getTodos(): Promise<Todo[]>;
   getTodosByNoteId(noteId: number): Promise<Todo[]>;
   updateTodo(id: number, updates: Partial<Todo>): Promise<Todo>;
-  
+
   // Collections
   createCollection(collection: InsertCollection): Promise<Collection>;
   getCollections(): Promise<Collection[]>;
   getCollection(id: number): Promise<Collection | undefined>;
   updateCollection(id: number, updates: Partial<Collection>): Promise<Collection>;
   getNotesByCollectionId(collectionId: number): Promise<NoteWithTodos[]>;
-  
+
   // Items
   createItem(item: InsertItem): Promise<Item>;
   getItems(): Promise<Item[]>;
@@ -92,7 +92,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(notes)
       .orderBy(desc(notes.createdAt));
-    
+
     const notesWithTodos = await Promise.all(
       allNotes.map(async (note) => {
         const noteTodos = await this.getTodosByNoteId(note.id);
@@ -102,14 +102,14 @@ export class DatabaseStorage implements IStorage {
         return { ...note, todos: noteTodos, collection };
       })
     );
-    
+
     return notesWithTodos.reverse(); // Most recent first
   }
 
   async getNote(id: number): Promise<NoteWithTodos | undefined> {
     const [note] = await db.select().from(notes).where(eq(notes.id, id));
     if (!note) return undefined;
-    
+
     const noteTodos = await this.getTodosByNoteId(id);
     const collection = note.collectionId 
       ? await this.getCollection(note.collectionId) 
@@ -123,20 +123,20 @@ export class DatabaseStorage implements IStorage {
       const cleanUpdates = Object.fromEntries(
         Object.entries(updates).filter(([_, value]) => value !== undefined && value !== null)
       );
-      
+
       if (Object.keys(cleanUpdates).length === 0) {
         // If no valid updates, just return the existing note
         const existingNote = await this.getNote(id);
         if (!existingNote) throw new Error("Note not found");
         return existingNote;
       }
-      
+
       const updatedNotes = await db
         .update(notes)
         .set(cleanUpdates)
         .where(eq(notes.id, id))
         .returning();
-      
+
       if (!updatedNotes || updatedNotes.length === 0) {
         throw new Error("Note not found");
       }
@@ -154,12 +154,40 @@ export class DatabaseStorage implements IStorage {
     await db.delete(notes).where(eq(notes.id, id));
   }
 
-  async createTodo(insertTodo: InsertTodo): Promise<Todo> {
-    const [todo] = await db
-      .insert(todos)
-      .values(insertTodo)
-      .returning();
-    return todo;
+  async createTodo(todoData: InsertTodo): Promise<Todo> {
+    try {
+      console.log("Creating todo/reminder with data:", {
+        title: todoData.title,
+        isActiveReminder: todoData.isActiveReminder,
+        timeDue: todoData.timeDue,
+        due: todoData.due
+      });
+
+      const [newTodo] = await db
+        .insert(todos)
+        .values({
+          title: todoData.title,
+          isCompleted: todoData.completed || false,
+          priority: todoData.priority || 'medium',
+          due: todoData.due,
+          timeDue: todoData.timeDue,
+          noteId: todoData.noteId,
+          isTimeDependent: todoData.isTimeDependent || false,
+          isActiveReminder: todoData.isActiveReminder || false,
+          notificationSchedule: todoData.notificationSchedule || [],
+          reminderType: todoData.reminderType || 'not_set',
+          reminderCategory: todoData.reminderCategory || 'not_set',
+          repeatPattern: todoData.repeatPattern || 'none',
+          leadTimeNotifications: todoData.leadTimeNotifications || []
+        })
+        .returning();
+
+      console.log("Successfully created todo/reminder:", newTodo);
+      return newTodo;
+    } catch (error) {
+      console.error('Error creating todo:', error);
+      throw error;
+    }
   }
 
   async getTodos(): Promise<Todo[]> {
@@ -179,7 +207,7 @@ export class DatabaseStorage implements IStorage {
       .from(todos)
       .leftJoin(notes, eq(todos.noteId, notes.id))
       .orderBy(desc(todos.createdAt));
-    
+
     return todosWithNotes as any;
   }
 
@@ -197,7 +225,7 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(todos.id, id))
       .returning();
-    
+
     if (!todo) throw new Error("Todo not found");
     return todo;
   }
@@ -238,7 +266,7 @@ export class DatabaseStorage implements IStorage {
       .from(notes)
       .where(eq(notes.collectionId, collectionId))
       .orderBy(desc(notes.createdAt));
-    
+
     const notesWithTodos = await Promise.all(
       collectionNotes.map(async (note) => {
         const noteTodos = await this.getTodosByNoteId(note.id);
@@ -246,7 +274,7 @@ export class DatabaseStorage implements IStorage {
         return { ...note, todos: noteTodos, collection };
       })
     );
-    
+
     return notesWithTodos; // Already sorted newest first
   }
 
@@ -254,7 +282,7 @@ export class DatabaseStorage implements IStorage {
   async createItem(insertItem: InsertItem): Promise<Item> {
     const [item] = await db
       .insert(items)
-      .values(insertItem)
+      .values(insertItem])
       .returning();
     return item;
   }

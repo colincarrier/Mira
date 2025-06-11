@@ -135,7 +135,9 @@ export default function Remind() {
 
   const handleRemindSubmit = () => {
     if (remindPopup.todo && remindInput.trim()) {
-      setReminder.mutate({ todoId: remindPopup.todo.id, remindText: remindInput });
+      // Enhanced reminder text with better context
+      const enhancedRemindText = `Set reminder for "${remindPopup.todo.title}" - ${remindInput}`;
+      setReminder.mutate({ todoId: remindPopup.todo.id, remindText: enhancedRemindText });
     }
   };
 
@@ -193,6 +195,11 @@ export default function Remind() {
   // Separate and filter reminders and todos
   const allReminders = todos?.filter(t => t.isActiveReminder && !t.completed && !t.archived) || [];
   const allTodos = todos?.filter(t => !t.isActiveReminder && !t.completed && !t.archived) || [];
+  
+  // Debug logging
+  console.log("All todos from API:", todos);
+  console.log("Filtered reminders:", allReminders);
+  console.log("Filtered todos:", allTodos);
   
   const reminders = filterReminders(allReminders);
   const regularTodos = filterTodos(allTodos);

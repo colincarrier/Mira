@@ -990,6 +990,8 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                     due: reminder.datetime,
                     noteId: note.id,
                     isTimeDependent: true,
+                    isActiveReminder: true, // This marks it as a reminder
+                    timeDue: reminder.datetime,
                     notificationSchedule: [reminder.datetime],
                     reminderType: 'time-based'
                   };
@@ -998,6 +1000,35 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   console.log("Created reminder:", reminder.title, "for", reminder.datetime);
                 } catch (reminderError) {
                   console.error("Error creating reminder:", reminderError);
+                }
+              }
+            }
+
+            // Also check if timeInstructions suggest this should be a reminder
+            if (analysis.timeInstructions?.hasTimeReference && analysis.timeInstructions.extractedTimes.length > 0) {
+              // If we have time references but no explicit reminders, create one
+              if (!analysis.reminders || analysis.reminders.length === 0) {
+                try {
+                  const defaultReminderTime = new Date();
+                  defaultReminderTime.setDate(defaultReminderTime.getDate() + 1);
+                  defaultReminderTime.setHours(9, 0, 0, 0);
+                  
+                  const reminderData = {
+                    title: `Reminder: ${content.slice(0, 50)}...`,
+                    isCompleted: false,
+                    priority: 'medium',
+                    due: defaultReminderTime.toISOString(),
+                    noteId: note.id,
+                    isTimeDependent: true,
+                    isActiveReminder: true,
+                    timeDue: defaultReminderTime.toISOString(),
+                    reminderType: 'auto-detected'
+                  };
+
+                  await storage.createTodo(reminderData);
+                  console.log("Created auto-detected reminder for time-sensitive content");
+                } catch (reminderError) {
+                  console.error("Error creating auto-detected reminder:", reminderError);
                 }
               }
             }
