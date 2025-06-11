@@ -1,8 +1,6 @@
 import React from "react";
 import { Router, Route, Switch } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
 import Notes from "@/pages/notes";
 import NoteDetail from "@/pages/note-detail";
 import TodoDetail from "@/pages/todo-detail";
@@ -29,16 +27,14 @@ function App() {
         <Router>
           <Switch>
             <Route path="/" component={Notes} />
-            <Route path="/note/:id" component={NoteDetail} />
-            <Route path="/todo/:id" component={TodoDetail} />
-            <Route path="/collection/:id" component={CollectionDetail} />
             <Route path="/remind" component={Remind} />
             <Route path="/profile" component={Profile} />
+            <Route path="/note/:id" component={NoteDetail} />
+            <Route path="/collection/:id" component={CollectionDetail} />
+            <Route path="/todo/:id" component={TodoDetail} />
             <Route component={NotFound} />
           </Switch>
         </Router>
-        <Toaster />
-        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ErrorBoundary>
   );
