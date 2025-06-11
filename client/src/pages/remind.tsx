@@ -32,6 +32,10 @@ export default function Remind() {
     queryKey: ["/api/todos"],
   });
 
+  // Debug logging to see what data we're getting
+  console.log("Remind - todos data:", todos);
+  console.log("Remind - isLoading:", isLoading);
+
   // Create todo/reminder mutation
   const createTodoMutation = useMutation({
     mutationFn: async (text: string) => {

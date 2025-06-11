@@ -18,6 +18,10 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     queryKey: ["/api/notes"],
   });
 
+  // Debug logging to see what data we're getting
+  console.log("ActivityFeed - notes data:", notes);
+  console.log("ActivityFeed - isLoading:", isLoading);
+
   const filteredNotes = notes?.filter(note => {
     return note.content.toLowerCase().includes(searchTerm.toLowerCase());
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
@@ -122,7 +126,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
                       .replace('less than a minute', 'less than a min')
                       .replace('less than am', 'less than a min')}
                   </span>
-                  {note.todos.length > 0 && (
+                  {note.todos && note.todos.length > 0 && (
                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                       {note.todos.length} todos
                     </span>
