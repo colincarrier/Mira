@@ -388,7 +388,7 @@ export default function NoteDetail() {
             onClick={() => setLocation("/")}
             className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md"
           >
-            Back to Home
+            Back to Notes
           </button>
         </div>
       </div>
