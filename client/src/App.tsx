@@ -31,20 +31,23 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Switch>
-            <Route path="/" component={ActivityFeed} />
-            <Route path="/todos" component={TodosView} />
-            <Route path="/collections" component={CollectionsView} />
-            <Route path="/profile" component={Profile} />
-            <Route path="/note/:id" component={NoteDetail} />
-            <Route path="/notes/:id" component={NoteDetail} />
-            <Route path="/collection/:id" component={CollectionDetail} />
-            <Route path="/collections/:id" component={CollectionDetail} />
-            <Route path="/todo/:id" component={TodoDetail} />
-            <Route path="/todos/:id" component={TodoDetail} />
-            <Route path="/remind" component={Remind} />
-            <Route component={NotFound} />
-          </Switch>
+          <div className="min-h-screen bg-[#f1efe8] pb-24">
+            <Switch>
+              <Route path="/" component={ActivityFeed} />
+              <Route path="/todos" component={TodosView} />
+              <Route path="/collections" component={CollectionsView} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/note/:id" component={NoteDetail} />
+              <Route path="/notes/:id" component={NoteDetail} />
+              <Route path="/collection/:id" component={CollectionDetail} />
+              <Route path="/collections/:id" component={CollectionDetail} />
+              <Route path="/todo/:id" component={TodoDetail} />
+              <Route path="/todos/:id" component={TodoDetail} />
+              <Route path="/remind" component={Remind} />
+              <Route component={NotFound} />
+            </Switch>
+            <BottomNavigation />
+          </div>
         </Router>
         <Toaster />
       </QueryClientProvider>
