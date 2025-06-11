@@ -4,6 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
+import DevCacheDebugger from "@/components/dev-cache-debugger";
+import { offlineStorage, serviceWorkerManager } from "@/store/offline-storage";
+import { useEffect } from "react";
 
 // Import pages
 import Notes from "@/pages/notes";
@@ -15,6 +18,27 @@ import TodoDetail from "@/pages/todo-detail";
 import NotFound from "@/pages/not-found";
 
 export default function App() {
+  // Initialize offline storage and service worker
+  useEffect(() => {
+    const initializeOfflineFeatures = async () => {
+      try {
+        await offlineStorage.init();
+        await serviceWorkerManager.init();
+        
+        // Clean stale cache entries periodically
+        const interval = setInterval(() => {
+          offlineStorage.clearStaleEntries();
+        }, 5 * 60 * 1000); // Every 5 minutes
+        
+        return () => clearInterval(interval);
+      } catch (error) {
+        console.warn('Failed to initialize offline features:', error);
+      }
+    };
+    
+    initializeOfflineFeatures();
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -29,6 +53,9 @@ export default function App() {
               <Route path="/todo/:id" component={TodoDetail} />
               <Route component={NotFound} />
             </Switch>
+            
+            {/* Development cache debugger - only shows in dev mode */}
+            <DevCacheDebugger />
           </div>
         </Router>
         <Toaster />
