@@ -1,4 +1,3 @@
-
 import { CheckSquare, FileText, User } from "lucide-react";
 import { useOfflineStore } from "@/store/offline-store";
 import { useLocation } from "wouter";
@@ -24,7 +23,7 @@ export default function BottomNavigation({}: BottomNavigationProps) {
           <CheckSquare className="w-4 h-4" />
           <span className="text-xs">Remind</span>
         </button>
-        
+
         <button 
           onClick={() => navigate("/")}
           className={`tab-button ${isActive("/") ? "active" : ""}`}
@@ -32,7 +31,7 @@ export default function BottomNavigation({}: BottomNavigationProps) {
           <FileText className="w-4 h-4" />
           <span className="text-xs">Notes</span>
         </button>
-        
+
         <button 
           onClick={() => navigate("/profile")}
           className={`tab-button ${isActive("/profile") ? "active" : ""} relative`}
