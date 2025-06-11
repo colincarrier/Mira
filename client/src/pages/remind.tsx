@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
-import { Check, Circle, Clock, AlertCircle, Pin, Bell, X } from "lucide-react";
+import { Check, Circle, Clock, AlertCircle, Pin, Bell, X, Send, Mic } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import BottomNavigation from "@/components/bottom-navigation";
@@ -280,7 +280,7 @@ export default function Remind() {
                     onClick={() => handleRemindClick(reminder)}
                     className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
                   >
-                    <Bell className="w-4 h-4" />
+                    <Clock className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -358,7 +358,7 @@ export default function Remind() {
                     onClick={() => handleRemindClick(todo)}
                     className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                   >
-                    <Circle className="w-4 h-4" />
+                    <Clock className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -397,27 +397,34 @@ export default function Remind() {
                   </div>
                 ) : (
                   <div>
-                    <input
-                      type="text"
-                      value={remindInput}
-                      onChange={(e) => setRemindInput(e.target.value)}
-                      placeholder="e.g., 'in 2 hours', 'tomorrow at 9am', 'next Monday'"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      autoFocus
-                    />
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={remindInput}
+                        onChange={(e) => setRemindInput(e.target.value)}
+                        placeholder="e.g., 'in 2 hours', 'tomorrow at 9am', 'next Monday'"
+                        className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        autoFocus
+                      />
                       <button
                         onClick={handleRemindSubmit}
                         disabled={!remindInput.trim()}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+                        className={`p-3 rounded-md transition-colors ${
+                          remindInput.trim() 
+                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500'
+                        }`}
                       >
-                        Set Reminder
+                        <Send className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setRemindPopup({ isOpen: false, todo: null })}
-                        className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-medium"
+                        onClick={() => {
+                          // TODO: Implement voice input
+                          console.log('Voice input clicked');
+                        }}
+                        className="p-3 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                       >
-                        Cancel
+                        <Mic className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
