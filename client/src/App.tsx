@@ -33,7 +33,9 @@ function App() {
             <Route path="/note/:id" component={NoteDetail} />
             <Route path="/notes/:id" component={NoteDetail} />
             <Route path="/collection/:id" component={CollectionDetail} />
+            <Route path="/collections/:id" component={CollectionDetail} />
             <Route path="/todo/:id" component={TodoDetail} />
+            <Route path="/todos/:id" component={TodoDetail} />
             <Route path="/remind" component={Remind} />
             <Route path="/profile" component={Profile} />
             <Route component={NotFound} />
