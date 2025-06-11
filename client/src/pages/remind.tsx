@@ -233,8 +233,7 @@ export default function Remind() {
           </div>
 
           {reminders.length === 0 ? (
-            <div className="text-center py-6">
-              <Clock className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+            <div className="px-4 py-1">
               <p className="text-gray-500 text-sm">
                 No reminders {activeReminderFilter === 'today' ? 'today' : 
                           activeReminderFilter === 'week' ? 'this week' :
@@ -258,7 +257,11 @@ export default function Remind() {
                     onClick={() => setLocation(`/todo/${reminder.id}`)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <span className={`text-sm font-medium truncate ${
+                        reminder.completed 
+                          ? 'line-through text-gray-500 dark:text-gray-400' 
+                          : 'text-gray-900 dark:text-gray-100'
+                      }`}>
                         {reminder.title}
                       </span>
                       <div className="flex items-center gap-1 text-xs text-orange-600 ml-2">
@@ -311,8 +314,7 @@ export default function Remind() {
           </div>
 
           {regularTodos.length === 0 ? (
-            <div className="text-center py-6">
-              <Circle className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+            <div className="px-4 py-1">
               <p className="text-gray-500 text-sm">
                 No {activeTodoFilter === 'all' ? 'todos' : activeTodoFilter} todos yet
               </p>
@@ -333,7 +335,11 @@ export default function Remind() {
                     onClick={() => setLocation(`/todo/${todo.id}`)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <span className={`text-sm font-medium truncate ${
+                        todo.completed 
+                          ? 'line-through text-gray-500 dark:text-gray-400' 
+                          : 'text-gray-900 dark:text-gray-100'
+                      }`}>
                         {todo.title}
                       </span>
                       <div className="flex items-center gap-1 text-xs text-gray-500 ml-2">
@@ -363,7 +369,7 @@ export default function Remind() {
 
       {/* Remind Popup */}
       {remindPopup.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-[60] p-4 pb-32">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
