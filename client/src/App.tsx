@@ -5,7 +5,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 
 // Import pages
-import ActivityFeed from "@/components/activity-feed";
+import Notes from "@/pages/notes";
 import TodosView from "@/components/todos-view";
 import CollectionsView from "@/components/collections-view";
 import Profile from "@/pages/profile";
@@ -14,7 +14,6 @@ import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
 import Remind from "@/pages/remind";
 import NotFound from "@/pages/not-found";
-import BottomNavigation from "@/components/bottom-navigation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,9 +30,9 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <div className="min-h-screen bg-[#f1efe8] pb-24">
+          <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
-              <Route path="/" component={ActivityFeed} />
+              <Route path="/" component={Notes} />
               <Route path="/todos" component={TodosView} />
               <Route path="/collections" component={CollectionsView} />
               <Route path="/profile" component={Profile} />
@@ -46,7 +45,6 @@ export default function App() {
               <Route path="/remind" component={Remind} />
               <Route component={NotFound} />
             </Switch>
-            <BottomNavigation />
           </div>
         </Router>
         <Toaster />
