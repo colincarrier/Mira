@@ -28,7 +28,6 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <Toaster />
         <Router />
       </QueryClientProvider>
     </ErrorBoundary>

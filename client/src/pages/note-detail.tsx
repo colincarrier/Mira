@@ -933,8 +933,9 @@ export default function NoteDetail() {
           {isTyping ? (
             <>
               <button 
-                onClick={() => {}}
+                onClick={() => fileInputRef.current?.click()}
                 className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                title="Add attachment"
               >
                 <Plus className="w-4 h-4" />
               </button>

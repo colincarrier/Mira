@@ -88,8 +88,9 @@ export default function SimpleTextInput({ onCameraCapture, onNewNote }: SimpleTe
           {text.trim() ? (
             <>
               <button 
-                onClick={() => {/* TODO: Add media picker functionality */}}
+                onClick={onCameraCapture}
                 className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                title="Add photo"
               >
                 <Plus className="w-4 h-4" />
               </button>
