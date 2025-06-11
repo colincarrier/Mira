@@ -8,7 +8,7 @@ import CollectionDetail from "@/pages/collection-detail";
 import Remind from "@/pages/remind";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
-import ErrorBoundary from "@/components/error-boundary";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 
 const queryClient = new QueryClient({
