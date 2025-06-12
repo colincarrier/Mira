@@ -2848,15 +2848,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
-  app.get("/api/reminders", async (req, res) => {
-    try {
-      const reminders = await storage.getReminders();
-      res.json(reminders);
-    } catch (error) {
-      console.error("Failed to fetch reminders:", error);
-      res.status(500).json({ message: "Failed to fetch reminders" });
-    }
-  });
+
 
   // Add optional todo to main todos list
   app.post("/api/todos/add-optional", async (req, res) => {
