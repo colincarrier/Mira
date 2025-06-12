@@ -213,17 +213,31 @@ class NotificationSystem {
 
     // Get all active reminders
     const todos = await storage.getTodos();
-    const activeReminders = todos.filter(todo => 
-      todo.isActiveReminder && 
-      !todo.completed && 
-      !todo.archived &&
-      todo.timeDue
-    );
+    console.log(`📋 Total todos fetched: ${todos.length}`);
+    
+    // Debug: Show first few todos with their reminder status
+    todos.slice(0, 5).forEach(todo => {
+      console.log(`🔍 Todo: "${todo.title}" - isActiveReminder: ${todo.isActiveReminder} (type: ${typeof todo.isActiveReminder}) - timeDue: ${todo.timeDue}`);
+    });
+    
+    const activeReminders = todos.filter(todo => {
+      const isActive = todo.isActiveReminder === true;
+      const notCompleted = !todo.completed;
+      const notArchived = !todo.archived;
+      const hasDueTime = todo.timeDue != null;
+      
+      if (isActive) {
+        console.log(`📝 Active reminder found: "${todo.title}" - Due: ${todo.timeDue} - Completed: ${todo.completed} - Archived: ${todo.archived}`);
+      }
+      
+      return isActive && notCompleted && notArchived;
+    });
 
     console.log(`📋 Found ${activeReminders.length} active reminders to schedule`);
 
     // Schedule notifications for each active reminder
     for (const reminder of activeReminders) {
+      console.log(`📅 Scheduling notifications for: "${reminder.title}"`);
       await this.scheduleNotifications(reminder);
     }
 
