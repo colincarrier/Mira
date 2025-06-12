@@ -130,50 +130,42 @@ export default function Remind() {
   const overdueCount = reminders?.filter(r => r.reminderState === 'overdue').length || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Status Bar */}
-      <div className="safe-area-top bg-[hsl(var(--background))]"></div>
-
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-4 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-serif font-medium text-gray-900">
-              Reminders
-            </h1>
-            <Button
-              onClick={() => setShowCreateReminder(true)}
-              size="sm"
-              className="bg-orange-500 hover:bg-orange-600"
+      <div className="sticky top-0 z-10 bg-background border-b">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h1 className="text-xl font-semibold">Reminders</h1>
+          <Button 
+            onClick={() => setShowCreateReminder(true)}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="px-4 py-2 bg-background border-b">
+        <div className="flex space-x-1">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'active', label: 'Active' },
+            { key: 'overdue', label: 'Overdue' },
+            { key: 'completed', label: 'Completed' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key as any)}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                filter === key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              New
-            </Button>
-          </div>
-
-
-
-          {/* Filter Pills */}
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { key: 'all', label: 'All' },
-              { key: 'active', label: 'Active' },
-              { key: 'overdue', label: 'Overdue' },
-              { key: 'completed', label: 'Completed' }
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key as any)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  filter === key
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -197,92 +189,75 @@ export default function Remind() {
         </DialogContent>
       </Dialog>
 
-      {/* Reminders List */}
-      <div className="pb-24 px-4 py-4">
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="p-4 space-y-2">
             {[1, 2, 3].map(i => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardContent>
-              </Card>
+              <div key={i} className="animate-pulse">
+                <div className="h-16 bg-muted rounded-lg"></div>
+              </div>
             ))}
           </div>
         ) : filteredReminders.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {filter === 'active' ? 'No active reminders' : 
-               filter === 'overdue' ? 'No overdue reminders' :
-               filter === 'completed' ? 'No completed reminders' : 'No reminders'}
-            </h3>
-            <p className="text-gray-500 mb-4">
+          <div className="flex flex-col items-center justify-center h-64 px-4">
+            <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No reminders</h3>
+            <p className="text-muted-foreground text-center mb-4">
               {filter === 'active' ? 'Create your first reminder to get started' : 
                `No ${filter} reminders to show`}
             </p>
-            {filter === 'active' && (
-              <Button
-                onClick={() => setShowCreateReminder(true)}
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Reminder
-              </Button>
-            )}
+            <Button onClick={() => setShowCreateReminder(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Reminder
+            </Button>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="p-4 space-y-2">
             {filteredReminders.map((reminder) => (
               <div 
                 key={reminder.id} 
-                className="bg-white p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+                className="flex items-center justify-between p-3 bg-card rounded-lg border cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
                 onClick={() => setSelectedReminder(reminder)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 mb-1">
-                      {reminder.title}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{reminder.title}</div>
+                  {reminder.dueDate && (
+                    <div className="text-sm text-muted-foreground">
+                      {formatDueTime(reminder.dueDate)}
                     </div>
-                    
-                    {reminder.dueDate && (
-                      <div className="text-sm text-gray-500">
-                        {formatDueTime(reminder.dueDate)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStateColor(reminder.reminderState)}`}>
-                      {reminder.reminderState}
-                    </span>
-                    
-                    {reminder.reminderState === 'active' && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            completeReminderMutation.mutate(reminder.id);
-                          }}
-                        >
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dismissReminderMutation.mutate(reminder.id);
-                          }}
-                        >
-                          <X className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2 ml-3">
+                  <Badge variant={reminder.reminderState === 'active' ? 'default' : 'secondary'}>
+                    {reminder.reminderState}
+                  </Badge>
+                  
+                  {reminder.reminderState === 'active' && (
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          completeReminderMutation.mutate(reminder.id);
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dismissReminderMutation.mutate(reminder.id);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
