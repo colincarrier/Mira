@@ -16,8 +16,12 @@ interface CacheStats {
   browserCaches: string[];
 }
 
-export default function DevCacheDebugger() {
-  const [isOpen, setIsOpen] = useState(false);
+interface DevCacheDebuggerProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function DevCacheDebugger({ isOpen = true, onClose }: DevCacheDebuggerProps) {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [isClearing, setIsClearing] = useState(false);
 
@@ -61,19 +65,9 @@ export default function DevCacheDebugger() {
     return new Date(timestamp).toLocaleTimeString();
   };
 
-  return (
-    <>
-      {/* Floating debug button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-20 right-4 z-[60] bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 transition-colors"
-        title="Cache Debugger (Dev Only)"
-      >
-        <Database className="w-5 h-5" />
-      </button>
+  if (!isOpen) return null;
 
-      {/* Debug panel */}
-      {isOpen && (
+  return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-6">
@@ -82,7 +76,7 @@ export default function DevCacheDebugger() {
                   Development Cache Debugger
                 </h2>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={onClose}
                   className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   ×
@@ -217,7 +211,5 @@ export default function DevCacheDebugger() {
             </div>
           </div>
         </div>
-      )}
-    </>
   );
 }

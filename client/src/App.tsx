@@ -53,9 +53,6 @@ export default function App() {
               <Route path="/todo/:id" component={TodoDetail} />
               <Route component={NotFound} />
             </Switch>
-            
-            {/* Development cache debugger - only shows in dev mode */}
-            <DevCacheDebugger />
           </div>
         </Router>
         <Toaster />

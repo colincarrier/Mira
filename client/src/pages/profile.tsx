@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search, Database } from "lucide-react";
 import type { NoteWithTodos, Collection } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { useOfflineStore } from "@/store/offline-store";
 import { useLocation } from "wouter";
 import BottomNavigation from "@/components/bottom-navigation";
 import CollectionsView from "@/components/collections-view";
+import DevCacheDebugger from "@/components/dev-cache-debugger";
 
 export default function Profile() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -19,6 +20,7 @@ export default function Profile() {
   const [profileText, setProfileText] = useState('');
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
   const [showCollections, setShowCollections] = useState(false);
+  const [showDebugger, setShowDebugger] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -210,19 +212,32 @@ export default function Profile() {
             </div>
 
             {/* Tiny Sync Status Bubble */}
-            <div className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 rounded-full ${
-                isSyncing ? 'bg-yellow-500' : 
-                !isOnline && pendingItems > 0 ? 'bg-red-500' : 
-                !isOnline ? 'bg-orange-500' : 
-                'bg-green-500'
-              }`} />
-              <span className="text-xs text-gray-500">
-                {isSyncing ? 'syncing' : 
-                 !isOnline && pendingItems > 0 ? 'offline' : 
-                 !isOnline ? 'offline' : 
-                 'synced'}
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${
+                  isSyncing ? 'bg-yellow-500' : 
+                  !isOnline && pendingItems > 0 ? 'bg-red-500' : 
+                  !isOnline ? 'bg-orange-500' : 
+                  'bg-green-500'
+                }`} />
+                <span className="text-xs text-gray-500">
+                  {isSyncing ? 'syncing' : 
+                   !isOnline && pendingItems > 0 ? 'offline' : 
+                   !isOnline ? 'offline' : 
+                   'synced'}
+                </span>
+              </div>
+              
+              {/* Subtle Development Cache Debug Button */}
+              {import.meta.env.DEV && (
+                <button
+                  onClick={() => setShowDebugger(!showDebugger)}
+                  className="opacity-30 hover:opacity-70 transition-opacity"
+                  title="Cache Debug (Dev)"
+                >
+                  <Database className="w-3 h-3 text-gray-400" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -445,6 +460,14 @@ export default function Profile() {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
+
+      {/* Development Cache Debugger - conditionally rendered */}
+      {showDebugger && (
+        <DevCacheDebugger 
+          isOpen={showDebugger} 
+          onClose={() => setShowDebugger(false)} 
+        />
+      )}
 
       {/* All the existing modals remain the same... */}
     </div>
