@@ -3089,15 +3089,33 @@ Provide a concise, actionable response that adds value beyond just the task titl
   app.get("/api/reminders", async (req, res) => {
     try {
       const { state } = req.query;
+      console.log(`Fetching reminders with state filter: ${state}`);
+      
       const todos = await storage.getTodos();
+      console.log(`Total todos: ${todos.length}`);
       
-      let reminders = todos.filter(todo => todo.isActiveReminder);
+      let reminders = todos.filter(todo => todo.isActiveReminder === true);
+      console.log(`Filtered active reminders: ${reminders.length}`);
       
-      if (state) {
+      if (state && state !== 'all') {
         reminders = reminders.filter(todo => todo.reminderState === state);
+        console.log(`After state filter '${state}': ${reminders.length}`);
       }
       
-      res.json(reminders);
+      // Transform todos to reminder format expected by frontend
+      const transformedReminders = reminders.map(todo => ({
+        id: todo.id,
+        title: todo.title,
+        dueDate: todo.dueDate || todo.timeDue,
+        reminderState: todo.reminderState || 'active',
+        priority: todo.priority,
+        reminderType: todo.plannedNotificationStructure?.reminderCategory || 'general',
+        completed: todo.completed,
+        createdAt: todo.createdAt
+      }));
+      
+      console.log(`Returning ${transformedReminders.length} transformed reminders`);
+      res.json(transformedReminders);
     } catch (error) {
       console.error("Failed to fetch reminders:", error);
       res.status(500).json({ message: "Failed to fetch reminders" });
