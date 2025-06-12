@@ -31,6 +31,7 @@ import {
   type WebSearchResult,
   type LocationContext 
 } from "../../web-search";
+import { IntelligentReminderParser } from "../intelligent-reminder-parser";
 
 /* ----------  TYPES  ---------- */
 
@@ -113,19 +114,27 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const uid = input.id ?? uuid();
   const ts  = input.timestamp ?? new Date().toISOString();
 
-  /* 1 ▸ Quick intent fingerprint (cheap regex) */
-  const fp = fingerprint(input);
+  /* 1 ▸ Intelligent reminder detection */
+  const reminderInfo = IntelligentReminderParser.parseReminder(input.content);
 
-  /* 2 ▸ Compose LLM prompt */
+  /* 2 ▸ Quick intent fingerprint (enhanced with reminder detection) */
+  const fp = fingerprint(input, reminderInfo);
+
+  /* 3 ▸ Compose LLM prompt */
   const prompt = await composePrompt(input, fp);
 
-  /* 3 ▸ Model call */
+  /* 4 ▸ Model call */
   const rawModelJSON = await callLLM(input, prompt);
 
-  /* 4 ▸ Post-process, enforce schema, fallback if needed */
-  const result = sanitise(rawModelJSON, input, uid, ts, fp);
+  /* 5 ▸ Post-process, enforce schema, fallback if needed */
+  let result = sanitise(rawModelJSON, input, uid, ts, fp);
 
-  /* 5 ▸ Location-aware web search if applicable */
+  /* 6 ▸ Enhance with intelligent reminder data */
+  if (reminderInfo.isReminder) {
+    result = enhanceWithReminderIntelligence(result, reminderInfo);
+  }
+
+  /* 7 ▸ Location-aware web search if applicable */
   let webResults: WebSearchResult[] = [];
   if (shouldTriggerLocationSearch(input.content)) {
     const location = await getUserLocation(input.req);
@@ -142,12 +151,13 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
 
 /* ----------  INTERNALS  ---------- */
 
-function fingerprint({ content, mode }: MiraAIInput) {
+function fingerprint({ content, mode }: MiraAIInput, reminderInfo?: any) {
   const c = content.toLowerCase();
   const isShort = c.length < 60;
-  const hasDate = /\b(today|tomorrow|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/.test(c);
-  const recur   = /\b(every|daily|weekly|monthly|annually|each)\b/.test(c);
-  return { isShort, hasDate, recur, mode };
+  const hasDate = /\b(today|tomorrow|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/.test(c) || reminderInfo?.timeReference;
+  const recur   = /\b(every|daily|weekly|monthly|annually|each)\b/.test(c) || reminderInfo?.recurringPattern;
+  const isReminder = reminderInfo?.isReminder || false;
+  return { isShort, hasDate, recur, mode, isReminder };
 }
 
 async function composePrompt(input: MiraAIInput, fp: any) {
@@ -237,5 +247,44 @@ function defaultSmartActions(intent: IntentType): SmartAction[] {
   }
 }
 
+function enhanceWithReminderIntelligence(result: MiraAIResult, reminderInfo: any): MiraAIResult {
+  // Enhance todos with intelligent reminder data
+  const enhancedTodos = result.todos.map(todo => ({
+    ...todo,
+    isActiveReminder: true,
+    timeDue: reminderInfo.timeReference?.parsedTime,
+    reminderType: reminderInfo.context.type,
+    reminderCategory: reminderInfo.context.category,
+    repeatPattern: reminderInfo.recurringPattern || 'none',
+    leadTimeNotifications: reminderInfo.explicitLeadTime ? 
+      [reminderInfo.explicitLeadTime] : 
+      [reminderInfo.context.defaultLeadTime],
+    urgencyLevel: reminderInfo.context.urgency
+  }));
+
+  // Add reminder-specific smart actions
+  const reminderSmartActions = [
+    { label: "Set Reminder", action: "reminder" },
+    { label: "Reschedule", action: "reschedule" }
+  ];
+
+  return {
+    ...result,
+    todos: enhancedTodos,
+    intent: reminderInfo.recurringPattern ? "recurring-task" : "scheduled-event",
+    urgency: reminderInfo.context.urgency,
+    smartActions: [...(result.smartActions || []), ...reminderSmartActions],
+    timeInstructions: {
+      hasTimeReference: !!reminderInfo.timeReference,
+      extractedTimes: reminderInfo.timeReference ? [reminderInfo.timeReference.originalText] : [],
+      scheduledItems: enhancedTodos.filter(t => t.timeDue).map(t => ({
+        title: t.title,
+        scheduledTime: t.timeDue,
+        type: t.reminderType
+      }))
+    }
+  };
+}
+
 /* ----------  TEST-HARNESS (exported for Jest / vitest) ---------- */
-export const _internal = { fingerprint, composePrompt, sanitise };
+export const _internal = { fingerprint, composePrompt, sanitise, enhanceWithReminderIntelligence };
