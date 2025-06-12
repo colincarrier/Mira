@@ -1,67 +1,85 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Check } from "lucide-react";
+import { Clock, Check, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/bottom-navigation";
 import { formatDistanceToNow } from "date-fns";
-
-interface Reminder {
-  id: number;
-  title: string;
-  dueDate?: Date;
-  reminderState: 'active' | 'overdue' | 'completed' | 'dismissed' | 'archived';
-  priority?: string;
-  reminderType?: string;
-}
-
-interface Todo {
-  id: number;
-  title: string;
-  completed: boolean;
-  dueDate?: Date;
-  priority?: string;
-  pinned?: boolean;
-}
+import type { Todo } from "@shared/schema";
 
 export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [todoFilter, setTodoFilter] = useState<'all' | 'urgent' | 'pinned'>('all');
+  const [newReminder, setNewReminder] = useState('');
+  const [newTodo, setNewTodo] = useState('');
   
   const queryClient = useQueryClient();
 
-  // Fetch reminders
-  const { data: reminders = [], isLoading: remindersLoading } = useQuery<Reminder[]>({
-    queryKey: ["/api/reminders"],
-  });
-
-  // Fetch todos
-  const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
+  // Fetch all todos - we'll filter client-side
+  const { data: allTodos = [], isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
   });
 
-  // Toggle reminder completion
-  const toggleReminderMutation = useMutation({
-    mutationFn: async (reminder: Reminder) => {
-      const newState = reminder.reminderState === 'completed' ? 'active' : 'completed';
-      const response = await fetch(`/api/reminders/${reminder.id}`, {
-        method: 'PATCH',
+  // Create reminder (todo with isActiveReminder = true)
+  const createReminderMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reminderState: newState })
+        body: JSON.stringify({ 
+          title: content,
+          completed: false,
+          itemType: 'reminder',
+          isActiveReminder: true,
+          plannedNotificationStructure: {
+            enabled: true,
+            reminderCategory: 'today',
+            repeatPattern: 'none',
+            leadTimeNotifications: []
+          }
+        })
       });
-      if (!response.ok) throw new Error('Failed to update reminder');
+      if (!response.ok) throw new Error('Failed to create reminder');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setNewReminder('');
     }
   });
 
-  // Toggle todo completion
-  const toggleTodoMutation = useMutation({
+  // Create todo (regular todo with isActiveReminder = false)
+  const createTodoMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          title: content,
+          completed: false,
+          itemType: 'todo',
+          isActiveReminder: false
+        })
+      });
+      if (!response.ok) throw new Error('Failed to create todo');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setNewTodo('');
+    }
+  });
+
+  // Toggle completion for any todo/reminder
+  const toggleCompletionMutation = useMutation({
     mutationFn: async (todo: Todo) => {
       const response = await fetch(`/api/todos/${todo.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !todo.completed })
+        body: JSON.stringify({ 
+          completed: !todo.completed,
+          reminderState: !todo.completed ? 'completed' : 'active'
+        })
       });
       if (!response.ok) throw new Error('Failed to update todo');
       return response.json();
@@ -71,26 +89,42 @@ export default function Remind() {
     }
   });
 
-  // Filter reminders based on time period
+  // Client-side filtering
+  const reminders = allTodos.filter(todo => todo.isActiveReminder === true && !todo.archived);
+  const todos = allTodos.filter(todo => todo.isActiveReminder === false && !todo.archived);
+
+  // Apply additional filters
   const filteredReminders = reminders.filter(reminder => {
-    // For now, show all reminders regardless of filter
-    return reminder.reminderState === 'active' || reminder.reminderState === 'overdue';
+    // For now, show all reminders regardless of time filter
+    // Future: implement proper time-based filtering
+    return true;
   });
 
-  // Filter todos
   const filteredTodos = todos.filter(todo => {
     if (todoFilter === 'all') return true;
-    if (todoFilter === 'urgent') return todo.priority === 'high' || todo.priority === 'urgent';
+    if (todoFilter === 'urgent') return todo.priority === 'urgent';
     if (todoFilter === 'pinned') return todo.pinned;
     return true;
   });
 
-  const formatRelativeTime = (date: Date | undefined) => {
+  const formatRelativeTime = (date: Date | string | null) => {
     if (!date) return '';
     try {
       return formatDistanceToNow(new Date(date), { addSuffix: true });
     } catch {
       return '';
+    }
+  };
+
+  const handleAddReminder = () => {
+    if (newReminder.trim()) {
+      createReminderMutation.mutate(newReminder.trim());
+    }
+  };
+
+  const handleAddTodo = () => {
+    if (newTodo.trim()) {
+      createTodoMutation.mutate(newTodo.trim());
     }
   };
 
@@ -129,9 +163,27 @@ export default function Remind() {
               </div>
             </div>
 
+            {/* Reminder Input */}
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Add a reminder..."
+                value={newReminder}
+                onChange={(e) => setNewReminder(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddReminder()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleAddReminder}
+                disabled={!newReminder.trim() || createReminderMutation.isPending}
+                size="sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+
             {/* Reminders List */}
             <div className="space-y-1">
-              {remindersLoading ? (
+              {isLoading ? (
                 <div className="text-center py-4 text-gray-500">Loading reminders...</div>
               ) : filteredReminders.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">No reminders found</div>
@@ -139,19 +191,23 @@ export default function Remind() {
                 filteredReminders.map((reminder) => (
                   <div key={reminder.id} className="flex items-center gap-3 py-1">
                     <button 
-                      onClick={() => toggleReminderMutation.mutate(reminder)}
+                      onClick={() => toggleCompletionMutation.mutate(reminder)}
                       className="text-gray-400 hover:text-green-600 transition-colors"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <div className="flex-1 min-w-0 cursor-pointer">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">
+                        <span className={`text-sm font-medium truncate ${
+                          reminder.completed 
+                            ? 'line-through text-gray-500' 
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}>
                           {reminder.title}
                         </span>
                         <div className="flex items-center gap-1 text-xs text-orange-600 ml-2">
-                          {reminder.dueDate && (
-                            <span>{formatRelativeTime(reminder.dueDate)}</span>
+                          {reminder.timeDue && (
+                            <span>{formatRelativeTime(reminder.timeDue)}</span>
                           )}
                         </div>
                       </div>
@@ -190,9 +246,27 @@ export default function Remind() {
               </div>
             </div>
 
+            {/* Todo Input */}
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Add a todo..."
+                value={newTodo}
+                onChange={(e) => setNewTodo(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTodo()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleAddTodo}
+                disabled={!newTodo.trim() || createTodoMutation.isPending}
+                size="sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+
             {/* Todos List */}
             <div className="space-y-1">
-              {todosLoading ? (
+              {isLoading ? (
                 <div className="text-center py-4 text-gray-500">Loading todos...</div>
               ) : filteredTodos.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">No todos found</div>
@@ -200,7 +274,7 @@ export default function Remind() {
                 filteredTodos.map((todo) => (
                   <div key={todo.id} className="flex items-center gap-3 py-1">
                     <button 
-                      onClick={() => toggleTodoMutation.mutate(todo)}
+                      onClick={() => toggleCompletionMutation.mutate(todo)}
                       className="text-gray-400 hover:text-green-600 transition-colors"
                     >
                       <Check className="w-4 h-4" />
@@ -215,8 +289,8 @@ export default function Remind() {
                           {todo.title}
                         </span>
                         <div className="flex items-center gap-1 text-xs text-blue-600 ml-2">
-                          {todo.dueDate && (
-                            <span>{formatRelativeTime(todo.dueDate)}</span>
+                          {todo.timeDue && (
+                            <span>{formatRelativeTime(todo.timeDue)}</span>
                           )}
                         </div>
                       </div>

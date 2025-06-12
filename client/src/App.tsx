@@ -11,7 +11,7 @@ import { useEffect } from "react";
 // Import pages
 import Notes from "@/pages/notes";
 import Remind from "@/pages/remind";
-import RemindTest from "@/pages/remind-test";
+
 import Profile from "@/pages/profile";
 import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
@@ -46,10 +46,9 @@ export default function App() {
         <Router>
           <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
-              <Route path="/" exact component={Notes} />
-              <Route path="/remind-test" exact component={RemindTest} />
-              <Route path="/remind" exact component={Remind} />
-              <Route path="/profile" exact component={Profile} />
+              <Route path="/" component={Notes} />
+              <Route path="/remind" component={Remind} />
+              <Route path="/profile" component={Profile} />
               <Route path="/notes/:id" component={NoteDetail} />
               <Route path="/collection/:id" component={CollectionDetail} />
               <Route path="/todo/:id" component={TodoDetail} />
