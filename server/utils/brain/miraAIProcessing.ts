@@ -67,6 +67,12 @@ export interface MiraAIResult {
   fromTheWeb?: WebSearchResult[];       // location-aware web search results
   /* PREDICTIVE */
   nextSteps?: string[];
+  /* REMINDER SYSTEM */
+  timeInstructions?: {
+    hasTimeReference: boolean;
+    extractedTimes: string[];
+  };
+  reminders?: ReminderItem[];           // structured reminder data
   /* RAW */
   _rawModelJSON: any;                   // untouched model response for debugging
 }
@@ -92,6 +98,14 @@ export interface ToDoItem {
 export interface OptionalTodoItem {
   title: string;
   description?: string;
+}
+
+export interface ReminderItem {
+  title: string;
+  dueTime?: string;                     // ISO timestamp
+  recurrence?: string;                  // RRULE or natural language
+  priority?: Urgency;
+  reminderType?: string;                // pickup, appointment, call, etc.
 }
 
 export interface SmartAction {

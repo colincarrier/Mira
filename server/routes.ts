@@ -1021,19 +1021,17 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 try {
                   const reminderData = {
                     title: reminder.title,
-                    isCompleted: false,
+                    completed: false,
                     priority: 'high',
-                    due: reminder.datetime,
                     noteId: note.id,
-                    isTimeDependent: true,
-                    isActiveReminder: true, // This marks it as a reminder
-                    timeDue: reminder.datetime,
-                    notificationSchedule: [reminder.datetime],
-                    reminderType: 'time-based'
+                    isActiveReminder: true,
+                    reminderState: 'active',
+                    dueDate: reminder.dueTime ? new Date(reminder.dueTime) : null,
+                    timeDue: reminder.dueTime ? new Date(reminder.dueTime) : null
                   };
 
                   await storage.createTodo(reminderData);
-                  console.log("Created reminder:", reminder.title, "for", reminder.datetime);
+                  console.log("Created reminder:", reminder.title, "for", reminder.dueTime);
                 } catch (reminderError) {
                   console.error("Error creating reminder:", reminderError);
                 }
@@ -1051,14 +1049,13 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
 
                   const reminderData = {
                     title: `Reminder: ${content.slice(0, 50)}...`,
-                    isCompleted: false,
+                    completed: false,
                     priority: 'medium',
-                    due: defaultReminderTime.toISOString(),
                     noteId: note.id,
-                    isTimeDependent: true,
                     isActiveReminder: true,
-                    timeDue: defaultReminderTime.toISOString(),
-                    reminderType: 'auto-detected'
+                    reminderState: 'active',
+                    dueDate: defaultReminderTime,
+                    timeDue: defaultReminderTime
                   };
 
                   await storage.createTodo(reminderData);

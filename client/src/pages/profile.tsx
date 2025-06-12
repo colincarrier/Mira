@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search, Database } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search, Database, Bell } from "lucide-react";
 import type { NoteWithTodos, Collection } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import BottomNavigation from "@/components/bottom-navigation";
 import CollectionsView from "@/components/collections-view";
 import DevCacheDebugger from "@/components/dev-cache-debugger";
+import { ReminderSettings } from "@/components/reminder-settings";
 
 export default function Profile() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -21,6 +22,7 @@ export default function Profile() {
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, string>>({});
   const [showCollections, setShowCollections] = useState(false);
   const [showDebugger, setShowDebugger] = useState(false);
+  const [showReminderSettings, setShowReminderSettings] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -363,7 +365,7 @@ export default function Profile() {
                           <span className="text-sm font-medium text-gray-900 truncate">{collection.name}</span>
                         </div>
                         <div className="text-xs text-gray-500">
-                          {collection.noteCount || 0} items
+                          {notes?.filter(note => note.collectionId === collection.id).length || 0} items
                         </div>
                       </div>
                     ))}
