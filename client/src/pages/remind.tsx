@@ -1,333 +1,249 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import type { Todo } from "@shared/schema";
-import { Check, Pin, Archive, Clock, AlertCircle, Star, Filter, ChevronDown, ChevronRight, Circle, Search, Mic, Copy, Trash2, MoreHorizontal, X, GripVertical } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { useLocation } from "wouter";
+import { Clock, Plus, CheckCircle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import BottomNavigation from "@/components/bottom-navigation";
+import { useToast } from "@/hooks/use-toast";
 
-type FilterType = 'all' | 'urgent' | 'today' | 'pinned' | 'completed' | 'archived';
-type ReminderFilterType = 'today' | 'week' | 'month' | 'year';
-
-interface TodoItemProps {
-  todo: Todo;
-  onToggle: (todo: Todo) => void;
-  onPin: (todo: Todo) => void;
-  onArchive: (todo: Todo) => void;
-  onDragStart?: (todo: Todo) => void;
-  onDragEnd?: () => void;
-  isDragging?: boolean;
-  onClick?: (todo: Todo) => void;
-}
-
-function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, isDragging: isExternalDragging, onClick }: TodoItemProps) {
-  const handleClick = () => {
-    if (onClick) {
-      onClick(todo);
-    }
-  };
-
-  return (
-    <div className="relative">
-      <div 
-        className={`flex items-center gap-2 py-3 px-4 transition-all duration-200 cursor-pointer relative touch-manipulation
-          ${todo.completed 
-            ? 'text-gray-500 dark:text-gray-400' 
-            : 'active:bg-gray-50 dark:active:bg-gray-700'
-          }
-          ${todo.pinned ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
-        `}
-        onClick={handleClick}
-      >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle(todo);
-          }}
-          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors touch-manipulation
-            ${todo.completed 
-              ? 'text-white' 
-              : 'active:bg-gray-100 dark:active:bg-gray-600'
-            }
-          `}
-        >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
-            ${todo.completed 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : 'border-gray-300 dark:border-gray-600'
-            }
-          `}>
-            {todo.completed && <Check size={12} />}
-          </div>
-        </button>
-
-        <div className="flex items-center gap-2 flex-grow min-w-0">
-          {/* Reminder/Bell icon for all items */}
-          <Clock size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-          
-          <p className={`text-sm ${todo.completed ? 'line-through' : ''} truncate`}>
-            {todo.title}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {todo.pinned && (
-            <Pin size={14} className="text-blue-500 dark:text-blue-400" />
-          )}
-          
-          {todo.priority === 'urgent' && !todo.completed && (
-            <AlertCircle size={14} className="text-red-500 dark:text-red-400" />
-          )}
-        </div>
-      </div>
-    </div>
-  );
+interface Reminder {
+  id: number;
+  title: string;
+  dueDate?: Date;
+  reminderState: 'active' | 'overdue' | 'completed' | 'dismissed' | 'archived';
+  priority?: string;
+  reminderType?: string;
 }
 
 export default function Remind() {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [activeReminderFilter, setActiveReminderFilter] = useState<ReminderFilterType>('today');
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
-  const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  const [filter, setFilter] = useState<'all' | 'active' | 'overdue' | 'completed'>('all');
+  const [newReminder, setNewReminder] = useState('');
   
-  const { data: todos, isLoading } = useQuery<Todo[]>({
-    queryKey: ["/api/todos"],
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch reminders
+  const { data: reminders = [], isLoading } = useQuery<Reminder[]>({
+    queryKey: ["/api/reminders"],
   });
 
-  const toggleTodoMutation = useMutation({
-    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      const response = await apiRequest("PATCH", `/api/todos/${id}`, { completed });
-      return response.json();
-    },
-    onMutate: async ({ id, completed }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/todos"] });
-      
-      // Snapshot the previous value
-      const previousTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]);
-      
-      // Optimistically update to the new value
-      queryClient.setQueryData<Todo[]>(["/api/todos"], (old) =>
-        old?.map(todo => 
-          todo.id === id ? { ...todo, completed } : todo
-        ) || []
-      );
-      
-      return { previousTodos };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousTodos) {
-        queryClient.setQueryData(["/api/todos"], context.previousTodos);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-    },
-  });
-
-  const pinTodoMutation = useMutation({
-    mutationFn: async ({ id, pinned }: { id: number; pinned: boolean }) => {
-      const response = await apiRequest("PATCH", `/api/todos/${id}`, { pinned });
+  // Create reminder mutation
+  const createReminderMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      if (!response.ok) throw new Error('Failed to create reminder');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-    },
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      setNewReminder('');
+      toast({
+        title: "Reminder created",
+        description: "Your reminder has been created successfully."
+      });
+    }
   });
 
-  const archiveTodoMutation = useMutation({
-    mutationFn: async ({ id, archived }: { id: number; archived: boolean }) => {
-      const response = await apiRequest("PATCH", `/api/todos/${id}`, { archived });
+  // Complete reminder mutation
+  const completeReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/reminders/${id}/complete`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to complete reminder');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-    },
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder completed",
+        description: "The reminder has been marked as complete."
+      });
+    }
   });
 
-  const getFilteredTodos = () => {
-    if (!todos) return [];
+  // Dismiss reminder mutation
+  const dismissReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/reminders/${id}/dismiss`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to dismiss reminder');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder dismissed",
+        description: "The reminder has been dismissed."
+      });
+    }
+  });
 
-    let filtered = todos.filter(t => {
-      const matchesSearch = !searchTerm || t.title.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    });
-
-    switch (activeFilter) {
-      case 'pinned':
-        return filtered.filter(t => t.pinned && !t.completed && !t.archived);
-      case 'urgent':
-        return filtered.filter(t => t.priority === 'urgent' && !t.completed && !t.archived);
-      case 'today':
-        return filtered.filter(t => !t.completed && !t.archived);
-      case 'completed':
-        return filtered.filter(t => t.completed && !t.archived);
-      case 'archived':
-        return filtered.filter(t => t.archived);
-      default:
-        return showArchived ? filtered : filtered.filter(t => !t.archived);
+  const handleCreateReminder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newReminder.trim()) {
+      createReminderMutation.mutate(newReminder.trim());
     }
   };
 
-  const handleToggleTodo = (todo: Todo) => {
-    toggleTodoMutation.mutate({ id: todo.id, completed: !todo.completed });
+  const formatDueTime = (dueDate?: Date) => {
+    if (!dueDate) return null;
+    
+    const date = new Date(dueDate);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    
+    const timeString = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    
+    if (isToday) return `Today at ${timeString}`;
+    if (isTomorrow) return `Tomorrow at ${timeString}`;
+    return date.toLocaleDateString([], { 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   };
 
-  const handlePinTodo = (todo: Todo) => {
-    pinTodoMutation.mutate({ id: todo.id, pinned: !todo.pinned });
-  };
-
-  const handleArchiveTodo = (todo: Todo) => {
-    archiveTodoMutation.mutate({ id: todo.id, archived: !todo.archived });
-  };
-
-  const handleTodoClick = (todo: Todo) => {
-    setLocation(`/todos/${todo.id}`);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  const filteredTodos = getFilteredTodos();
-  const activeTodos = todos?.filter(t => !t.completed && !t.archived) || [];
-  const pinnedCount = todos?.filter(t => t.pinned && !t.completed && !t.archived).length || 0;
-  const urgentCount = todos?.filter(t => t.priority === 'urgent' && !t.completed && !t.archived).length || 0;
-
-  const filterButtons = [
-    { key: 'all', label: 'All', count: activeTodos.length, icon: null },
-    { key: 'pinned', label: 'Pins', count: pinnedCount, icon: Pin },
-    { key: 'urgent', label: 'Urgent', count: urgentCount, icon: AlertCircle },
-    { key: 'completed', label: 'Done', count: todos?.filter(t => t.completed && !t.archived).length || 0, icon: Check },
-  ];
-
-  // Separate reminders and todos
-  const reminders = todos?.filter(t => t.isActiveReminder && !t.completed && !t.archived) || [];
-  const regularTodos = todos?.filter(t => !t.isActiveReminder && !t.completed && !t.archived) || [];
+  const filteredReminders = reminders?.filter(reminder => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return reminder.reminderState === 'active';
+    if (filter === 'overdue') return reminder.reminderState === 'overdue';
+    if (filter === 'completed') return reminder.reminderState === 'completed';
+    return true;
+  }) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-4 pt-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
-              Remind
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-500 dark:text-gray-400 active:text-gray-700 dark:active:text-gray-200 transition-colors touch-manipulation">
-              <Search size={18} />
-            </button>
-            <button className="p-2 text-gray-500 dark:text-gray-400 active:text-gray-700 dark:active:text-gray-200 transition-colors touch-manipulation">
-              <Filter size={18} />
-            </button>
-          </div>
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="px-4 py-4">
+          <h1 className="text-xl font-semibold text-gray-900">Reminders</h1>
         </div>
+      </div>
 
-        {/* Reminders Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
-            <div className="flex gap-1">
-              {(['today', 'week', 'month', 'year'] as ReminderFilterType[]).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActiveReminderFilter(filter)}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                    activeReminderFilter === filter
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {reminders.length > 0 ? (
-            <div className="space-y-2">
-              {reminders.map(reminder => (
-                <TodoItem
-                  key={reminder.id}
-                  todo={reminder}
-                  onToggle={handleToggleTodo}
-                  onPin={handlePinTodo}
-                  onArchive={handleArchiveTodo}
-                  onClick={handleTodoClick}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="px-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                None {activeReminderFilter === 'today' ? 'today' : 
-                      activeReminderFilter === 'week' ? 'this week' :
-                      activeReminderFilter === 'month' ? 'this month' :
-                      'this year'}
-              </p>
-            </div>
-          )}
+      {/* Input Section */}
+      <div className="bg-white border-b px-4 py-3">
+        <form onSubmit={handleCreateReminder} className="flex gap-2">
+          <Input
+            value={newReminder}
+            onChange={(e) => setNewReminder(e.target.value)}
+            placeholder="Add a reminder..."
+            className="flex-1"
+          />
+          <Button 
+            type="submit" 
+            size="sm"
+            disabled={!newReminder.trim() || createReminderMutation.isPending}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="bg-white border-b px-4 py-2">
+        <div className="flex space-x-1">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'active', label: 'Active' },
+            { key: 'overdue', label: 'Overdue' },
+            { key: 'completed', label: 'Completed' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key as any)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                filter === key
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* To-dos Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">To-dos</h3>
-            <div className="flex gap-1">
-              {filterButtons.map(({ key, label, count, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(key as FilterType)}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap flex-shrink-0
-                    ${activeFilter === key
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                    }
-                  `}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {filteredTodos.length > 0 ? (
-            <div className="space-y-2">
-              {filteredTodos.map(todo => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggle={handleToggleTodo}
-                  onPin={handlePinTodo}
-                  onArchive={handleArchiveTodo}
-                  onClick={handleTodoClick}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="text-gray-400 dark:text-gray-500 mb-2">
-                <Circle size={48} className="mx-auto mb-4 opacity-50" />
+      {/* Content */}
+      <div className="pb-20">
+        {isLoading ? (
+          <div className="p-4 space-y-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse bg-white rounded-lg border p-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </div>
-              <p className="text-gray-500 dark:text-gray-400">
-                {activeFilter === 'completed' ? 'No completed tasks yet' : 
-                 activeFilter === 'pinned' ? 'No pinned tasks' :
-                 activeFilter === 'urgent' ? 'No urgent tasks' :
-                 searchTerm ? 'No tasks found' : 'No tasks yet'}
-              </p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : filteredReminders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 px-4">
+            <Clock className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No reminders</h3>
+            <p className="text-gray-500 text-center">
+              {filter === 'all' ? 'Add your first reminder above' : `No ${filter} reminders to show`}
+            </p>
+          </div>
+        ) : (
+          <div className="p-4 space-y-2">
+            {filteredReminders.map((reminder) => (
+              <div 
+                key={reminder.id} 
+                className="bg-white rounded-lg border p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 mb-1">{reminder.title}</div>
+                    {reminder.dueDate && (
+                      <div className="text-sm text-gray-500">
+                        {formatDueTime(reminder.dueDate)}
+                      </div>
+                    )}
+                    <div className="mt-1">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        reminder.reminderState === 'active' ? 'bg-blue-100 text-blue-800' :
+                        reminder.reminderState === 'overdue' ? 'bg-red-100 text-red-800' :
+                        reminder.reminderState === 'completed' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {reminder.reminderState}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {reminder.reminderState === 'active' && (
+                    <div className="flex gap-1 ml-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => completeReminderMutation.mutate(reminder.id)}
+                        disabled={completeReminderMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => dismissReminderMutation.mutate(reminder.id)}
+                        disabled={dismissReminderMutation.isPending}
+                      >
+                        <X className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <BottomNavigation />
