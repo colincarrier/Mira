@@ -146,8 +146,6 @@ export default function Remind() {
               </div>
             </div>
 
-
-
             {/* Reminders List */}
             <div className="space-y-1">
               {isLoading ? (
