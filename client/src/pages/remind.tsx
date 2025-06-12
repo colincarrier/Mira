@@ -8,6 +8,7 @@ import { ReminderInput } from "@/components/reminder-input";
 import BottomNavigation from "@/components/bottom-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
 interface Reminder {
   id: number;
@@ -21,6 +22,7 @@ interface Reminder {
 export default function Remind() {
   const [filter, setFilter] = useState<'all' | 'active' | 'overdue' | 'completed'>('active');
   const [showCreateReminder, setShowCreateReminder] = useState(false);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -238,7 +240,11 @@ export default function Remind() {
         ) : (
           <div className="space-y-3">
             {filteredReminders.map((reminder) => (
-              <Card key={reminder.id} className="bg-white">
+              <Card 
+                key={reminder.id} 
+                className="bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setSelectedReminder(reminder)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -272,7 +278,10 @@ export default function Remind() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => completeReminderMutation.mutate(reminder.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              completeReminderMutation.mutate(reminder.id);
+                            }}
                             disabled={completeReminderMutation.isPending}
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -280,7 +289,10 @@ export default function Remind() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => dismissReminderMutation.mutate(reminder.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              dismissReminderMutation.mutate(reminder.id);
+                            }}
                             disabled={dismissReminderMutation.isPending}
                           >
                             <Archive className="h-4 w-4" />
@@ -298,6 +310,73 @@ export default function Remind() {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
+
+      {/* Reminder Detail Dialog */}
+      <Dialog open={!!selectedReminder} onOpenChange={(open) => !open && setSelectedReminder(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              {selectedReminder?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedReminder && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge className={getStateColor(selectedReminder.reminderState)}>
+                  {selectedReminder.reminderState}
+                </Badge>
+                {selectedReminder.priority && (
+                  <Badge variant="outline" className="text-xs">
+                    {selectedReminder.priority}
+                  </Badge>
+                )}
+              </div>
+
+              {selectedReminder.dueDate && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  {formatDueTime(selectedReminder.dueDate)}
+                </div>
+              )}
+
+              {selectedReminder.reminderState === 'active' && (
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    onClick={() => {
+                      completeReminderMutation.mutate(selectedReminder.id);
+                      setSelectedReminder(null);
+                    }}
+                    disabled={completeReminderMutation.isPending}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Complete
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      dismissReminderMutation.mutate(selectedReminder.id);
+                      setSelectedReminder(null);
+                    }}
+                    disabled={dismissReminderMutation.isPending}
+                    className="flex-1"
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Dismiss
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogClose asChild>
+            <Button variant="ghost" className="mt-4">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

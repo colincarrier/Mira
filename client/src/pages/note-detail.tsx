@@ -385,7 +385,13 @@ export default function NoteDetail() {
             This note may have been deleted or moved.
           </p>
           <button
-            onClick={() => setLocation("/")}
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                setLocation("/");
+              }
+            }}
             className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md"
           >
             Back to Notes
@@ -402,7 +408,13 @@ export default function NoteDetail() {
         <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] bg-[#f5f5f5]">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setLocation("/")}
+              onClick={() => {
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  setLocation("/");
+                }
+              }}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]"
             >
               <ArrowLeft className="w-4 h-4" />

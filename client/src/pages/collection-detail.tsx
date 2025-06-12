@@ -114,7 +114,13 @@ export default function CollectionDetail() {
       <header className="bg-white px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => setLocation("/?tab=collections")}
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                setLocation("/?tab=collections");
+              }
+            }}
             className="flex items-center text-[hsl(var(--ios-blue))] touch-manipulation"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
@@ -140,7 +146,7 @@ export default function CollectionDetail() {
             </p>
           </div>
         </div>
-        
+
         {superNote && (
           <p className="text-sm text-gray-600 mb-3">{superNote.description}</p>
         )}
@@ -176,13 +182,13 @@ export default function CollectionDetail() {
                   // Separate completed and uncompleted items
                   const uncompleted = superNote.items.filter((item: any) => !item.isProcessed);
                   const completed = superNote.items.filter((item: any) => item.isProcessed);
-                  
+
                   return [...uncompleted, ...completed].map((item: any, index: number) => {
                     const timeAgo = (() => {
                       const now = new Date();
                       const itemDate = new Date(item.createdAt);
                       const diffInSeconds = Math.floor((now.getTime() - itemDate.getTime()) / 1000);
-                      
+
                       if (diffInSeconds < 60) return 'now';
                       if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
                       if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -271,7 +277,7 @@ export default function CollectionDetail() {
                   const now = new Date();
                   const noteDate = new Date(note.createdAt);
                   const diffInSeconds = Math.floor((now.getTime() - noteDate.getTime()) / 1000);
-                  
+
                   if (diffInSeconds < 60) return 'now';
                   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
                   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -290,7 +296,7 @@ export default function CollectionDetail() {
                         {note.content && note.content.length > 80 && '...'}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-3 ml-3 flex-shrink-0">
                       {note.todos && note.todos.length > 0 && (
                         <div className="flex items-center space-x-1">
@@ -300,14 +306,14 @@ export default function CollectionDetail() {
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center space-x-1">
                         {note.mode === 'standard' && <Icons.MessageSquare className="w-3 h-3 text-gray-400" />}
                         {note.mode === 'voice' && <Icons.Mic className="w-3 h-3 text-blue-500" />}
                         {note.mode === 'camera' && <Icons.Camera className="w-3 h-3 text-green-500" />}
                         {note.mode === 'file' && <Icons.File className="w-3 h-3 text-purple-500" />}
                       </div>
-                      
+
                       <span className="text-xs text-gray-500 min-w-0">{timeAgo}</span>
                     </div>
                   </div>
