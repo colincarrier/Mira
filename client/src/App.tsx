@@ -46,10 +46,10 @@ export default function App() {
         <Router>
           <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
-              <Route path="/" component={Notes} />
-              <Route path="/remind-test" component={RemindTest} />
-              <Route path="/remind" component={Remind} />
-              <Route path="/profile" component={Profile} />
+              <Route path="/" exact component={Notes} />
+              <Route path="/remind-test" exact component={RemindTest} />
+              <Route path="/remind" exact component={Remind} />
+              <Route path="/profile" exact component={Profile} />
               <Route path="/notes/:id" component={NoteDetail} />
               <Route path="/collection/:id" component={CollectionDetail} />
               <Route path="/todo/:id" component={TodoDetail} />
