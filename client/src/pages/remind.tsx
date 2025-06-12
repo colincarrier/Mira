@@ -1,492 +1,303 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import type { Todo } from "@shared/schema";
-import { Check, Circle, Clock, AlertCircle, Pin, Bell, X, Send, Mic } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { useLocation } from "wouter";
+import { Clock, Calendar, CheckCircle, Archive, AlertCircle, Filter, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ReminderInput } from "@/components/reminder-input";
 import BottomNavigation from "@/components/bottom-navigation";
-import SimpleTextInput from "@/components/simple-text-input";
-import FullScreenCapture from "@/components/full-screen-capture";
-import IOSVoiceRecorder from "@/components/ios-voice-recorder";
-import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
-type ReminderFilterType = 'today' | 'week' | 'month' | 'year';
-type TodoFilterType = 'all' | 'urgent' | 'pinned';
+interface Reminder {
+  id: number;
+  title: string;
+  dueDate?: Date;
+  reminderState: 'active' | 'overdue' | 'completed' | 'dismissed' | 'archived';
+  priority?: string;
+  reminderType?: string;
+}
 
 export default function Remind() {
-  const [, setLocation] = useLocation();
-  const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [activeReminderFilter, setActiveReminderFilter] = useState<ReminderFilterType>('today');
-  const [activeTodoFilter, setActiveTodoFilter] = useState<TodoFilterType>('all');
-  const [remindPopup, setRemindPopup] = useState<{ isOpen: boolean; todo: Todo | null }>({ isOpen: false, todo: null });
-  const [remindInput, setRemindInput] = useState('');
-
+  const [filter, setFilter] = useState<'all' | 'active' | 'overdue' | 'completed'>('active');
+  const [showCreateReminder, setShowCreateReminder] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: todos, isLoading } = useQuery<Todo[]>({
-    queryKey: ["/api/todos"],
+  // Fetch reminders
+  const { data: reminders, isLoading } = useQuery<Reminder[]>({
+    queryKey: ["/api/reminders", filter === 'all' ? undefined : filter],
   });
 
-  // Debug logging to see what data we're getting
-  console.log("Remind - todos data:", todos);
-  console.log("Remind - isLoading:", isLoading);
-
-  // Create todo/reminder mutation
-  const createTodoMutation = useMutation({
-    mutationFn: async (text: string) => {
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          content: text,
-          mode: "text",
-          context: "todo_creation"
-        }),
-        credentials: "include",
+  // Complete reminder mutation
+  const completeReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/reminders/${id}/complete`, {
+        method: 'PUT'
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create todo/reminder");
-      }
-
-      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
       toast({
-        title: "Todo/Reminder created",
-        description: "Your item has been processed successfully.",
-        duration: 3000,
+        title: "Reminder completed",
+        description: "The reminder has been marked as complete."
       });
-    },
-    onError: (error) => {
-      console.error("Todo creation error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create todo/reminder. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleTextSubmit = (text: string) => {
-    console.log('📋 REMIND handleTextSubmit called with:', text);
-    createTodoMutation.mutate(text);
-  };
-
-  const toggleComplete = useMutation({
-    mutationFn: async (todoId: number) => {
-      const response = await fetch(`/api/todos/${todoId}/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: true }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to toggle todo");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      // Refresh notification schedules
-      fetch('/api/notifications/refresh', { method: 'POST' });
-    },
-  });
-
-  const setReminder = useMutation({
-    mutationFn: async ({ todoId, remindText }: { todoId: number; remindText: string }) => {
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          content: `Set reminder for todo: ${remindText}`,
-          mode: "text",
-          context: "reminder_creation"
-        }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to set reminder");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setRemindPopup({ isOpen: false, todo: null });
-      setRemindInput('');
-      toast({
-        title: "Reminder set",
-        description: "Your reminder has been processed.",
-        duration: 3000,
-      });
-    },
-    onError: (error) => {
-      console.error("Reminder creation error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to set reminder. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleRemindClick = (todo: Todo) => {
-    setRemindPopup({ isOpen: true, todo });
-    if (todo.isActiveReminder && todo.timeDue) {
-      setRemindInput(`Reminder set for ${formatDistanceToNow(new Date(todo.timeDue), { addSuffix: true })}`);
-    } else {
-      setRemindInput('');
     }
-  };
+  });
 
-  const handleRemindSubmit = () => {
-    if (remindPopup.todo && remindInput.trim()) {
-      // Enhanced reminder text with better context
-      const enhancedRemindText = `Set reminder for "${remindPopup.todo.title}" - ${remindInput}`;
-      setReminder.mutate({ todoId: remindPopup.todo.id, remindText: enhancedRemindText });
+  // Dismiss reminder mutation
+  const dismissReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/reminders/${id}/dismiss`, {
+        method: 'PUT'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder dismissed",
+        description: "The reminder has been dismissed."
+      });
     }
-  };
+  });
 
-  if (isLoading) {
-    return (
-      <div className="w-full bg-[hsl(var(--background))] min-h-screen relative flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Archive reminder mutation
+  const archiveReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/reminders/${id}/archive`, {
+        method: 'PUT'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+      toast({
+        title: "Reminder archived",
+        description: "The reminder has been archived."
+      });
+    }
+  });
 
-  // Filter functions
-  const filterReminders = (items: Todo[]) => {
+  const formatDueTime = (dueDate?: Date) => {
+    if (!dueDate) return null;
+    
+    const date = new Date(dueDate);
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-
-    return items.filter(item => {
-      if (!item.timeDue) return activeReminderFilter === 'today';
-      const dueDate = new Date(item.timeDue);
-      
-      switch (activeReminderFilter) {
-        case 'today':
-          return dueDate >= today && dueDate < new Date(today.getTime() + 24 * 60 * 60 * 1000);
-        case 'week':
-          return dueDate >= weekStart;
-        case 'month':
-          return dueDate >= monthStart;
-        case 'year':
-          return dueDate >= yearStart;
-        default:
-          return true;
-      }
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    
+    const timeString = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    
+    if (isToday) return `Today at ${timeString}`;
+    if (isTomorrow) return `Tomorrow at ${timeString}`;
+    return date.toLocaleDateString([], { 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
     });
   };
 
-  const filterTodos = (items: Todo[]) => {
-    switch (activeTodoFilter) {
-      case 'urgent':
-        return items.filter(item => item.priority === 'urgent');
-      case 'pinned':
-        return items.filter(item => item.pinned);
-      case 'all':
-      default:
-        return items;
+  const getStateColor = (state: string) => {
+    switch (state) {
+      case 'active': return 'bg-blue-100 text-blue-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'dismissed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Separate and filter reminders and todos
-  const allReminders = todos?.filter(t => t.isActiveReminder === true && !t.completed && !t.archived) || [];
-  const allTodos = todos?.filter(t => (t.isActiveReminder === false || t.isActiveReminder === undefined || t.isActiveReminder === null) && !t.completed && !t.archived) || [];
-  
-  // Debug logging
-  console.log("All todos from API:", todos);
-  console.log("Filtered reminders:", allReminders);
-  console.log("Filtered todos:", allTodos);
-  
-  const reminders = filterReminders(allReminders);
-  const regularTodos = filterTodos(allTodos);
+  const filteredReminders = reminders?.filter(reminder => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return reminder.reminderState === 'active';
+    if (filter === 'overdue') return reminder.reminderState === 'overdue';
+    if (filter === 'completed') return reminder.reminderState === 'completed';
+    return true;
+  }) || [];
+
+  const activeCount = reminders?.filter(r => r.reminderState === 'active').length || 0;
+  const overdueCount = reminders?.filter(r => r.reminderState === 'overdue').length || 0;
 
   return (
-    <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
+    <div className="min-h-screen bg-gray-50">
       {/* Status Bar */}
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
 
-      {/* Main Content */}
-      <div className="pb-24 px-4">
-        {/* Header */}
-        <div className="pt-6 mb-6">
-          <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
-            Remind
-          </h2>
-        </div>
-
-        {/* Reminders Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between px-0 mb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Reminders</h3>
-              <span className="text-sm text-gray-500">({reminders.length})</span>
-            </div>
-            <div className="flex gap-1">
-              {(['today', 'week', 'month', 'year'] as ReminderFilterType[]).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActiveReminderFilter(filter)}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                    activeReminderFilter === filter
-                      ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-serif font-medium text-gray-900">
+              Reminders
+            </h1>
+            <Button
+              onClick={() => setShowCreateReminder(true)}
+              size="sm"
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New
+            </Button>
           </div>
 
-          {reminders.length === 0 ? (
-            <div className="px-4 py-1">
-              <p className="text-gray-500 text-sm">
-                No reminders {activeReminderFilter === 'today' ? 'today' : 
-                          activeReminderFilter === 'week' ? 'this week' :
-                          activeReminderFilter === 'month' ? 'this month' :
-                          'this year'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {reminders.map((reminder) => (
-                <div key={reminder.id} className="flex items-center gap-3 py-1">
-                  <button
-                    onClick={() => toggleComplete.mutate(reminder.id)}
-                    className="text-gray-400 hover:text-green-600 transition-colors"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-
-                  <div 
-                    className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => setLocation(`/todo/${reminder.id}`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm font-medium truncate ${
-                        reminder.completed 
-                          ? 'line-through text-gray-500 dark:text-gray-400' 
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}>
-                        {reminder.title}
-                      </span>
-                      <div className="flex items-center gap-1 text-xs text-orange-600 ml-2">
-                        {reminder.timeDue && (
-                          <span>
-                            {formatDistanceToNow(new Date(reminder.timeDue), { addSuffix: true })}
-                          </span>
-                        )}
-                        {reminder.priority === 'urgent' && <AlertCircle className="w-3 h-3" />}
-                        {reminder.pinned && <Pin className="w-3 h-3 text-yellow-500" />}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleRemindClick(reminder)}
-                    className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
-                  >
-                    <Clock className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* To-do's Section */}
-        <div>
-          <div className="flex items-center justify-between px-0 mb-3">
+          {/* Quick Stats */}
+          <div className="flex gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">To-do's</h3>
-              <span className="text-sm text-gray-500">({regularTodos.length})</span>
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-sm text-gray-600">{activeCount} active</span>
             </div>
-            <div className="flex gap-1">
-              {(['all', 'urgent', 'pinned'] as TodoFilterType[]).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActiveTodoFilter(filter)}
-                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                    activeTodoFilter === filter
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {regularTodos.length === 0 ? (
-            <div className="px-4 py-1">
-              <p className="text-gray-500 text-sm">
-                No {activeTodoFilter === 'all' ? 'todos' : activeTodoFilter} todos yet
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {regularTodos.map((todo) => (
-                <div key={todo.id} className="flex items-center gap-3 py-1">
-                  <button
-                    onClick={() => toggleComplete.mutate(todo.id)}
-                    className="text-gray-400 hover:text-green-600 transition-colors"
-                  >
-                    <Circle className="w-4 h-4" />
-                  </button>
-
-                  <div 
-                    className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => setLocation(`/todo/${todo.id}`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm font-medium truncate ${
-                        todo.completed 
-                          ? 'line-through text-gray-500 dark:text-gray-400' 
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}>
-                        {todo.title}
-                      </span>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 ml-2">
-                        {todo.timeDue && (
-                          <span>
-                            {formatDistanceToNow(new Date(todo.timeDue), { addSuffix: true })}
-                          </span>
-                        )}
-                        {todo.priority === 'urgent' && <AlertCircle className="w-3 h-3 text-red-500" />}
-                        {todo.pinned && <Pin className="w-3 h-3 text-yellow-500" />}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleRemindClick(todo)}
-                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                  >
-                    <Clock className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Remind Popup */}
-      {remindPopup.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-[60] p-4 pb-32">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Set Reminder
-              </h3>
-              <button
-                onClick={() => setRemindPopup({ isOpen: false, todo: null })}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            {remindPopup.todo && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  {remindPopup.todo.title}
-                </p>
-                
-                {remindPopup.todo.isActiveReminder && remindPopup.todo.timeDue ? (
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Current reminder: {formatDistanceToNow(new Date(remindPopup.todo.timeDue), { addSuffix: true })}
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={remindInput}
-                        onChange={(e) => setRemindInput(e.target.value)}
-                        placeholder="e.g., 'in 2 hours', 'tomorrow at 9am', 'next Monday'"
-                        className="w-full pl-3 pr-20 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
-                        autoFocus
-                      />
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            // TODO: Implement voice input
-                            console.log('Voice input clicked');
-                          }}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <Mic className="w-4 h-4" />
-                        </button>
-                        {remindInput.trim() && (
-                          <button
-                            onClick={handleRemindSubmit}
-                            className="p-2 text-gray-600 hover:text-gray-800 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {overdueCount > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-sm text-red-600">{overdueCount} overdue</span>
               </div>
             )}
           </div>
+
+          {/* Filter Tabs */}
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            {[
+              { key: 'active', label: 'Active', icon: Clock },
+              { key: 'overdue', label: 'Overdue', icon: AlertCircle },
+              { key: 'completed', label: 'Done', icon: CheckCircle },
+              { key: 'all', label: 'All', icon: Filter }
+            ].map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key as any)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  filter === key
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Create Reminder Section */}
+      {showCreateReminder && (
+        <div className="bg-white border-b border-gray-200 p-4">
+          <ReminderInput
+            onReminderCreated={(reminder) => {
+              setShowCreateReminder(false);
+              queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCreateReminder(false)}
+            className="mt-2"
+          >
+            Cancel
+          </Button>
         </div>
       )}
 
-      {/* Input Bar */}
-      <SimpleTextInput 
-        onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
-        onNewNote={() => setIsVoiceModalOpen(true)}
-        onTextSubmit={handleTextSubmit}
-        placeholder="Add a todo or reminder..."
-        context="remind"
-      />
+      {/* Reminders List */}
+      <div className="pb-24 px-4 py-4">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredReminders.length === 0 ? (
+          <div className="text-center py-12">
+            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {filter === 'active' ? 'No active reminders' : 
+               filter === 'overdue' ? 'No overdue reminders' :
+               filter === 'completed' ? 'No completed reminders' : 'No reminders'}
+            </h3>
+            <p className="text-gray-500 mb-4">
+              {filter === 'active' ? 'Create your first reminder to get started' : 
+               `No ${filter} reminders to show`}
+            </p>
+            {filter === 'active' && (
+              <Button
+                onClick={() => setShowCreateReminder(true)}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Reminder
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredReminders.map((reminder) => (
+              <Card key={reminder.id} className="bg-white">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 truncate mb-1">
+                        {reminder.title}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={getStateColor(reminder.reminderState)}>
+                          {reminder.reminderState}
+                        </Badge>
+                        {reminder.priority && (
+                          <Badge variant="outline" className="text-xs">
+                            {reminder.priority}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {reminder.dueDate && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Calendar className="h-3 w-3" />
+                          {formatDueTime(reminder.dueDate)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-1 ml-3">
+                      {reminder.reminderState === 'active' && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => completeReminderMutation.mutate(reminder.id)}
+                            disabled={completeReminderMutation.isPending}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => dismissReminderMutation.mutate(reminder.id)}
+                            disabled={dismissReminderMutation.isPending}
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Bottom Navigation */}
       <BottomNavigation />
-
-      {/* Modals */}
-      <IOSVoiceRecorder 
-        isOpen={isVoiceModalOpen} 
-        onClose={() => setIsVoiceModalOpen(false)} 
-      />
-
-      <FullScreenCapture
-        isOpen={isFullScreenCaptureOpen}
-        onClose={() => setIsFullScreenCaptureOpen(false)}
-      />
-
-      {/* AI Processing Indicator */}
-      <AIProcessingIndicator isProcessing={false} position="fixed" />
     </div>
   );
 }

@@ -453,6 +453,60 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* Reminder Settings */}
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="p-4 border-b border-gray-100">
+                <h2 className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-purple-500" />
+                  Reminder Settings
+                </h2>
+              </div>
+              <div className="p-4">
+                <button
+                  onClick={() => setShowReminderSettings(true)}
+                  className="w-full flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Bell className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-gray-900">Configure Notifications</div>
+                      <div className="text-xs text-gray-500">Lead times, auto-archive, and display options</div>
+                    </div>
+                  </div>
+                  <span className="text-purple-600">→</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Reminder Settings Section */}
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="p-4 border-b border-gray-100">
+                <h2 className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-orange-500" />
+                  Reminder Settings
+                </h2>
+              </div>
+              <div className="p-4">
+                <button 
+                  onClick={() => setShowReminderSettings(true)}
+                  className="w-full flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <Bell className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Configure Notifications</div>
+                      <div className="text-xs text-gray-500">Default lead times and preferences</div>
+                    </div>
+                  </div>
+                  <span className="text-orange-600">→</span>
+                </button>
+              </div>
+            </div>
+
             {/* Rest of the settings sections... */}
             {/* AI Usage, AI Settings, Appearance, Data Management, About, Account sections remain the same */}
 
@@ -469,6 +523,46 @@ export default function Profile() {
           isOpen={showDebugger} 
           onClose={() => setShowDebugger(false)} 
         />
+      )}
+
+      {/* Reminder Settings Modal */}
+      {showReminderSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-medium">Reminder Settings</h3>
+              <button
+                onClick={() => setShowReminderSettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-4">
+              <ReminderSettings />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reminder Settings Modal */}
+      {showReminderSettings && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Reminder Settings</h3>
+              <button
+                onClick={() => setShowReminderSettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <ReminderSettings />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* All the existing modals remain the same... */}
