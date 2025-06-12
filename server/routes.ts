@@ -2987,6 +2987,254 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
+  // Reminder state management endpoints
+  app.post("/api/reminders/parse", async (req, res) => {
+    try {
+      const { content } = req.body;
+      const { IntelligentReminderParser } = await import('./utils/intelligent-reminder-parser');
+      const parsed = IntelligentReminderParser.parseReminder(content);
+      
+      let timeString = null;
+      let leadTime = null;
+      
+      if (parsed.timeReference) {
+        timeString = parsed.timeReference.originalText;
+      }
+      
+      if (parsed.context) {
+        leadTime = `${parsed.context.defaultLeadTime}`;
+      }
+      
+      res.json({
+        isReminder: parsed.isReminder,
+        timeString,
+        leadTime,
+        dueTime: parsed.timeReference?.parsedTime,
+        recurrence: parsed.recurringPattern,
+        category: parsed.context?.type,
+        urgency: parsed.context?.urgency
+      });
+    } catch (error) {
+      console.error("Failed to parse reminder:", error);
+      res.status(500).json({ message: "Failed to parse reminder" });
+    }
+  });
+
+  app.post("/api/reminders", async (req, res) => {
+    try {
+      const { content, parsedInfo } = req.body;
+      
+      // Create note first
+      const note = await storage.createNote({
+        content,
+        mode: "text"
+      });
+
+      // Process with AI to create reminder
+      const miraModule = await import('./utils/brain/miraAIProcessing');
+      const analysis = await miraModule.processNote({
+        content,
+        mode: "text",
+        req
+      });
+
+      // Update note with AI analysis
+      await storage.updateNote(note.id, {
+        content: analysis.title,
+        aiEnhanced: true,
+        aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
+        aiContext: analysis.summary || "",
+        isProcessing: false
+      });
+
+      // Create reminder todo with proper state
+      if (analysis.todos && analysis.todos.length > 0) {
+        const todo = analysis.todos[0];
+        const reminderData: any = {
+          noteId: note.id,
+          title: todo.title,
+          isActiveReminder: true,
+          reminderState: 'active',
+          priority: todo.priority || 'medium'
+        };
+
+        if (parsedInfo?.dueTime) {
+          reminderData.dueDate = new Date(parsedInfo.dueTime);
+          reminderData.timeDue = new Date(parsedInfo.dueTime);
+        }
+
+        if (parsedInfo?.recurrence) {
+          reminderData.recurrenceRule = parsedInfo.recurrence;
+        }
+
+        const createdTodo = await storage.createTodo(reminderData);
+        
+        // Refresh notifications
+        const { notificationSystem } = await import('./notification-system');
+        await notificationSystem.refreshNotifications();
+
+        res.json({
+          id: createdTodo.id,
+          title: createdTodo.title,
+          dueDate: createdTodo.dueDate,
+          reminderState: createdTodo.reminderState,
+          note: note
+        });
+      } else {
+        res.status(400).json({ message: "Failed to create reminder from input" });
+      }
+    } catch (error) {
+      console.error("Failed to create reminder:", error);
+      res.status(500).json({ message: "Failed to create reminder" });
+    }
+  });
+
+  app.get("/api/reminders", async (req, res) => {
+    try {
+      const { state } = req.query;
+      const todos = await storage.getTodos();
+      
+      let reminders = todos.filter(todo => todo.isActiveReminder);
+      
+      if (state) {
+        reminders = reminders.filter(todo => todo.reminderState === state);
+      }
+      
+      res.json(reminders);
+    } catch (error) {
+      console.error("Failed to fetch reminders:", error);
+      res.status(500).json({ message: "Failed to fetch reminders" });
+    }
+  });
+
+  app.put("/api/reminders/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updatedTodo = await storage.updateTodo(id, {
+        completed: true,
+        reminderState: 'completed'
+      });
+      
+      // Refresh notifications
+      const { notificationSystem } = await import('./notification-system');
+      await notificationSystem.refreshNotifications();
+      
+      res.json(updatedTodo);
+    } catch (error) {
+      console.error("Failed to complete reminder:", error);
+      res.status(500).json({ message: "Failed to complete reminder" });
+    }
+  });
+
+  app.put("/api/reminders/:id/dismiss", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updatedTodo = await storage.updateTodo(id, {
+        reminderState: 'dismissed',
+        dismissedAt: new Date()
+      });
+      
+      // Refresh notifications
+      const { notificationSystem } = await import('./notification-system');
+      await notificationSystem.refreshNotifications();
+      
+      res.json(updatedTodo);
+    } catch (error) {
+      console.error("Failed to dismiss reminder:", error);
+      res.status(500).json({ message: "Failed to dismiss reminder" });
+    }
+  });
+
+  app.put("/api/reminders/:id/archive", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updatedTodo = await storage.updateTodo(id, {
+        reminderState: 'archived',
+        archivedAt: new Date()
+      });
+      
+      res.json(updatedTodo);
+    } catch (error) {
+      console.error("Failed to archive reminder:", error);
+      res.status(500).json({ message: "Failed to archive reminder" });
+    }
+  });
+
+  // User reminder settings endpoints
+  app.get("/api/user/reminder-settings", async (req, res) => {
+    try {
+      // For now, return default settings since we don't have user auth
+      res.json({
+        reminderSettings: {
+          defaultLeadTimes: {
+            general: 10,
+            pickup: 10,
+            appointment: 30,
+            medication: 0,
+            call: 5,
+            meeting: 15,
+            flight: 120
+          },
+          autoArchiveAfterDays: 1,
+          showOverdueReminders: true,
+          enablePushNotifications: true
+        }
+      });
+    } catch (error) {
+      console.error("Failed to get reminder settings:", error);
+      res.status(500).json({ message: "Failed to get reminder settings" });
+    }
+  });
+
+  app.put("/api/user/reminder-settings", async (req, res) => {
+    try {
+      const { reminderSettings } = req.body;
+      
+      // For now, just return success since we don't have user auth
+      // In a real app, this would update the user's settings in the database
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update reminder settings:", error);
+      res.status(500).json({ message: "Failed to update reminder settings" });
+    }
+  });
+
+  // Archive expired reminders (called by scheduled job)
+  app.post("/api/reminders/archive-expired", async (req, res) => {
+    try {
+      const todos = await storage.getTodos();
+      const now = new Date();
+      const endOfYesterday = new Date(now);
+      endOfYesterday.setDate(endOfYesterday.getDate() - 1);
+      endOfYesterday.setHours(23, 59, 59, 999);
+
+      let archivedCount = 0;
+      
+      for (const todo of todos) {
+        if (todo.isActiveReminder && 
+            todo.reminderState === 'active' && 
+            todo.dueDate && 
+            todo.dueDate < endOfYesterday) {
+          
+          await storage.updateTodo(todo.id, {
+            reminderState: 'archived',
+            archivedAt: new Date()
+          });
+          archivedCount++;
+        }
+      }
+
+      // Refresh notifications after archiving
+      const { notificationSystem } = await import('./notification-system');
+      await notificationSystem.refreshNotifications();
+
+      res.json({ archivedCount });
+    } catch (error) {
+      console.error("Failed to archive expired reminders:", error);
+      res.status(500).json({ message: "Failed to archive expired reminders" });
+    }
+  });
+
   // Create and return HTTP server
   const server = createServer(app);
   return server;

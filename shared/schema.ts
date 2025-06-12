@@ -95,6 +95,13 @@ export const todos = pgTable("todos", {
   lastNotificationSent: timestamp("last_notification_sent"),
   nextNotificationDue: timestamp("next_notification_due"),
   
+  // Reminder state management
+  reminderState: varchar("reminder_state").default("active"), // 'active', 'overdue', 'completed', 'dismissed', 'archived'
+  archivedAt: timestamp("archived_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  dueDate: timestamp("due_date"), // When the reminder is actually due
+  recurrenceRule: text("recurrence_rule"), // RRULE format for recurring reminders
+  
   noteId: integer("note_id").notNull().references(() => notes.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -154,6 +161,33 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number"), // For future contact-based discovery
   personalBio: text("personal_bio"),
   preferences: json("preferences"),
+  reminderSettings: json("reminder_settings").$type<{
+    defaultLeadTimes: {
+      general: number;
+      pickup: number;
+      appointment: number;
+      medication: number;
+      call: number;
+      meeting: number;
+      flight: number;
+    };
+    autoArchiveAfterDays: number;
+    showOverdueReminders: boolean;
+    enablePushNotifications: boolean;
+  }>().default({
+    defaultLeadTimes: {
+      general: 10,
+      pickup: 10,
+      appointment: 30,
+      medication: 0,
+      call: 5,
+      meeting: 15,
+      flight: 120
+    },
+    autoArchiveAfterDays: 1,
+    showOverdueReminders: true,
+    enablePushNotifications: true
+  }),
   developerSettings: json("developer_settings").default({
     enableDualAIProcessing: false,
     showAIComparison: false,
