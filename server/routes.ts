@@ -2910,23 +2910,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
-  // Create todo/reminder
-  const createTodoMutation = useMutation({
-    mutationFn: async (text: string) => {
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          content: text,
-          mode: "text",
-          context: "reminder_creation"
-        }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create todo/reminder");
-      }
-
-      return response.json();
-    },
+  // Create and return HTTP server
+  const server = createServer(app);
+  return server;
+}
