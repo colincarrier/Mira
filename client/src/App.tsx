@@ -47,8 +47,8 @@ export default function App() {
           <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
               <Route path="/" component={Notes} />
-              <Route path="/remind" component={Remind} />
               <Route path="/remind-test" component={RemindTest} />
+              <Route path="/remind" component={Remind} />
               <Route path="/profile" component={Profile} />
               <Route path="/notes/:id" component={NoteDetail} />
               <Route path="/collection/:id" component={CollectionDetail} />
