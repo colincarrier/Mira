@@ -23,23 +23,6 @@ interface TodoItemProps {
 }
 
 function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, isDragging: isExternalDragging, onClick }: TodoItemProps) {
-  const [showSwipeMenu, setShowSwipeMenu] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isLongPress, setIsLongPress] = useState(false);
-  const longPressTimer = useState<NodeJS.Timeout | null>(null);
-
-  const handleDuplicate = () => {
-    console.log('Duplicate todo:', todo.id);
-    setShowSwipeMenu(false);
-  };
-
-  const handleDelete = () => {
-    console.log('Delete todo:', todo.id);
-    setShowSwipeMenu(false);
-  };
-
   const handleClick = () => {
     if (onClick) {
       onClick(todo);
@@ -49,17 +32,15 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
   return (
     <div className="relative">
       <div 
-        className={`flex items-center gap-2 py-0 px-4 border-b border-gray-100 dark:border-gray-800 transition-all duration-200 cursor-pointer relative
+        className={`flex items-center gap-2 py-3 px-4 transition-all duration-200 cursor-pointer relative touch-manipulation
           ${todo.completed 
             ? 'text-gray-500 dark:text-gray-400' 
-            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            : 'active:bg-gray-50 dark:active:bg-gray-700'
           }
           ${todo.pinned ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
         `}
         onClick={handleClick}
       >
-        {/* Vertical grouping line - positioned right of circle, before text */}
-        <div className="absolute left-[56px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -68,7 +49,7 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
           className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors touch-manipulation
             ${todo.completed 
               ? 'text-white' 
-              : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+              : 'active:bg-gray-100 dark:active:bg-gray-600'
             }
           `}
         >
@@ -82,7 +63,10 @@ function TodoItem({ todo, onToggle, onPin, onArchive, onDragStart, onDragEnd, is
           </div>
         </button>
 
-        <div className="flex-grow min-w-0">
+        <div className="flex items-center gap-2 flex-grow min-w-0">
+          {/* Reminder/Bell icon for all items */}
+          <Clock size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          
           <p className={`text-sm ${todo.completed ? 'line-through' : ''} truncate`}>
             {todo.title}
           </p>
@@ -240,10 +224,10 @@ export default function Remind() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            <button className="p-2 text-gray-500 dark:text-gray-400 active:text-gray-700 dark:active:text-gray-200 transition-colors touch-manipulation">
               <Search size={18} />
             </button>
-            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+            <button className="p-2 text-gray-500 dark:text-gray-400 active:text-gray-700 dark:active:text-gray-200 transition-colors touch-manipulation">
               <Filter size={18} />
             </button>
           </div>
