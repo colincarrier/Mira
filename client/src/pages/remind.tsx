@@ -177,25 +177,25 @@ export default function Remind() {
         </div>
       </div>
 
-      {/* Create Reminder Section */}
-      {showCreateReminder && (
-        <div className="bg-white border-b border-gray-200 p-4">
+      {/* Create Reminder Dialog */}
+      <Dialog open={showCreateReminder} onOpenChange={setShowCreateReminder}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Reminder</DialogTitle>
+          </DialogHeader>
           <ReminderInput
             onReminderCreated={(reminder) => {
               setShowCreateReminder(false);
               queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
             }}
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowCreateReminder(false)}
-            className="mt-2"
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
+          <DialogClose asChild>
+            <Button variant="outline" className="mt-4">
+              Cancel
+            </Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
 
       {/* Reminders List */}
       <div className="pb-24 px-4 py-4">
