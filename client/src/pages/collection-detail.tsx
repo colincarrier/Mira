@@ -115,7 +115,9 @@ export default function CollectionDetail() {
         <div className="flex items-center justify-between">
           <button 
             onClick={() => {
-              if (window.history.length > 1) {
+              // Always go back to collections tab when coming from collection detail
+              const referrer = document.referrer;
+              if (referrer && referrer.includes('tab=collections')) {
                 window.history.back();
               } else {
                 setLocation("/?tab=collections");

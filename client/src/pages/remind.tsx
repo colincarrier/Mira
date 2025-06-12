@@ -312,7 +312,13 @@ export default function Remind() {
       <BottomNavigation />
 
       {/* Reminder Detail Dialog */}
-      <Dialog open={!!selectedReminder} onOpenChange={(open) => !open && setSelectedReminder(null)}>
+      <Dialog open={!!selectedReminder} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedReminder(null);
+          // Ensure we stay on the remind page
+          window.history.replaceState(null, '', '/remind');
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
@@ -370,11 +376,13 @@ export default function Remind() {
             </div>
           )}
 
-          <DialogClose asChild>
-            <Button variant="ghost" className="mt-4">
-              Close
-            </Button>
-          </DialogClose>
+          <Button 
+            variant="ghost" 
+            className="mt-4"
+            onClick={() => setSelectedReminder(null)}
+          >
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

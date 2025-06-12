@@ -386,7 +386,13 @@ export default function NoteDetail() {
           </p>
           <button
             onClick={() => {
-              if (window.history.length > 1) {
+              // Check referrer to return to appropriate page
+              const referrer = document.referrer;
+              if (referrer && referrer.includes('/remind')) {
+                setLocation("/remind");
+              } else if (referrer && referrer.includes('/collections')) {
+                setLocation("/?tab=collections");
+              } else if (window.history.length > 1) {
                 window.history.back();
               } else {
                 setLocation("/");
@@ -409,7 +415,11 @@ export default function NoteDetail() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                if (window.history.length > 1) {
+                // Check if we came from a specific page
+                const referrer = document.referrer;
+                if (referrer && (referrer.includes('/remind') || referrer.includes('/collections'))) {
+                  window.history.back();
+                } else if (window.history.length > 1) {
                   window.history.back();
                 } else {
                   setLocation("/");
