@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Calendar, CheckCircle, Archive, AlertCircle, Filter, Plus } from "lucide-react";
+import { Clock, Calendar, CheckCircle, Archive, AlertCircle, Filter, Plus, X, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ReminderInput } from "@/components/reminder-input";
 import BottomNavigation from "@/components/bottom-navigation";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
 interface Reminder {
@@ -35,9 +34,12 @@ export default function Remind() {
   // Complete reminder mutation
   const completeReminderMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/reminders/${id}/complete`, {
-        method: 'PUT'
+      const response = await fetch(`/api/reminders/${id}/complete`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to complete reminder');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
@@ -51,9 +53,12 @@ export default function Remind() {
   // Dismiss reminder mutation
   const dismissReminderMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/reminders/${id}/dismiss`, {
-        method: 'PUT'
+      const response = await fetch(`/api/reminders/${id}/dismiss`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to dismiss reminder');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
@@ -67,9 +72,12 @@ export default function Remind() {
   // Archive reminder mutation
   const archiveReminderMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/reminders/${id}/archive`, {
-        method: 'PUT'
+      const response = await fetch(`/api/reminders/${id}/archive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to archive reminder');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
