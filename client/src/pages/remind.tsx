@@ -10,8 +10,7 @@ import type { Todo } from "@shared/schema";
 export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [todoFilter, setTodoFilter] = useState<'all' | 'urgent' | 'pinned'>('all');
-  const [newReminder, setNewReminder] = useState('');
-  const [newTodo, setNewTodo] = useState('');
+  const [inputText, setInputText] = useState('');
   
   const queryClient = useQueryClient();
 
@@ -20,53 +19,25 @@ export default function Remind() {
     queryKey: ["/api/todos"],
   });
 
-  // Create reminder (todo with isActiveReminder = true)
-  const createReminderMutation = useMutation({
+  // Intelligent input processing - creates note and extracts todos/reminders with AI
+  const processInputMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await fetch('/api/todos', {
+      const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          title: content,
-          completed: false,
-          itemType: 'reminder',
-          isActiveReminder: true,
-          plannedNotificationStructure: {
-            enabled: true,
-            reminderCategory: 'today',
-            repeatPattern: 'none',
-            leadTimeNotifications: []
-          }
+          content,
+          mode: 'text',
+          context: 'remind_page_input'
         })
       });
-      if (!response.ok) throw new Error('Failed to create reminder');
+      if (!response.ok) throw new Error('Failed to process input');
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setNewReminder('');
-    }
-  });
-
-  // Create todo (regular todo with isActiveReminder = false)
-  const createTodoMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const response = await fetch('/api/todos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: content,
-          completed: false,
-          itemType: 'todo',
-          isActiveReminder: false
-        })
-      });
-      if (!response.ok) throw new Error('Failed to create todo');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setNewTodo('');
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      setInputText('');
     }
   });
 
@@ -116,15 +87,9 @@ export default function Remind() {
     }
   };
 
-  const handleAddReminder = () => {
-    if (newReminder.trim()) {
-      createReminderMutation.mutate(newReminder.trim());
-    }
-  };
-
-  const handleAddTodo = () => {
-    if (newTodo.trim()) {
-      createTodoMutation.mutate(newTodo.trim());
+  const handleSubmitInput = () => {
+    if (inputText.trim()) {
+      processInputMutation.mutate(inputText.trim());
     }
   };
 
@@ -136,6 +101,24 @@ export default function Remind() {
           {/* Header */}
           <div className="pt-6 mb-6">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">Remind</h2>
+          </div>
+
+          {/* Unified Intelligent Input */}
+          <div className="flex gap-2 mb-6">
+            <Input
+              placeholder="Add/edit to-do's + reminders..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSubmitInput()}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSubmitInput}
+              disabled={!inputText.trim() || processInputMutation.isPending}
+              size="sm"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Reminders Section */}
@@ -163,23 +146,7 @@ export default function Remind() {
               </div>
             </div>
 
-            {/* Reminder Input */}
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Add a reminder..."
-                value={newReminder}
-                onChange={(e) => setNewReminder(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddReminder()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddReminder}
-                disabled={!newReminder.trim() || createReminderMutation.isPending}
-                size="sm"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
+
 
             {/* Reminders List */}
             <div className="space-y-1">
@@ -244,24 +211,6 @@ export default function Remind() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Todo Input */}
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Add a todo..."
-                value={newTodo}
-                onChange={(e) => setNewTodo(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTodo()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddTodo}
-                disabled={!newTodo.trim() || createTodoMutation.isPending}
-                size="sm"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
             </div>
 
             {/* Todos List */}
