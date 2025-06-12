@@ -476,19 +476,55 @@ This profile was generated from your input and will help provide more personaliz
                 title: todo.title,
               };
 
+              // Apply intelligent reminder parsing to each todo
+              const { IntelligentReminderParser } = await import('./utils/intelligent-reminder-parser');
+              const reminderInfo = IntelligentReminderParser.parseReminder(todo.title);
+
+              console.log("Creating todo/reminder with data:", {
+                title: todo.title,
+                isActiveReminder: reminderInfo.isReminder || todo.isActiveReminder,
+                timeDue: reminderInfo.timeReference?.parsedTime || todo.timeDue,
+                priority: todo.priority || 'medium'
+              });
+
               // Add v2.0 enhanced todo properties
-              if (todo.due) {
-                todoData.timeDue = new Date(todo.due);
+              if (todo.due || reminderInfo.timeReference?.parsedTime) {
+                todoData.timeDue = todo.due ? new Date(todo.due) : reminderInfo.timeReference?.parsedTime;
               }
-              if (todo.recurrence) {
-                todoData.recurrenceRule = todo.recurrence; // RRULE format
+              if (todo.recurrence || reminderInfo.recurringPattern) {
+                todoData.recurrenceRule = todo.recurrence || reminderInfo.recurringPattern;
               }
-              if (todo.priority) {
-                todoData.priority = todo.priority;
+              if (todo.priority || reminderInfo.context?.urgency) {
+                todoData.priority = todo.priority || reminderInfo.context.urgency;
+              }
+
+              // Mark as active reminder if intelligent parser detected it
+              if (reminderInfo.isReminder) {
+                todoData.isActiveReminder = true;
+                todoData.plannedNotificationStructure = {
+                  enabled: true,
+                  reminderCategory: reminderInfo.context.category,
+                  repeatPattern: reminderInfo.recurringPattern || 'none',
+                  leadTimeNotifications: reminderInfo.explicitLeadTime ? 
+                    [reminderInfo.explicitLeadTime] : 
+                    [reminderInfo.context.defaultLeadTime]
+                };
               }
 
               console.log("Creating v2.0 todo with title:", todo.title);
-              await storage.createTodo(todoData);
+              const createdTodo = await storage.createTodo(todoData);
+              console.log("Successfully created todo/reminder:", createdTodo);
+
+              // Schedule notifications if it's an active reminder
+              if (reminderInfo.isReminder && todoData.timeDue) {
+                try {
+                  const { notificationSystem } = await import('./notification-system');
+                  await notificationSystem.refreshNotifications();
+                  console.log("Scheduled notifications for active reminder:", todo.title);
+                } catch (notificationError) {
+                  console.error("Failed to schedule notifications:", notificationError);
+                }
+              }
             }
           }
 
@@ -2907,6 +2943,47 @@ Provide a concise, actionable response that adds value beyond just the task titl
     } catch (error) {
       console.error("Failed to create todo:", error);
       res.status(400).json({ message: "Invalid todo data" });
+    }
+  });
+
+  // Notification system endpoints
+  app.get("/api/notifications/status", async (req, res) => {
+    try {
+      const { notificationSystem } = await import('./notification-system');
+      const status = notificationSystem.getNotificationStatus();
+      res.json(status);
+    } catch (error) {
+      console.error("Failed to get notification status:", error);
+      res.status(500).json({ message: "Failed to get notification status" });
+    }
+  });
+
+  app.get("/api/notifications/recent", async (req, res) => {
+    try {
+      // Return recent notifications (placeholder for now)
+      res.json({ recent: [] });
+    } catch (error) {
+      console.error("Failed to get recent notifications:", error);
+      res.status(500).json({ message: "Failed to get recent notifications" });
+    }
+  });
+
+  app.post("/api/notifications/test", async (req, res) => {
+    try {
+      const { notificationSystem } = await import('./notification-system');
+      const { title, message, scheduledTime } = req.body;
+      
+      // Create a test notification
+      console.log(`🔔 Test notification: ${title} - ${message} at ${scheduledTime}`);
+      
+      res.json({ 
+        success: true, 
+        message: "Test notification created",
+        scheduledTime 
+      });
+    } catch (error) {
+      console.error("Failed to create test notification:", error);
+      res.status(500).json({ message: "Failed to create test notification" });
     }
   });
 

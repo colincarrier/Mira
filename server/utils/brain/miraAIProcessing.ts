@@ -134,6 +134,45 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     result = enhanceWithReminderIntelligence(result, reminderInfo);
   }
 
+  function enhanceWithReminderIntelligence(result: MiraAIResult, reminderInfo: any): MiraAIResult {
+    // Enhance todos with intelligent reminder data
+    const enhancedTodos = (result.todos || []).map(todo => ({
+      ...todo,
+      isActiveReminder: true,
+      timeDue: reminderInfo.timeReference?.parsedTime,
+      reminderType: reminderInfo.context.type,
+      reminderCategory: reminderInfo.context.category,
+      repeatPattern: reminderInfo.recurringPattern || 'none',
+      leadTimeNotifications: reminderInfo.explicitLeadTime ? 
+        [reminderInfo.explicitLeadTime] : 
+        [reminderInfo.context.defaultLeadTime],
+      urgencyLevel: reminderInfo.context.urgency
+    }));
+
+    // Add reminder-specific smart actions
+    const reminderSmartActions: SmartAction[] = [
+      { label: "Set Reminder", action: "reminder" },
+      { label: "Reschedule", action: "custom" }
+    ];
+
+    return {
+      ...result,
+      todos: enhancedTodos,
+      intent: reminderInfo.recurringPattern ? "recurring-task" : "scheduled-event",
+      urgency: reminderInfo.context.urgency,
+      smartActions: [...(result.smartActions || []), ...reminderSmartActions],
+      timeInstructions: {
+        hasTimeReference: !!reminderInfo.timeReference,
+        extractedTimes: reminderInfo.timeReference ? [reminderInfo.timeReference.originalText] : [],
+        scheduledItems: enhancedTodos.filter(t => t.timeDue).map(t => ({
+          title: t.title,
+          scheduledTime: t.timeDue,
+          type: t.reminderType
+        }))
+      }
+    };
+  }
+
   /* 7 ▸ Location-aware web search if applicable */
   let webResults: WebSearchResult[] = [];
   if (shouldTriggerLocationSearch(input.content)) {
