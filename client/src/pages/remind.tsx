@@ -321,7 +321,7 @@ export default function Remind() {
                       onClick={() => handleEditReminder(reminder)}
                       className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Clock className="w-4 h-4" />
                     </button>
                   </div>
                 ))
