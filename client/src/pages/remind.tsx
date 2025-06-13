@@ -12,7 +12,7 @@ export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [todoFilter, setTodoFilter] = useState<'all' | 'urgent' | 'pinned'>('all');
   const [inputText, setInputText] = useState('');
-  
+
   const queryClient = useQueryClient();
 
   // Fetch all todos - we'll filter client-side
@@ -104,7 +104,7 @@ export default function Remind() {
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">Remind</h2>
           </div>
 
-          
+
 
           {/* Reminders Section */}
           <div className="mb-8">
@@ -142,7 +142,7 @@ export default function Remind() {
                   <div key={reminder.id} className="flex items-center gap-3 py-1">
                     <button 
                       onClick={() => toggleCompletionMutation.mutate(reminder)}
-                      className="text-gray-400 hover:text-green-600 transition-colors"
+                      className="text-gray-400"
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -207,7 +207,7 @@ export default function Remind() {
                   <div key={todo.id} className="flex items-center gap-3 py-1">
                     <button 
                       onClick={() => toggleCompletionMutation.mutate(todo)}
-                      className="text-gray-400 hover:text-green-600 transition-colors"
+                      className="text-gray-400"
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -245,7 +245,7 @@ export default function Remind() {
           showCamera={false}
           showMediaPicker={false}
         />
-        
+
         <BottomNavigation />
       </div>
     </div>
