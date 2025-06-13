@@ -26,18 +26,18 @@ export default function IOSActionSheet({
       />
       
       {/* Action Sheet - Positioned above button */}
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-[101] animate-slide-up">
-        <div className="w-[270px]">
+      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-[101]">
+        <div className="w-[200px]">
           {/* Main Actions */}
-          <div className="bg-white border border-gray-300 rounded-[13px] overflow-hidden shadow-lg">
+          <div className="bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">
             <button
               onClick={() => {
                 onPhotoLibrary();
                 onClose();
               }}
-              className="w-full px-4 py-[14px] text-center text-gray-700 font-normal text-[20px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-3"
+              className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
             >
-              <Image className="w-[22px] h-[22px]" />
+              <Image className="w-[16px] h-[16px]" />
               Photo Library
             </button>
             
@@ -46,29 +46,14 @@ export default function IOSActionSheet({
                 onChooseFile();
                 onClose();
               }}
-              className="w-full px-4 py-[14px] text-center text-gray-700 font-normal text-[20px] hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-3"
+              className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
             >
-              <FileText className="w-[22px] h-[22px]" />
+              <FileText className="w-[16px] h-[16px]" />
               Choose File
             </button>
           </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }
