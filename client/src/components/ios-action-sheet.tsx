@@ -21,45 +21,37 @@ export default function IOSActionSheet({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300"
+        className="fixed inset-0 bg-black/40 z-[100] transition-opacity duration-300"
         onClick={onClose}
       />
       
-      {/* Action Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-[101] animate-slide-up">
-        {/* Main Actions */}
-        <div className="bg-white/95 backdrop-blur-md mx-4 mb-2 rounded-xl overflow-hidden">
-          <button
-            onClick={() => {
-              onPhotoLibrary();
-              onClose();
-            }}
-            className="w-full px-6 py-4 text-left text-blue-500 font-medium text-lg border-b border-gray-200/50 active:bg-gray-100/50 transition-colors flex items-center gap-3"
-          >
-            <Image className="w-5 h-5" />
-            Photo Library
-          </button>
-          
-          <button
-            onClick={() => {
-              onChooseFile();
-              onClose();
-            }}
-            className="w-full px-6 py-4 text-left text-blue-500 font-medium text-lg active:bg-gray-100/50 transition-colors flex items-center gap-3"
-          >
-            <FileText className="w-5 h-5" />
-            Choose File
-          </button>
-        </div>
-        
-        {/* Cancel Button */}
-        <div className="bg-white/95 backdrop-blur-md mx-4 mb-8 rounded-xl overflow-hidden">
-          <button
-            onClick={onClose}
-            className="w-full px-6 py-4 text-center text-blue-500 font-semibold text-lg active:bg-gray-100/50 transition-colors"
-          >
-            Cancel
-          </button>
+      {/* Action Sheet - Native iOS Dimensions */}
+      <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center animate-slide-up">
+        <div className="w-[270px] mb-8">
+          {/* Main Actions */}
+          <div className="bg-white/95 backdrop-blur-md rounded-[13px] overflow-hidden mb-2">
+            <button
+              onClick={() => {
+                onPhotoLibrary();
+                onClose();
+              }}
+              className="w-full px-4 py-[14px] text-center text-blue-500 font-normal text-[20px] border-b border-gray-200/50 active:bg-gray-100/50 transition-colors flex items-center justify-center gap-3"
+            >
+              <Image className="w-[22px] h-[22px]" />
+              Photo Library
+            </button>
+            
+            <button
+              onClick={() => {
+                onChooseFile();
+                onClose();
+              }}
+              className="w-full px-4 py-[14px] text-center text-blue-500 font-normal text-[20px] active:bg-gray-100/50 transition-colors flex items-center justify-center gap-3"
+            >
+              <FileText className="w-[22px] h-[22px]" />
+              Choose File
+            </button>
+          </div>
         </div>
       </div>
       
