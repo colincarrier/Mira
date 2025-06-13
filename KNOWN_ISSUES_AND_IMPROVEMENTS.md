@@ -1,5 +1,38 @@
 # Mira - Known Issues and Future Improvements
 
+## External Content Integration System (New - High Priority)
+
+### Phase 1: Email Integration
+- [ ] Setup SendGrid inbound parsing webhook
+- [ ] Create `/api/email-webhook` endpoint for processing
+- [ ] Implement email subject line parsing for collections/tags
+- [ ] Build user identification via sender email
+- [ ] Create confirmation email templates
+- [ ] Support forwarded content separation from user notes
+- [ ] Handle attachments (images, PDFs, documents)
+
+### Phase 2: iOS Share Sheet Integration  
+- [ ] Update PWA manifest.json with share_target configuration
+- [ ] Create `/share-capture` page with custom interface
+- [ ] Build content preview and user annotation system
+- [ ] Add collection selector and tagging interface
+- [ ] Implement reminder toggle for shared content
+- [ ] Support text, URLs, images, and PDFs from any iOS app
+
+### Phase 3: SMS Integration
+- [ ] Setup Twilio account and dedicated phone number
+- [ ] Create SMS webhook handler for incoming messages
+- [ ] Implement phone number verification system
+- [ ] Build message parsing for commands (#work, !remind, @tags)
+- [ ] Add MMS support for images and voice messages
+- [ ] Create conversation threading for multi-part content
+
+### Technical Architecture:
+- **Single SMS Number**: One Twilio number handles all users via phone number identification
+- **Email Parsing**: Smart separation of user notes vs forwarded content
+- **Share Sheet UX**: Custom interface with preview, notes, collections, and reminder options
+- **Cross-Platform**: All methods create consistent notes through existing AI pipeline
+
 ## Sophisticated Push Notifications System (Future Development)
 
 ### Core Features to Build:
