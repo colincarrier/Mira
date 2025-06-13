@@ -65,64 +65,14 @@ export default function Remind() {
   });
 
   // Dialog handlers
-  const handleEditReminder = (reminder: Todo) => {
+  const handleClockClick = (reminder: Todo) => {
     setEditingReminder(reminder);
     setReminderDialogOpen(true);
   };
 
-  const handleCreateReminder = () => {
+  const handleReminderUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
     setEditingReminder(null);
-    setReminderDialogOpen(true);
-  };
-
-  const handleSaveReminder = async (reminderData: any) => {
-    try {
-      if (editingReminder) {
-        // Update existing reminder
-        const response = await fetch(`/api/todos/${editingReminder.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reminderData)
-        });
-        if (!response.ok) throw new Error('Failed to update reminder');
-      } else {
-        // Create new reminder
-        const response = await fetch('/api/notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: reminderData.title,
-            mode: 'reminder_creation',
-            context: 'dialog_box_creation',
-            reminderData
-          })
-        });
-        if (!response.ok) throw new Error('Failed to create reminder');
-      }
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setReminderDialogOpen(false);
-      setEditingReminder(null);
-    } catch (error) {
-      console.error('Failed to save reminder:', error);
-    }
-  };
-
-  const handleDeleteReminder = async () => {
-    if (!editingReminder) return;
-    
-    try {
-      const response = await fetch(`/api/todos/${editingReminder.id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete reminder');
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      setReminderDialogOpen(false);
-      setEditingReminder(null);
-    } catch (error) {
-      console.error('Failed to delete reminder:', error);
-    }
   };
 
   // Client-side filtering
@@ -295,7 +245,7 @@ export default function Remind() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleEditReminder(reminder)}
+                      onClick={() => handleClockClick(reminder)}
                       className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
                     >
                       <Clock className="w-4 h-4" />
@@ -371,11 +321,14 @@ export default function Remind() {
                         </div>
                       </div>
                     </div>
-                    <button className={`p-1 transition-colors ${
-                      todo.timeDue || todo.isActiveReminder 
-                        ? 'text-blue-500' 
-                        : 'text-gray-300'
-                    }`}>
+                    <button 
+                      onClick={() => handleClockClick(todo)}
+                      className={`p-1 transition-colors ${
+                        todo.timeDue || todo.isActiveReminder 
+                          ? 'text-blue-500 hover:text-blue-700' 
+                          : 'text-gray-300 hover:text-gray-500'
+                      }`}
+                    >
                       <Clock className="w-4 h-4" />
                     </button>
                   </div>
@@ -400,16 +353,8 @@ export default function Remind() {
         <ReminderDialog
           open={reminderDialogOpen}
           onOpenChange={setReminderDialogOpen}
-          mode={editingReminder ? 'edit' : 'create'}
-          initialData={editingReminder ? {
-            title: editingReminder.title,
-            description: editingReminder.description || '',
-            dueDate: editingReminder.timeDue ? new Date(editingReminder.timeDue) : undefined,
-            reminderType: editingReminder.reminderType || 'general',
-            priority: editingReminder.priority || 'medium'
-          } : undefined}
-          onSave={handleSaveReminder}
-          onDelete={editingReminder ? handleDeleteReminder : undefined}
+          existingReminder={editingReminder}
+          onReminderUpdated={handleReminderUpdated}
         />
       </div>
     </div>
