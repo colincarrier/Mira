@@ -3242,11 +3242,15 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
-  // Cleanup old todos and reminders
+  // Cleanup old todos, reminders, and notes
   app.post("/api/cleanup/old-todos-reminders", async (req, res) => {
     try {
+      // Get current state
       const todos = await storage.getTodos();
+      const notes = await storage.getNotes();
+      
       console.log(`Total todos before cleanup: ${todos.length}`);
+      console.log(`Total notes before cleanup: ${notes.length}`);
 
       // Separate todos and reminders
       const regularTodos = todos.filter(todo => !todo.isActiveReminder);
@@ -3257,12 +3261,14 @@ Provide a concise, actionable response that adds value beyond just the task titl
       // Sort by creation date (oldest first)
       const sortedTodos = regularTodos.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       const sortedReminders = reminders.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const sortedNotes = notes.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
       // Calculate how many to delete
       const todosToDeleteCount = Math.floor(sortedTodos.length * 0.8); // 80% of todos
       const remindersToDeleteCount = Math.floor(sortedReminders.length * 0.6); // 60% of reminders
+      const notesToDeleteCount = Math.floor(sortedNotes.length * 0.8); // 80% of notes
 
-      console.log(`Will delete ${todosToDeleteCount} todos and ${remindersToDeleteCount} reminders`);
+      console.log(`Will delete ${todosToDeleteCount} todos, ${remindersToDeleteCount} reminders, and ${notesToDeleteCount} notes`);
 
       let deletedCount = 0;
 
@@ -3290,12 +3296,27 @@ Provide a concise, actionable response that adds value beyond just the task titl
         }
       }
 
+      // Delete oldest 80% of notes
+      const notesToDelete = sortedNotes.slice(0, notesToDeleteCount);
+      for (const note of notesToDelete) {
+        try {
+          await storage.deleteNote(note.id);
+          deletedCount++;
+          console.log(`Deleted note: "${note.content.slice(0, 50)}..." (created: ${note.createdAt})`);
+        } catch (error) {
+          console.error(`Failed to delete note ${note.id}:`, error);
+        }
+      }
+
       // Refresh notifications after cleanup
       const { notificationSystem } = await import('./notification-system');
       await notificationSystem.refreshNotifications();
 
       const finalTodos = await storage.getTodos();
+      const finalNotes = await storage.getNotes();
+      
       console.log(`Total todos after cleanup: ${finalTodos.length}`);
+      console.log(`Total notes after cleanup: ${finalNotes.length}`);
 
       res.json({
         success: true,
@@ -3303,17 +3324,19 @@ Provide a concise, actionable response that adds value beyond just the task titl
         breakdown: {
           todosDeleted: todosToDeleteCount,
           remindersDeleted: remindersToDeleteCount,
+          notesDeleted: notesToDeleteCount,
           remainingTodos: finalTodos.filter(t => !t.isActiveReminder).length,
-          remainingReminders: finalTodos.filter(t => t.isActiveReminder === true).length
+          remainingReminders: finalTodos.filter(t => t.isActiveReminder === true).length,
+          remainingNotes: finalNotes.length
         },
-        message: `Successfully deleted ${deletedCount} items (${todosToDeleteCount} todos + ${remindersToDeleteCount} reminders)`
+        message: `Successfully deleted ${deletedCount} items (${todosToDeleteCount} todos + ${remindersToDeleteCount} reminders + ${notesToDeleteCount} notes)`
       });
 
     } catch (error) {
       console.error("Cleanup operation failed:", error);
       res.status(500).json({ 
         success: false,
-        message: "Failed to cleanup old todos and reminders",
+        message: "Failed to cleanup old todos, reminders, and notes",
         error: error.message 
       });
     }
