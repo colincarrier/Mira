@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info } from "lucide-react";
+import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -379,7 +379,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <span className="text-xs text-[hsl(var(--muted-foreground))]">{timeAgo}</span>
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -420,6 +420,19 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </DropdownMenu>
           
           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toast({
+                description: "Reminder functionality coming soon!",
+              });
+            }}
+            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+            title="Set reminder"
+          >
+            <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+          </button>
+          
+          <button
             onClick={handleShare}
             className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
             title="Share note"
@@ -435,14 +448,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
           <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
           <span className="opacity-60">AI processing</span>
-        </div>
-      )}
-      
-      {/* Show AI enhanced indicator when done */}
-      {!note.isProcessing && note.aiEnhanced && (
-        <div className="mb-2 flex items-center space-x-1 text-xs text-green-600">
-          <CheckCircle2 className="w-3 h-3" />
-          <span className="opacity-80">AI enhanced</span>
         </div>
       )}
 
@@ -634,25 +639,35 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           )}
         </div>
 
-        {/* AI Partner Logo - Aligned with text baseline */}
-        {aiPartner && (
-          <div className="flex items-center">
-            {aiPartner === 'claude' && (
-              <div className="h-3 opacity-[0.3] hover:opacity-40 transition-opacity" title="Enhanced by Claude Sonnet 4">
-                <img 
-                  src="/claude-logo.png" 
-                  alt="Claude" 
-                  className="h-full w-auto object-contain"
-                />
-              </div>
-            )}
-            {aiPartner === 'openai' && (
-              <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center opacity-[0.3] hover:opacity-40 transition-opacity" title="Enhanced by GPT-4o">
-                <span className="text-white text-[5px] font-bold">AI</span>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {/* AI Partner Logo - Aligned with text baseline */}
+          {aiPartner && (
+            <div className="flex items-center">
+              {aiPartner === 'claude' && (
+                <div className="h-3 opacity-[0.3] hover:opacity-40 transition-opacity" title="Enhanced by Claude Sonnet 4">
+                  <img 
+                    src="/claude-logo.png" 
+                    alt="Claude" 
+                    className="h-full w-auto object-contain"
+                  />
+                </div>
+              )}
+              {aiPartner === 'openai' && (
+                <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center opacity-[0.3] hover:opacity-40 transition-opacity" title="Enhanced by GPT-4o">
+                  <span className="text-white text-[5px] font-bold">AI</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* AI enhanced indicator moved to bottom right */}
+          {!note.isProcessing && note.aiEnhanced && (
+            <div className="flex items-center space-x-1 text-xs text-green-600">
+              <CheckCircle2 className="w-3 h-3" />
+              <span className="opacity-80">AI enhanced</span>
+            </div>
+          )}
+        </div>
       </div>
       {/* Todos Modal */}
       <Dialog open={showTodosModal} onOpenChange={(open) => {
