@@ -183,11 +183,8 @@ export function ReminderInput({
               variant="ghost"
               size="sm"
               onClick={startRecording}
-              className={`h-8 w-8 p-0 rounded-full transition-all duration-200 ${
-                isRecording 
-                  ? 'bg-red-100 text-red-600 scale-110' 
-                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
-              }`}
+              className="h-8 w-8 p-0 rounded-full transition-colors hover:opacity-90 text-[#374252]"
+              style={{ backgroundColor: isRecording ? '#ef4444' : '#9bb8d3' }}
             >
               <Mic className="h-4 w-4" />
             </Button>
