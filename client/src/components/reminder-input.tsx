@@ -137,6 +137,36 @@ export function ReminderInput({
 
   return (
     <div className="space-y-3">
+      {/* Header with menu */}
+      {existingReminder && (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={generateCalendarLink}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Add to Calendar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onArchive?.(existingReminder.id)}>
+                <Archive className="h-4 w-4 mr-2" />
+                Archive
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onDelete?.(existingReminder.id)}
+                className="text-red-600"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
       {/* Input Bar */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
@@ -146,43 +176,21 @@ export function ReminderInput({
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder={existingReminder ? "Update reminder..." : "Type or speak your reminder..."}
             onKeyDown={(e) => e.key === 'Enter' && !existingReminder && createReminder()}
-            className="pr-20"
+            className="pr-12"
           />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
             <Button
               variant="ghost"
               size="sm"
               onClick={startRecording}
-              className={`h-6 w-6 p-0 ${isRecording ? 'text-red-500' : ''}`}
+              className={`h-8 w-8 p-0 rounded-full transition-colors ${
+                isRecording 
+                  ? 'bg-red-100 text-red-600' 
+                  : 'hover:bg-blue-100 text-blue-600'
+              }`}
             >
               <Mic className="h-4 w-4" />
             </Button>
-            {existingReminder && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={generateCalendarLink}>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Add to Calendar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onArchive?.(existingReminder.id)}>
-                    <Archive className="h-4 w-4 mr-2" />
-                    Archive
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => onDelete?.(existingReminder.id)}
-                    className="text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
         </div>
         
@@ -196,6 +204,30 @@ export function ReminderInput({
           </Button>
         )}
       </div>
+
+      {/* Existing Schedule Display for Reminders */}
+      {existingReminder && existingReminder.plannedNotificationStructure && (
+        <Card className="p-3 bg-blue-50 border-blue-200">
+          <div className="text-sm space-y-1">
+            <div className="font-medium text-blue-900">Current Reminder Schedule</div>
+            {existingReminder.timeDue && (
+              <div className="text-blue-700">
+                📅 Due: {new Date(existingReminder.timeDue).toLocaleString()}
+              </div>
+            )}
+            {existingReminder.plannedNotificationStructure.leadTime && (
+              <div className="text-blue-700">
+                🔔 Notify {existingReminder.plannedNotificationStructure.leadTime} minutes before
+              </div>
+            )}
+            {existingReminder.plannedNotificationStructure.recurrence && (
+              <div className="text-blue-700">
+                🔄 {existingReminder.plannedNotificationStructure.recurrence}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Parsed Information Display */}
       {parsedInfo && (
@@ -220,15 +252,7 @@ export function ReminderInput({
         </Card>
       )}
 
-      {/* Existing Reminder Actions */}
-      {existingReminder && !input && (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={generateCalendarLink}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Add to Calendar
-          </Button>
-        </div>
-      )}
+      
     </div>
   );
 }

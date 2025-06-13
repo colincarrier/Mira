@@ -19,17 +19,18 @@ export function ReminderDialog({
   const handleClose = () => {
     // Preserve navigation state when closing dialog
     window.history.replaceState(null, '', '/remind');
+    onReminderUpdated?.(); // Auto-save on close
     onOpenChange(false);
   };
 
   const handleReminderCreated = () => {
     onReminderUpdated?.();
-    handleClose();
+    onOpenChange(false);
   };
 
   const handleReminderUpdate = () => {
     onReminderUpdated?.();
-    handleClose();
+    onOpenChange(false);
   };
 
   return (

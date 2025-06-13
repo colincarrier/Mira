@@ -64,6 +64,13 @@ export default function Remind() {
     }
   });
 
+  // Navigate to source note
+  const handleItemClick = (todo: Todo) => {
+    if (todo.noteId) {
+      window.location.href = `/notes/${todo.noteId}`;
+    }
+  };
+
   // Dialog handlers
   const handleClockClick = (reminder: Todo) => {
     setEditingReminder(reminder);
@@ -223,7 +230,10 @@ export default function Remind() {
                     >
                       {reminder.completed && <Check className="w-3 h-3" />}
                     </button>
-                    <div className="flex-1 min-w-0 cursor-pointer">
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => handleItemClick(reminder)}
+                    >
                       <div className="flex items-center justify-between">
                         <span className={`text-sm font-medium truncate ${
                           reminder.completed 
@@ -300,7 +310,10 @@ export default function Remind() {
                     >
                       {todo.completed && <Check className="w-3 h-3" />}
                     </button>
-                    <div className="flex-1 min-w-0 cursor-pointer">
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => handleItemClick(todo)}
+                    >
                       <div className="flex items-center justify-between">
                         <span className={`text-sm font-medium truncate ${
                           todo.completed 
