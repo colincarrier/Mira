@@ -25,8 +25,8 @@ export default function IOSActionSheet({
         onClick={onClose}
       />
       
-      {/* Action Sheet - Positioned above button */}
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-[101]">
+      {/* Action Sheet - Positioned directly above + button */}
+      <div className="fixed bottom-16 right-6 z-[101]">
         <div className="w-[200px]">
           {/* Main Actions */}
           <div className="bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">
