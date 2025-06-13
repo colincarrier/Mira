@@ -1,7 +1,8 @@
-import { Camera, Mic, Plus, Send, Square } from "lucide-react";
+import { Send, Plus, Camera, Mic, Square, FileText, Image } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import IOSActionSheet from './ios-action-sheet';
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 
 interface UniversalInputBarProps {
   onTextSubmit?: (text: string) => void;
@@ -32,9 +33,15 @@ export default function UniversalInputBar({
 }: UniversalInputBarProps) {
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
-  
+  const [showSubmenu, setShowSubmenu] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -43,9 +50,8 @@ export default function UniversalInputBar({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const generalFileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,31 +69,31 @@ export default function UniversalInputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
-      
+
       // Immediately refresh to show placeholder
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       // Now upload the actual audio
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/voice", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create voice note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -126,31 +132,31 @@ export default function UniversalInputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
-      
+
       // Immediately refresh to show placeholder
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       // Now upload the actual image
       const formData = new FormData();
       formData.append("image", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/image", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -188,31 +194,31 @@ export default function UniversalInputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
-      
+
       // Immediately refresh to show placeholder
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       // Now upload the actual file
       const formData = new FormData();
       formData.append("file", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/file", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload file");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -243,39 +249,39 @@ export default function UniversalInputBar({
           autoGainControl: true,
         }
       });
-      
+
       streamRef.current = stream;
-      
+
       // Setup audio context for waveform visualization
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       const source = audioContextRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioContextRef.current.createAnalyser();
-      
+
       analyserRef.current.fftSize = 256;
       const bufferLength = analyserRef.current.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
-      
+
       source.connect(analyserRef.current);
-      
+
       // Setup media recorder
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       });
-      
+
       chunksRef.current = [];
-      
+
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         stopWaveformAnimation();
         createVoiceNoteMutation.mutate(blob);
       };
-      
+
       return true;
     } catch (error) {
       console.error("Error setting up audio:", error);
@@ -290,13 +296,13 @@ export default function UniversalInputBar({
 
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current) return;
-    
+
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-    
+
     // Convert to waveform data for inline display
     const waveform = [];
     const step = Math.floor(dataArrayRef.current.length / 40); // 40 bars for inline waveform
-    
+
     for (let i = 0; i < dataArrayRef.current.length; i += step) {
       let sum = 0;
       for (let j = 0; j < step && i + j < dataArrayRef.current.length; j++) {
@@ -304,9 +310,9 @@ export default function UniversalInputBar({
       }
       waveform.push(sum / step / 255); // Normalize to 0-1
     }
-    
+
     setWaveformData(waveform);
-    
+
     if (isVoiceRecording) {
       animationRef.current = requestAnimationFrame(updateWaveform);
     }
@@ -326,16 +332,16 @@ export default function UniversalInputBar({
   const startRecording = async () => {
     const success = await setupAudioContext();
     if (!success) return;
-    
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       mediaRecorderRef.current.start(100);
       setRecordingTime(0);
-      
+
       // Start timer
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
       // Start waveform animation
       startWaveformAnimation();
     }
@@ -349,7 +355,7 @@ export default function UniversalInputBar({
         clearInterval(intervalRef.current);
       }
     }
-    
+
     // Stop all tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -360,13 +366,13 @@ export default function UniversalInputBar({
     setRecordingTime(0);
     setWaveformData([]);
     chunksRef.current = [];
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    
+
     stopWaveformAnimation();
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -389,7 +395,7 @@ export default function UniversalInputBar({
     const value = e.target.value;
     setInputText(value);
     setIsTyping(value.trim().length > 0);
-    
+
     // Auto-resize textarea
     const target = e.target;
     target.style.height = 'auto';
@@ -431,7 +437,7 @@ export default function UniversalInputBar({
     }
   };
 
-  
+
 
   const toggleMediaPicker = () => {
     // Create a native file picker that accepts all media types and files
@@ -439,7 +445,7 @@ export default function UniversalInputBar({
     input.type = 'file';
     input.accept = 'image/*,video/*,audio/*,*/*'; // Accept all media types and files
     input.multiple = false;
-    
+
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -450,12 +456,53 @@ export default function UniversalInputBar({
         }
       }
     };
-    
+
     input.click();
   };
 
   return (
     <div className={`relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300 ${className}`}>
+            {/* iOS-style action sheet */}
+      {showActionSheet && (
+        <IOSActionSheet
+          options={[
+            {
+              label: 'Photo Library',
+              onClick: () => {
+                photoInputRef.current?.click();
+                setShowActionSheet(false);
+              },
+            },
+            {
+              label: 'Choose File',
+              onClick: () => {
+                fileInputRef.current?.click();
+                setShowActionSheet(false);
+              },
+            },
+          ]}
+          onCancel={() => setShowActionSheet(false)}
+        />
+      )}
+            <input
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageSelect}
+        ref={photoInputRef}
+      />
+      <input
+        type="file"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            uploadFileMutation.mutate(file);
+          }
+        }}
+        ref={fileInputRef}
+      />
+      {/* End iOS-style action sheet */}
               disabled={uploadFileMutation.isPending}
             >
               <FileText className="w-6 h-6 text-purple-500 mb-1" />
@@ -476,7 +523,7 @@ export default function UniversalInputBar({
           </div>
         </div>
       )}
-      
+
       {/* Waveform overlay when recording */}
       {isVoiceRecording && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-2xl z-10">
@@ -528,7 +575,7 @@ export default function UniversalInputBar({
         {isTyping && !isVoiceRecording ? (
           <>
             <button 
-              onClick={toggleMediaPicker}
+              onClick={() => setShowActionSheet(true)}
               className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -543,7 +590,7 @@ export default function UniversalInputBar({
         ) : (
           <>
             <button 
-              onClick={toggleMediaPicker}
+              onClick={() => setShowActionSheet(true)}
               className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
             >
               <Plus className="w-4 h-4" />

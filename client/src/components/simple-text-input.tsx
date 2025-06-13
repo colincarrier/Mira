@@ -1,33 +1,36 @@
-import React, { useState, useRef } from "react";
-import { Send, Camera, Mic, Plus } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Plus, Camera, Mic } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import IOSActionSheet from './ios-action-sheet';
 
 interface SimpleTextInputProps {
-  onTextSubmit?: (text: string) => void;
+  onSendMessage: (message: string) => void;
   onCameraCapture?: () => void;
   onNewNote?: () => void;
   placeholder?: string;
-  context?: "notes" | "remind" | "note_detail";
   showCamera?: boolean;
   showMediaPicker?: boolean;
-  onToggleSubmenu?: () => void; // Add this line
+  className?: string;
 }
 
-export default function SimpleTextInput({ 
-  onCameraCapture, 
-  onNewNote, 
-  onTextSubmit,
-  placeholder = "What's on your mind?",
-  context = "notes",
+export default function SimpleTextInput({
+  onSendMessage,
+  onCameraCapture,
+  onNewNote = () => {},
+  placeholder = "Type a message...",
   showCamera = true,
   showMediaPicker = true,
-  onToggleSubmenu // Add this line
+  className = ""
 }: SimpleTextInputProps) {
-  const [text, setText] = useState("");
-  const { toast } = useToast();
+  const [inputText, setInputText] = useState('');
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
 
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -78,28 +81,28 @@ export default function SimpleTextInput({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       const formData = new FormData();
       formData.append("image", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/image", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -134,28 +137,28 @@ export default function SimpleTextInput({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/file", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload file");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -179,13 +182,9 @@ export default function SimpleTextInput({
   });
 
   const handleSubmit = () => {
-    if (text.trim()) {
-      if (onTextSubmit) {
-        onTextSubmit(text.trim());
-      } else {
-        createNoteMutation.mutate(text.trim());
-      }
-      setText("");
+    if (inputText.trim()) {
+      createNoteMutation.mutate(inputText.trim());
+      setInputText('');
     }
   };
 
@@ -196,40 +195,49 @@ export default function SimpleTextInput({
     }
   };
 
-  const handleToggleSubmenu = () => {
-    // Create a native file picker that accepts all media types and files
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*,video/*,audio/*,*/*'; // Accept all media types and files
-    input.multiple = false;
-    
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        // Handle images, videos, GIFs as media
-        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-          uploadImageMutation.mutate(file);
-        } else {
-          // Handle all other files
-          uploadFileMutation.mutate(file);
-        }
-      }
-    };
-    
-    input.click();
+  const handlePhotoLibrary = () => {
+    if (photoInputRef.current) {
+      photoInputRef.current.click();
+    }
   };
 
-  
+  const handleChooseFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImageMutation.mutate(file);
+    }
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFileMutation.mutate(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+
 
   return (
 
     <div className="fixed bottom-24 left-4 right-4 z-50">
-
       <div className="relative bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
         <div className="flex items-center gap-2">
           <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            ref={textareaRef}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none"
@@ -244,38 +252,26 @@ export default function SimpleTextInput({
               target.style.height = Math.min(target.scrollHeight, 120) + 'px';
             }}
           />
-          {text.trim() ? (
-            <>
-              {showMediaPicker && (
+          {showMediaPicker && (
                 <button 
-                  onClick={handleToggleSubmenu}
+                  onClick={() => setShowActionSheet(true)}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                   title="Add media"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               )}
-              <button 
-                onClick={handleSubmit}
-                disabled={createNoteMutation.isPending}
-                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </>
+          {inputText.trim() ? (
+            <button
+              onClick={handleSubmit}
+              className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
           ) : (
             <>
-              {showMediaPicker && (
-                <button 
-                  onClick={handleToggleSubmenu}
-                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  title="Add media"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              )}
               {showCamera && (
-                <button 
+                <button
                   onClick={onCameraCapture}
                   className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                   style={{ backgroundColor: '#a8bfa1' }}
@@ -283,7 +279,7 @@ export default function SimpleTextInput({
                   <Camera className="w-4 h-4" />
                 </button>
               )}
-              <button 
+              <button
                 onClick={onNewNote}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-colors text-[#374252]"
                 style={{ backgroundColor: '#9bb8d3' }}
@@ -294,6 +290,32 @@ export default function SimpleTextInput({
           )}
         </div>
       </div>
+
+      {/* Hidden file inputs */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handlePhotoSelect}
+        className="hidden"
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="*/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Custom iOS Action Sheet */}
+      <IOSActionSheet
+        isOpen={showActionSheet}
+        onClose={() => setShowActionSheet(false)}
+        onPhotoLibrary={handlePhotoLibrary}
+        onChooseFile={handleChooseFile}
+      />
     </div>
+
   );
 }

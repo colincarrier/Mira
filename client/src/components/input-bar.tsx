@@ -2,6 +2,7 @@ import { Camera, Mic, Plus, Send, Square } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import IOSActionSheet from './ios-action-sheet';
 
 interface InputBarProps {
   onCameraCapture?: () => void;
@@ -19,16 +20,17 @@ export default function InputBar({
   // Input state
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  
+
   // Mode state (mutually exclusive)
   const [showSubmenu, setShowSubmenu] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
-  
+
   // Voice recording state
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
   const [recordingStartTime, setRecordingStartTime] = useState<number>(0);
-  
+
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -40,12 +42,12 @@ export default function InputBar({
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generalFileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Touch interaction for hiding input bar
   const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const addButtonRef = useRef<HTMLDivElement>(null);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -61,11 +63,11 @@ export default function InputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create text note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -99,28 +101,28 @@ export default function InputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       const formData = new FormData();
       formData.append("audio", audioBlob);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/voice", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload voice note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -154,28 +156,28 @@ export default function InputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       const formData = new FormData();
       formData.append("image", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/image", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -210,28 +212,28 @@ export default function InputBar({
         }),
         credentials: "include",
       });
-      
+
       if (!placeholderResponse.ok) {
         throw new Error("Failed to create placeholder note");
       }
-      
+
       const placeholderNote = await placeholderResponse.json();
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("noteId", placeholderNote.id.toString());
-      
+
       const response = await fetch("/api/notes/file", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload file");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -288,6 +290,10 @@ export default function InputBar({
   const closeSubmenu = useCallback(() => {
     setShowSubmenu(false);
   }, []);
+
+  const toggleMediaPicker = () => {
+    setShowActionSheet(true);
+  };
 
   // Text input handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -354,26 +360,26 @@ export default function InputBar({
           autoGainControl: true,
         }
       });
-      
+
       streamRef.current = stream;
-      
+
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
-      
+
       analyser.fftSize = 256;
       const bufferLength = analyser.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
-      
+
       source.connect(analyser);
-      
+
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      
+
       // Try to use a supported audio format
       const options = { mimeType: 'audio/webm' };
       let mediaRecorder;
-      
+
       if (MediaRecorder.isTypeSupported('audio/webm')) {
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
@@ -383,17 +389,17 @@ export default function InputBar({
       } else {
         mediaRecorder = new MediaRecorder(stream);
       }
-      
+
       chunksRef.current = [];
-      
+
       mediaRecorder.ondataavailable = (event) => {
         chunksRef.current.push(event.data);
       };
-      
+
       mediaRecorder.onstop = () => {
         const recordingDuration = Date.now() - recordingStartTime;
         console.log('Recording stopped, duration:', recordingDuration, 'ms');
-        
+
         // Only process recordings longer than 1 second
         if (recordingDuration >= 1000) {
           console.log('Processing recording - duration acceptable');
@@ -404,12 +410,12 @@ export default function InputBar({
           console.log('Recording too short, discarding - no note will be created');
           // Silently discard short recordings without creating any note
         }
-        
+
         stream.getTracks().forEach(track => track.stop());
         audioContext.close();
         setWaveformData([]);
       };
-      
+
       mediaRecorderRef.current = mediaRecorder;
       return true;
     } catch (error) {
@@ -426,13 +432,13 @@ export default function InputBar({
   // Waveform animation
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current || !isVoiceRecording) return;
-    
+
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-    
+
     const waveform: number[] = [];
     const bufferLength = dataArrayRef.current.length;
     const step = Math.floor(bufferLength / 16);
-    
+
     for (let i = 0; i < bufferLength; i += step) {
       let sum = 0;
       let count = 0;
@@ -443,9 +449,9 @@ export default function InputBar({
       const avgAmplitude = count > 0 ? (sum / count) / 255 : 0;
       waveform.push(Math.min(1, avgAmplitude * 3)); // Amplify for better visibility
     }
-    
+
     setWaveformData(waveform);
-    
+
     if (isVoiceRecording) {
       animationRef.current = requestAnimationFrame(updateWaveform);
     }
@@ -466,19 +472,19 @@ export default function InputBar({
   const startRecording = useCallback(async () => {
     const success = await setupAudioContext();
     if (!success) return;
-    
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       const startTime = Date.now();
       setRecordingStartTime(startTime);
       mediaRecorderRef.current.start(100);
       setRecordingTime(0);
-      
+
       // Use actual elapsed time instead of simple counter
       intervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         setRecordingTime(elapsed);
       }, 100); // Check every 100ms for smoother updates
-      
+
       startWaveformAnimation();
     }
   }, [setupAudioContext, startWaveformAnimation]);
@@ -492,11 +498,11 @@ export default function InputBar({
         intervalRef.current = null;
       }
     }
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-    
+
     setRecordingTime(0);
     setWaveformData([]);
   }, [stopWaveformAnimation]);
@@ -556,21 +562,21 @@ export default function InputBar({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStart) return;
-    
+
     const touchEnd = {
       x: e.changedTouches[0].clientX,
       y: e.changedTouches[0].clientY
     };
-    
+
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = Math.abs(touchEnd.y - touchStart.y);
-    
+
     if (deltaX > 50 && deltaY < 30) {
       setIsAddButtonHidden(true);
     } else if (deltaX < -50 && deltaY < 30) {
       setIsAddButtonHidden(false);
     }
-    
+
     setTouchStart(null);
   };
 
@@ -660,7 +666,7 @@ export default function InputBar({
               </div>
             </div>
           )}
-          
+
           {/* Recording waveform display */}
           {isVoiceRecording && (
             <div className="absolute left-3 right-20 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white/95 rounded-lg px-3 py-2 z-20">
@@ -734,7 +740,7 @@ export default function InputBar({
             >
               <Plus className="w-4 h-4" />
             </button>
-            
+
             {inputText.trim() ? (
               <button 
                 onClick={() => {
@@ -783,6 +789,14 @@ export default function InputBar({
           </div>
         </div>
       )}
+
+      {/* Custom iOS Action Sheet */}
+      <IOSActionSheet
+        isOpen={showActionSheet}
+        onClose={() => setShowActionSheet(false)}
+        onPhotoLibrary={openPhotoLibrary}
+        onChooseFile={openFilePicker}
+      />
     </>
   );
 }
