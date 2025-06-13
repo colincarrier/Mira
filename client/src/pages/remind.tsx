@@ -418,6 +418,22 @@ export default function Remind() {
         />
 
         <BottomNavigation />
+
+        {/* Reminder Dialog */}
+        <ReminderDialog
+          open={reminderDialogOpen}
+          onOpenChange={setReminderDialogOpen}
+          mode={editingReminder ? 'edit' : 'create'}
+          initialData={editingReminder ? {
+            title: editingReminder.title,
+            description: editingReminder.description || '',
+            dueDate: editingReminder.timeDue ? new Date(editingReminder.timeDue) : undefined,
+            reminderType: editingReminder.reminderType || 'general',
+            priority: editingReminder.priority || 'medium'
+          } : undefined}
+          onSave={handleSaveReminder}
+          onDelete={editingReminder ? handleDeleteReminder : undefined}
+        />
       </div>
     </div>
   );
