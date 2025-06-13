@@ -235,7 +235,11 @@ export default function Remind() {
                         </div>
                       </div>
                     </div>
-                    <button className="p-1 text-blue-500 transition-colors">
+                    <button className={`p-1 transition-colors ${
+                      todo.timeDue || todo.isActiveReminder 
+                        ? 'text-blue-500' 
+                        : 'text-gray-300'
+                    }`}>
                       <Clock className="w-4 h-4" />
                     </button>
                   </div>
