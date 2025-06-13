@@ -227,30 +227,7 @@ export default function Remind() {
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">Remind</h2>
           </div>
 
-          {/* Unified Intelligent Input */}
-          <div className="flex gap-2 mb-6">
-            <Input
-              placeholder="Add/edit to-do's + reminders..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmitInput()}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSubmitInput}
-              disabled={!inputText.trim() || processInputMutation.isPending}
-              size="sm"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button 
-              onClick={handleCreateReminder}
-              variant="outline"
-              size="sm"
-            >
-              <Calendar className="w-4 h-4" />
-            </Button>
-          </div>
+          
 
           {/* Reminders Section */}
           <div className="mb-8">
