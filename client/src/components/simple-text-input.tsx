@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Send, Camera, Mic, Plus, X, Image, FileText } from "lucide-react";
+import { Send, Camera, Mic, Plus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,9 +27,7 @@ export default function SimpleTextInput({
   const [text, setText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const generalFileInputRef = useRef<HTMLInputElement>(null);
+  
 
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -199,115 +197,33 @@ export default function SimpleTextInput({
   };
 
   const handleToggleSubmenu = () => {
-    setIsSubmenuOpen(!isSubmenuOpen);
-    if (onToggleSubmenu) {
-        onToggleSubmenu();
-    }
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        uploadImageMutation.mutate(file);
-      } else {
-        toast({
-          title: "Unsupported file type",
-          description: "Please select an image file (JPG, PNG, GIF, etc.)",
-          variant: "destructive",
-        });
+    // Create a native file picker that accepts both images and files
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,*/*'; // Accept images and all file types
+    input.multiple = false;
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        if (file.type.startsWith('image/')) {
+          uploadImageMutation.mutate(file);
+        } else {
+          uploadFileMutation.mutate(file);
+        }
       }
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    };
+    
+    input.click();
   };
 
-  const handleGeneralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFileMutation.mutate(file);
-    }
-    if (generalFileInputRef.current) {
-      generalFileInputRef.current.value = '';
-    }
-  };
-
-  const openPhotoLibrary = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-    setIsSubmenuOpen(false);
-  };
-
-  const openFilePicker = () => {
-    if (generalFileInputRef.current) {
-      generalFileInputRef.current.click();
-    }
-    setIsSubmenuOpen(false);
-  };
+  
 
   return (
 
     <div className="fixed bottom-24 left-4 right-4 z-50">
-      {/* Hidden file inputs */}
-      <input
-        ref={fileInputRef}
-        id="image-file-input"
-        name="imageFile"
-        type="file"
-        accept="image/*"
-        onChange={handleImageSelect}
-        className="hidden"
-        aria-label="Select image file"
-      />
-      <input
-        ref={generalFileInputRef}
-        id="general-file-input"
-        name="generalFile"
-        type="file"
-        onChange={handleGeneralFileSelect}
-        className="hidden"
-        aria-label="Select any file"
-      />
 
       <div className="relative bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
-        {/* Media picker overlay */}
-        {isSubmenuOpen && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Add Media</span>
-              <button 
-                onClick={() => setIsSubmenuOpen(false)}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
-              >
-                <X className="w-4 h-4 text-gray-500" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={openFilePicker}
-                className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={uploadFileMutation.isPending}
-              >
-                <FileText className="w-6 h-6 text-purple-500 mb-1" />
-                <span className="text-xs text-gray-600">
-                  {uploadFileMutation.isPending ? "Uploading..." : "Files"}
-                </span>
-              </button>
-              <button
-                onClick={openPhotoLibrary}
-                className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={uploadImageMutation.isPending}
-              >
-                <Image className="w-6 h-6 text-blue-500 mb-1" />
-                <span className="text-xs text-gray-600">
-                  {uploadImageMutation.isPending ? "Uploading..." : "Media"}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
         <div className="flex items-center gap-2">
           <textarea
             value={text}
