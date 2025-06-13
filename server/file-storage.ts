@@ -29,11 +29,23 @@ export async function saveAudioFile(
     // If no extension, derive from MIME type
     if (!fileExtension) {
       if (mimeType.startsWith('image/')) {
-        fileExtension = mimeType.includes('png') ? '.png' : '.jpg';
+        if (mimeType.includes('png')) fileExtension = '.png';
+        else if (mimeType.includes('gif')) fileExtension = '.gif';
+        else if (mimeType.includes('webp')) fileExtension = '.webp';
+        else fileExtension = '.jpg';
+      } else if (mimeType.startsWith('video/')) {
+        if (mimeType.includes('mp4')) fileExtension = '.mp4';
+        else if (mimeType.includes('webm')) fileExtension = '.webm';
+        else if (mimeType.includes('mov')) fileExtension = '.mov';
+        else fileExtension = '.mp4';
       } else if (mimeType.startsWith('audio/')) {
-        fileExtension = '.webm';
+        if (mimeType.includes('mp3')) fileExtension = '.mp3';
+        else if (mimeType.includes('wav')) fileExtension = '.wav';
+        else fileExtension = '.webm';
       } else if (mimeType.includes('pdf')) {
         fileExtension = '.pdf';
+      } else if (mimeType.includes('text/')) {
+        fileExtension = '.txt';
       } else {
         fileExtension = '.bin';
       }

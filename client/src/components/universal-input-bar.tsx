@@ -1,4 +1,4 @@
-import { Camera, Mic, Plus, Send, Square, Image, FileText, X, Upload } from "lucide-react";
+import { Camera, Mic, Plus, Send, Square } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -431,74 +431,31 @@ export default function UniversalInputBar({
     }
   };
 
-  const handleGeneralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFileMutation.mutate(file);
-    }
-    // Reset the input
-    if (generalFileInputRef.current) {
-      generalFileInputRef.current.value = '';
-    }
-  };
-
-  const openPhotoLibrary = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-    onToggleSubmenu?.();
-  };
-
-  const openFilePicker = () => {
-    if (generalFileInputRef.current) {
-      generalFileInputRef.current.click();
-    }
-    onToggleSubmenu?.();
-  };
+  
 
   const toggleMediaPicker = () => {
-    onToggleSubmenu?.();
+    // Create a native file picker that accepts all media types and files
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,video/*,audio/*,*/*'; // Accept all media types and files
+    input.multiple = false;
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+          uploadImageMutation.mutate(file);
+        } else {
+          uploadFileMutation.mutate(file);
+        }
+      }
+    };
+    
+    input.click();
   };
 
   return (
     <div className={`relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300 ${className}`}>
-      {/* Hidden file inputs */}
-      <input
-        ref={fileInputRef}
-        id="image-file-input"
-        name="imageFile"
-        type="file"
-        accept="image/*"
-        onChange={handleImageSelect}
-        className="hidden"
-        aria-label="Select image file"
-      />
-      <input
-        ref={generalFileInputRef}
-        id="general-file-input"
-        name="generalFile"
-        type="file"
-        onChange={handleGeneralFileSelect}
-        className="hidden"
-        aria-label="Select any file"
-      />
-      
-      {/* Media picker overlay */}
-      {showSubmenu && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Add Media</span>
-            <button 
-              onClick={() => onToggleSubmenu?.()}
-              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={openFilePicker}
-              className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={uploadFileMutation.isPending}
             >
               <FileText className="w-6 h-6 text-purple-500 mb-1" />

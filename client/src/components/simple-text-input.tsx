@@ -197,18 +197,20 @@ export default function SimpleTextInput({
   };
 
   const handleToggleSubmenu = () => {
-    // Create a native file picker that accepts both images and files
+    // Create a native file picker that accepts all media types and files
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,*/*'; // Accept images and all file types
+    input.accept = 'image/*,video/*,audio/*,*/*'; // Accept all media types and files
     input.multiple = false;
     
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        if (file.type.startsWith('image/')) {
+        // Handle images, videos, GIFs as media
+        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
           uploadImageMutation.mutate(file);
         } else {
+          // Handle all other files
           uploadFileMutation.mutate(file);
         }
       }
