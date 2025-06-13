@@ -27,6 +27,7 @@ export default function SimpleTextInput({
   const [text, setText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
 
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -83,6 +84,14 @@ export default function SimpleTextInput({
     }
   };
 
+  const handleToggleSubmenu = () => {
+    setIsSubmenuOpen(!isSubmenuOpen);
+    if (onToggleSubmenu) {
+        onToggleSubmenu();
+    }
+  };
+
+
   return (
 
     <div className="fixed bottom-24 left-4 right-4 z-50">
@@ -109,7 +118,7 @@ export default function SimpleTextInput({
             <>
               {showMediaPicker && (
                 <button 
-                  onClick={onToggleSubmenu}
+                  onClick={handleToggleSubmenu}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                   title="Add media"
                 >
@@ -128,7 +137,7 @@ export default function SimpleTextInput({
             <>
               {showMediaPicker && (
                 <button 
-                  onClick={onToggleSubmenu}
+                  onClick={handleToggleSubmenu}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
                   title="Add media"
                 >
