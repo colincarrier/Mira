@@ -508,23 +508,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         </div>
       )}
 
-      {/* Smart Action Buttons */}
-      {smartActions.length > 0 && (
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-2">
-            {smartActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={(e) => handleSmartAction(action, e)}
-                className="flex items-center space-x-1 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-medium hover:bg-[hsl(var(--primary))]/90 transition-colors"
-              >
-                <action.icon className="w-3 h-3" />
-                <span>{action.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      
 
       {/* Next Steps from Rich Context */}
       {richContextData?.nextSteps && richContextData.nextSteps.length > 0 && (
