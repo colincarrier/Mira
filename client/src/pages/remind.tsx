@@ -235,8 +235,8 @@ export default function Remind() {
                         </div>
                       </div>
                     </div>
-                    <button className="p-1 text-blue-500 hover:text-blue-700 transition-colors">
-                      <Check className="w-4 h-4" />
+                    <button className="p-1 text-blue-500 transition-colors">
+                      <Clock className="w-4 h-4" />
                     </button>
                   </div>
                 ))
