@@ -20,6 +20,7 @@ export interface IStorage {
   getTodos(): Promise<Todo[]>;
   getTodosByNoteId(noteId: number): Promise<Todo[]>;
   updateTodo(id: number, updates: Partial<Todo>): Promise<Todo>;
+  deleteTodo(id: number): Promise<void>;
 
   // Collections
   createCollection(collection: InsertCollection): Promise<Collection>;
@@ -229,6 +230,10 @@ export class DatabaseStorage implements IStorage {
 
     if (!todo) throw new Error("Todo not found");
     return todo;
+  }
+
+  async deleteTodo(id: number): Promise<void> {
+    await db.delete(todos).where(eq(todos.id, id));
   }
 
   async createCollection(insertCollection: InsertCollection): Promise<Collection> {

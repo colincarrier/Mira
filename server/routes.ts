@@ -3242,6 +3242,83 @@ Provide a concise, actionable response that adds value beyond just the task titl
     }
   });
 
+  // Cleanup old todos and reminders
+  app.post("/api/cleanup/old-todos-reminders", async (req, res) => {
+    try {
+      const todos = await storage.getTodos();
+      console.log(`Total todos before cleanup: ${todos.length}`);
+
+      // Separate todos and reminders
+      const regularTodos = todos.filter(todo => !todo.isActiveReminder);
+      const reminders = todos.filter(todo => todo.isActiveReminder === true);
+
+      console.log(`Regular todos: ${regularTodos.length}, Reminders: ${reminders.length}`);
+
+      // Sort by creation date (oldest first)
+      const sortedTodos = regularTodos.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const sortedReminders = reminders.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      // Calculate how many to delete
+      const todosToDeleteCount = Math.floor(sortedTodos.length * 0.8); // 80% of todos
+      const remindersToDeleteCount = Math.floor(sortedReminders.length * 0.6); // 60% of reminders
+
+      console.log(`Will delete ${todosToDeleteCount} todos and ${remindersToDeleteCount} reminders`);
+
+      let deletedCount = 0;
+
+      // Delete oldest 80% of todos
+      const todosToDelete = sortedTodos.slice(0, todosToDeleteCount);
+      for (const todo of todosToDelete) {
+        try {
+          await storage.deleteTodo(todo.id);
+          deletedCount++;
+          console.log(`Deleted todo: "${todo.title}" (created: ${todo.createdAt})`);
+        } catch (error) {
+          console.error(`Failed to delete todo ${todo.id}:`, error);
+        }
+      }
+
+      // Delete oldest 60% of reminders
+      const remindersToDelete = sortedReminders.slice(0, remindersToDeleteCount);
+      for (const reminder of remindersToDelete) {
+        try {
+          await storage.deleteTodo(reminder.id);
+          deletedCount++;
+          console.log(`Deleted reminder: "${reminder.title}" (created: ${reminder.createdAt})`);
+        } catch (error) {
+          console.error(`Failed to delete reminder ${reminder.id}:`, error);
+        }
+      }
+
+      // Refresh notifications after cleanup
+      const { notificationSystem } = await import('./notification-system');
+      await notificationSystem.refreshNotifications();
+
+      const finalTodos = await storage.getTodos();
+      console.log(`Total todos after cleanup: ${finalTodos.length}`);
+
+      res.json({
+        success: true,
+        deletedCount,
+        breakdown: {
+          todosDeleted: todosToDeleteCount,
+          remindersDeleted: remindersToDeleteCount,
+          remainingTodos: finalTodos.filter(t => !t.isActiveReminder).length,
+          remainingReminders: finalTodos.filter(t => t.isActiveReminder === true).length
+        },
+        message: `Successfully deleted ${deletedCount} items (${todosToDeleteCount} todos + ${remindersToDeleteCount} reminders)`
+      });
+
+    } catch (error) {
+      console.error("Cleanup operation failed:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to cleanup old todos and reminders",
+        error: error.message 
+      });
+    }
+  });
+
   // Create and return HTTP server
   const server = createServer(app);
   return server;
