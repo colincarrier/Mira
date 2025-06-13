@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Send, Camera, Mic, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Camera, Mic, Plus, X, Image, FileText } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,8 +23,11 @@ export default function SimpleTextInput({
   showMediaPicker = true
 }: SimpleTextInputProps) {
   const [text, setText] = useState("");
+  const [showSubmenu, setShowSubmenu] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const generalFileInputRef = useRef<HTMLInputElement>(null);
 
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -63,6 +66,76 @@ export default function SimpleTextInput({
     },
   });
 
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been uploaded and processed.",
+        duration: 3000,
+      });
+    },
+    onError: (error) => {
+      console.error("Image upload error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({
+        title: "File uploaded",
+        description: "Your file has been uploaded and processed.",
+        duration: 3000,
+      });
+    },
+    onError: (error) => {
+      console.error("File upload error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = () => {
     if (text.trim()) {
       if (onTextSubmit) {
@@ -81,10 +154,107 @@ export default function SimpleTextInput({
     }
   };
 
-  return (
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        uploadImageMutation.mutate(file);
+      } else {
+        toast({
+          title: "Unsupported file type",
+          description: "Please select an image file (JPG, PNG, GIF, etc.)",
+          variant: "destructive",
+        });
+      }
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setShowSubmenu(false);
+  };
 
+  const handleGeneralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFileMutation.mutate(file);
+    }
+    if (generalFileInputRef.current) {
+      generalFileInputRef.current.value = '';
+    }
+    setShowSubmenu(false);
+  };
+
+  const openPhotoLibrary = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const openFilePicker = () => {
+    if (generalFileInputRef.current) {
+      generalFileInputRef.current.click();
+    }
+  };
+
+  const toggleSubmenu = () => {
+    setShowSubmenu(!showSubmenu);
+  };
+
+  return (
     <div className="fixed bottom-24 left-4 right-4 z-50">
-      <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
+      {/* Hidden file inputs */}
+      <input
+        ref={fileInputRef}
+        id="image-file-input"
+        name="imageFile"
+        type="file"
+        accept="image/*"
+        onChange={handleImageSelect}
+        className="hidden"
+        aria-label="Select image file"
+      />
+      <input
+        ref={generalFileInputRef}
+        id="general-file-input"
+        name="generalFile"
+        type="file"
+        onChange={handleGeneralFileSelect}
+        className="hidden"
+        aria-label="Select any file"
+      />
+
+      <div className="relative bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
+        {/* Media picker overlay */}
+        {showSubmenu && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Add Media</span>
+              <button 
+                onClick={() => setShowSubmenu(false)}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={openFilePicker}
+                className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FileText className="w-6 h-6 text-gray-600 mb-1" />
+                <span className="text-xs text-gray-600">File</span>
+              </button>
+              <button
+                onClick={openPhotoLibrary}
+                className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Image className="w-6 h-6 text-gray-600 mb-1" />
+                <span className="text-xs text-gray-600">Photo</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <textarea
             value={text}
@@ -107,9 +277,9 @@ export default function SimpleTextInput({
             <>
               {showMediaPicker && (
                 <button 
-                  onClick={onCameraCapture}
+                  onClick={toggleSubmenu}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  title="Add photo"
+                  title="Add media"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -126,9 +296,9 @@ export default function SimpleTextInput({
             <>
               {showMediaPicker && (
                 <button 
-                  onClick={onCameraCapture}
+                  onClick={toggleSubmenu}
                   className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  title="Add photo"
+                  title="Add media"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
