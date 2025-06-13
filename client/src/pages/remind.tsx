@@ -255,7 +255,11 @@ export default function Remind() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleClockClick(reminder)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleClockClick(reminder);
+                      }}
                       className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
                     >
                       <Clock className="w-4 h-4" />
@@ -335,11 +339,15 @@ export default function Remind() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleClockClick(todo)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleClockClick(todo);
+                      }}
                       className={`p-1 transition-colors ${
                         todo.timeDue || todo.isActiveReminder 
                           ? 'text-blue-500 hover:text-blue-700' 
-                          : 'text-gray-300 hover:text-gray-500'
+                          : 'text-gray-300 hover:text-gray-400 opacity-50'
                       }`}
                     >
                       <Clock className="w-4 h-4" />

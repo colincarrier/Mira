@@ -183,10 +183,10 @@ export function ReminderInput({
               variant="ghost"
               size="sm"
               onClick={startRecording}
-              className={`h-8 w-8 p-0 rounded-full transition-colors ${
+              className={`h-8 w-8 p-0 rounded-full transition-all duration-200 ${
                 isRecording 
-                  ? 'bg-red-100 text-red-600' 
-                  : 'hover:bg-blue-100 text-blue-600'
+                  ? 'bg-red-100 text-red-600 scale-110' 
+                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
               }`}
             >
               <Mic className="h-4 w-4" />
