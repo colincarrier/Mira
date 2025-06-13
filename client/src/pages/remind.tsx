@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Check, Plus } from "lucide-react";
+import { Clock, Check, Plus, Edit2, Calendar, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/bottom-navigation";
 import SimpleTextInput from "@/components/simple-text-input";
+import { ReminderDialog } from "@/components/reminder-dialog";
 import { formatDistanceToNow } from "date-fns";
 import type { Todo } from "@shared/schema";
 
@@ -12,6 +13,8 @@ export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [todoFilter, setTodoFilter] = useState<'all' | 'urgent' | 'pinned'>('all');
   const [inputText, setInputText] = useState('');
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Todo | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -60,6 +63,67 @@ export default function Remind() {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
     }
   });
+
+  // Dialog handlers
+  const handleEditReminder = (reminder: Todo) => {
+    setEditingReminder(reminder);
+    setReminderDialogOpen(true);
+  };
+
+  const handleCreateReminder = () => {
+    setEditingReminder(null);
+    setReminderDialogOpen(true);
+  };
+
+  const handleSaveReminder = async (reminderData: any) => {
+    try {
+      if (editingReminder) {
+        // Update existing reminder
+        const response = await fetch(`/api/todos/${editingReminder.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reminderData)
+        });
+        if (!response.ok) throw new Error('Failed to update reminder');
+      } else {
+        // Create new reminder
+        const response = await fetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: reminderData.title,
+            mode: 'reminder_creation',
+            context: 'dialog_box_creation',
+            reminderData
+          })
+        });
+        if (!response.ok) throw new Error('Failed to create reminder');
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setReminderDialogOpen(false);
+      setEditingReminder(null);
+    } catch (error) {
+      console.error('Failed to save reminder:', error);
+    }
+  };
+
+  const handleDeleteReminder = async () => {
+    if (!editingReminder) return;
+    
+    try {
+      const response = await fetch(`/api/todos/${editingReminder.id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete reminder');
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      setReminderDialogOpen(false);
+      setEditingReminder(null);
+    } catch (error) {
+      console.error('Failed to delete reminder:', error);
+    }
+  };
 
   // Client-side filtering
   const reminders = allTodos.filter(todo => todo.isActiveReminder === true && !todo.archived);
@@ -163,7 +227,30 @@ export default function Remind() {
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">Remind</h2>
           </div>
 
-
+          {/* Unified Intelligent Input */}
+          <div className="flex gap-2 mb-6">
+            <Input
+              placeholder="Add/edit to-do's + reminders..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSubmitInput()}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSubmitInput}
+              disabled={!inputText.trim() || processInputMutation.isPending}
+              size="sm"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button 
+              onClick={handleCreateReminder}
+              variant="outline"
+              size="sm"
+            >
+              <Calendar className="w-4 h-4" />
+            </Button>
+          </div>
 
           {/* Reminders Section */}
           <div className="mb-8">
@@ -230,8 +317,11 @@ export default function Remind() {
                         </div>
                       </div>
                     </div>
-                    <button className="p-1 text-orange-500 hover:text-orange-700 transition-colors">
-                      <Clock className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleEditReminder(reminder)}
+                      className="p-1 text-orange-500 hover:text-orange-700 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))
