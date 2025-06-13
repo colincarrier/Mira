@@ -7,13 +7,15 @@ interface ReminderDialogProps {
   onOpenChange: (open: boolean) => void;
   existingReminder?: Todo | null;
   onReminderUpdated?: () => void;
+  prePopulatedText?: string;
 }
 
 export function ReminderDialog({ 
   open, 
   onOpenChange, 
   existingReminder,
-  onReminderUpdated
+  onReminderUpdated,
+  prePopulatedText
 }: ReminderDialogProps) {
   
   const handleClose = () => {
@@ -43,7 +45,7 @@ export function ReminderDialog({
         </DialogHeader>
 
         <ReminderInput
-          initialValue={existingReminder?.title || ''}
+          initialValue={existingReminder?.title || prePopulatedText || ''}
           existingReminder={existingReminder}
           onReminderCreated={handleReminderCreated}
           onUpdate={handleReminderUpdate}

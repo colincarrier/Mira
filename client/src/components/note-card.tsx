@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
+import { ReminderDialog } from "@/components/reminder-dialog";
 
 interface NoteCardProps {
   note: NoteWithTodos;
@@ -116,6 +117,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [showTodosModal, setShowTodosModal] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
   
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
@@ -422,9 +424,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              toast({
-                description: "Reminder functionality coming soon!",
-              });
+              setShowReminderDialog(true);
             }}
             className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
             title="Set reminder"
@@ -714,6 +714,19 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Reminder Dialog */}
+      <ReminderDialog
+        open={showReminderDialog}
+        onOpenChange={setShowReminderDialog}
+        prePopulatedText={`Reminder: ${formattedContent.title}`}
+        onReminderUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+          toast({
+            description: "Reminder created successfully!",
+          });
+        }}
+      />
     </div>
   );
 }
