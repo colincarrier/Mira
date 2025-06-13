@@ -699,35 +699,6 @@ export default function NoteDetail() {
                     >
                       <Calendar className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => {
-                        const reminderText = `Set reminder for: ${note.content.slice(0, 50)}...`;
-                        fetch("/api/notes", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ 
-                            content: reminderText,
-                            mode: "text",
-                            context: "reminder_creation"
-                          }),
-                        }).then(() => {
-                          toast({
-                            title: "Reminder created",
-                            description: "Your reminder has been processed.",
-                          });
-                        }).catch(() => {
-                          toast({
-                            title: "Error",
-                            description: "Failed to create reminder.",
-                            variant: "destructive",
-                          });
-                        });
-                      }}
-                      className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
-                      title="Set reminder"
-                    >
-                      <Bell className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -781,32 +752,6 @@ export default function NoteDetail() {
                                 title="Add to todos"
                               >
                                 <Plus className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  const reminderTime = new Date();
-                                  reminderTime.setHours(reminderTime.getHours() + 1);
-
-                                  apiRequest('/api/reminders', 'POST', {
-                                    title: `Reminder: ${step}`,
-                                    description: `From note: ${note.content.slice(0, 50)}...`,
-                                    reminderTime: reminderTime.toISOString(),
-                                    noteId: note.id
-                                  }).then(() => {
-                                    toast({
-                                      description: "Reminder set for 1 hour",
-                                    });
-                                  }).catch(() => {
-                                    toast({
-                                      description: "Failed to set reminder",
-                                      variant: "destructive"
-                                    });
-                                  });
-                                }}
-                                className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
-                                title="Set reminder"
-                              >
-                                <Bell className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
@@ -864,8 +809,7 @@ export default function NoteDetail() {
                                   rel="noopener noreferrer"
                                   className="block text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200 transition-colors"
                                 >
-                                  <div className="font-medium truncate">{link.title}</div>
-                                  {link.description && (
+                                  <div className="font-medium truncate">{link.title}</div>                                  {link.description && (
                                     <div className="text-gray-500 truncate mt-1">{link.description.slice(0, 80)}...</div>
                                   )}
                                 </a>
