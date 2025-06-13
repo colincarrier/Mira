@@ -79,12 +79,71 @@ export default function Remind() {
     return true;
   });
 
-  const formatRelativeTime = (date: Date | string | null) => {
-    if (!date) return '';
-    try {
-      return formatDistanceToNow(new Date(date), { addSuffix: true });
-    } catch {
-      return '';
+  // Work-day-aware smart urgency system
+  const getSmartTimeDisplay = (date: Date | string | null, filterContext: 'today' | 'week' | 'month' | 'year') => {
+    if (!date) return null;
+
+    const now = new Date();
+    const targetDate = new Date(date);
+    const diffMs = targetDate.getTime() - now.getTime();
+
+    const diffMinutes = Math.floor(Math.abs(diffMs) / (1000 * 60));
+    const diffHours = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60));
+    const diffDays = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+
+    // Helper: Get work days between dates (excludes weekends)
+    const getWorkDaysBetween = (start: Date, end: Date): number => {
+      let count = 0;
+      const current = new Date(start);
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) count++; // Not Sunday or Saturday
+        current.setDate(current.getDate() + 1);
+      }
+      return count;
+    };
+
+    // Helper: Is same work day?
+    const isSameWorkDay = (date1: Date, date2: Date): boolean => {
+      return date1.toDateString() === date2.toDateString();
+    };
+
+    // If time has passed (overdue)
+    if (diffMs < 0) {
+      // Still same work day - show as overdue with red styling
+      if (isSameWorkDay(now, targetDate)) {
+        if (diffMinutes < 60) {
+          return { text: `${diffMinutes}m ago`, color: 'text-red-600', bgColor: 'bg-red-50' };
+        } else {
+          return { text: `${diffHours}h ago`, color: 'text-red-600', bgColor: 'bg-red-50' };
+        }
+      }
+      // Past work day - will be filtered to overdue section
+      return null;
+    }
+
+    // Future items - work-day-aware urgency thresholds
+    const workDaysAway = getWorkDaysBetween(now, targetDate);
+
+    // Smart thresholds based on filter context and work days
+    const urgencyThresholds = {
+      today: diffHours < 2,                    // Show if < 2 hours
+      week: workDaysAway <= 1,                 // Show if within 1 work day
+      month: workDaysAway <= 4,                // Show if within 4 work days  
+      year: workDaysAway <= 10                 // Show if within 2 work weeks
+    };
+
+    if (!urgencyThresholds[filterContext]) return null;
+
+    // Format the urgent time display
+    if (diffMinutes < 60) {
+      return { text: `in ${diffMinutes}m`, color: 'text-orange-600', bgColor: 'bg-orange-50' };
+    } else if (diffHours < 24) {
+      return { text: `in ${diffHours}h`, color: 'text-orange-600', bgColor: 'bg-orange-50' };
+    } else if (workDaysAway <= 1) {
+      return { text: `in 1d`, color: 'text-orange-600', bgColor: 'bg-orange-50' };
+    } else {
+      return { text: `in ${workDaysAway}d`, color: 'text-orange-600', bgColor: 'bg-orange-50' };
     }
   };
 
@@ -159,10 +218,15 @@ export default function Remind() {
                         }`}>
                           {reminder.title}
                         </span>
-                        <div className="flex items-center gap-1 text-xs text-orange-600 ml-2">
-                          {reminder.timeDue && (
-                            <span>{formatRelativeTime(reminder.timeDue)}</span>
-                          )}
+                        <div className="flex items-center gap-1 text-xs ml-2">
+                          {reminder.timeDue && (() => {
+                            const timeDisplay = getSmartTimeDisplay(reminder.timeDue, reminderFilter);
+                            return timeDisplay && (
+                              <span className={`${timeDisplay.color} font-medium px-1 py-0.5 ${timeDisplay.bgColor} rounded`}>
+                                {timeDisplay.text}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -228,10 +292,15 @@ export default function Remind() {
                         }`}>
                           {todo.title}
                         </span>
-                        <div className="flex items-center gap-1 text-xs text-blue-600 ml-2">
-                          {todo.timeDue && (
-                            <span>{formatRelativeTime(todo.timeDue)}</span>
-                          )}
+                        <div className="flex items-center gap-1 text-xs ml-2">
+                          {todo.timeDue && (() => {
+                            const timeDisplay = getSmartTimeDisplay(todo.timeDue, 'today');
+                            return timeDisplay && (
+                              <span className={`${timeDisplay.color} font-medium px-1 py-0.5 ${timeDisplay.bgColor} rounded`}>
+                                {timeDisplay.text}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
