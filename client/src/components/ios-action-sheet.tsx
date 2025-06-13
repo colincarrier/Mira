@@ -25,17 +25,17 @@ export default function IOSActionSheet({
         onClick={onClose}
       />
       
-      {/* Action Sheet - Native iOS Dimensions */}
-      <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center animate-slide-up">
-        <div className="w-[270px] mb-8">
+      {/* Action Sheet - Positioned above button */}
+      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-[101] animate-slide-up">
+        <div className="w-[270px]">
           {/* Main Actions */}
-          <div className="bg-white/95 backdrop-blur-md rounded-[13px] overflow-hidden mb-2">
+          <div className="bg-white border border-gray-300 rounded-[13px] overflow-hidden shadow-lg">
             <button
               onClick={() => {
                 onPhotoLibrary();
                 onClose();
               }}
-              className="w-full px-4 py-[14px] text-center text-blue-500 font-normal text-[20px] border-b border-gray-200/50 active:bg-gray-100/50 transition-colors flex items-center justify-center gap-3"
+              className="w-full px-4 py-[14px] text-center text-gray-700 font-normal text-[20px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-3"
             >
               <Image className="w-[22px] h-[22px]" />
               Photo Library
@@ -46,7 +46,7 @@ export default function IOSActionSheet({
                 onChooseFile();
                 onClose();
               }}
-              className="w-full px-4 py-[14px] text-center text-blue-500 font-normal text-[20px] active:bg-gray-100/50 transition-colors flex items-center justify-center gap-3"
+              className="w-full px-4 py-[14px] text-center text-gray-700 font-normal text-[20px] hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-3"
             >
               <FileText className="w-[22px] h-[22px]" />
               Choose File
