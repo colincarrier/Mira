@@ -25,8 +25,8 @@ export default function IOSActionSheet({
         onClick={onClose}
       />
       
-      {/* Action Sheet - Positioned directly above + button */}
-      <div className="fixed bottom-16 right-6 z-[101]">
+      {/* Action Sheet - Positioned relative to input bar with gap */}
+      <div className="fixed right-6 z-[101]" style={{ bottom: 'calc(3.5rem + 16px + 60px + 8px)' }}>
         <div className="w-[200px]">
           {/* Main Actions */}
           <div className="bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">

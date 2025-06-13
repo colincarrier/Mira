@@ -231,7 +231,12 @@ export default function SimpleTextInput({
 
   return (
 
-    <div className="fixed bottom-24 left-4 right-4 z-50">
+    <div 
+      className="fixed left-4 right-4 z-50"
+      style={{ 
+        bottom: 'calc(3.5rem + 16px)' // Nav height + gap, consistent with other input bars
+      }}
+    >
       <div className="relative bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
         <div className="flex items-center gap-2">
           <textarea
