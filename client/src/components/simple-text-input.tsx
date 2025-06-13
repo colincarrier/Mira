@@ -4,11 +4,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 interface SimpleTextInputProps {
+  onTextSubmit?: (text: string) => void;
   onCameraCapture?: () => void;
   onNewNote?: () => void;
-  onTextSubmit?: (text: string) => void;
   placeholder?: string;
   context?: "notes" | "remind" | "note_detail";
+  showCamera?: boolean;
+  showMediaPicker?: boolean;
 }
 
 export default function SimpleTextInput({ 
@@ -16,7 +18,9 @@ export default function SimpleTextInput({
   onNewNote, 
   onTextSubmit,
   placeholder = "What's on your mind?",
-  context = "notes"
+  context = "notes",
+  showCamera = true,
+  showMediaPicker = true
 }: SimpleTextInputProps) {
   const [text, setText] = useState("");
   const { toast } = useToast();
@@ -78,7 +82,7 @@ export default function SimpleTextInput({
   };
 
   return (
-    
+
     <div className="fixed bottom-24 left-4 right-4 z-50">
       <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
         <div className="flex items-center gap-2">
@@ -101,13 +105,15 @@ export default function SimpleTextInput({
           />
           {text.trim() ? (
             <>
-              <button 
-                onClick={onCameraCapture}
-                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                title="Add photo"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              {showMediaPicker && (
+                <button 
+                  onClick={onCameraCapture}
+                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  title="Add photo"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
               <button 
                 onClick={handleSubmit}
                 disabled={createNoteMutation.isPending}
@@ -118,20 +124,24 @@ export default function SimpleTextInput({
             </>
           ) : (
             <>
-              <button 
-                onClick={onCameraCapture}
-                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                title="Add photo"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={onCameraCapture}
-                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: '#a8bfa1' }}
-              >
-                <Camera className="w-4 h-4" />
-              </button>
+              {showMediaPicker && (
+                <button 
+                  onClick={onCameraCapture}
+                  className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  title="Add photo"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+              {showCamera && (
+                <button 
+                  onClick={onCameraCapture}
+                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: '#a8bfa1' }}
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              )}
               <button 
                 onClick={onNewNote}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-colors text-[#374252]"

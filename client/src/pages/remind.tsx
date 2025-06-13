@@ -4,6 +4,7 @@ import { Clock, Check, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/bottom-navigation";
+import SimpleTextInput from "@/components/simple-text-input";
 import { formatDistanceToNow } from "date-fns";
 import type { Todo } from "@shared/schema";
 
@@ -103,23 +104,7 @@ export default function Remind() {
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">Remind</h2>
           </div>
 
-          {/* Unified Intelligent Input */}
-          <div className="flex gap-2 mb-6">
-            <Input
-              placeholder="Add/edit to-do's + reminders..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmitInput()}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSubmitInput}
-              disabled={!inputText.trim() || processInputMutation.isPending}
-              size="sm"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
+          
 
           {/* Reminders Section */}
           <div className="mb-8">
@@ -251,6 +236,15 @@ export default function Remind() {
             </div>
           </div>
         </div>
+
+        {/* Floating Input Bar - Voice Only */}
+        <SimpleTextInput 
+          onTextSubmit={(text) => processInputMutation.mutate(text)}
+          placeholder="Add/edit to-do's + reminders..."
+          context="remind"
+          showCamera={false}
+          showMediaPicker={false}
+        />
         
         <BottomNavigation />
       </div>
