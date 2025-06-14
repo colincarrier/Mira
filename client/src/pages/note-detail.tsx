@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight, Undo2, AlertTriangle, CheckCircle, X } from "lucide-react";
+import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -26,12 +27,7 @@ export default function NoteDetail() {
   const [pendingChanges, setPendingChanges] = useState<any>(null);
   const [clarificationInput, setClarificationInput] = useState('');
 
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
@@ -210,49 +206,31 @@ export default function NoteDetail() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    setIsTyping(value.length > 0);
-  };
+  const handleSendMessage = (text: string) => {
+    console.log("Sending message for note update:", text);
 
-  const handleSendMessage = () => {
-    if (inputValue.trim()) {
-      console.log("Sending message for note update:", inputValue);
+    // Create context-aware update with full note context
+    const fullContext = {
+      currentContent: note.content,
+      todos: note.todos || [],
+      richContext: note.richContext,
+      aiContext: note.aiContext,
+      userModification: text.trim()
+    };
 
-      // Create context-aware update with full note context
-      const fullContext = {
-        currentContent: note.content,
-        todos: note.todos || [],
-        richContext: note.richContext,
-        aiContext: note.aiContext,
-        userModification: inputValue.trim()
-      };
+    // Send context-aware update request
+    updateNoteMutation.mutate({ 
+      content: note.content, 
+      updateInstruction: `User wants to modify this note: "${text.trim()}". 
+      Current note context: ${JSON.stringify(fullContext)}. 
+      Please intelligently update the note content, todos, priorities, timing, or other aspects based on the user's intent.
+      If they're adding items, add them. If removing, remove them. If checking off todos, mark them complete.
+      If changing details, priorities, or timing, update accordingly.`
+    });
 
-      // Send context-aware update request
-      updateNoteMutation.mutate({ 
-        content: note.content, 
-        updateInstruction: `User wants to modify this note: "${inputValue.trim()}". 
-        Current note context: ${JSON.stringify(fullContext)}. 
-        Please intelligently update the note content, todos, priorities, timing, or other aspects based on the user's intent.
-        If they're adding items, add them. If removing, remove them. If checking off todos, mark them complete.
-        If changing details, priorities, or timing, update accordingly.`
-      });
-
-      setInputValue("");
-      setIsTyping(false);
-
-      toast({
-        description: "Updating note with AI assistance...",
-      });
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+    toast({
+      description: "Updating note with AI assistance...",
+    });
   };
 
   const formatNoteForSharing = (note: NoteWithTodos) => {
@@ -884,79 +862,19 @@ export default function NoteDetail() {
 
 
       </div>
-      {/* Input Bar - Same style as other pages */}
-      <div 
-        className="fixed bottom-24 left-4 right-4 transition-transform duration-300 translate-x-0 opacity-100"
-        style={{ 
-          zIndex: 9999,
-          position: 'fixed',
-          bottom: 'calc(3.5rem + 16px)', // Match other input bars
-          left: '1rem',
-          right: '1rem',
-          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+      {/* Input Bar - Same functionality as home page */}
+      <InputBar
+        onTextSubmit={handleSendMessage}
+        onCameraCapture={() => {
+          // Open camera capture (same as home page)
+          console.log('Camera capture triggered from note detail');
         }}
-      >
-        <div className="border border-gray-300 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-1.5 bg-white">
-          <textarea
-            placeholder="Add/edit anything here..."
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-600 text-gray-900 resize-none overflow-hidden"
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
-            rows={1}
-            style={{
-              minHeight: '20px',
-              maxHeight: '120px'
-            }}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              target.style.height = 'auto';
-              target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-            }}
-          />
-          {isTyping ? (
-            <>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                title="Add attachment"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={handleSendMessage}
-                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-8 h-8 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors bg-[#f1efe8]"
-                title="PLUS BUTTON - Grey"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: '#a8bfa1' }}
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: '#9bb8d3' }}
-              >
-                <Mic className="w-4 h-4" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+        onNewNote={() => {
+          // Handle new note creation (voice modal, etc.)
+          console.log('New note triggered from note detail');
+        }}
+        placeholder="Add/edit anything here..."
+      />
 
       {/* Version History Dialog */}
       {showVersionHistory && (
