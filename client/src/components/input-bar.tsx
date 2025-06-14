@@ -1,29 +1,35 @@
-import { Camera, Mic, Plus, Send, Square } from "lucide-react";
+
+import { Camera, Mic, Plus, Send, Square, X, FileText, Image } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import IOSActionSheet from './ios-action-sheet';
+import { useLocation } from "wouter";
 
 interface InputBarProps {
+  onTextSubmit?: (text: string) => void;
   onCameraCapture?: () => void;
   onNewNote?: () => void;
-  onTextSubmit?: (text: string) => void;
   isHidden?: boolean;
+  className?: string;
 }
 
 export default function InputBar({
+  onTextSubmit,
   onCameraCapture,
   onNewNote,
-  onTextSubmit,
-  isHidden = false
+  isHidden = false,
+  className = ""
 }: InputBarProps) {
+  // Get current page context
+  const [location] = useLocation();
+  const currentPage = location.split('/')[1] || 'notes';
+  
   // Input state
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  // Mode state (mutually exclusive)
+  // Mode state
   const [showSubmenu, setShowSubmenu] = useState(false);
-  const [showActionSheet, setShowActionSheet] = useState(false);
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 
   // Voice recording state
@@ -43,29 +49,62 @@ export default function InputBar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generalFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Touch interaction for hiding input bar
-  const [isAddButtonHidden, setIsAddButtonHidden] = useState(false);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const addButtonRef = useRef<HTMLDivElement>(null);
-
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Context-aware placeholders and settings
+  const getContextConfig = () => {
+    switch (currentPage) {
+      case 'remind':
+        return {
+          placeholder: "Add/edit to-do's + reminders...",
+          showCamera: false,
+          showMediaPicker: false,
+          context: "remind"
+        };
+      case 'collections':
+        return {
+          placeholder: "Add to collection...",
+          showCamera: true,
+          showMediaPicker: true,
+          context: "collections"
+        };
+      case 'note-detail':
+        return {
+          placeholder: "Add/edit anything here...",
+          showCamera: true,
+          showMediaPicker: true,
+          context: "note_edit"
+        };
+      default: // notes page
+        return {
+          placeholder: "What's on your mind?",
+          showCamera: true,
+          showMediaPicker: true,
+          context: "notes"
+        };
+    }
+  };
+
+  const config = getContextConfig();
 
   // Text note mutation
   const createTextNoteMutation = useMutation({
     mutationFn: async (text: string) => {
-      const response = await fetch("/api/notes", {
+      const endpoint = currentPage === 'remind' ? "/api/reminders" : "/api/notes";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           content: text,
-          mode: "text"
+          mode: "text",
+          context: config.context
         }),
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create text note");
+        throw new Error(`Failed to create ${currentPage === 'remind' ? 'reminder' : 'note'}`);
       }
 
       return response.json();
@@ -73,17 +112,18 @@ export default function InputBar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
       toast({
-        title: "Note saved",
-        description: "Your note has been created successfully.",
+        title: `${currentPage === 'remind' ? 'Reminder' : 'Note'} saved`,
+        description: `Your ${currentPage === 'remind' ? 'reminder' : 'note'} has been created successfully.`,
         duration: 3000,
       });
     },
     onError: (error) => {
-      console.error("Text note error:", error);
+      console.error("Text submission error:", error);
       toast({
         title: "Error",
-        description: "Failed to save note. Please try again.",
+        description: `Failed to save ${currentPage === 'remind' ? 'reminder' : 'note'}. Please try again.`,
         variant: "destructive",
       });
     },
@@ -97,7 +137,8 @@ export default function InputBar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           content: "🎤 Recording voice note...",
-          type: "voice"
+          type: "voice",
+          context: config.context
         }),
         credentials: "include",
       });
@@ -152,7 +193,8 @@ export default function InputBar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           content: "📷 Processing image...",
-          type: "image"
+          type: "image",
+          context: config.context
         }),
         credentials: "include",
       });
@@ -208,7 +250,8 @@ export default function InputBar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           content: `📄 Processing ${file.name}...`,
-          type: "file"
+          type: "file",
+          context: config.context
         }),
         credentials: "include",
       });
@@ -266,34 +309,23 @@ export default function InputBar({
   }, [isVoiceRecording]);
 
   const openCamera = useCallback(() => {
-    console.log('📷 CAMERA TRIGGERED! Current states:', { showSubmenu, isVoiceRecording });
-    // Close all other modes first
-    setShowSubmenu(false);
-    if (isVoiceRecording) {
-      stopRecording();
-      setIsVoiceRecording(false);
-    }
+    console.log('📷 CAMERA TRIGGERED!');
+    closeAllModes();
     onCameraCapture?.();
-  }, [isVoiceRecording, showSubmenu, onCameraCapture]);
+  }, [onCameraCapture]);
 
   const toggleSubmenu = useCallback(() => {
-    console.log('Submenu button clicked, current states:', { showSubmenu, isVoiceRecording });
-    // Close voice recording if active
+    console.log('Submenu button clicked');
     if (isVoiceRecording) {
       stopRecording();
       setIsVoiceRecording(false);
     }
-    // Toggle submenu
     setShowSubmenu(!showSubmenu);
   }, [isVoiceRecording, showSubmenu]);
 
   const closeSubmenu = useCallback(() => {
     setShowSubmenu(false);
   }, []);
-
-  const toggleMediaPicker = () => {
-    setShowActionSheet(true);
-  };
 
   // Text input handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -303,47 +335,34 @@ export default function InputBar({
   };
 
   const handleSendMessage = () => {
-    console.log('🚀 SEND BUTTON CLICKED! Text:', inputText, 'onTextSubmit exists:', !!onTextSubmit);
     if (inputText.trim()) {
-      console.log('✅ Text found, processing:', inputText.trim());
       if (onTextSubmit) {
-        console.log('🎯 Using onTextSubmit prop');
         onTextSubmit(inputText.trim());
       } else {
-        console.log('📝 Using internal mutation');
         createTextNoteMutation.mutate(inputText.trim());
       }
       setInputText("");
       setIsTyping(false);
-      closeAllModes(); // Close any open modes
+      closeAllModes();
     } else {
-      console.log('❌ No text to send, calling onNewNote fallback');
-      onNewNote?.(); // Fallback for empty text
+      onNewNote?.();
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('🔑 ENTER pressed with text:', inputText);
-      if (onTextSubmit && inputText.trim()) {
-        console.log('🔑 Calling onTextSubmit via Enter');
-        onTextSubmit(inputText.trim());
-        setInputText("");
-        setIsTyping(false);
-      } else {
-        console.log('🔑 Enter pressed but no onTextSubmit or empty text');
+      if (inputText.trim()) {
+        handleSendMessage();
       }
     }
   };
 
   const startVoiceRecording = useCallback(async () => {
-    console.log('Voice button clicked, current states:', { showSubmenu, isVoiceRecording });
-    // Close submenu if open
     setShowSubmenu(false);
     setIsVoiceRecording(true);
     await startRecording();
-  }, [showSubmenu, isVoiceRecording]);
+  }, []);
 
   const stopVoiceRecording = useCallback(() => {
     stopRecording();
@@ -376,7 +395,6 @@ export default function InputBar({
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
 
-      // Try to use a supported audio format
       const options = { mimeType: 'audio/webm' };
       let mediaRecorder;
 
@@ -398,17 +416,11 @@ export default function InputBar({
 
       mediaRecorder.onstop = () => {
         const recordingDuration = Date.now() - recordingStartTime;
-        console.log('Recording stopped, duration:', recordingDuration, 'ms');
-
-        // Only process recordings longer than 1 second
+        
         if (recordingDuration >= 1000) {
-          console.log('Processing recording - duration acceptable');
           const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const blob = new Blob(chunksRef.current, { type: mimeType });
           createVoiceNoteMutation.mutate(blob);
-        } else {
-          console.log('Recording too short, discarding - no note will be created');
-          // Silently discard short recordings without creating any note
         }
 
         stream.getTracks().forEach(track => track.stop());
@@ -447,7 +459,7 @@ export default function InputBar({
         count++;
       }
       const avgAmplitude = count > 0 ? (sum / count) / 255 : 0;
-      waveform.push(Math.min(1, avgAmplitude * 3)); // Amplify for better visibility
+      waveform.push(Math.min(1, avgAmplitude * 3));
     }
 
     setWaveformData(waveform);
@@ -479,11 +491,10 @@ export default function InputBar({
       mediaRecorderRef.current.start(100);
       setRecordingTime(0);
 
-      // Use actual elapsed time instead of simple counter
       intervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         setRecordingTime(elapsed);
-      }, 100); // Check every 100ms for smoother updates
+      }, 100);
 
       startWaveformAnimation();
     }
@@ -506,8 +517,6 @@ export default function InputBar({
     setRecordingTime(0);
     setWaveformData([]);
   }, [stopWaveformAnimation]);
-
-  // Removed duplicate text input functions - using the correct ones above
 
   // File handlers
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -552,34 +561,6 @@ export default function InputBar({
     closeSubmenu();
   };
 
-  // Touch gesture handlers for hiding input bar
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-
-    const touchEnd = {
-      x: e.changedTouches[0].clientX,
-      y: e.changedTouches[0].clientY
-    };
-
-    const deltaX = touchEnd.x - touchStart.x;
-    const deltaY = Math.abs(touchEnd.y - touchStart.y);
-
-    if (deltaX > 50 && deltaY < 30) {
-      setIsAddButtonHidden(true);
-    } else if (deltaX < -50 && deltaY < 30) {
-      setIsAddButtonHidden(false);
-    }
-
-    setTouchStart(null);
-  };
-
   // Format time for recording timer
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -594,44 +575,30 @@ export default function InputBar({
       {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
-        id="image-file-input"
-        name="imageFile"
         type="file"
         accept="image/*"
         onChange={handleImageSelect}
         className="hidden"
-        aria-label="Select image file"
       />
       <input
         ref={generalFileInputRef}
-        id="general-file-input"
-        name="generalFile"
         type="file"
         onChange={handleGeneralFileSelect}
         className="hidden"
-        aria-label="Select any file"
       />
 
       {/* Main input bar */}
       <div 
-        ref={addButtonRef}
-        className={`fixed left-4 right-4 transition-transform duration-300 ${
-          isAddButtonHidden ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
-        }`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        className={`fixed left-4 right-4 ${className}`}
         style={{ 
           zIndex: 9999,
-          position: 'fixed',
-          bottom: 'calc(3.5rem + 16px)', // Adjusted for significantly shorter nav + separation
-          left: '1rem',
-          right: '1rem',
+          bottom: 'calc(3.5rem + 16px)',
           filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
         }}
       >
         <div className="relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
           {/* Media picker overlay */}
-          {showSubmenu && (
+          {showSubmenu && config.showMediaPicker && (
             <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Add Media</span>
@@ -644,12 +611,7 @@ export default function InputBar({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => {
-                    if (generalFileInputRef.current) {
-                      generalFileInputRef.current.click();
-                    }
-                    closeSubmenu();
-                  }}
+                  onClick={openFilePicker}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   disabled={uploadFileMutation.isPending}
                 >
@@ -659,12 +621,7 @@ export default function InputBar({
                   </span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (fileInputRef.current) {
-                      fileInputRef.current.click();
-                    }
-                    closeSubmenu();
-                  }}
+                  onClick={openPhotoLibrary}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   disabled={uploadImageMutation.isPending}
                 >
@@ -713,21 +670,9 @@ export default function InputBar({
           {/* Text input */}
           <textarea
             value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              setIsTyping(e.target.value.length > 0);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (onTextSubmit && inputText.trim()) {
-                  onTextSubmit(inputText.trim());
-                  setInputText("");
-                  setIsTyping(false);
-                }
-              }
-            }}
-            placeholder={isVoiceRecording ? "Recording voice note..." : "Add/edit anything..."}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
+            placeholder={isVoiceRecording ? "Recording voice note..." : config.placeholder}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
             rows={1}
             style={{
@@ -744,35 +689,33 @@ export default function InputBar({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5">
-            <button 
-              onClick={toggleSubmenu}
-              className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            {config.showMediaPicker && (
+              <button 
+                onClick={toggleSubmenu}
+                className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
 
             {inputText.trim() ? (
               <button 
-                onClick={() => {
-                  if (onTextSubmit && inputText.trim()) {
-                    onTextSubmit(inputText.trim());
-                    setInputText("");
-                    setIsTyping(false);
-                  }
-                }}
+                onClick={handleSendMessage}
                 className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>
             ) : (
               <>
-                <button 
-                  onClick={openCamera}
-                  className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
-                  style={{ backgroundColor: '#a8bfa1' }}
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
+                {config.showCamera && (
+                  <button 
+                    onClick={openCamera}
+                    className="w-8 h-8 text-gray-700 rounded-full flex items-center justify-center transition-colors"
+                    style={{ backgroundColor: '#a8bfa1' }}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                )}
                 <button 
                   onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-colors z-20 relative hover:opacity-90 text-[#374252]"
@@ -786,27 +729,6 @@ export default function InputBar({
           </div>
         </div>
       </div>
-
-      {/* Hidden state indicator - tap to restore */}
-      {isAddButtonHidden && (
-        <div 
-          className="fixed bottom-24 right-4 cursor-pointer"
-          onClick={() => setIsAddButtonHidden(false)}
-          style={{ zIndex: 10000 }}
-        >
-          <div className="w-12 h-6 bg-gray-400/50 rounded-full flex items-center justify-center">
-            <div className="w-8 h-1 bg-gray-600 rounded-full"></div>
-          </div>
-        </div>
-      )}
-
-      {/* Custom iOS Action Sheet */}
-      <IOSActionSheet
-        isOpen={showActionSheet}
-        onClose={() => setShowActionSheet(false)}
-        onPhotoLibrary={openPhotoLibrary}
-        onChooseFile={openFilePicker}
-      />
     </>
   );
 }

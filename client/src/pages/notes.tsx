@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import ActivityFeed from "@/components/activity-feed";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
-import SimpleTextInput from "@/components/simple-text-input";
+import InputBar from "@/components/input-bar";
 import FullScreenCapture from "@/components/full-screen-capture";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import type { NoteWithTodos } from "@shared/schema";
@@ -79,12 +79,10 @@ export default function Notes() {
       </div>
 
       {/* Context-specific Input Bar for Notes */}
-      <SimpleTextInput 
+      <InputBar 
         onCameraCapture={() => setIsFullScreenCaptureOpen(true)}
         onNewNote={() => setIsVoiceModalOpen(true)}
         onTextSubmit={handleTextSubmit}
-        placeholder="What's on your mind?"
-        context="notes"
       />
 
       {/* Bottom Navigation */}

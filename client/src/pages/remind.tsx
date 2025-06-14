@@ -359,13 +359,9 @@ export default function Remind() {
           </div>
         </div>
 
-        {/* Floating Input Bar - Voice Only */}
-        <SimpleTextInput 
+        {/* Floating Input Bar - Context Aware */}
+        <InputBar 
           onTextSubmit={(text) => processInputMutation.mutate(text)}
-          placeholder="Add/edit to-do's + reminders..."
-          context="remind"
-          showCamera={false}
-          showMediaPicker={false}
         />
 
         <BottomNavigation />

@@ -862,18 +862,15 @@ export default function NoteDetail() {
 
 
       </div>
-      {/* Input Bar - Same functionality as home page */}
+      {/* Input Bar - Context Aware */}
       <InputBar
         onTextSubmit={handleSendMessage}
         onCameraCapture={() => {
-          // Open camera capture (same as home page)
           console.log('Camera capture triggered from note detail');
         }}
         onNewNote={() => {
-          // Handle new note creation (voice modal, etc.)
           console.log('New note triggered from note detail');
         }}
-        placeholder="Add/edit anything here..."
       />
 
       {/* Version History Dialog */}
