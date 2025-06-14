@@ -601,16 +601,22 @@ export default function InputBar({
             <div className="absolute bottom-full right-0 mb-2 z-50" style={{ right: '48px' }}>
               <div className="w-[200px] bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">
                 <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     closeSubmenu();
-                    // Use setTimeout to ensure submenu closes first
-                    setTimeout(() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.click();
-                      }
-                    }, 10);
+                    // Direct trigger without setTimeout to prevent native behavior
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
                   }}
                   className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
                   disabled={uploadImageMutation.isPending}
@@ -618,18 +624,24 @@ export default function InputBar({
                   <Image className="w-[16px] h-[16px]" />
                   {uploadImageMutation.isPending ? "Uploading..." : "Photo Library"}
                 </button>
-                
+
                 <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     closeSubmenu();
-                    // Use setTimeout to ensure submenu closes first
-                    setTimeout(() => {
-                      if (generalFileInputRef.current) {
-                        generalFileInputRef.current.click();
-                      }
-                    }, 10);
+                    // Direct trigger without setTimeout to prevent native behavior
+                    if (generalFileInputRef.current) {
+                      generalFileInputRef.current.click();
+                    }
                   }}
                   className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
                   disabled={uploadFileMutation.isPending}
@@ -698,7 +710,19 @@ export default function InputBar({
           <div className="flex items-center gap-1.5">
             {config.showMediaPicker && (
               <button 
-                onClick={toggleSubmenu}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleSubmenu();
+                }}
                 className="w-8 h-8 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-full flex items-center justify-center transition-colors"
               >
                 <Plus className="w-4 h-4" />
