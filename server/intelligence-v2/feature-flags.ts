@@ -17,6 +17,7 @@ export class FeatureFlagManager {
 
   private constructor() {
     this.flags = this.loadFeatureFlags();
+    console.log('🚩 Feature Flags initialized:', this.flags);
   }
 
   public static getInstance(): FeatureFlagManager {

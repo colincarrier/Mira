@@ -1,4 +1,9 @@
-import 'dotenv/config';
+// Set Intelligence-V2 flags explicitly
+process.env.FEATURE_INTELLIGENCE_V2 = 'true';
+process.env.FEATURE_VECTOR_SEARCH = 'true';
+process.env.FEATURE_RECURSIVE_REASONING = 'true';
+process.env.FEATURE_RELATIONSHIP_MAPPING = 'true';
+process.env.FEATURE_PROACTIVE_DELIVERY = 'true';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import { registerRoutes } from "./routes";
