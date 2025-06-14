@@ -68,35 +68,33 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     try {
       console.log("Starting camera...");
 
-      // If permission is explicitly denied, don't try again
-      if (permissions.camera === 'denied') {
+      // Check if we already have camera permission
+      if (hasCamera && permissions.camera === 'granted') {
+        console.log("Camera permission already granted, proceeding...");
+      } else if (permissions.camera === 'denied') {
         toast({
           title: "Camera Access Denied",
-          description: "Camera permission was denied. Please enable it in your browser settings to use this feature.",
+          description: "Please enable camera access in your browser settings to use this feature.",
           variant: "destructive",
         });
         return;
-      }
-
-      // Only request permission if we don't already have it
-      if (!hasCamera && needsCameraPermission) {
+      } else if (needsCameraPermission) {
+        // Only request permission if we haven't tried recently
+        console.log("Requesting camera permission...");
         const granted = await requestCameraPermission();
         if (!granted) {
           toast({
             title: "Camera Permission Required",
-            description: "Please allow camera access to take photos. This permission will be remembered.",
+            description: "Camera access is needed to take photos. Please allow access and try again.",
             variant: "destructive",
           });
           return;
         }
       }
 
-      let constraints = { 
-        video: { 
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 },
-          facingMode: cameraFacing
-        },
+      // Start with basic constraints and progressively enhance
+      let constraints: MediaStreamConstraints = { 
+        video: { facingMode: cameraFacing },
         audio: false 
       };
 
@@ -104,13 +102,25 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch (specificCameraError) {
-        console.log(`${cameraFacing} camera failed, trying any camera:`, specificCameraError);
-        // Fallback to basic camera
-        constraints = { 
-          video: true,
-          audio: false 
-        };
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log(`${cameraFacing} camera failed, trying opposite camera:`, specificCameraError);
+        
+        // Try the opposite camera
+        try {
+          constraints = { 
+            video: { facingMode: cameraFacing === 'environment' ? 'user' : 'environment' },
+            audio: false 
+          };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (secondError) {
+          console.log(`Both specific cameras failed, trying any camera:`, secondError);
+          
+          // Final fallback to any available camera
+          constraints = { 
+            video: true,
+            audio: false 
+          };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        }
       }
       console.log("Camera stream obtained:", stream);
 
@@ -143,9 +153,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       }
     } catch (error) {
       console.error('Camera access error:', error);
+      
+      let errorMessage = "Could not access camera. ";
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = "Camera permission was denied. Please enable camera access in your browser settings.";
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = "No camera found on this device.";
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = "Camera is already in use by another application.";
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage = "Camera settings are not supported by this device.";
+      } else {
+        errorMessage += `${error.message || error.name || 'Unknown error'}`;
+      }
+      
       toast({
         title: "Camera Error",
-        description: `Could not access camera: ${error.message}. Please check permissions.`,
+        description: errorMessage,
         variant: "destructive",
       });
     }
