@@ -62,14 +62,24 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => stopCamera();
   }, [captureMode, isOpen, cameraFacing]);
 
-  const { hasCamera, requestCameraPermission, needsCameraPermission } = usePermissions();
+  const { hasCamera, requestCameraPermission, needsCameraPermission, permissions } = usePermissions();
 
   const startCamera = async () => {
     try {
       console.log("Starting camera...");
 
-      // Check if we already have permission, if not request it
-      if (needsCameraPermission) {
+      // If permission is explicitly denied, don't try again
+      if (permissions.camera === 'denied') {
+        toast({
+          title: "Camera Access Denied",
+          description: "Camera permission was denied. Please enable it in your browser settings to use this feature.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Only request permission if we don't already have it
+      if (!hasCamera && needsCameraPermission) {
         const granted = await requestCameraPermission();
         if (!granted) {
           toast({
