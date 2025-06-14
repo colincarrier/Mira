@@ -383,19 +383,35 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           <canvas ref={canvasRef} className="hidden" />
 
           {/* Top controls */}
-          <div className="absolute top-4 right-4 z-[10001] flex flex-col gap-2">
+          <div className="absolute top-4 right-4 z-[10001]">
             <button
               onClick={onClose}
               className="w-10 h-10 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
+          </div>
+
+          {/* Camera flip button - positioned in middle right */}
+          <div className="absolute top-1/2 right-4 transform -translate-y-1/2 z-[10001]">
             <button
               onClick={flipCamera}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
               title={`Switch to ${cameraFacing === 'environment' ? 'front' : 'rear'} camera`}
             >
-              <Camera className="w-6 h-6" style={{ transform: 'scaleX(-1)' }} />
+              <svg 
+                className="w-6 h-6" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m0-4l-4-4" 
+                />
+              </svg>
             </button>
           </div>
 
