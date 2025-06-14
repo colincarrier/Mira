@@ -596,38 +596,32 @@ export default function InputBar({
         }}
       >
         <div className="relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
-          {/* Media picker overlay */}
+          {/* Media picker overlay - positioned above plus button */}
           {showSubmenu && config.showMediaPicker && (
-            <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2 z-50 w-48">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Add Media</span>
-                <button 
-                  onClick={closeSubmenu}
-                  className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100"
-                >
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="absolute bottom-full right-0 mb-2 z-50" style={{ right: '48px' }}>
+              <div className="w-[200px] bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">
                 <button
-                  onClick={openFilePicker}
-                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                  disabled={uploadFileMutation.isPending}
-                >
-                  <FileText className="w-6 h-6 text-purple-500 mb-1" />
-                  <span className="text-xs text-gray-600">
-                    {uploadFileMutation.isPending ? "Uploading..." : "Files"}
-                  </span>
-                </button>
-                <button
-                  onClick={openPhotoLibrary}
-                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    openPhotoLibrary();
+                    closeSubmenu();
+                  }}
+                  className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
                   disabled={uploadImageMutation.isPending}
                 >
-                  <Image className="w-6 h-6 text-blue-500 mb-1" />
-                  <span className="text-xs text-gray-600">
-                    {uploadImageMutation.isPending ? "Uploading..." : "Media"}
-                  </span>
+                  <Image className="w-[16px] h-[16px]" />
+                  {uploadImageMutation.isPending ? "Uploading..." : "Photo Library"}
+                </button>
+                
+                <button
+                  onClick={() => {
+                    openFilePicker();
+                    closeSubmenu();
+                  }}
+                  className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
+                  disabled={uploadFileMutation.isPending}
+                >
+                  <FileText className="w-[16px] h-[16px]" />
+                  {uploadFileMutation.isPending ? "Uploading..." : "Choose File"}
                 </button>
               </div>
             </div>
