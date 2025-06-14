@@ -1,4 +1,5 @@
-import { storage } from '../storage.js';
+import { db } from '../storage.js';
+import { collections, collectionItems } from '@shared/schema';
 
 export class CollectionsExtractor {
   static async extract(noteId: number, text: string) {
@@ -13,15 +14,19 @@ export class CollectionsExtractor {
     const title = 'Untitled Collection';
     
     try {
-      const collection = await storage.createCollection({
-        name: title,
-        icon: 'folder',
-        collectionType: 'generic'
-      });
+      const [{ id: collectionId }] = await db
+        .insert(collections)
+        .values({ name: title, collectionType: 'generic' })
+        .returning();
 
-      for (const [i, raw] of items.entries()) {
-        // Store collection items - would need to implement in storage if needed
-        console.log(`Collection item ${i}: ${raw.trim()}`);
+      for (let i = 0; i < items.length; i++) {
+        const raw = items[i];
+        await db.insert(collectionItems).values({
+          collectionId: collectionId,
+          sourceNoteId: noteId,
+          rawText: raw.trim(),
+          position: i
+        });
       }
     } catch (error) {
       console.warn('Collection extraction failed:', error);

@@ -1,5 +1,8 @@
-import { notes, todos, collections, users, items, reminders, type Note, type Todo, type Collection, type User, type Item, type Reminder, type InsertNote, type InsertTodo, type InsertCollection, type InsertItem, type InsertReminder, type UpsertUser, type NoteWithTodos } from "@shared/schema";
+import { notes, todos, collections, users, items, reminders, collectionItems, type Note, type Todo, type Collection, type User, type Item, type Reminder, type InsertNote, type InsertTodo, type InsertCollection, type InsertItem, type InsertReminder, type UpsertUser, type NoteWithTodos } from "@shared/schema";
 import { db } from "./db";
+
+// Export db for Intelligence-V2 components
+export { db };
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
