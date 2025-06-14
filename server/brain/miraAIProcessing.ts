@@ -419,7 +419,10 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
         storage
     );
 
-    return v2Result;
+    return {
+      ...v2Result,
+      uid: v2Result.id
+    };
   }
 
   try {

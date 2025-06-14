@@ -126,14 +126,19 @@ export class VectorEngine {
    * Calculate sparse vector similarity using Jaccard coefficient
    */
   calculateSparseSimilarity(sparseA: Record<string, number>, sparseB: Record<string, number>): number {
-    const keysA = new Set(Object.keys(sparseA));
-    const keysB = new Set(Object.keys(sparseB));
+    const keysAArray = Object.keys(sparseA);
+    const keysBArray = Object.keys(sparseB);
     
-    const intersection = new Set(Array.from(keysA).filter(x => keysB.has(x)));
-    const union = new Set([...Array.from(keysA), ...Array.from(keysB)]);
+    const intersection = keysAArray.filter(x => keysBArray.includes(x));
+    const allKeys = keysAArray.concat(keysBArray);
+    const unionSet = new Set(allKeys);
+    const union = [];
+    for (const key of unionSet) {
+      union.push(key);
+    }
 
-    if (union.size === 0) return 0;
-    return intersection.size / union.size;
+    if (union.length === 0) return 0;
+    return intersection.length / union.length;
   }
 
   /**
@@ -269,7 +274,7 @@ export class VectorEngine {
         const batch = notesToProcess.slice(i, i + batchSize);
         
         await Promise.all(
-          batch.map(note => this.updateNoteVectors(note.id, note.content, storage))
+          batch.map((note: any) => this.updateNoteVectors(note.id, note.content, storage))
         );
 
         console.log(`Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(notesToProcess.length / batchSize)}`);
