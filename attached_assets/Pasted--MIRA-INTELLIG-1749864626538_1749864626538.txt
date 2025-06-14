@@ -1,0 +1,169 @@
+###############################################################################
+#  MIRA  ▸  INTELLIGENCE‑V2  PATCH & COMPLETE  (June‑2025)
+#  - Fix vector‑engine dots
+#  - Add IntentVectorClassifier & CollectionsExtractor
+#  - Patch Router to use classifier
+#  - Promote Postgres columns to native 'vector'
+#  - Generate + run migration
+#  - Drop in a sanity Vitest
+###############################################################################
+
+set -e
+
+echo "▶  1/7  Fixing stray dots in vector‑engine …"
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/vector-engine.ts
+@@
+-        const batchResults = await Promise.all(batchPromises);
+-        results.push(.batchResults);
++        const batchResults = await Promise.all(batchPromises);
++        results.push(...batchResults);
+*** End Patch
+PATCH
+
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/vector-engine.ts
+@@
+-        const batchResults = await Promise.all(batchPromises);
+-        results.push(.batchResults);
++        const batchResults = await Promise.all(batchPromises);
++        results.push(...batchResults);
+*** End Patch
+PATCH
+
+echo "▶  2/7  Adding IntentVectorClassifier …"
+mkdir -p server/intelligence-v2
+cat <<'TS' > server/intelligence-v2/intent-vector-classifier.ts
+import OpenAI from 'openai';
+import { z } from 'zod';
+
+export type ActionLabel = 'remind' | 'buy' | 'research' | 'log' | 'schedule' | 'delegate' | 'track';
+export interface IntentVector {
+  primaryActions: ActionLabel[];
+  domainContexts: string[];
+  temporalClass: 'immediate' | 'short-term' | 'long-term' | 'evergreen';
+  collaborationScope: 'private' | 'shared-internal' | 'shared-external';
+  affectTone?: 'neutral' | 'celebratory' | 'sensitive' | 'urgent';
+}
+
+const schema = z.object({
+  primaryActions: z.array(z.string()),
+  domainContexts: z.array(z.string()),
+  temporalClass: z.string(),
+  collaborationScope: z.string(),
+  affectTone: z.string().optional()
+});
+
+export class IntentVectorClassifier {
+  private static openai = new OpenAI();
+
+  static async classify(text: string): Promise<IntentVector> {
+    const prompt = `
+You are Mira's intent classifier. 
+Classify the NOTE into the IntentVector JSON with keys:
+primaryActions, domainContexts, temporalClass, collaborationScope, affectTone.
+Respond with ONLY valid JSON.
+NOTE: """${text}"""
+`.trim();
+
+    const chat = await this.openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2
+    });
+
+    const raw = chat.choices[0]?.message?.content ?? '{}';
+    const parsed = JSON.parse(raw);
+    return schema.parse(parsed);
+  }
+}
+TS
+
+echo "▶  3/7  Adding CollectionsExtractor …"
+cat <<'TS' > server/intelligence-v2/collections-extractor.ts
+import { db } from '../../storage';
+import { collections, collection_items } from '../../schema';
+
+export class CollectionsExtractor {
+  static async extract(noteId: number, text: string) {
+    // naive list detector (bullets or "X, Y, Z")
+    const bulletMatch = text.match(/-\s(.+)/g);
+    const inlineList = text.includes(',') ? text.split(',') : [];
+    const items = bulletMatch ? bulletMatch.map(l => l.replace(/-\s/, '')) : inlineList;
+
+    if (!items.length) return;
+
+    // simple "Books" heuristic – refine in later iterations
+    const title = 'Untitled Collection';
+    const [{ id: collectionId }] = await db
+      .insert(collections)
+      .values({ title, collection_type: 'generic' })
+      .returning();
+
+    for (const [i, raw] of items.entries()) {
+      await db.insert(collection_items).values({
+        collection_id: collectionId,
+        source_note_id: noteId,
+        raw_text: raw.trim(),
+        position: i
+      });
+    }
+  }
+}
+TS
+
+echo "▶  4/7  Patching Router to use classifier …"
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/intelligence-router.ts
+@@
+-      // Step 1: Fast classification (existing logic)
+-      const classificationScores = this.fastClassification(input.content);
+-      const processingPath = classificationScores.commerce > 0.7 ? 'commerce' : 'memory';
++      // Step 1: Multi‑label intent classification
++      const intentVector = await IntentVectorClassifier.classify(input.content);
++      const processingPath = intentVector.primaryActions.includes('buy')
++        ? 'commerce'
++        : 'memory';
++
++      // Stash on ctx for downstream agents
++      ctx.intentVector = intentVector;
+*** End Patch
+PATCH
+
+echo "▶  5/7  Promoting vector columns & migration …"
+cat <<'SQL' > drizzle/20250614_vector_upgrade.sql
+-- turn text → pgvector (requires pgvector extension)
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE notes
+  ALTER COLUMN vector_dense TYPE vector(3072) USING vector_dense::vector,
+  ALTER COLUMN vector_sparse TYPE vector(1536) USING vector_sparse::vector;
+SQL
+
+echo "    running drizzle migration …"
+npx drizzle-kit generate:pg >/dev/null
+node ./scripts/runMigrations.js
+
+echo "▶  6/7  Minimal Vitest …"
+mkdir -p tests
+cat <<'JS' > tests/intentVector.test.ts
+import { describe, expect, it } from 'vitest';
+import { IntentVectorClassifier } from '../server/intelligence-v2/intent-vector-classifier';
+
+describe('IntentVectorClassifier', () => {
+  it('classifies simple buy intent', async () => {
+    const v = await IntentVectorClassifier.classify('Buy milk tomorrow');
+    expect(v.primaryActions).toContain('buy');
+  }, 60000);
+});
+JS
+
+echo "▶  7/7  Install test runner …"
+npm i -D vitest >/dev/null
+
+git add .
+git commit -m "fix: syntax dots, add intent classifier & collections extractor, vector column upgrade"
+echo "✔  All set – run 'npm run dev'  |  run 'npx vitest' to verify tests."
+###############################################################################

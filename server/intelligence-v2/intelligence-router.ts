@@ -6,6 +6,10 @@
 import { VectorEngine } from './vector-engine.js';
 import { RecursiveReasoningEngine, RecursiveAnalysis } from './recursive-reasoning-engine.js';
 import { RelationshipMapper } from './relationship-mapper.js';
+import { IntentVectorClassifier, type IntentVector } from './intent-vector-classifier.js';
+import { CollectionsExtractor } from './collections-extractor.js';
+import { FeatureFlagManager } from './feature-flags.js';
+import { storage } from '../storage.js';
 
 export interface IntelligenceV2Input {
   id?: string;
