@@ -644,7 +644,12 @@ export default function InputBar({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={openFilePicker}
+                  onClick={() => {
+                    if (generalFileInputRef.current) {
+                      generalFileInputRef.current.click();
+                    }
+                    closeSubmenu();
+                  }}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   disabled={uploadFileMutation.isPending}
                 >
@@ -654,7 +659,12 @@ export default function InputBar({
                   </span>
                 </button>
                 <button
-                  onClick={openPhotoLibrary}
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
+                    closeSubmenu();
+                  }}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   disabled={uploadImageMutation.isPending}
                 >
