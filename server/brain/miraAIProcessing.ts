@@ -385,9 +385,33 @@ OUTPUT ONLY JSON:`;
 /**
  * Main entry point - Universal AI Processing
  */
+import { storage } from '../storage.js';
 export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const uid = input.id ?? uuid();
   const timestamp = input.timestamp ?? new Date().toISOString();
+
+  // Check if Intelligence V2 is enabled
+  if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED')) {
+    console.log('🧠 Using Intelligence V2 processing');
+    try {
+      // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
+      const v2Result = await intelligenceV2Router.processWithIntelligenceV2(
+        {
+          content: input.content,
+          mode: input.mode,
+          userContext: input.userContext, // Corrected property name
+          timestamp: input.timestamp,
+        },
+        storage
+      );
+
+      // Return Intelligence V2 result
+      return v2Result;
+    } catch (error) {
+      console.error('Intelligence V2 processing failed, falling back to V1:', error);
+      // Continue to V1 processing below
+    }
+  }
 
   try {
     // Fast classification
