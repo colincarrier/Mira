@@ -131,11 +131,16 @@ export class VectorEngine {
     
     const intersection = keysAArray.filter(x => keysBArray.includes(x));
     const allKeys = keysAArray.concat(keysBArray);
-    const unionSet = new Set(allKeys);
-    const union = [];
-    for (const key of unionSet) {
-      union.push(key);
+    const uniqueKeys: string[] = [];
+    const seen = new Set<string>();
+    
+    for (const key of allKeys) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueKeys.push(key);
+      }
     }
+    const union = uniqueKeys;
 
     if (union.length === 0) return 0;
     return intersection.length / union.length;
