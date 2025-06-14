@@ -23,7 +23,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   const [showMediaDialog, setShowMediaDialog] = useState(false);
   const [capturedImageData, setCapturedImageData] = useState<string>("");
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,7 +32,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const { createNote, createVoiceNote } = useNotes();
   const { toast } = useToast();
 
@@ -61,16 +61,25 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     return () => stopCamera();
   }, [captureMode, isOpen]);
 
+  const { hasCamera, requestCameraPermission, needsCameraPermission } = usePermissions();
+
   const startCamera = async () => {
     try {
-      console.log('Starting camera...');
-      
-      // Check if camera is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported');
+      console.log("Starting camera...");
+
+      // Check if we already have permission, if not request it
+      if (needsCameraPermission) {
+        const granted = await requestCameraPermission();
+        if (!granted) {
+          toast({
+            title: "Camera Permission Required",
+            description: "Please allow camera access to take photos. This permission will be remembered.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
-      // Simple constraints first
       let constraints = { 
         video: { 
           width: { ideal: 1280, max: 1920 },
@@ -79,7 +88,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         },
         audio: false 
       };
-      
+
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -92,17 +101,16 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         };
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       }
-      
-      console.log('Camera stream obtained:', stream);
-      
+      console.log("Camera stream obtained:", stream);
+
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
-        
+
         // Set video attributes
         videoRef.current.muted = true;
         videoRef.current.playsInline = true;
         videoRef.current.autoplay = true;
-        
+
         // Wait for metadata and play
         videoRef.current.onloadedmetadata = async () => {
           console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
@@ -117,7 +125,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             }, { once: true });
           }
         };
-        
+
         videoRef.current.onerror = (e) => {
           console.error('Video element error:', e);
         };
@@ -146,13 +154,13 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     const canvas = canvasRef.current;
     const video = videoRef.current;
     const context = canvas.getContext('2d');
-    
+
     if (!context) return;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0);
-    
+
     canvas.toBlob((blob) => {
       if (blob) {
         const reader = new FileReader();
@@ -179,7 +187,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       content,
       mode: 'smart'
     });
-    
+
     setNoteText('');
     setNoteTitle('');
     onClose();
@@ -192,19 +200,19 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   // Audio visualization effect
   useEffect(() => {
     let animationFrame: number;
-    
+
     if (isRecording && analyserRef.current) {
       const updateWaveform = () => {
         const analyser = analyserRef.current!;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
-        
+
         // Convert to visual levels (32 bars)
         const barCount = 32;
         const levels: number[] = [];
         const samplesPerBar = Math.floor(bufferLength / barCount);
-        
+
         for (let i = 0; i < barCount; i++) {
           let sum = 0;
           for (let j = 0; j < samplesPerBar; j++) {
@@ -213,14 +221,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           const average = sum / samplesPerBar;
           levels.push(Math.max(8, (average / 255) * 50)); // Scale to 8-50px height
         }
-        
+
         setAudioLevels(levels);
         animationFrame = requestAnimationFrame(updateWaveform);
       };
-      
+
       updateWaveform();
     }
-    
+
     return () => {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
@@ -242,7 +250,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       }
       setRecordingTime(0);
     }
-    
+
     return () => {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
@@ -271,22 +279,22 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // Set up audio analysis
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
-      
+
       analyser.fftSize = 256;
       source.connect(analyser);
-      
+
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      
+
       // Set up recording
       const mediaRecorder = new MediaRecorder(stream);
       const chunks: Blob[] = [];
-      
+
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -296,14 +304,14 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
         createVoiceNote(blob);
-        
+
         // Clean up
         stream.getTracks().forEach(track => track.stop());
         audioContext.close();
         setIsRecording(false);
         setAudioLevels([]);
         onClose();
-        
+
         toast({
           title: "Voice note saved",
           description: "Your voice note has been transcribed and saved.",
@@ -369,7 +377,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             onPause={() => console.log('Video paused')}
           />
           <canvas ref={canvasRef} className="hidden" />
-          
+
           {/* Top close button */}
           <div className="absolute top-4 right-4 z-[10001]">
             <button
@@ -428,9 +436,9 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
               <X className="w-5 h-5" />
               <span className="text-sm font-medium">Close</span>
             </button>
-            
+
             <span className="text-gray-900 dark:text-white text-lg font-medium">Voice Note</span>
-            
+
             <div className="w-16"></div>
           </div>
 
@@ -532,7 +540,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm font-medium">Notes</span>
             </button>
-            
+
             <button
               onClick={handleSendNote}
               disabled={!noteText.trim() && !noteTitle.trim()}
@@ -558,7 +566,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                 className="w-full text-2xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-2"
                 style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
               />
-              
+
               {/* Date */}
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 {new Date().toLocaleDateString('en-US', { 
@@ -568,7 +576,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
                   day: 'numeric' 
                 })}
               </div>
-              
+
               {/* Content */}
               <textarea
                 ref={textareaRef}
@@ -628,4 +636,42 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       />
     </div>
   );
+}
+
+// Placeholder for usePermissions hook
+function usePermissions() {
+  const [hasCamera, setHasCamera] = useState(false);
+  const [needsCameraPermission, setNeedsCameraPermission] = useState(true);
+
+  useEffect(() => {
+    const checkCameraPermission = async () => {
+      if (navigator.permissions) {
+        const { state } = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        setHasCamera(state === 'granted');
+        setNeedsCameraPermission(state !== 'granted');
+      } else {
+        // Permissions API not supported - assume permission is needed
+        setNeedsCameraPermission(true);
+      }
+    };
+
+    checkCameraPermission();
+  }, []);
+
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+      setHasCamera(true);
+      setNeedsCameraPermission(false);
+      return true;
+    } catch (error) {
+      console.error("Camera permission error:", error);
+      setHasCamera(false);
+      setNeedsCameraPermission(true);
+      return false;
+    }
+  };
+
+  return { hasCamera, requestCameraPermission, needsCameraPermission };
 }

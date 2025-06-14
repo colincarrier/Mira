@@ -13,7 +13,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [waveformData, setWaveformData] = useState<number[]>([]);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -22,7 +22,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -30,17 +30,17 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
-      
+
       const response = await fetch("/api/notes/voice", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create voice note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -64,49 +64,122 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     },
   });
 
+  //TODO: Implement usePermissions hook
+
+  const usePermissions = () => {
+    const [hasMicrophone, setHasMicrophone] = useState(false);
+    const [needsMicrophonePermission, setNeedsMicrophonePermission] = useState(false);
+
+    useEffect(() => {
+      const checkMicrophonePermission = async () => {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+
+          setHasMicrophone(permissionStatus.state === 'granted');
+          setNeedsMicrophonePermission(permissionStatus.state !== 'granted');
+
+          permissionStatus.addEventListener('change', () => {
+            setHasMicrophone(permissionStatus.state === 'granted');
+            setNeedsMicrophonePermission(permissionStatus.state !== 'granted');
+          });
+        } catch (error) {
+          console.error("Error checking microphone permission:", error);
+          // Assume permission is needed if there's an error checking
+          setNeedsMicrophonePermission(true);
+        }
+      };
+
+      // Check initial microphone permission
+      checkMicrophonePermission();
+
+      // Listen for changes in permission status
+    }, []);
+
+    const requestMicrophonePermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        setHasMicrophone(true);
+        setNeedsMicrophonePermission(false);
+        return true; // Permission granted
+      } catch (error) {
+        console.error("Error requesting microphone permission:", error);
+        setHasMicrophone(false);
+        setNeedsMicrophonePermission(true);
+        return false; // Permission denied
+      }
+    };
+
+    return { hasMicrophone, requestMicrophonePermission, needsMicrophonePermission };
+  };
+
+  const { hasMicrophone, requestMicrophonePermission, needsMicrophonePermission } = usePermissions();
+
   const setupAudioContext = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast({
+        title: "Not Supported",
+        description: "Audio recording is not supported in this browser.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // Check if we already have permission, if not request it
+      if (needsMicrophonePermission) {
+        const granted = await requestMicrophonePermission();
+        if (!granted) {
+          toast({
+            title: "Microphone Permission Required",
+            description: "Please allow microphone access to record audio. This permission will be remembered.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
         }
       });
-      
+
       streamRef.current = stream;
-      
+
       // Setup audio context for waveform visualization
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       const source = audioContextRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioContextRef.current.createAnalyser();
-      
+
       analyserRef.current.fftSize = 256;
       const bufferLength = analyserRef.current.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
-      
+
       source.connect(analyserRef.current);
-      
+
       // Setup media recorder
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       });
-      
+
       chunksRef.current = [];
-      
+
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         setAudioBlob(blob);
         setRecordingState('stopped');
         stopWaveformAnimation();
       };
-      
+
       return true;
     } catch (error) {
       console.error("Error setting up audio:", error);
@@ -117,17 +190,17 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
       });
       return false;
     }
-  }, [toast]);
+  }, [toast, hasMicrophone, requestMicrophonePermission, needsMicrophonePermission]);
 
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current) return;
-    
+
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-    
+
     // Convert to waveform data (simplified for visualization)
     const waveform = [];
     const step = Math.floor(dataArrayRef.current.length / 40); // 40 bars for waveform
-    
+
     for (let i = 0; i < dataArrayRef.current.length; i += step) {
       let sum = 0;
       for (let j = 0; j < step && i + j < dataArrayRef.current.length; j++) {
@@ -135,9 +208,9 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
       }
       waveform.push(sum / step / 255); // Normalize to 0-1
     }
-    
+
     setWaveformData(waveform);
-    
+
     if (recordingState === 'recording') {
       animationRef.current = requestAnimationFrame(updateWaveform);
     }
@@ -157,17 +230,17 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
   const startRecording = async () => {
     const success = await setupAudioContext();
     if (!success) return;
-    
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       mediaRecorderRef.current.start(100); // Collect data every 100ms
       setRecordingState('recording');
       setRecordingTime(0);
-      
+
       // Start timer
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
       // Start waveform animation
       startWaveformAnimation();
     }
@@ -188,12 +261,12 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
       mediaRecorderRef.current.resume();
       setRecordingState('recording');
-      
+
       // Resume timer
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
       // Resume waveform animation
       startWaveformAnimation();
     }
@@ -207,7 +280,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
         clearInterval(intervalRef.current);
       }
     }
-    
+
     // Stop all tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -227,13 +300,13 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     setAudioBlob(null);
     setWaveformData([]);
     chunksRef.current = [];
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    
+
     stopWaveformAnimation();
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -250,7 +323,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     if (!isOpen) {
       handleReset();
     }
-    
+
     return () => {
       handleReset();
     };
