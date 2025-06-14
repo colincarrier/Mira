@@ -365,7 +365,6 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(notes)
-      .where(eq(notes.vectorDense, null))
       .orderBy(desc(notes.createdAt));
   }
 

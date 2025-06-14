@@ -1,4 +1,14 @@
 /**
+ * Intelligence-V2 Integration
+ */
+import { IntelligenceV2Router } from '../intelligence-v2/intelligence-router.js';
+import { FeatureFlagManager } from '../intelligence-v2/feature-flags.js';
+
+// Initialize intelligence-v2 components
+let intelligenceV2Router: IntelligenceV2Router | null = null;
+let featureFlags: FeatureFlagManager | null = null;
+
+/**
  * Enhanced time detection for reminder creation
  */
 function detectTimeReferences(content: string): {

@@ -161,7 +161,15 @@ Mira is a sophisticated AI-powered memory and productivity assistant that transf
 
 Preferred communication style: Simple, everyday language.
 
-## Changelog
+## Recent Changes
 
-Changelog:
-- June 14, 2025. Initial setup
+### Intelligence-V2 Architecture Implementation (June 14, 2025)
+- **Vector Engine**: Implemented dual-vector storage (dense + sparse) for semantic search
+- **Recursive Reasoning Engine**: Built 2-3 step ahead thinking capabilities
+- **Relationship Mapper**: Created sophisticated content relationship analysis
+- **Feature Flag System**: Enabled controlled rollout of new intelligence features
+- **Enhanced Database Schema**: Added vector storage, intent classification, and collection intelligence
+- **Proactive Intelligence Router**: Integrated all components for unified processing
+
+### Previous Updates
+- June 14, 2025. Initial setup with basic AI processing and reminder system
