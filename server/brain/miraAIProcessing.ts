@@ -7,15 +7,22 @@ import OpenAI from 'openai';
 import { IntelligenceV2Router } from '../intelligence-v2/intelligence-router';
 import { FeatureFlagManager } from '../intelligence-v2/feature-flags';
 
+// Initialize Intelligence-V2 system
+console.log('Environment check:', {
+  FEATURE_INTELLIGENCE_V2: process.env.FEATURE_INTELLIGENCE_V2,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'present' : 'missing'
+});
+
 const featureFlags = FeatureFlagManager.getInstance();
 
 let intelligenceV2Router: IntelligenceV2Router | null = null;
 if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED')) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   intelligenceV2Router = new IntelligenceV2Router(openai);
-  console.log('[Bootstrap] Intelligence‑V2 router initialised');
+  console.log('✅ [Bootstrap] Intelligence‑V2 router initialised successfully');
 } else {
-  console.log('[Bootstrap] Intelligence‑V2 disabled by env flag');
+  console.log('❌ [Bootstrap] Intelligence‑V2 disabled by env flag');
+  featureFlags.logFlagStatus();
 }
 
 /**
