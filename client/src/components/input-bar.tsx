@@ -1,4 +1,3 @@
-
 import { Camera, Mic, Plus, Send, Square, X, FileText, Image } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +22,7 @@ export default function InputBar({
   // Get current page context
   const [location] = useLocation();
   const currentPage = location.split('/')[1] || 'notes';
-  
+
   // Input state
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -416,7 +415,7 @@ export default function InputBar({
 
       mediaRecorder.onstop = () => {
         const recordingDuration = Date.now() - recordingStartTime;
-        
+
         if (recordingDuration >= 1000) {
           const mimeType = mediaRecorder.mimeType || 'audio/webm';
           const blob = new Blob(chunksRef.current, { type: mimeType });
@@ -599,7 +598,7 @@ export default function InputBar({
         <div className="relative flex items-center gap-1.5 bg-white rounded-2xl p-3 shadow-lg border border-gray-300">
           {/* Media picker overlay */}
           {showSubmenu && config.showMediaPicker && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
+            <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2 z-50 w-48">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Add Media</span>
                 <button 
