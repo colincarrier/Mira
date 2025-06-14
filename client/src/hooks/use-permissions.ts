@@ -20,11 +20,15 @@ export function usePermissions() {
     microphone: boolean;
     lastCameraRequest: number;
     lastMicrophoneRequest: number;
+    cameraGranted: boolean;
+    microphoneGranted: boolean;
   }>({
     camera: false,
     microphone: false,
     lastCameraRequest: 0,
-    lastMicrophoneRequest: 0
+    lastMicrophoneRequest: 0,
+    cameraGranted: false,
+    microphoneGranted: false
   });
 
   // Check existing permissions on mount
@@ -50,9 +54,11 @@ export function usePermissions() {
         // Update cache based on current permission state
         if (cameraPermission.state === 'granted') {
           permissionRequestCache.current.camera = true;
+          permissionRequestCache.current.cameraGranted = true;
         }
         if (microphonePermission.state === 'granted') {
           permissionRequestCache.current.microphone = true;
+          permissionRequestCache.current.microphoneGranted = true;
         }
 
         // Listen for permission changes
@@ -60,8 +66,10 @@ export function usePermissions() {
           setPermissions(prev => ({ ...prev, camera: cameraPermission.state }));
           if (cameraPermission.state === 'granted') {
             permissionRequestCache.current.camera = true;
+            permissionRequestCache.current.cameraGranted = true;
           } else if (cameraPermission.state === 'denied') {
             permissionRequestCache.current.camera = false;
+            permissionRequestCache.current.cameraGranted = false;
           }
         });
 
@@ -69,8 +77,10 @@ export function usePermissions() {
           setPermissions(prev => ({ ...prev, microphone: microphonePermission.state }));
           if (microphonePermission.state === 'granted') {
             permissionRequestCache.current.microphone = true;
+            permissionRequestCache.current.microphoneGranted = true;
           } else if (microphonePermission.state === 'denied') {
             permissionRequestCache.current.microphone = false;
+            permissionRequestCache.current.microphoneGranted = false;
           }
         });
       } catch (error) {
@@ -83,15 +93,15 @@ export function usePermissions() {
   }, []);
 
   const requestCameraPermission = useCallback(async (): Promise<boolean> => {
-    // Don't request again if we already have permission
-    if (permissions.camera === 'granted') {
+    // Return true immediately if we already have permission
+    if (permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted) {
       return true;
     }
 
-    // Don't request again if user denied recently (within 30 seconds)
+    // Don't request again if user denied recently (within 60 seconds)
     const now = Date.now();
     const timeSinceLastRequest = now - permissionRequestCache.current.lastCameraRequest;
-    if (permissions.camera === 'denied' && timeSinceLastRequest < 30000) {
+    if (permissions.camera === 'denied' && timeSinceLastRequest < 60000) {
       console.log('Camera permission denied recently, not requesting again');
       return false;
     }
@@ -105,31 +115,33 @@ export function usePermissions() {
     try {
       permissionRequestCache.current.lastCameraRequest = now;
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: true 
       });
       stream.getTracks().forEach(track => track.stop());
       
       setPermissions(prev => ({ ...prev, camera: 'granted' }));
       permissionRequestCache.current.camera = true;
+      permissionRequestCache.current.cameraGranted = true;
       return true;
     } catch (error) {
       console.error('Camera permission denied:', error);
       setPermissions(prev => ({ ...prev, camera: 'denied' }));
       permissionRequestCache.current.camera = false;
+      permissionRequestCache.current.cameraGranted = false;
       return false;
     }
   }, [permissions.camera]);
 
   const requestMicrophonePermission = useCallback(async (): Promise<boolean> => {
-    // Don't request again if we already have permission
-    if (permissions.microphone === 'granted') {
+    // Return true immediately if we already have permission
+    if (permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted) {
       return true;
     }
 
-    // Don't request again if user denied recently (within 30 seconds)
+    // Don't request again if user denied recently (within 60 seconds)
     const now = Date.now();
     const timeSinceLastRequest = now - permissionRequestCache.current.lastMicrophoneRequest;
-    if (permissions.microphone === 'denied' && timeSinceLastRequest < 30000) {
+    if (permissions.microphone === 'denied' && timeSinceLastRequest < 60000) {
       console.log('Microphone permission denied recently, not requesting again');
       return false;
     }
@@ -147,24 +159,27 @@ export function usePermissions() {
       
       setPermissions(prev => ({ ...prev, microphone: 'granted' }));
       permissionRequestCache.current.microphone = true;
+      permissionRequestCache.current.microphoneGranted = true;
       return true;
     } catch (error) {
       console.error('Microphone permission denied:', error);
       setPermissions(prev => ({ ...prev, microphone: 'denied' }));
       permissionRequestCache.current.microphone = false;
+      permissionRequestCache.current.microphoneGranted = false;
       return false;
     }
   }, [permissions.microphone]);
 
   const requestBothPermissions = useCallback(async (): Promise<{ camera: boolean; microphone: boolean }> => {
     // Check if we already have both permissions
-    if (permissions.camera === 'granted' && permissions.microphone === 'granted') {
+    if ((permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted) && 
+        (permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted)) {
       return { camera: true, microphone: true };
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }, 
+        video: true, 
         audio: true 
       });
       stream.getTracks().forEach(track => track.stop());
@@ -177,6 +192,8 @@ export function usePermissions() {
 
       permissionRequestCache.current.camera = true;
       permissionRequestCache.current.microphone = true;
+      permissionRequestCache.current.cameraGranted = true;
+      permissionRequestCache.current.microphoneGranted = true;
 
       return { camera: true, microphone: true };
     } catch (error) {
@@ -192,13 +209,13 @@ export function usePermissions() {
 
   return {
     permissions,
-    hasCamera: permissions.camera === 'granted',
-    hasMicrophone: permissions.microphone === 'granted',
+    hasCamera: permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted,
+    hasMicrophone: permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted,
     canRequestPermissions: permissions.mediaDevices,
     requestCameraPermission,
     requestMicrophonePermission,
     requestBothPermissions,
-    needsCameraPermission: permissions.camera !== 'granted' && permissions.camera !== 'denied',
-    needsMicrophonePermission: permissions.microphone !== 'granted' && permissions.microphone !== 'denied'
+    needsCameraPermission: permissions.camera !== 'granted' && permissions.camera !== 'denied' && !permissionRequestCache.current.cameraGranted,
+    needsMicrophonePermission: permissions.microphone !== 'granted' && permissions.microphone !== 'denied' && !permissionRequestCache.current.microphoneGranted
   };
 }

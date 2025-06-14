@@ -69,7 +69,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       console.log("Starting camera...");
 
       // Check if we already have camera permission
-      if (hasCamera && permissions.camera === 'granted') {
+      if (hasCamera) {
         console.log("Camera permission already granted, proceeding...");
       } else if (permissions.camera === 'denied') {
         toast({
@@ -78,8 +78,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           variant: "destructive",
         });
         return;
-      } else if (needsCameraPermission) {
-        // Only request permission if we haven't tried recently
+      } else {
+        // Request permission if we don't have it
         console.log("Requesting camera permission...");
         const granted = await requestCameraPermission();
         if (!granted) {
