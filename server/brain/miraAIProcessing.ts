@@ -1,12 +1,22 @@
 /**
  * Intelligence-V2 Integration
  */
-import { IntelligenceV2Router } from '../intelligence-v2/intelligence-router.js';
-import { FeatureFlagManager } from '../intelligence-v2/feature-flags.js';
+// ─────────────────────────────────────────────────────────────────────────────
+// V2 COMPONENT SINGLETONS
+import OpenAI from 'openai';
+import { IntelligenceV2Router } from '../intelligence-v2/intelligence-router';
+import { FeatureFlagManager } from '../intelligence-v2/feature-flags';
 
-// Initialize intelligence-v2 components
+const featureFlags = new FeatureFlagManager(process.env);          // reads env vars
+
 let intelligenceV2Router: IntelligenceV2Router | null = null;
-let featureFlags: FeatureFlagManager | null = null;
+if (featureFlags.isEnabled('FEATURE_INTELLIGENCE_V2')) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  intelligenceV2Router = new IntelligenceV2Router(openai);
+  console.log('[Bootstrap] Intelligence‑V2 router initialised');
+} else {
+  console.log('[Bootstrap] Intelligence‑V2 disabled by env flag');
+}
 
 /**
  * Enhanced time detection for reminder creation
@@ -390,12 +400,13 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const uid = input.id ?? uuid();
   const timestamp = input.timestamp ?? new Date().toISOString();
 
-  // Check if Intelligence V2 is enabled
-  if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED')) {
-    console.log('🧠 Using Intelligence V2 processing');
-    try {
-      // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
-      const v2Result = await intelligenceV2Router.processWithIntelligenceV2(
+  // Switch between V1 and V2 processing  (null‑safe)
+  if (
+    featureFlags.isEnabled('FEATURE_INTELLIGENCE_V2') &&
+    intelligenceV2Router !== null
+  ) {
+    // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
+    const v2Result = await intelligenceV2Router.processWithIntelligenceV2(
         {
           content: input.content,
           mode: input.mode,
@@ -403,14 +414,9 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
           timestamp: input.timestamp,
         },
         storage
-      );
+    );
 
-      // Return Intelligence V2 result
-      return v2Result;
-    } catch (error) {
-      console.error('Intelligence V2 processing failed, falling back to V1:', error);
-      // Continue to V1 processing below
-    }
+    return v2Result;
   }
 
   try {
