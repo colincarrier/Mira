@@ -355,8 +355,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
             className="w-full h-full object-cover bg-gray-900"
             style={{ 
               minHeight: '100vh',
-              minWidth: '100vw',
-              transform: 'scaleX(-1)' // Mirror the video for selfie-style
+              minWidth: '100vw'
             }}
             onLoadedMetadata={() => {
               console.log('Video metadata loaded - dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
