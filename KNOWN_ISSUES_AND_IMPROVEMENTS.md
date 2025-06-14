@@ -160,6 +160,26 @@
 - **Timezone-aware notifications** for international users
 - **Cultural sensitivity** in notification timing and content
 
+# Known Issues and Improvements
+
+## Current Issues
+
+### High Priority
+- [ ] **Git lock file issue**: Persistent `.git/index.lock` files preventing commits during development. Occurs when git operations are interrupted or run concurrently. Workaround: `rm -f .git/index.lock` before git operations.
+- [ ] Collections dropdown not showing proper collection names in some cases
+- [ ] Voice recording permissions need better UX flow
+- [ ] PWA install prompt could be more prominent
+
+### Medium Priority
+- [ ] Offline sync occasionally shows stale data
+- [ ] Image compression could be more aggressive for mobile
+- [ ] Search functionality needs performance optimization
+
+### Low Priority
+- [ ] Dark mode toggle animation could be smoother
+- [ ] Loading states could be more consistent
+- [ ] Error messages could be more user-friendly
+
 ---
 
 *This document serves as our internal roadmap and feature tracking system. Items marked with ✅ are completed, items without marks are planned for future development.*
