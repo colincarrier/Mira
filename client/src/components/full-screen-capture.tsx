@@ -23,6 +23,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
   const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   const [showMediaDialog, setShowMediaDialog] = useState(false);
   const [capturedImageData, setCapturedImageData] = useState<string>("");
+  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,7 +60,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       stopCamera();
     }
     return () => stopCamera();
-  }, [captureMode, isOpen]);
+  }, [captureMode, isOpen, cameraFacing]);
 
   const { hasCamera, requestCameraPermission, needsCameraPermission } = usePermissions();
 
@@ -84,7 +85,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         video: { 
           width: { ideal: 1280, max: 1920 },
           height: { ideal: 720, max: 1080 },
-          facingMode: 'environment'
+          facingMode: cameraFacing
         },
         audio: false 
       };
@@ -92,8 +93,8 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (backCameraError) {
-        console.log('Back camera failed, trying any camera:', backCameraError);
+      } catch (specificCameraError) {
+        console.log(`${cameraFacing} camera failed, trying any camera:`, specificCameraError);
         // Fallback to basic camera
         constraints = { 
           video: true,
@@ -174,6 +175,10 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
         reader.readAsDataURL(blob);
       }
     }, 'image/jpeg', 0.8);
+  };
+
+  const flipCamera = () => {
+    setCameraFacing(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
   const handleSendNote = () => {
@@ -377,13 +382,20 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Top close button */}
-          <div className="absolute top-4 right-4 z-[10001]">
+          {/* Top controls */}
+          <div className="absolute top-4 right-4 z-[10001] flex flex-col gap-2">
             <button
               onClick={onClose}
               className="w-10 h-10 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
             >
               <X className="w-6 h-6" />
+            </button>
+            <button
+              onClick={flipCamera}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-sm text-white hover:bg-white/40 transition-colors"
+              title={`Switch to ${cameraFacing === 'environment' ? 'front' : 'rear'} camera`}
+            >
+              <Camera className="w-6 h-6" style={{ transform: 'scaleX(-1)' }} />
             </button>
           </div>
 
