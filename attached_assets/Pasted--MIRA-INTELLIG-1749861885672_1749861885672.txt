@@ -1,0 +1,76 @@
+###############################################################################
+#  MIRA  ▸  INTELLIGENCE‑V2  ONE‑SHOT BOOTSTRAP  (≈90 s on Replit)
+#  1.  install deps       2.  create feature branch
+#  3.  fetch new modules  4.  add DB migrations   5.  run migrations
+#  6.  set feature flag   7.  commit
+###############################################################################
+
+# ─── 1. Install backend + ops dependencies ───────────────────────────────────
+npm i neo4j-driver weaviate-client grafana-client lightgbm-node && \
+npm i -D drizzle-kit@latest vitest
+
+# ─── 2. Create a dedicated Git branch (keeps prod safe) ──────────────────────
+git config --global init.defaultBranch main
+git init
+git add .
+git commit -m "snapshot before intelligence-v2"
+git checkout -b intelligence-v2
+
+# ─── 3. Pull in the 15 new / changed files from our gist ---------------------
+curl -sL https://replit.com/@<YOUR-USERNAME>/mira-intelligence-v2-files/raw \
+  | tar -xzvf -
+
+#  (If you prefer manual copy‑paste, comment the line above and add files later)
+
+# ─── 4. Write the SQL migration file ----------------------------------------
+cat <<'SQL' > drizzle/20250614_intelligence_v2.sql
+-- Dual‑vector storage
+ALTER TABLE notes ADD COLUMN vector_dense vector(3072);
+ALTER TABLE notes ADD COLUMN vector_sparse tsvector;
+
+-- Intent‑vector JSON
+ALTER TABLE notes ADD COLUMN intent_vector jsonb;
+
+-- Collections
+CREATE TABLE collections (
+  id              serial PRIMARY KEY,
+  owner_id        uuid,
+  title           text,
+  collection_type text,
+  created_at      timestamptz DEFAULT now(),
+  updated_at      timestamptz DEFAULT now()
+);
+CREATE TABLE collection_items (
+  id               serial PRIMARY KEY,
+  collection_id    int REFERENCES collections(id),
+  source_note_id   int REFERENCES notes(id),
+  raw_text         text,
+  normalised_json  jsonb,
+  position         int,
+  completed        bool DEFAULT false
+);
+SQL
+
+# ─── 5. Execute migrations ---------------------------------------------------
+npx drizzle-kit generate:pg && node ./scripts/runMigrations.js
+
+# ─── 6. Add environment switches & external services -------------------------
+# Replit → Secrets UI  (NOT a plain .env file):  add the following keys
+#   FEATURE_INTELLIGENCE_V2=true
+#   WEAVIATE_URL=  (your Weaviate Cloud URL)
+#   WEAVIATE_API_KEY=...
+#   KG_NEO4J_URI=neo4j+s://<aura-endpoint>
+#   KG_NEO4J_USER=neo4j
+#   KG_NEO4J_PWD=<password>
+
+# ─── 7. Commit & push --------------------------------------------------------
+git add .
+git commit -m "feat: bootstrap intelligence-v2 (vector, collections, router)"
+git push -u origin intelligence-v2
+
+echo
+echo "✔  Intelligence‑V2 scaffold complete."
+echo "•  ‘npm run dev’ to launch."
+echo "•  Toggle FEATURE_INTELLIGENCE_V2=false to fall back to prod logic."
+echo "•  Run ‘npx vitest’ to execute new unit tests."
+###############################################################################

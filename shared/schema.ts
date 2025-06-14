@@ -23,6 +23,15 @@ export const notes = pgTable("notes", {
   isProcessing: boolean("is_processing").default(false), // True while AI is processing
   collectionId: integer("collection_id").references(() => collections.id),
   
+  // Intelligence-v2: Vector storage for semantic search
+  vectorDense: text("vector_dense"), // Dense vector embedding (3072 dimensions)
+  vectorSparse: text("vector_sparse"), // Sparse vector for keyword matching
+  intentVector: json("intent_vector").$type<{
+    categories: Record<string, number>;
+    confidence: number;
+    reasoning: string;
+  }>(),
+  
   // Version control and data protection
   version: integer("version").default(1).notNull(),
   originalContent: text("original_content"), // Preserve original user input
@@ -113,6 +122,40 @@ export const collections = pgTable("collections", {
   color: text("color").default("blue"),
   iconUrl: text("icon_url"), // Custom icon image URL
   displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // Intelligence-v2: Enhanced collection metadata
+  collectionType: text("collection_type").default("standard"), // 'standard', 'smart', 'temporal', 'project'
+  smartFilters: json("smart_filters").$type<{
+    tags?: string[];
+    contentTypes?: string[];
+    dateRange?: { start: Date; end: Date };
+    priority?: string[];
+    autoInclude?: boolean;
+  }>(),
+  intelligenceMetadata: json("intelligence_metadata").$type<{
+    patterns: Record<string, number>;
+    relationships: string[];
+    userBehavior: Record<string, any>;
+    predictiveScore: number;
+  }>(),
+});
+
+// Intelligence-v2: Collection items for smart organization
+export const collectionItems = pgTable("collection_items", {
+  id: serial("id").primaryKey(),
+  collectionId: integer("collection_id").references(() => collections.id, { onDelete: 'cascade' }),
+  sourceNoteId: integer("source_note_id").references(() => notes.id, { onDelete: 'cascade' }),
+  rawText: text("raw_text"),
+  normalisedJson: json("normalised_json").$type<{
+    extractedEntities: Record<string, any>[];
+    processedContent: string;
+    intelligenceScore: number;
+    relationships: string[];
+  }>(),
+  position: integer("position").default(0),
+  completed: boolean("completed").default(false),
+  intelligenceRating: integer("intelligence_rating").default(0), // 0-100 quality score
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
