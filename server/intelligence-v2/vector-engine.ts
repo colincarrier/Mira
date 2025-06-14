@@ -34,10 +34,12 @@ export interface VectorSearchQuery {
   limit?: number;
 }
 
-export class VectorEngine {
-  private openai: any;
+import OpenAI from 'openai';
 
-  constructor(openaiClient: any) {
+export class VectorEngine {
+  private openai: OpenAI;
+
+  constructor(openaiClient: OpenAI) {
     this.openai = openaiClient;
   }
 
@@ -127,8 +129,8 @@ export class VectorEngine {
     const keysA = new Set(Object.keys(sparseA));
     const keysB = new Set(Object.keys(sparseB));
     
-    const intersection = new Set([...keysA].filter(x => keysB.has(x)));
-    const union = new Set([...keysA, ...keysB]);
+    const intersection = new Set(Array.from(keysA).filter(x => keysB.has(x)));
+    const union = new Set([...Array.from(keysA), ...Array.from(keysB)]);
 
     if (union.size === 0) return 0;
     return intersection.size / union.size;

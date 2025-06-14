@@ -1,4 +1,4 @@
-import { Camera, Mic, Plus, Send, Square, X, FileText, Image } from "lucide-react";
+import { Camera, Mic, Plus, Send, Square, X as CloseIcon, FileText, Image } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";

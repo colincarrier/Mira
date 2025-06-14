@@ -7,10 +7,10 @@ import OpenAI from 'openai';
 import { IntelligenceV2Router } from '../intelligence-v2/intelligence-router';
 import { FeatureFlagManager } from '../intelligence-v2/feature-flags';
 
-const featureFlags = new FeatureFlagManager(process.env);          // reads env vars
+const featureFlags = FeatureFlagManager.getInstance();
 
 let intelligenceV2Router: IntelligenceV2Router | null = null;
-if (featureFlags.isEnabled('FEATURE_INTELLIGENCE_V2')) {
+if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED')) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   intelligenceV2Router = new IntelligenceV2Router(openai);
   console.log('[Bootstrap] Intelligence‑V2 router initialised');
@@ -402,7 +402,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
 
   // Switch between V1 and V2 processing  (null‑safe)
   if (
-    featureFlags.isEnabled('FEATURE_INTELLIGENCE_V2') &&
+    featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') &&
     intelligenceV2Router !== null
   ) {
     // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
@@ -410,8 +410,11 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
         {
           content: input.content,
           mode: input.mode,
-          userContext: input.userContext, // Corrected property name
+          context: {
+            source: input.userContext
+          },
           timestamp: input.timestamp,
+          id: input.id
         },
         storage
     );
