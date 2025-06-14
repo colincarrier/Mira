@@ -40,6 +40,12 @@ export interface IStorage {
   // Reminders
   createReminder(reminder: InsertReminder): Promise<Reminder>;
   getReminders(): Promise<Reminder[]>;
+
+  // Intelligence-v2 extensions
+  getAllNotes(): Promise<Note[]>;
+  getNotesWithVectors(): Promise<Note[]>;
+  updateNoteVectors(id: number, vectorDense: string, vectorSparse: string): Promise<void>;
+  storeRelationships?(noteId: string, relationships: any[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -345,6 +351,56 @@ export class DatabaseStorage implements IStorage {
       .from(reminders)
       .where(eq(reminders.isCompleted, false))
       .orderBy(reminders.reminderTime);
+  }
+
+  // Intelligence-v2 implementations
+  async getAllNotes(): Promise<Note[]> {
+    return await db
+      .select()
+      .from(notes)
+      .orderBy(desc(notes.createdAt));
+  }
+
+  async getNotesWithVectors(): Promise<Note[]> {
+    return await db
+      .select()
+      .from(notes)
+      .where(eq(notes.vectorDense, null))
+      .orderBy(desc(notes.createdAt));
+  }
+
+  async updateNoteVectors(id: number, vectorDense: string, vectorSparse: string): Promise<void> {
+    await db
+      .update(notes)
+      .set({
+        vectorDense,
+        vectorSparse
+      })
+      .where(eq(notes.id, id));
+  }
+
+  async storeRelationships(noteId: string, relationships: any[]): Promise<void> {
+    // Store relationships in note metadata for now
+    // Can be expanded to dedicated relationship table later
+    const id = parseInt(noteId);
+    if (isNaN(id)) return;
+
+    const relationshipData = {
+      relationships: relationships.map(rel => ({
+        type: rel.type,
+        targetId: rel.targetId,
+        strength: rel.strength,
+        context: rel.context,
+        discoveredAt: rel.discoveredAt
+      }))
+    };
+
+    await db
+      .update(notes)
+      .set({
+        richContext: JSON.stringify(relationshipData)
+      })
+      .where(eq(notes.id, id));
   }
 }
 
