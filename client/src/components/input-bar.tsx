@@ -601,9 +601,16 @@ export default function InputBar({
             <div className="absolute bottom-full right-0 mb-2 z-50" style={{ right: '48px' }}>
               <div className="w-[200px] bg-white border border-gray-300 rounded-[8px] overflow-hidden shadow-lg">
                 <button
-                  onClick={() => {
-                    openPhotoLibrary();
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     closeSubmenu();
+                    // Use setTimeout to ensure submenu closes first
+                    setTimeout(() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.click();
+                      }
+                    }, 10);
                   }}
                   className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] border-b border-gray-200/50 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
                   disabled={uploadImageMutation.isPending}
@@ -613,9 +620,16 @@ export default function InputBar({
                 </button>
                 
                 <button
-                  onClick={() => {
-                    openFilePicker();
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     closeSubmenu();
+                    // Use setTimeout to ensure submenu closes first
+                    setTimeout(() => {
+                      if (generalFileInputRef.current) {
+                        generalFileInputRef.current.click();
+                      }
+                    }, 10);
                   }}
                   className="w-full px-3 py-2 text-center text-gray-700 font-normal text-[16px] hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2"
                   disabled={uploadFileMutation.isPending}
