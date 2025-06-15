@@ -413,18 +413,15 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     intelligenceV2Router !== null
   ) {
     // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
-    const v2Result = await intelligenceV2Router.processWithIntelligenceV2(
-        {
-          content: input.content,
-          mode: input.mode,
-          context: {
-            source: input.userContext
-          },
-          timestamp: input.timestamp,
-          id: uid // Use generated uid
-        },
-        storage
-    );
+    const v2Result = await intelligenceV2Router.processWithIntelligenceV2({
+      content: input.content,
+      mode: input.mode,
+      context: {
+        source: input.userContext
+      },
+      timestamp: input.timestamp,
+      id: uid // Use generated uid
+    });
 
     return {
       ...v2Result,
