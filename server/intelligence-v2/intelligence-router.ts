@@ -147,11 +147,16 @@ export class IntelligenceV2Router {
       );
 
       // 6. Generate vector embeddings for future searches
-      await this.vectorEngine.updateNoteVectors(
-        parseInt(noteId),
-        input.content,
-        storage
-      );
+      const numericNoteId = input.id ? parseInt(input.id) : null;
+      if (numericNoteId && !isNaN(numericNoteId)) {
+        await this.vectorEngine.updateNoteVectors(
+          numericNoteId,
+          input.content,
+          storage
+        );
+      } else {
+        console.warn('Skipping vector update - invalid note ID:', input.id);
+      }
 
       // 7. Generate proactive recommendations
       const proactiveRecommendations = this.reasoningEngine.generateProactiveRecommendations(recursiveAnalysis);
@@ -184,8 +189,16 @@ export class IntelligenceV2Router {
         })),
         proactiveRecommendations,
         
-        // Traditional compatibility
-        ...traditionalOutputs,
+        // Traditional compatibility - ensure all required fields
+        todos: traditionalOutputs.todos || [],
+        smartActions: traditionalOutputs.smartActions || [],
+        entities: traditionalOutputs.entities || [],
+        suggestedLinks: traditionalOutputs.suggestedLinks || [],
+        nextSteps: traditionalOutputs.nextSteps || [],
+        microQuestions: traditionalOutputs.microQuestions || [],
+        fromTheWeb: traditionalOutputs.fromTheWeb || [],
+        tags: traditionalOutputs.tags || [],
+        relatedTopics: traditionalOutputs.relatedTopics || [],
         confidence: this.calculateOverallConfidence(recursiveAnalysis, semanticMatches),
         processingPath: this.determineProcessingPath(recursiveAnalysis),
         timestamp: new Date().toISOString(),

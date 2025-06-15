@@ -421,7 +421,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
             source: input.userContext
           },
           timestamp: input.timestamp,
-          id: input.id
+          id: String(noteId) // Ensure string format for ID
         },
         storage
     );
