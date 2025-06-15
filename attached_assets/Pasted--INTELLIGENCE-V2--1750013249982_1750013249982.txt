@@ -1,5 +1,25 @@
+###############################################################################
+#  INTELLIGENCE‑V2  •  CRITICAL BUILD‑FIX PATCH  (copy‑paste, hit Enter)
+###############################################################################
+set -e
+
+# ─── 1 ▸  Fix missing flags in FeatureFlags interface ────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/feature-flags.ts
+@@
+   PROACTIVE_DELIVERY_ENABLED: boolean;
+-  // MISSING: ENHANCED_COLLECTIONS_ENABLED
++  ENHANCED_COLLECTIONS_ENABLED: boolean;
++  ADVANCED_NOTIFICATIONS_ENABLED: boolean;
+ }
+*** End Patch
+PATCH
+
+# ─── 2 ▸  Replace the malformed router with a minimal, compilable version ────
+cat <<'TS' > server/intelligence-v2/intelligence-router.ts
 /**
- * Intelligence‑V2 Router  – syntactically minimal but functional
+ * Intelligence‑V2 Router  – syntactically minimal but functional
  *  • uses IntentVectorClassifier for routing
  *  • calls RecursiveReasoningEngine when flag is on
  *  • updates vectors and Collections
@@ -87,3 +107,17 @@ export class IntelligenceV2Router {
     };
   }
 }
+TS
+
+# ─── 3 ▸  Commit & remind the user what to do next ───────────────────────────
+git add server/intelligence-v2/intelligence-router.ts \
+        server/intelligence-v2/feature-flags.ts
+git commit -m "build‑fix: router rewrite + flag interface patch"
+
+echo
+echo "✔ Build‑fix applied.  Now run:"
+echo "   npm run build   # should compile without errors"
+echo "   npm run dev     # start server – log must show Recursive reasoning finished"
+echo
+echo "If this compiles, re‑test POST /api/notes.  We’ll layer thumbnails & UX after build is green."
+###############################################################################

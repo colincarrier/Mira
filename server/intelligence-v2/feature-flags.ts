@@ -9,6 +9,8 @@ export interface FeatureFlags {
   RECURSIVE_REASONING_ENABLED: boolean;
   RELATIONSHIP_MAPPING_ENABLED: boolean;
   PROACTIVE_DELIVERY_ENABLED: boolean;
+  ENHANCED_COLLECTIONS_ENABLED: boolean;
+  ADVANCED_NOTIFICATIONS_ENABLED: boolean;
 }
 
 export class FeatureFlagManager {
