@@ -132,9 +132,9 @@ export class IntelligenceV2Router {
       // 4. Perform recursive reasoning analysis with error handling
       let recursiveAnalysis = null;
       try {
-        // Basic Intelligence-V2 without recursive reasoning for now
-        console.log('🔄 Using simplified Intelligence-V2 processing');
-        if (false) {
+        // Enable full Intelligence-V2 with recursive reasoning
+        console.log('🔄 Enabling full Intelligence-V2 processing with recursive reasoning');
+        if (true) {
           recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
             input.content,
             userContext || {},
@@ -371,16 +371,16 @@ export class IntelligenceV2Router {
 
     if (!analysis) return actions;
 
-    // Check for reminder needs
-    if (analysis.immediateProcessing.temporalAnalysis.explicitTimes.length > 0) {
+    // Check for reminder needs with safe property access
+    if (analysis?.immediateProcessing?.temporalAnalysis?.explicitTimes?.length > 0) {
       actions.push({
         label: 'Set Reminder',
         action: 'reminder'
       });
     }
 
-    // Check for research needs
-    if (analysis.contextualIntelligence.knowledgeGaps.length > 0) {
+    // Check for research needs with safe property access
+    if (analysis?.contextualIntelligence?.knowledgeGaps?.length > 0) {
       actions.push({
         label: 'Research Topic',
         action: 'research'

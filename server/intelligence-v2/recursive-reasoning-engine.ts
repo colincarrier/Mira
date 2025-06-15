@@ -328,7 +328,7 @@ SYSTEM: Predict the next 3 most likely actions this user will take based on thei
 
 CURRENT_INPUT: "${currentInput}"
 USER_PATTERNS: ${JSON.stringify(userHistory.slice(0, 10))}
-ANALYSIS_CONTEXT: ${JSON.stringify(analysis.immediate_processing)}
+ANALYSIS_CONTEXT: ${JSON.stringify(analysis.immediateProcessing)}
 
 Provide 3 specific, actionable predictions of what the user will likely do next.
 Consider their typical workflows, timing patterns, and context.
