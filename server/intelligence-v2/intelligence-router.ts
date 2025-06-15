@@ -133,9 +133,10 @@ export class IntelligenceV2Router {
       );
 
       // Extract Collections if enabled
-      if (FeatureFlagManager.getInstance().isEnabled('ENHANCED_COLLECTIONS_ENABLED')) {
-        await CollectionsExtractor.extract(input.id ?? '', input.content);
-      }
+      // Note: Temporarily disabled due to interface mismatch
+      // if (FeatureFlagManager.getInstance().isEnabled('ENHANCED_COLLECTIONS_ENABLED')) {
+      //   await CollectionsExtractor.extract(input.id ?? '', input.content);
+      // }
 
       // 4. Build temporal and user context
       const temporalContext = await this.buildTemporalContext(input, userContext);
@@ -327,19 +328,15 @@ export class IntelligenceV2Router {
       return result;
 
     } catch (error) {
-      console.error('❌ Intelligence-V2 processing failed:', error);
+      console.error('❌ Intelligence-V2 processing failed:', (error as Error).message);
       
       // Fallback to basic processing
       return this.fallbackToBasicProcessing(input);
     }
   }
 
-  /**
-   * Build temporal context for analysis
-   */
   private async buildTemporalContext(input: IntelligenceV2Input, userContext?: any): Promise<any> {
     const now = new Date();
-    
     return {
       currentTime: now.toISOString(),
       timeOfDay: this.getTimeOfDay(now),
@@ -347,6 +344,182 @@ export class IntelligenceV2Router {
       userTimezone: userContext?.timezone || 'UTC',
       recentActivity: userContext?.recentActivity || [],
       upcomingEvents: userContext?.upcomingEvents || []
+    };
+  }
+
+  private generateIntelligentSummary(analysis: RecursiveAnalysis | null): string {
+    if (!analysis) {
+      return "Basic content analysis completed";
+    }
+    
+    return analysis.immediateProcessing?.understanding?.substring(0, 200) + 
+           (analysis.immediateProcessing?.understanding?.length > 200 ? "..." : "");
+  }
+
+  private async enhanceContentWithInsights(
+    originalContent: string,
+    analysis: RecursiveAnalysis | null,
+    semanticMatches: any[]
+  ): Promise<string> {
+    if (!analysis) {
+      return originalContent;
+    }
+
+    let enhanced = originalContent;
+    
+    // Add insights from analysis
+    const insights = analysis.contextualIntelligence?.patternRecognition;
+    if (insights) {
+      enhanced += `\n\n**Insights:** ${insights}`;
+    }
+
+    // Add related content references
+    if (semanticMatches.length > 0) {
+      const topMatch = semanticMatches[0];
+      enhanced += `\n\n**Related:** ${topMatch.content.substring(0, 100)}...`;
+    }
+
+    return enhanced;
+  }
+
+  private extractTraditionalOutputs(analysis: RecursiveAnalysis | null) {
+    return {
+      todos: this.extractTodos(analysis),
+      smartActions: this.extractSmartActions(analysis),
+      tags: this.extractTags(analysis),
+      relatedTopics: this.extractRelatedTopics(analysis)
+    };
+  }
+
+  private extractTodos(analysis: RecursiveAnalysis | null): ProcessedTodo[] {
+    if (!analysis?.proactiveDelivery?.suggestedActions) {
+      return [];
+    }
+
+    return analysis.proactiveDelivery.suggestedActions
+      .filter(action => action.action.includes('todo') || action.action.includes('task'))
+      .map(action => ({
+        title: action.action,
+        priority: action.priority > 7 ? 'high' : action.priority > 5 ? 'medium' : 'low',
+        due: undefined,
+        isReminder: false
+      }));
+  }
+
+  private extractSmartActions(analysis: RecursiveAnalysis | null): SmartAction[] {
+    if (!analysis?.proactiveDelivery?.suggestedActions) {
+      return [];
+    }
+
+    return analysis.proactiveDelivery.suggestedActions.map(action => ({
+      label: action.action,
+      action: action.reasoning
+    }));
+  }
+
+  private extractTags(analysis: RecursiveAnalysis | null): string[] {
+    if (!analysis?.immediateProcessing?.entities) {
+      return [];
+    }
+
+    return analysis.immediateProcessing.entities
+      .map(entity => entity.toLowerCase())
+      .filter(tag => tag.length > 2);
+  }
+
+  private extractRelatedTopics(analysis: RecursiveAnalysis | null): string[] {
+    if (!analysis?.contextualIntelligence?.crossReferences) {
+      return [];
+    }
+
+    return analysis.contextualIntelligence.crossReferences
+      .map(ref => ref.relationship)
+      .filter(topic => topic && topic.length > 0);
+  }
+
+  private calculateOverallConfidence(analysis: RecursiveAnalysis | null, semanticMatches: any[]): number {
+    if (!analysis) return 0.3;
+    return Math.min(0.9, 0.5 + (semanticMatches.length * 0.05));
+  }
+
+  private determineProcessingPath(analysis: RecursiveAnalysis | null): 'memory' | 'commerce' {
+    return analysis?.immediateProcessing?.intent === 'commerce' ? 'commerce' : 'memory';
+  }
+
+  private generateClassificationScores(analysis: RecursiveAnalysis | null): Record<string, number> {
+    return {
+      complexity: analysis?.immediateProcessing?.complexity || 0,
+      urgency: this.mapUrgencyToScore(analysis?.immediateProcessing?.urgency || 'medium'),
+      confidence: analysis ? 0.8 : 0.3
+    };
+  }
+
+  private mapUrgencyToScore(urgency: string): number {
+    switch (urgency) {
+      case 'critical': return 1.0;
+      case 'high': return 0.8;
+      case 'medium': return 0.6;
+      case 'low': return 0.4;
+      default: return 0.5;
+    }
+  }
+
+  private getTimeOfDay(date: Date): string {
+    const hour = date.getHours();
+    if (hour < 6) return 'early_morning';
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    if (hour < 21) return 'evening';
+    return 'night';
+  }
+
+  private async fallbackToBasicProcessing(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
+    console.log('⚠️ Using fallback basic processing');
+    
+    return {
+      id: input.id || 'temp',
+      title: makeTitle(input.content),
+      summary: "Basic processing fallback",
+      enhancedContent: input.content,
+      intent: 'general',
+      urgency: 'medium',
+      complexity: 3,
+      recursiveAnalysis: {} as RecursiveAnalysis,
+      vectorSimilarities: [],
+      relationshipInsights: [],
+      proactiveRecommendations: { immediate: [], upcoming: [], strategic: [] },
+      todos: [],
+      smartActions: [],
+      entities: [],
+      suggestedLinks: [],
+      nextSteps: [],
+      microQuestions: [],
+      fromTheWeb: [],
+      tags: [],
+      relatedTopics: [],
+      confidence: 0.3,
+      processingPath: 'memory',
+      timestamp: new Date().toISOString(),
+      classificationScores: { basic: 1.0 }
+    };
+  }
+
+  async healthCheck(): Promise<{ status: string; components: Record<string, any> }> {
+    const components: Record<string, any> = {};
+    let allHealthy = true;
+
+    try {
+      // Check vector engine
+      await this.vectorEngine.generateDenseEmbedding("test");
+      components['vectorEngine'] = { status: 'healthy' };
+    } catch (error) {
+      components['vectorEngine'] = { status: 'unhealthy', error: (error as Error).message };
+      allHealthy = false;
+    }
+
+    return {
+      status: allHealthy ? 'healthy' : 'degraded',
+      components
     };
   }
 
