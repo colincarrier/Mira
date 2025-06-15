@@ -416,16 +416,31 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     const v2Result = await intelligenceV2Router.processWithIntelligenceV2({
       content: input.content,
       mode: input.mode,
-      context: {
-        source: input.userContext
-      },
-      timestamp: input.timestamp,
       id: uid // Use generated uid
     });
 
+    // Map V2 result to expected V1 format for compatibility
     return {
-      ...v2Result,
-      uid: v2Result.id
+      uid: v2Result.id,
+      title: v2Result.title,
+      summary: v2Result.summary,
+      enhancedContent: v2Result.enhancedContent,
+      intent: 'research', // Default from V2
+      urgency: 'medium',
+      complexity: 5,
+      confidence: 0.8,
+      todos: [],
+      smartActions: [],
+      entities: [],
+      suggestedLinks: [],
+      nextSteps: [],
+      microQuestions: [],
+      fromTheWeb: [],
+      tags: [],
+      relatedTopics: [],
+      processingPath: 'memory',
+      classificationScores: { intelligence_v2: 1.0 },
+      timestamp: v2Result.timestamp
     };
   }
 

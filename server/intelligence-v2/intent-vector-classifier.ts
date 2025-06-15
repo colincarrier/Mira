@@ -36,8 +36,16 @@ NOTE: """${text}"""
       temperature: 0.2
     });
 
-    const raw = chat.choices[0]?.message?.content ?? '{}';
-    const parsed = JSON.parse(raw);
+    let raw = chat.choices[0]?.message?.content ?? '{}';
+    
+    // Strip markdown code blocks if present
+    if (raw.startsWith('```json')) {
+      raw = raw.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (raw.startsWith('```')) {
+      raw = raw.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const parsed = JSON.parse(raw.trim());
     return schema.parse(parsed);
   }
 }

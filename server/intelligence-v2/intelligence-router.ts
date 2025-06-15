@@ -47,9 +47,16 @@ export class IntelligenceV2Router {
 
     /** 2 ▸ semantic matches (10) */
     const notes = await storage.getAllNotes();
+    // Map to expected format for vector search
+    const vectorNotes = notes.map(note => ({
+      id: note.id,
+      content: note.content,
+      vectorDense: note.vectorDense || undefined,
+      vectorSparse: note.vectorSparse || undefined
+    }));
     const matches = await this.vector.performSemanticSearch(
       { query: input.content, limit: 10 },
-      notes
+      vectorNotes
     );
 
     /** 3 ▸ Collections auto‑extract */
@@ -73,7 +80,9 @@ export class IntelligenceV2Router {
     }
 
     /** 5 ▸ update vectors (fire‑and‑forget) */
-    if (input.id) this.vector.updateNoteVectors(Number(input.id), input.content, storage).catch(()=>{});
+    if (input.id && !isNaN(Number(input.id))) {
+      this.vector.updateNoteVectors(Number(input.id), input.content, storage).catch(()=>{});
+    }
 
     /** 6 ▸ build & return result */
     return {
