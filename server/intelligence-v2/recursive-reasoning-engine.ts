@@ -197,13 +197,13 @@ PROCESSING_RULES:
 
 REQUIRED_OUTPUT_STRUCTURE:
 {
-  "immediate_processing": {
+  "immediateProcessing": {
     "understanding": "Deep semantic comprehension",
     "entities": [{"name": "string", "type": "string", "relevance": 0.95, "relationships": []}],
     "intent": "primary_intent_with_confidence",
     "urgency": "critical|high|medium|low",
     "complexity": 1-10,
-    "temporal_analysis": {
+    "temporalAnalysis": {
       "explicit_times": [{"text": "string", "parsed": "ISO_date", "confidence": 0.95, "precision": "exact|approximate|relative"}],
       "implicit_urgency": "assessment of time pressure",
       "deadline_implications": "impact analysis",
@@ -211,7 +211,7 @@ REQUIRED_OUTPUT_STRUCTURE:
     }
   },
   
-  "recursive_reasoning": {
+  "recursiveReasoning": {
     "step_1_anticipation": {
       "likely_next_needs": ["anticipated need 1", "anticipated need 2"],
       "follow_up_questions": ["question 1", "question 2"],
@@ -236,7 +236,7 @@ REQUIRED_OUTPUT_STRUCTURE:
     }
   },
   
-  "contextual_intelligence": {
+  "contextualIntelligence": {
     "cross_references": [{"content_id": "string", "relationship": "string", "strength": 0.95, "reasoning": "why connected"}],
     "pattern_recognition": "identified patterns and their significance",
     "anomaly_detection": "unusual aspects requiring attention",
@@ -244,7 +244,7 @@ REQUIRED_OUTPUT_STRUCTURE:
     "unexpected_connections": [{"connection": "string", "value": "why valuable", "confidence": 0.85}]
   },
   
-  "proactive_delivery": {
+  "proactiveDelivery": {
     "surface_immediately": [{"content_id": "string", "reason": "specific value proposition", "timing": "now"}],
     "prepare_for_later": [{"content_id": "string", "reason": "anticipated future need", "timing": "ISO_datetime"}],
     "suggested_actions": [{"action": "specific actionable step", "reasoning": "why this helps", "priority": 1-10}],

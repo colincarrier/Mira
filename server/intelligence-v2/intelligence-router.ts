@@ -396,15 +396,19 @@ export class IntelligenceV2Router {
   private extractTags(analysis: RecursiveAnalysis): string[] {
     const tags = new Set<string>();
 
-    // Add urgency as tag
-    tags.add(analysis.immediateProcessing.urgency);
+    // Add urgency as tag with safe access
+    if (analysis?.immediateProcessing?.urgency) {
+      tags.add(analysis.immediateProcessing.urgency);
+    }
 
-    // Add entity types as tags
-    analysis.immediateProcessing.entities.forEach(entity => {
-      if (entity.type) {
-        tags.add(entity.type.toLowerCase());
-      }
-    });
+    // Add entity types as tags with safe access
+    if (analysis?.immediateProcessing?.entities) {
+      analysis.immediateProcessing.entities.forEach(entity => {
+        if (entity.type) {
+          tags.add(entity.type.toLowerCase());
+        }
+      });
+    }
 
     return Array.from(tags).slice(0, 5);
   }
@@ -415,15 +419,19 @@ export class IntelligenceV2Router {
   private extractRelatedTopics(analysis: RecursiveAnalysis): string[] {
     const topics: string[] = [];
 
-    // Extract from entities
-    analysis.immediateProcessing.entities.forEach(entity => {
-      topics.push(entity.name);
-    });
+    // Extract from entities with safe access
+    if (analysis?.immediateProcessing?.entities) {
+      analysis.immediateProcessing.entities.forEach(entity => {
+        topics.push(entity.name);
+      });
+    }
 
-    // Extract from cross-references
-    analysis.contextualIntelligence.crossReferences.forEach(ref => {
-      topics.push(ref.relationship);
-    });
+    // Extract from cross-references with safe access
+    if (analysis?.contextualIntelligence?.crossReferences) {
+      analysis.contextualIntelligence.crossReferences.forEach(ref => {
+        topics.push(ref.relationship);
+      });
+    }
 
     return topics.slice(0, 8);
   }
