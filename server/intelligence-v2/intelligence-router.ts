@@ -132,7 +132,9 @@ export class IntelligenceV2Router {
       // 4. Perform recursive reasoning analysis with error handling
       let recursiveAnalysis = null;
       try {
-        if (true) { // Skip feature flag check for now
+        // Basic Intelligence-V2 without recursive reasoning for now
+        console.log('🔄 Using simplified Intelligence-V2 processing');
+        if (false) {
           recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
             input.content,
             userContext || {},
@@ -300,17 +302,31 @@ export class IntelligenceV2Router {
   /**
    * Extract traditional outputs for backward compatibility
    */
-  private extractTraditionalOutputs(analysis: RecursiveAnalysis): Partial<IntelligenceV2Result> {
+  private extractTraditionalOutputs(analysis: RecursiveAnalysis | null): Partial<IntelligenceV2Result> {
+    if (!analysis) {
+      return {
+        todos: [],
+        smartActions: [],
+        entities: [],
+        suggestedLinks: [],
+        nextSteps: [],
+        microQuestions: [],
+        fromTheWeb: [],
+        tags: [],
+        relatedTopics: []
+      };
+    }
+
     return {
-      todos: this.extractTodos(analysis),
-      smartActions: this.extractSmartActions(analysis),
-      entities: analysis.immediateProcessing.entities,
+      todos: analysis ? this.extractTodos(analysis) : [],
+      smartActions: analysis ? this.extractSmartActions(analysis) : [],
+      entities: analysis?.immediateProcessing?.entities || [],
       suggestedLinks: [],
-      nextSteps: analysis.recursiveReasoning.step1Anticipation.potentialActions,
-      microQuestions: analysis.recursiveReasoning.step1Anticipation.followUpQuestions,
+      nextSteps: analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || [],
+      microQuestions: analysis?.recursiveReasoning?.step1Anticipation?.followUpQuestions || [],
       fromTheWeb: [],
-      tags: this.extractTags(analysis),
-      relatedTopics: this.extractRelatedTopics(analysis)
+      tags: analysis ? this.extractTags(analysis) : [],
+      relatedTopics: analysis ? this.extractRelatedTopics(analysis) : []
     };
   }
 
@@ -320,25 +336,29 @@ export class IntelligenceV2Router {
   private extractTodos(analysis: RecursiveAnalysis): ProcessedTodo[] {
     const todos: ProcessedTodo[] = [];
 
-    // Extract from suggested actions
-    analysis.proactiveDelivery.suggestedActions
-      .filter(action => action.priority >= 7)
-      .forEach(action => {
-        todos.push({
-          title: action.action,
-          priority: action.priority >= 9 ? 'high' : action.priority >= 7 ? 'medium' : 'low'
+    // Extract from suggested actions with safe property access
+    if (analysis?.proactiveDelivery?.suggestedActions) {
+      analysis.proactiveDelivery.suggestedActions
+        .filter(action => action.priority >= 7)
+        .forEach(action => {
+          todos.push({
+            title: action.action,
+            priority: action.priority >= 9 ? 'high' : action.priority >= 7 ? 'medium' : 'low'
+          });
         });
-      });
+    }
 
-    // Extract from anticipated needs
-    analysis.recursiveReasoning.step1Anticipation.likelyNextNeeds
-      .slice(0, 3)
-      .forEach(need => {
-        todos.push({
-          title: need,
-          priority: 'medium'
+    // Extract from anticipated needs with safe property access
+    if (analysis?.recursiveReasoning?.step1Anticipation?.likelyNextNeeds) {
+      analysis.recursiveReasoning.step1Anticipation.likelyNextNeeds
+        .slice(0, 3)
+        .forEach(need => {
+          todos.push({
+            title: need,
+            priority: 'medium'
+          });
         });
-      });
+    }
 
     return todos;
   }
@@ -348,6 +368,8 @@ export class IntelligenceV2Router {
    */
   private extractSmartActions(analysis: RecursiveAnalysis): SmartAction[] {
     const actions: SmartAction[] = [];
+
+    if (!analysis) return actions;
 
     // Check for reminder needs
     if (analysis.immediateProcessing.temporalAnalysis.explicitTimes.length > 0) {
