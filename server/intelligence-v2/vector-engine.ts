@@ -185,17 +185,11 @@ export class VectorEngine {
 
     for (const note of existingNotes) {
       try {
-        // Parse stored vectors - handle vector database format
-        let noteDense = null;
+        // pgvector comes out like '{0.12,0.34,…}' – convert to number[]
+        let noteDense: number[] | null = null;
         if (note.vectorDense) {
-          try {
-            noteDense = note.vectorDense.startsWith('[') ? 
-              JSON.parse(note.vectorDense) : 
-              JSON.parse(note.vectorDense);
-          } catch (e) {
-            console.warn(`Failed to parse dense vector for note ${note.id}`);
-            continue;
-          }
+          const trimmed = note.vectorDense.replace(/[{}]/g, '');
+          noteDense = trimmed.split(',').map(Number);
         }
         
         const noteSparse = note.vectorSparse ? JSON.parse(note.vectorSparse) : {};
@@ -260,9 +254,9 @@ export class VectorEngine {
       const denseEmbedding = await this.generateDenseEmbedding(content);
       const sparseEmbedding = this.generateSparseEmbedding(content);
 
-      // Convert vectors to proper database format
-      const denseVector = `[${denseEmbedding.dense.join(',')}]`;
-      const sparseVector = JSON.stringify(sparseEmbedding);
+      // Convert vectors to pgvector literal  '{1,2,3}'
+      const denseVector = `{${denseEmbedding.dense.join(',')}}`;
+      const sparseVector = JSON.stringify(sparseEmbedding);   // still JSON
 
       // Update note with vector data
       await storage.updateNote(noteId, {

@@ -120,13 +120,23 @@ export class IntelligenceV2Router {
       // 1. Get existing notes for context
       const allNotes = await storage.getAllNotes();
       
-      // 2. Perform semantic search to find related content
+      // 2. Classify intent & entities (multi‑label)
+      const intentVector: IntentVector = await IntentVectorClassifier.classify(
+        input.content
+      );
+
+      // 3. Perform semantic search to find related content
       const semanticMatches = await this.vectorEngine.performSemanticSearch(
         { query: input.content, limit: 15 },
         allNotes
       );
 
-      // 3. Build temporal and user context
+      // Extract Collections if enabled
+      if (FeatureFlagManager.getInstance().isEnabled('ENHANCED_COLLECTIONS_ENABLED')) {
+        await CollectionsExtractor.extract(input.id ?? '', input.content);
+      }
+
+      // 4. Build temporal and user context
       const temporalContext = await this.buildTemporalContext(input, userContext);
       
       // 4. Perform recursive reasoning analysis with error handling
@@ -232,7 +242,7 @@ export class IntelligenceV2Router {
         recursiveAnalysis = null;
       }
 
-      // 5. Map relationships for this content
+      // 6. Map relationships for this content
       const noteId = input.id || 'temp';
       const relationships = await this.relationshipMapper.mapRelationships(
         noteId,

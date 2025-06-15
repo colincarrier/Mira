@@ -1,0 +1,196 @@
+###############################################################################
+#  PATCH ▸  Revive full Intelligence‑V2  (intent routing, recursion, vectors)
+###############################################################################
+set -e
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1.  Harmonise feature‑flags  (read env → defaults)                          │
+# ─────────────────────────────────────────────────────────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/feature-flags.ts
+@@
+-  private constructor() {
+-    this.flags = {
+-      INTELLIGENCE_V2_ENABLED: true,
++  private constructor() {
++    // read env first, fall back to defaults
++    this.flags = {
++      INTELLIGENCE_V2_ENABLED:
++        process.env.FEATURE_INTELLIGENCE_V2?.toLowerCase() === 'true',
+@@
+-  public isEnabled(flag: keyof FeatureFlags): boolean {
+-    return this.flags[flag] ?? false;
++  public isEnabled(flag: keyof FeatureFlags): boolean {
++    return Boolean(this.flags[flag]);
+   }
+*** End Patch
+PATCH
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2.  Short‑title governor util                                               │
+# ─────────────────────────────────────────────────────────────────────────────
+mkdir -p server/utils
+cat <<'TS' > server/utils/title-governor.ts
+export const makeTitle = (raw: string): string => {
+  const clean = raw.trim().replace(/\s+/g, ' ');
+  return clean.length > 55 ? clean.slice(0, 52) + '…' : clean || 'Untitled';
+};
+TS
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3.  Router: use IntentVector, call recursion, call CollectionsExtractor     │
+# ─────────────────────────────────────────────────────────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/intelligence-router.ts
+@@
+-      // 2. Perform semantic search to find related content
++      // 2. Classify intent & entities (multi‑label)
++      const intentVector: IntentVector = await IntentVectorClassifier.classify(
++        input.content
++      );
++
++      // 3. Perform semantic search to find related content
+       const semanticMatches = await this.vectorEngine.performSemanticSearch(
+         { query: input.content, limit: 15 },
+         allNotes
+       );
+ 
+-      // 3. Build temporal and user context
++      // Extract Collections if enabled
++      if (FeatureFlagManager.getInstance().isEnabled('ENHANCED_COLLECTIONS_ENABLED')) {
++        await CollectionsExtractor.extract(input.id ?? '', input.content);
++      }
++
++      // 4. Build temporal and user context
+       const temporalContext = await this.buildTemporalContext(input, userContext);
+       
+-      // 4. Perform recursive reasoning analysis with error handling
+-      let recursiveAnalysis = null;
+-      try {
+-        // Enhanced basic processing for Intelligence-V2
+-        console.log('🔄 Using enhanced Intelligence-V2 processing');
+-        
+-        recursiveAnalysis = {
+-          immediateProcessing: {
+-            understanding: `Enhanced analysis: ${input.content}`,
+-            entities: [],
+-            intent: semanticMatches.length > 0 ? 'research' : 'general',
+-            urgency: 'medium' as const,
+-            complexity: Math.min(10, Math.max(1, Math.ceil(input.content.length / 50))),
+-            temporalAnalysis: {
+-              explicitTimes: [],
+-              implicitUrgency: 'normal processing pace',
+-              deadlineImplications: 'no immediate deadlines detected',
+-              recurringPatterns: 'analyzing for patterns'
+-            }
+-          },
+-          recursiveReasoning: { /* … stub … */ },
+-          contextualIntelligence: { /* … stub … */ },
+-          proactiveDelivery: { /* … stub … */ }
+-        };
+-        console.log('✅ Created enhanced Intelligence-V2 analysis structure');
+-      } catch (error) {
+-        console.warn('⚠️ Analysis failed, using fallback:', error.message);
+-        recursiveAnalysis = null;
+-      }
++      // 5. Perform REAL recursive reasoning (can be toggled)
++      let recursiveAnalysis = null;
++      if (FeatureFlagManager.getInstance().isEnabled('RECURSIVE_REASONING_ENABLED')) {
++        try {
++          recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
++            input.content,
++            userContext,
++            semanticMatches,
++            temporalContext
++          );
++          console.log('✅ Recursive reasoning finished');
++        } catch (err) {
++          console.warn('⚠️ Recursive reasoning failed:', err.message);
++        }
++      }
+ 
+-      // 5. Map relationships for this content
++      // 6. Map relationships for this content
+*** End Patch
+PATCH
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4.  Router: replace title line with governor                                │
+# ─────────────────────────────────────────────────────────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/intelligence-router.ts
+@@
+-        title: recursiveAnalysis?.immediateProcessing?.understanding?.substring(0, 50) + '...' || input.content.substring(0, 50),
++        title: require('../utils/title-governor.js').makeTitle(
++          recursiveAnalysis?.immediateProcessing?.understanding || input.content
++        ),
+*** End Patch
+PATCH
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5.  VectorEngine: store pgvector literals & parse correctly                 │
+# ─────────────────────────────────────────────────────────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/vector-engine.ts
+@@
+-      // Convert vectors to proper database format
+-      const denseVector = `[${denseEmbedding.dense.join(',')}]`;
+-      const sparseVector = JSON.stringify(sparseEmbedding);
++      // Convert vectors to pgvector literal  '{1,2,3}'
++      const denseVector = `{${denseEmbedding.dense.join(',')}}`;
++      const sparseVector = JSON.stringify(sparseEmbedding);   // still JSON
+*** End Patch
+PATCH
+
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/vector-engine.ts
+@@
+-        let noteDense = null;
+-        if (note.vectorDense) {
+-          try {
+-            noteDense = note.vectorDense.startsWith('[') ? 
+-              JSON.parse(note.vectorDense) : 
+-              JSON.parse(note.vectorDense);
+-          } catch (e) {
+-            console.warn(`Failed to parse dense vector for note ${note.id}`);
+-            continue;
+-          }
+-        }
++        // pgvector comes out like '{0.12,0.34,…}' – convert to number[]
++        let noteDense: number[] | null = null;
++        if (note.vectorDense) {
++          const trimmed = note.vectorDense.replace(/[{}]/g, '');
++          noteDense = trimmed.split(',').map(Number);
++        }
+*** End Patch
+PATCH
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6.  miraAIProcessing.ts: use env flag name + singleton FeatureFlags         │
+# ─────────────────────────────────────────────────────────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/brain/miraAIProcessing.ts
+@@
+-const featureFlags = new FeatureFlagManager(process.env);
+-...
+-if (featureFlags.isEnabled('FEATURE_INTELLIGENCE_V2') &&  intelligenceV2Router !== null)
++const featureFlags = FeatureFlagManager.getInstance();
++...
++if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') && intelligenceV2Router)
+*** End Patch
+PATCH
+
+echo "▶  Patches applied – committing"
+git add .
+git commit -m "feat: re‑enable IntentVector, recursion, pgvector; title governor"
+
+echo "✔  Done.  Restart with  'npm run dev'  and watch for:"
+echo "   [Bootstrap] Intelligence‑V2 router initialised"
+echo "   ✅ Recursive reasoning finished"
+###############################################################################
