@@ -149,17 +149,25 @@ export class IntelligenceV2Router {
       // 6. Generate vector embeddings for future searches
       const numericNoteId = input.id ? parseInt(input.id) : null;
       if (numericNoteId && !isNaN(numericNoteId)) {
-        await this.vectorEngine.updateNoteVectors(
-          numericNoteId,
-          input.content,
-          storage
-        );
+        try {
+          await this.vectorEngine.updateNoteVectors(
+            numericNoteId,
+            input.content,
+            storage
+          );
+          console.log('Updated vectors for note', numericNoteId);
+        } catch (error) {
+          console.warn('Vector update failed for note', numericNoteId, ':', error.message);
+          // Continue processing even if vector update fails
+        }
       } else {
         console.warn('Skipping vector update - invalid note ID:', input.id);
       }
 
-      // 7. Generate proactive recommendations
-      const proactiveRecommendations = this.reasoningEngine.generateProactiveRecommendations(recursiveAnalysis);
+      // 7. Generate proactive recommendations - handle empty analysis gracefully
+      const proactiveRecommendations = recursiveAnalysis ? 
+        this.reasoningEngine.generateProactiveRecommendations(recursiveAnalysis) : 
+        { immediate: [], upcoming: [], strategic: [] };
 
       // 8. Extract traditional outputs for compatibility
       const traditionalOutputs = this.extractTraditionalOutputs(recursiveAnalysis);

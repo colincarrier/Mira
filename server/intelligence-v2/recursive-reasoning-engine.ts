@@ -366,16 +366,22 @@ OUTPUT JSON:
     upcoming: string[];
     strategic: string[];
   } {
+    // Safe property access with fallbacks
+    const immediate = analysis?.proactiveDelivery?.suggestedActions
+      ?.filter((action: any) => action.priority >= 8)
+      ?.map((action: any) => action.action) || [];
+    
+    const upcoming = [
+      ...(analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || []),
+      ...(analysis?.recursiveReasoning?.step2Projection?.potentialActions || [])
+    ].slice(0, 5);
+    
+    const strategic = analysis?.recursiveReasoning?.step3Implications?.potentialActions || [];
+
     return {
-      immediate: analysis.proactive_delivery.suggested_actions
-        .filter(action => action.priority >= 8)
-        .map(action => action.action),
-      
-      upcoming: analysis.recursiveReasoning.step1Anticipation.potential_actions
-        .concat(analysis.recursiveReasoning.step2Projection.potential_actions || [])
-        .slice(0, 5),
-      
-      strategic: analysis.recursiveReasoning.step3Implications.potential_actions || []
+      immediate,
+      upcoming,
+      strategic
     };
   }
 
@@ -389,21 +395,21 @@ OUTPUT JSON:
     recommendations: string[];
   } {
     // Calculate confidence based on various factors
-    const entityConfidence = analysis.immediate_processing.entities
-      .reduce((sum, entity) => sum + entity.relevance, 0) / analysis.immediate_processing.entities.length || 0;
+    const entityConfidence = analysis.immediateProcessing?.entities
+      ?.reduce((sum: number, entity: any) => sum + (entity.relevance || 0), 0) / (analysis.immediateProcessing?.entities?.length || 1) || 0;
     
-    const crossReferenceStrength = analysis.contextual_intelligence.cross_references
-      .reduce((sum, ref) => sum + ref.strength, 0) / analysis.contextual_intelligence.cross_references.length || 0;
+    const crossReferenceStrength = analysis.contextualIntelligence?.crossReferences
+      ?.reduce((sum: number, ref: any) => sum + (ref.strength || 0), 0) / (analysis.contextualIntelligence?.crossReferences?.length || 1) || 0;
     
     const reasoningDepth = 
-      analysis.recursiveReasoning.step1Anticipation.likely_next_needs.length +
-      analysis.recursiveReasoning.step2Projection.likely_next_needs.length +
-      (analysis.recursiveReasoning.step3Implications.likely_next_needs?.length || 0);
+      (analysis.recursiveReasoning?.step1Anticipation?.likelyNextNeeds?.length || 0) +
+      (analysis.recursiveReasoning?.step2Projection?.likelyNextNeeds?.length || 0) +
+      (analysis.recursiveReasoning?.step3Implications?.likelyNextNeeds?.length || 0);
     
     const proactiveValue = 
-      analysis.proactive_delivery.suggested_actions.length +
-      analysis.proactive_delivery.preventive_measures.length +
-      analysis.proactive_delivery.optimization_suggestions.length;
+      (analysis.proactiveDelivery?.suggestedActions?.length || 0) +
+      (analysis.proactiveDelivery?.preventiveMeasures?.length || 0) +
+      (analysis.proactiveDelivery?.optimizationSuggestions?.length || 0);
 
     const overallConfidence = (entityConfidence + crossReferenceStrength) / 2;
 
