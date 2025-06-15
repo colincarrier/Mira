@@ -776,18 +776,23 @@ export default function InputBar({
         </div>
       </div>
       
-      {/* Media Context Dialog */}
-      <MediaContextDialog
-        isOpen={showMediaDialog}
-        onClose={() => {
-          setShowMediaDialog(false);
-          setCapturedImageData("");
-          setSelectedFile(null);
-        }}
-        mediaType={selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'file') : 'camera'}
-        capturedImage={capturedImageData}
-        selectedFile={selectedFile}
-      />
+      {/* Media Context Dialog - temporarily disabled */}
+      {showMediaDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-4 rounded-lg">
+            <button 
+              onClick={() => {
+                setShowMediaDialog(false);
+                setCapturedImageData("");
+                setSelectedFile(null);
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

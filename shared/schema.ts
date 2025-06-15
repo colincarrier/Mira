@@ -24,8 +24,8 @@ export const notes = pgTable("notes", {
   collectionId: integer("collection_id").references(() => collections.id),
   
   // Intelligence-v2: Vector storage for semantic search
-  vectorDense: text("vector_dense"), // Dense vector embedding (3072 dimensions)
-  vectorSparse: text("vector_sparse"), // Sparse vector for keyword matching
+  vectorDense: text("vector_dense"), // Dense vector embedding array format: [0.1,0.2,...]
+  vectorSparse: text("vector_sparse"), // Sparse vector as JSON string
   intentVector: json("intent_vector").$type<{
     categories: Record<string, number>;
     confidence: number;

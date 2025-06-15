@@ -185,8 +185,19 @@ export class VectorEngine {
 
     for (const note of existingNotes) {
       try {
-        // Parse stored vectors
-        const noteDense = note.vectorDense ? JSON.parse(note.vectorDense) : null;
+        // Parse stored vectors - handle vector database format
+        let noteDense = null;
+        if (note.vectorDense) {
+          try {
+            noteDense = note.vectorDense.startsWith('[') ? 
+              JSON.parse(note.vectorDense) : 
+              JSON.parse(note.vectorDense);
+          } catch (e) {
+            console.warn(`Failed to parse dense vector for note ${note.id}`);
+            continue;
+          }
+        }
+        
         const noteSparse = note.vectorSparse ? JSON.parse(note.vectorSparse) : {};
 
         if (!noteDense) continue; // Skip notes without dense vectors
@@ -249,10 +260,14 @@ export class VectorEngine {
       const denseEmbedding = await this.generateDenseEmbedding(content);
       const sparseEmbedding = this.generateSparseEmbedding(content);
 
+      // Convert vectors to proper database format
+      const denseVector = `[${denseEmbedding.dense.join(',')}]`;
+      const sparseVector = JSON.stringify(sparseEmbedding);
+
       // Update note with vector data
       await storage.updateNote(noteId, {
-        vectorDense: JSON.stringify(denseEmbedding.dense),
-        vectorSparse: JSON.stringify(sparseEmbedding)
+        vectorDense: denseVector,
+        vectorSparse: sparseVector
       });
 
       console.log(`Updated vectors for note ${noteId}`);
