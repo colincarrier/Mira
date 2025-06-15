@@ -518,11 +518,15 @@ export default function InputBar({
   }, [stopWaveformAnimation]);
 
   // File handlers
+  const [capturedImageData, setCapturedImageData] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showMediaDialog, setShowMediaDialog] = useState(false);
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
-        uploadImageMutation.mutate(file);
+          handleFileSelect(file);
       } else {
         toast({
           title: "Unsupported file type",
@@ -539,12 +543,23 @@ export default function InputBar({
   const handleGeneralFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadFileMutation.mutate(file);
+        handleFileSelect(file);
     }
     if (generalFileInputRef.current) {
       generalFileInputRef.current.value = '';
     }
   };
+
+    const handleFileSelect = async (file: File) => {
+    if (!file) return;
+
+    console.log('📁 File selected:', file.name, file.type);
+
+    // Show MediaContextDialog for all file uploads (same as camera flow)
+    setSelectedFile(file);
+    setShowMediaDialog(true);
+  };
+
 
   const openPhotoLibrary = () => {
     if (fileInputRef.current) {
@@ -760,6 +775,19 @@ export default function InputBar({
           </div>
         </div>
       </div>
+      
+      {/* Media Context Dialog */}
+      <MediaContextDialog
+        isOpen={showMediaDialog}
+        onClose={() => {
+          setShowMediaDialog(false);
+          setCapturedImageData("");
+          setSelectedFile(null);
+        }}
+        mediaType={selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'file') : 'camera'}
+        capturedImage={capturedImageData}
+        selectedFile={selectedFile}
+      />
     </>
   );
 }
