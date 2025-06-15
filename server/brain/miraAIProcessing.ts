@@ -420,26 +420,41 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     });
 
     // Map V2 result to expected V1 format for compatibility
+    const analysis = v2Result.recursiveAnalysis;
+    
     return {
       uid: v2Result.id,
       title: v2Result.title,
       summary: v2Result.summary,
       enhancedContent: v2Result.enhancedContent,
-      intent: 'research', // Default from V2
-      urgency: 'medium',
-      complexity: 5,
-      confidence: 0.8,
-      todos: [],
-      smartActions: [],
-      entities: [],
+      intent: analysis?.immediateProcessing?.intent || 'research',
+      urgency: analysis?.immediateProcessing?.urgency || 'medium',
+      complexity: analysis?.immediateProcessing?.complexity || 5,
+      confidence: 0.9,
+      todos: analysis?.proactiveDelivery?.suggestedActions?.map(action => ({
+        title: action.action,
+        priority: action.priority > 7 ? 'high' : action.priority > 5 ? 'medium' : 'low'
+      })) || [],
+      smartActions: analysis?.proactiveDelivery?.suggestedActions?.map(action => ({
+        label: action.action,
+        action: action.reasoning
+      })) || [],
+      entities: analysis?.immediateProcessing?.entities?.map(entity => ({
+        name: entity,
+        type: 'general'
+      })) || [],
       suggestedLinks: [],
-      nextSteps: [],
-      microQuestions: [],
+      nextSteps: analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || [],
+      microQuestions: analysis?.recursiveReasoning?.step1Anticipation?.followUpQuestions || [],
       fromTheWeb: [],
-      tags: [],
-      relatedTopics: [],
-      processingPath: 'memory',
-      classificationScores: { intelligence_v2: 1.0 },
+      tags: analysis?.immediateProcessing?.entities || [],
+      relatedTopics: analysis?.contextualIntelligence?.crossReferences?.map(ref => ref.relationship) || [],
+      processingPath: 'intelligence_v2',
+      classificationScores: { 
+        intelligence_v2: 1.0,
+        complexity: analysis?.immediateProcessing?.complexity || 0,
+        confidence: 0.9
+      },
       timestamp: v2Result.timestamp
     };
   }
