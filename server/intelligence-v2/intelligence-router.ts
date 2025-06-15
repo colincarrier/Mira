@@ -10,6 +10,7 @@ import { IntentVectorClassifier, type IntentVector } from './intent-vector-class
 import { CollectionsExtractor } from './collections-extractor.js';
 import { FeatureFlagManager } from './feature-flags.js';
 import { storage } from '../storage.js';
+import { makeTitle } from '../utils/title-governor.js';
 
 export interface IntelligenceV2Input {
   id?: string;
@@ -139,21 +140,22 @@ export class IntelligenceV2Router {
       // 4. Build temporal and user context
       const temporalContext = await this.buildTemporalContext(input, userContext);
       
-      // 4. Perform recursive reasoning analysis with error handling
+      // 5. Perform REAL recursive reasoning (can be toggled)
       let recursiveAnalysis = null;
-      try {
-        // Temporarily disable recursive reasoning to fix core Intelligence-V2 processing
-        console.log('🔄 Using core Intelligence-V2 without recursive reasoning for stability');
-        if (false) {
+      if (FeatureFlagManager.getInstance().isEnabled('RECURSIVE_REASONING_ENABLED')) {
+        try {
           recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
             input.content,
-            userContext || {},
+            userContext,
             semanticMatches,
             temporalContext
           );
-          console.log('✅ Recursive analysis completed successfully');
-        } else {
-          console.log('🔄 Recursive reasoning disabled, using enhanced basic Intelligence-V2');
+          console.log('✅ Recursive reasoning finished');
+        } catch (err) {
+          console.warn('⚠️ Recursive reasoning failed:', (err as Error).message);
+        }
+      } else {
+        console.log('🔄 Recursive reasoning disabled, using fallback');
           
           // Create a basic analysis structure for Intelligence-V2 processing
           recursiveAnalysis = {
@@ -280,7 +282,9 @@ export class IntelligenceV2Router {
       // 9. Build comprehensive result
       const result: IntelligenceV2Result = {
         id: noteId,
-        title: recursiveAnalysis?.immediateProcessing?.understanding?.substring(0, 50) + (recursiveAnalysis?.immediateProcessing?.understanding?.length > 50 ? '...' : '') || input.content.substring(0, 50),
+        title: makeTitle(
+          recursiveAnalysis?.immediateProcessing?.understanding || input.content
+        ),
         summary: this.generateIntelligentSummary(recursiveAnalysis),
         enhancedContent: await this.enhanceContentWithInsights(input.content, recursiveAnalysis, semanticMatches),
         intent: recursiveAnalysis?.immediateProcessing?.intent || 'general',
