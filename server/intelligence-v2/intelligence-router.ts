@@ -189,8 +189,8 @@ export class IntelligenceV2Router {
       const result: IntelligenceV2Result = {
         id: noteId,
         title: recursiveAnalysis?.immediateProcessing?.understanding?.substring(0, 50) + (recursiveAnalysis?.immediateProcessing?.understanding?.length > 50 ? '...' : '') || input.content.substring(0, 50),
-        summary: this.generateIntelligentSummary(recursiveAnalysis || null),
-        enhancedContent: await this.enhanceContentWithInsights(input.content, recursiveAnalysis || null, semanticMatches),
+        summary: this.generateIntelligentSummary(recursiveAnalysis),
+        enhancedContent: await this.enhanceContentWithInsights(input.content, recursiveAnalysis, semanticMatches),
         intent: recursiveAnalysis?.immediateProcessing?.intent || 'general',
         urgency: recursiveAnalysis?.immediateProcessing?.urgency || 'medium',
         complexity: recursiveAnalysis?.immediateProcessing?.complexity || 3,

@@ -274,26 +274,36 @@ OUTPUT ONLY JSON:
     input: string,
     relatedContent: SemanticSearchResult[]
   ): Promise<RecursiveAnalysis> {
-    // Add vector-based cross-references
+    // Ensure contextualIntelligence structure exists with proper camelCase
+    if (!analysis.contextualIntelligence) {
+      analysis.contextualIntelligence = {
+        crossReferences: [],
+        patternRecognition: '',
+        anomalyDetection: '',
+        knowledgeGaps: [],
+        unexpectedConnections: []
+      };
+    }
+
+    // Add vector-based cross-references with safe property access
     const vectorCrossReferences = relatedContent.map(content => ({
-      contentId: content.noteId.toString(),
-      relationship: content.reasoning,
+      contentId: content.noteId?.toString() || 'unknown',
+      relationship: content.reasoning || 'semantic_similarity',
       strength: content.similarity,
-      reasoning: `Vector similarity: ${(content.similarity * 100).toFixed(1)}% - ${content.reasoning}`
+      reasoning: `Vector similarity: ${(content.similarity * 100).toFixed(1)}%`
     }));
 
-    // Merge with existing cross-references
-    analysis.contextual_intelligence.cross_references = [
-      ...analysis.contextual_intelligence.cross_references,
+    // Safely merge with existing cross-references
+    analysis.contextualIntelligence.crossReferences = [
+      ...(analysis.contextualIntelligence.crossReferences || []),
       ...vectorCrossReferences
-    ].slice(0, 10); // Limit to top 10
+    ].slice(0, 10);
 
-    // Enhance unexpected connections with semantic analysis
-    const semanticConnections = await this.findSemanticConnections(input, relatedContent);
-    analysis.contextual_intelligence.unexpected_connections = [
-      ...analysis.contextual_intelligence.unexpected_connections,
-      ...semanticConnections
-    ];
+    // Add pattern recognition insights
+    if (relatedContent.length > 2) {
+      analysis.contextualIntelligence.patternRecognition = 
+        `Vector analysis reveals ${relatedContent.length} related items suggesting recurring themes.`;
+    }
 
     return analysis as RecursiveAnalysis;
   }
