@@ -425,6 +425,7 @@ This profile was generated from your input and will help provide more personaliz
         const miraModule = await import('./brain/miraAIProcessing');
 
         const miraInput = {
+          id: note.id.toString(), // Pass the actual database note ID
           content: noteData.content,
           mode: noteData.mode === 'file' ? 'text' : (noteData.mode as 'text' | 'image' | 'voice'),
           req: req, // Pass request for location detection
