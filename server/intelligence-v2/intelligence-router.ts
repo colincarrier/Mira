@@ -41,7 +41,7 @@ export class IntelligenceV2Router {
     this.reason = new RecursiveReasoningEngine(openai, this.vector);
   }
 
-  async processNoteV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
+  async processWithIntelligenceV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
     /** 1 ▸ classify intent */
     const intent: IntentVector = await IntentVectorClassifier.classify(input.content);
 
