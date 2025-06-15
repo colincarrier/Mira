@@ -129,13 +129,24 @@ export class IntelligenceV2Router {
       // 3. Build temporal and user context
       const temporalContext = await this.buildTemporalContext(input, userContext);
       
-      // 4. Perform recursive reasoning analysis
-      const recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
-        input.content,
-        userContext || {},
-        semanticMatches,
-        temporalContext
-      );
+      // 4. Perform recursive reasoning analysis with error handling
+      let recursiveAnalysis = null;
+      try {
+        if (true) { // Skip feature flag check for now
+          recursiveAnalysis = await this.reasoningEngine.performRecursiveAnalysis(
+            input.content,
+            userContext || {},
+            semanticMatches,
+            temporalContext
+          );
+          console.log('✅ Recursive analysis completed successfully');
+        } else {
+          console.log('🔄 Recursive reasoning disabled, using basic analysis');
+        }
+      } catch (error) {
+        console.warn('⚠️ Recursive reasoning failed, continuing without it:', error.message);
+        recursiveAnalysis = null;
+      }
 
       // 5. Map relationships for this content
       const noteId = input.id || 'temp';
@@ -170,20 +181,20 @@ export class IntelligenceV2Router {
         { immediate: [], upcoming: [], strategic: [] };
 
       // 8. Extract traditional outputs for compatibility
-      const traditionalOutputs = this.extractTraditionalOutputs(recursiveAnalysis);
+      const traditionalOutputs = this.extractTraditionalOutputs(recursiveAnalysis || null);
 
       // 9. Build comprehensive result
       const result: IntelligenceV2Result = {
         id: noteId,
-        title: recursiveAnalysis.immediateProcessing.understanding.substring(0, 50) + (recursiveAnalysis.immediateProcessing.understanding.length > 50 ? '...' : ''),
-        summary: this.generateIntelligentSummary(recursiveAnalysis),
-        enhancedContent: await this.enhanceContentWithInsights(input.content, recursiveAnalysis, semanticMatches),
-        intent: recursiveAnalysis.immediateProcessing.intent,
-        urgency: recursiveAnalysis.immediateProcessing.urgency,
-        complexity: recursiveAnalysis.immediateProcessing.complexity,
+        title: recursiveAnalysis?.immediateProcessing?.understanding?.substring(0, 50) + (recursiveAnalysis?.immediateProcessing?.understanding?.length > 50 ? '...' : '') || input.content.substring(0, 50),
+        summary: this.generateIntelligentSummary(recursiveAnalysis || null),
+        enhancedContent: await this.enhanceContentWithInsights(input.content, recursiveAnalysis || null, semanticMatches),
+        intent: recursiveAnalysis?.immediateProcessing?.intent || 'general',
+        urgency: recursiveAnalysis?.immediateProcessing?.urgency || 'medium',
+        complexity: recursiveAnalysis?.immediateProcessing?.complexity || 3,
         
         // Intelligence-v2 specific
-        recursiveAnalysis,
+        recursiveAnalysis: recursiveAnalysis || {},
         vectorSimilarities: semanticMatches.map(match => ({
           noteId: match.noteId,
           similarity: match.similarity,
@@ -207,10 +218,10 @@ export class IntelligenceV2Router {
         fromTheWeb: traditionalOutputs.fromTheWeb || [],
         tags: traditionalOutputs.tags || [],
         relatedTopics: traditionalOutputs.relatedTopics || [],
-        confidence: this.calculateOverallConfidence(recursiveAnalysis, semanticMatches),
-        processingPath: this.determineProcessingPath(recursiveAnalysis),
+        confidence: this.calculateOverallConfidence(recursiveAnalysis || null, semanticMatches),
+        processingPath: this.determineProcessingPath(recursiveAnalysis || null),
         timestamp: new Date().toISOString(),
-        classificationScores: this.generateClassificationScores(recursiveAnalysis)
+        classificationScores: this.generateClassificationScores(recursiveAnalysis || null)
       };
 
       console.log('✅ Intelligence-V2 processing completed with', semanticMatches.length, 'semantic matches and', relationships.length, 'relationships');

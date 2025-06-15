@@ -366,17 +366,21 @@ OUTPUT JSON:
     upcoming: string[];
     strategic: string[];
   } {
-    // Safe property access with fallbacks
-    const immediate = analysis?.proactiveDelivery?.suggestedActions
+    // Safe property access with comprehensive fallbacks
+    if (!analysis) {
+      return { immediate: [], upcoming: [], strategic: [] };
+    }
+
+    const immediate = analysis.proactiveDelivery?.suggestedActions
       ?.filter((action: any) => action.priority >= 8)
       ?.map((action: any) => action.action) || [];
     
     const upcoming = [
-      ...(analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || []),
-      ...(analysis?.recursiveReasoning?.step2Projection?.potentialActions || [])
+      ...(analysis.recursiveReasoning?.step1Anticipation?.potentialActions || []),
+      ...(analysis.recursiveReasoning?.step2Projection?.potentialActions || [])
     ].slice(0, 5);
     
-    const strategic = analysis?.recursiveReasoning?.step3Implications?.potentialActions || [];
+    const strategic = analysis.recursiveReasoning?.step3Implications?.potentialActions || [];
 
     return {
       immediate,
