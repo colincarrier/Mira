@@ -182,8 +182,8 @@ export class IntelligenceV2Router {
         this.reasoningEngine.generateProactiveRecommendations(recursiveAnalysis) : 
         { immediate: [], upcoming: [], strategic: [] };
 
-      // 8. Extract traditional outputs for compatibility
-      const traditionalOutputs = this.extractTraditionalOutputs(recursiveAnalysis || null);
+      // 8. Extract traditional outputs for compatibility (handle null analysis)
+      const traditionalOutputs = this.extractTraditionalOutputs(recursiveAnalysis);
 
       // 9. Build comprehensive result
       const result: IntelligenceV2Result = {
