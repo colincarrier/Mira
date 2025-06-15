@@ -204,44 +204,52 @@ REQUIRED_OUTPUT_STRUCTURE:
     "urgency": "critical|high|medium|low",
     "complexity": 1-10,
     "temporalAnalysis": {
-      "explicit_times": [{"text": "string", "parsed": "ISO_date", "confidence": 0.95, "precision": "exact|approximate|relative"}],
-      "implicit_urgency": "assessment of time pressure",
-      "deadline_implications": "impact analysis",
-      "recurring_patterns": "detected patterns"
+      "explicitTimes": [{"text": "string", "parsed": "ISO_date", "confidence": 0.95, "precision": "exact|approximate|relative"}],
+      "implicitUrgency": "assessment of time pressure",
+      "deadlineImplications": "impact analysis",
+      "recurringPatterns": "detected patterns"
     }
   },
   
   "recursiveReasoning": {
-    "step_1_anticipation": {
-      "likely_next_needs": ["anticipated need 1", "anticipated need 2"],
-      "follow_up_questions": ["question 1", "question 2"],
-      "required_information": ["info need 1", "info need 2"],
-      "potential_actions": ["action 1", "action 2"]
+    "step1Anticipation": {
+      "likelyNextNeeds": ["anticipated need 1", "anticipated need 2"],
+      "followUpQuestions": ["question 1", "question 2"],
+      "requiredInformation": ["info need 1", "info need 2"],
+      "potentialActions": ["action 1", "action 2"],
+      "cascadingEffects": ["effect 1", "effect 2"],
+      "optimizationOpportunities": ["opportunity 1", "opportunity 2"],
+      "longTermValue": "strategic value",
+      "learningOpportunities": ["learning 1", "learning 2"]
     },
-    "step_2_projection": {
-      "likely_next_needs": ["subsequent need 1", "subsequent need 2"],
-      "follow_up_questions": ["follow-up question 1", "follow-up question 2"],
-      "required_information": ["future info need 1", "future info need 2"],
-      "potential_actions": ["future action 1", "future action 2"],
-      "cascading_effects": ["effect 1", "effect 2"],
-      "optimization_opportunities": ["opportunity 1", "opportunity 2"]
+    "step2Projection": {
+      "likelyNextNeeds": ["subsequent need 1", "subsequent need 2"],
+      "followUpQuestions": ["follow-up question 1", "follow-up question 2"],
+      "requiredInformation": ["future info need 1", "future info need 2"],
+      "potentialActions": ["future action 1", "future action 2"],
+      "cascadingEffects": ["effect 1", "effect 2"],
+      "optimizationOpportunities": ["opportunity 1", "opportunity 2"],
+      "longTermValue": "extended value",
+      "learningOpportunities": ["learning 2", "learning 3"]
     },
-    "step_3_implications": {
-      "likely_next_needs": ["long-term need 1", "long-term need 2"],
-      "follow_up_questions": ["strategic question 1", "strategic question 2"],
-      "required_information": ["strategic info 1", "strategic info 2"],
-      "potential_actions": ["strategic action 1", "strategic action 2"],
-      "long_term_value": "strategic assessment",
-      "learning_opportunities": ["learning 1", "learning 2"]
+    "step3Implications": {
+      "likelyNextNeeds": ["long-term need 1", "long-term need 2"],
+      "followUpQuestions": ["strategic question 1", "strategic question 2"],
+      "requiredInformation": ["strategic info 1", "strategic info 2"],
+      "potentialActions": ["strategic action 1", "strategic action 2"],
+      "cascadingEffects": ["system effect 1", "system effect 2"],
+      "optimizationOpportunities": ["strategic optimization 1", "strategic optimization 2"],
+      "longTermValue": "transformational value",
+      "learningOpportunities": ["strategic learning 1", "strategic learning 2"]
     }
   },
   
   "contextualIntelligence": {
-    "cross_references": [{"content_id": "string", "relationship": "string", "strength": 0.95, "reasoning": "why connected"}],
-    "pattern_recognition": "identified patterns and their significance",
-    "anomaly_detection": "unusual aspects requiring attention",
-    "knowledge_gaps": ["gap 1 with research suggestion", "gap 2 with action plan"],
-    "unexpected_connections": [{"connection": "string", "value": "why valuable", "confidence": 0.85}]
+    "crossReferences": [{"contentId": "string", "relationship": "string", "strength": 0.95, "reasoning": "why connected"}],
+    "patternRecognition": "identified patterns and their significance",
+    "anomalyDetection": "unusual aspects requiring attention",
+    "knowledgeGaps": ["gap 1 with research suggestion", "gap 2 with action plan"],
+    "unexpectedConnections": [{"connection": "string", "value": "why valuable", "confidence": 0.85}]
   },
   
   "proactiveDelivery": {
