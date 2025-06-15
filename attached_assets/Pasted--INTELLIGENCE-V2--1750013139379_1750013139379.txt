@@ -1,0 +1,123 @@
+###############################################################################
+#  INTELLIGENCE‑V2  •  CRITICAL BUILD‑FIX PATCH  (copy‑paste, hit Enter)
+###############################################################################
+set -e
+
+# ─── 1 ▸  Fix missing flags in FeatureFlags interface ────────────────────────
+apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: server/intelligence-v2/feature-flags.ts
+@@
+   PROACTIVE_DELIVERY_ENABLED: boolean;
+-  // MISSING: ENHANCED_COLLECTIONS_ENABLED
++  ENHANCED_COLLECTIONS_ENABLED: boolean;
++  ADVANCED_NOTIFICATIONS_ENABLED: boolean;
+ }
+*** End Patch
+PATCH
+
+# ─── 2 ▸  Replace the malformed router with a minimal, compilable version ────
+cat <<'TS' > server/intelligence-v2/intelligence-router.ts
+/**
+ * Intelligence‑V2 Router  – syntactically minimal but functional
+ *  • uses IntentVectorClassifier for routing
+ *  • calls RecursiveReasoningEngine when flag is on
+ *  • updates vectors and Collections
+ *  • returns a trimmed IntelligenceV2Result
+ */
+
+import { VectorEngine } from './vector-engine.js';
+import { RecursiveReasoningEngine, RecursiveAnalysis } from './recursive-reasoning-engine.js';
+import { IntentVectorClassifier, type IntentVector } from './intent-vector-classifier.js';
+import { CollectionsExtractor } from './collections-extractor.js';
+import { FeatureFlagManager } from './feature-flags.js';
+import { storage } from '../storage.js';
+
+export interface IntelligenceV2Input {
+  id?: string;
+  content: string;
+  mode: 'text' | 'voice' | 'image' | 'file';
+}
+
+export interface IntelligenceV2Result {
+  id: string;
+  title: string;
+  summary: string;
+  enhancedContent: string;
+  recursiveAnalysis?: RecursiveAnalysis;
+  timestamp: string;
+}
+
+import OpenAI from 'openai';
+import { makeTitle } from '../utils/title-governor.js';
+
+export class IntelligenceV2Router {
+  private vector: VectorEngine;
+  private reason: RecursiveReasoningEngine;
+  private flags = FeatureFlagManager.getInstance();
+
+  constructor(private openai: OpenAI) {
+    this.vector = new VectorEngine(openai);
+    this.reason = new RecursiveReasoningEngine(openai, this.vector);
+  }
+
+  async processNoteV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
+    /** 1 ▸ classify intent */
+    const intent: IntentVector = await IntentVectorClassifier.classify(input.content);
+
+    /** 2 ▸ semantic matches (10) */
+    const notes = await storage.getAllNotes();
+    const matches = await this.vector.performSemanticSearch(
+      { query: input.content, limit: 10 },
+      notes
+    );
+
+    /** 3 ▸ Collections auto‑extract */
+    if (this.flags.isEnabled('ENHANCED_COLLECTIONS_ENABLED')) {
+      await CollectionsExtractor.extract(input.id ?? '', input.content);
+    }
+
+    /** 4 ▸ recursive reasoning (optional) */
+    let analysis: RecursiveAnalysis | undefined;
+    if (this.flags.isEnabled('RECURSIVE_REASONING_ENABLED')) {
+      try {
+        analysis = await this.reason.performRecursiveAnalysis(
+          input.content,
+          {},            // user context placeholder
+          matches,
+          {}             // temporal context placeholder
+        );
+      } catch (err) {
+        console.warn('Recursive reasoning failed:', err);
+      }
+    }
+
+    /** 5 ▸ update vectors (fire‑and‑forget) */
+    if (input.id) this.vector.updateNoteVectors(Number(input.id), input.content, storage).catch(()=>{});
+
+    /** 6 ▸ build & return result */
+    return {
+      id: input.id ?? 'temp',
+      title: makeTitle(input.content),
+      summary: analysis?.immediateProcessing?.understanding ??
+               'Intelligence‑V2 processed',
+      enhancedContent: input.content,
+      recursiveAnalysis: analysis,
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+TS
+
+# ─── 3 ▸  Commit & remind the user what to do next ───────────────────────────
+git add server/intelligence-v2/intelligence-router.ts \
+        server/intelligence-v2/feature-flags.ts
+git commit -m "build‑fix: router rewrite + flag interface patch"
+
+echo
+echo "✔ Build‑fix applied.  Now run:"
+echo "   npm run build   # should compile without errors"
+echo "   npm run dev     # start server – log must show Recursive reasoning finished"
+echo
+echo "If this compiles, re‑test POST /api/notes.  We’ll layer thumbnails & UX after build is green."
+###############################################################################
