@@ -444,20 +444,6 @@ export default function NoteDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowReminderDialog(true)}
-              className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-              title="Set reminder"
-            >
-              <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-            </button>
-            <button
-              onClick={handleShare}
-              className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-              title="Share note"
-            >
-              <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -494,6 +480,20 @@ export default function NoteDetail() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <button
+              onClick={handleShare}
+              className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+              title="Share note"
+            >
+              <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            </button>
+            <button
+              onClick={() => setShowReminderDialog(true)}
+              className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+              title="Set reminder"
+            >
+              <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            </button>
           </div>
         </div>
 
