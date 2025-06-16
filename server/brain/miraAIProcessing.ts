@@ -410,7 +410,8 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   // Switch between V1 and V2 processing  (null‑safe)
   if (
     featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') &&
-    intelligenceV2Router !== null
+    intelligenceV2Router !== null &&
+    typeof intelligenceV2Router.processWithIntelligenceV2 === 'function'
   ) {
     // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
     const v2Result = await intelligenceV2Router.processWithIntelligenceV2({
