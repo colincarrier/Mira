@@ -443,7 +443,7 @@ export default function NoteDetail() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 mr-2">
+          <div className="flex items-center gap-2 mr-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
