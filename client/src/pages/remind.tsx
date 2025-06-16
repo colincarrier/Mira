@@ -4,6 +4,7 @@ import { Clock, Check, Plus, Edit2, Calendar, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/bottom-navigation";
+import InputBar from "@/components/input-bar";
 import SimpleTextInput from "@/components/simple-text-input";
 import { ReminderDialog } from "@/components/reminder-dialog";
 import { formatDistanceToNow } from "date-fns";
