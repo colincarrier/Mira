@@ -382,18 +382,25 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
         </div>
         <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">#{note.id}</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-6 h-6 rounded-full bg-[#f9fafb] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-                  title="More options"
-                >
-                  <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-                </button>
-              </DropdownMenuTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 rounded-full bg-[#f9fafb] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+                title="More options"
+              >
+                <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+              </button>
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem className="text-xs text-gray-500">
+                Note ID: #{note.id}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleShare}>
+                <ArrowUpRight className="w-4 h-4 mr-2" />
+                Share Note
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Star className="w-4 h-4 mr-2" />
                 Star Note
@@ -431,14 +438,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             title="Set reminder"
           >
             <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-          </button>
-
-          <button
-            onClick={handleShare}
-            className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-            title="Share note"
-          >
-            <ArrowUpRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
           </button>
         </div>
       </div>
@@ -649,7 +648,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           {!note.isProcessing && note.aiEnhanced && (
             <div className="flex items-center space-x-1 text-xs text-green-600">
               <CheckCircle2 className="w-3 h-3" />
-              <span className="opacity-80">AI enhanced</span>
+              <span className="opacity-25">AI enhanced</span>
             </div>
           )}
         </div>

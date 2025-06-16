@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { ReminderDialog } from "@/components/reminder-dialog";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -26,6 +27,7 @@ export default function NoteDetail() {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<any>(null);
   const [clarificationInput, setClarificationInput] = useState('');
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -442,6 +444,13 @@ export default function NoteDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowReminderDialog(true)}
+              className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+              title="Set reminder"
+            >
+              <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            </button>
             <button
               onClick={handleShare}
               className="w-6 h-6 rounded-md bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
@@ -1039,6 +1048,19 @@ export default function NoteDetail() {
           </div>
         </div>
       )}
+
+      {/* Reminder Dialog */}
+      <ReminderDialog
+        open={showReminderDialog}
+        onOpenChange={setShowReminderDialog}
+        prePopulatedText={`Reminder: ${note?.content?.split('\n')[0] || 'Untitled Note'}`}
+        onReminderUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+          toast({
+            description: "Reminder created successfully!",
+          });
+        }}
+      />
     </div>
   );
 }
