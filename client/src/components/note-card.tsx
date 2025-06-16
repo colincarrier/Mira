@@ -45,16 +45,16 @@ const getModeColor = (mode: string) => {
 const getFollowUpQuestions = (content: string, todos: any[]) => {
   const questions = [];
   const lowerContent = content.toLowerCase();
-  
+
   // Check for time-sensitive events first
   const timeSensitiveTerms = [
     'birthday', 'party', 'anniversary', 'wedding', 'graduation', 'deadline',
     'appointment', 'meeting', 'interview', 'flight', 'reservation', 'event',
     'surprise', 'gift', 'holiday', 'vacation', 'trip'
   ];
-  
+
   const hasTimeSensitive = timeSensitiveTerms.some(term => lowerContent.includes(term));
-  
+
   if (hasTimeSensitive) {
     // For time-sensitive items, prioritize date/timing questions
     if (lowerContent.includes('party') || lowerContent.includes('surprise') || lowerContent.includes('birthday')) {
@@ -73,9 +73,9 @@ const getFollowUpQuestions = (content: string, todos: any[]) => {
       return questions;
     }
   }
-  
+
   // For non-time-sensitive items, be more helpful and less annoying
-  
+
   // Simple tasks that don't need AI overkill
   const simpleTaskPatterns = [
     /pick up .+ at \d+/,
@@ -84,24 +84,24 @@ const getFollowUpQuestions = (content: string, todos: any[]) => {
     /email .+/,
     /text .+/
   ];
-  
+
   if (simpleTaskPatterns.some(pattern => pattern.test(lowerContent))) {
     // Don't add follow-up questions for obvious simple tasks
     return [];
   }
-  
+
   // Restaurant/food related - focus on helpful info
   if (lowerContent.includes('restaurant') || lowerContent.includes('food')) {
     questions.push("What type of cuisine or atmosphere?");
     questions.push("Price range preference?");
   }
-  
+
   // Book/movie/entertainment - focus on preferences
   else if (lowerContent.includes('book') || lowerContent.includes('movie') || lowerContent.includes('show')) {
     questions.push("What genre interests you?");
     questions.push("Any specific recommendations?");
   }
-  
+
   // Only return questions if they add real value
   return questions.slice(0, 2);
 };
@@ -118,27 +118,27 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const [, setLocation] = useLocation();
   const [showTodosModal, setShowTodosModal] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
-  
+
   const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
 
   // Helper to format content with proper title length limits
   const formatContent = (content: string) => {
     const lines = content.split('\n').filter(line => line.trim().length > 0);
     const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
-    
+
     let firstLine = lines[0] || '';
-    
+
     // Remove AI partner indicators from title
     firstLine = firstLine.replace(/^\[claude\]\s*/i, '').replace(/^\[openai\]\s*/i, '').replace(/^\[gpt\]\s*/i, '');
-    
+
     const hasDescription = lines.length > 1 || bullets.length >= 2;
-    
+
     // Title character limits: 1 line (~50 chars) with description, 3 lines (~150 chars) without
     const maxTitleLength = hasDescription ? 50 : 150;
     const title = firstLine.length > maxTitleLength 
       ? firstLine.substring(0, maxTitleLength).trim()
       : firstLine;
-    
+
     if (bullets.length >= 2) {
       const displayBullets = bullets.slice(0, 3).map(b => b.replace(/^[-•*]\s+/, '').trim());
       return {
@@ -148,7 +148,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         bullets: displayBullets
       };
     }
-    
+
     // For longer content, split into title and description
     if (lines.length > 1) {
       const description = lines.slice(1).join(' ').substring(0, 120);
@@ -159,7 +159,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         bullets: []
       };
     }
-    
+
     return {
       hasStructure: false,
       title,
@@ -187,14 +187,14 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   // Calculate todo progress
   const todoProgress = () => {
     if (note.todos.length === 0) return null;
-    
+
     const completed = note.todos.filter(todo => todo.completed).length;
     const total = note.todos.length;
     const percentage = (completed / total) * 100;
-    
+
     let color = '';
     let icon = CheckCircle;
-    
+
     if (percentage === 100) {
       color = 'text-green-600 bg-green-50';
       icon = CheckCircle2;
@@ -203,7 +203,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     } else {
       color = 'text-red-600 bg-red-50';
     }
-    
+
     return {
       completed,
       total,
@@ -278,10 +278,10 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   // Parse smart actions from aiSuggestion
   const parseSmartActions = (aiSuggestion: string | null) => {
     if (!aiSuggestion) return [];
-    
+
     const actions = [];
     const suggestions = aiSuggestion.split(',').map(s => s.trim());
-    
+
     for (const suggestion of suggestions) {
       if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
         actions.push({ type: 'calendar', label: 'Add to Calendar', icon: Calendar });
@@ -291,7 +291,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         actions.push({ type: 'reminder', label: 'Set Reminder', icon: Bell });
       }
     }
-    
+
     return actions;
   };
 
@@ -299,7 +299,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   const handleSmartAction = (action: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     switch (action.type) {
       case 'calendar':
         // Create calendar event
@@ -320,9 +320,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    
+
     const shareText = formatNoteForSharing(note);
-    
+
     if (navigator.share) {
       navigator.share({
         title: `Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}`,
@@ -345,17 +345,17 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   const formatNoteForSharing = (note: NoteWithTodos) => {
     let shareText = `📝 Note from ${formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}\n\n`;
-    
+
     shareText += `${note.content}\n\n`;
-    
+
     if (note.aiContext) {
       shareText += `💡 Context:\n${note.aiContext}\n\n`;
     }
-    
+
     if (note.aiSuggestion) {
       shareText += `🤔 Follow-up:\n${note.aiSuggestion}\n\n`;
     }
-    
+
     if (note.todos && note.todos.length > 0) {
       shareText += `✅ Action Items:\n`;
       note.todos.forEach((todo, index) => {
@@ -364,13 +364,13 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       });
       shareText += '\n';
     }
-    
+
     if (note.collection) {
       shareText += `📁 Collection: ${note.collection.name}\n\n`;
     }
-    
+
     shareText += `Shared from Mira`;
-    
+
     return shareText;
   };
 
@@ -420,7 +420,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -431,7 +431,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           >
             <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
           </button>
-          
+
           <button
             onClick={handleShare}
             className="w-6 h-6 rounded-full bg-[hsl(var(--muted))] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
@@ -461,7 +461,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
            (note.aiSuggestion && !note.aiSuggestion.includes('You are Mira') && note.aiSuggestion.length < 100) ? 
            note.aiSuggestion : formattedContent.title}
         </h3>
-        
+
         {/* Description or bullets - smaller, single-spaced */}
         {formattedContent.hasStructure ? (
           <ul className="space-y-0.5 text-sm leading-tight text-[hsl(var(--muted-foreground))]">
@@ -508,7 +508,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         </div>
       )}
 
-      
+
 
       {/* Next Steps from Rich Context */}
       {richContextData?.nextSteps && richContextData.nextSteps.length > 0 && (
@@ -614,7 +614,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </span>
             </button>
           )}
-          
+
           {note.collection && (
             <div className="flex items-center space-x-2">
               <Folder className="w-4 h-4 text-[hsl(var(--sand-taupe))]" />
@@ -643,7 +643,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               )}
             </div>
           )}
-          
+
           {/* AI enhanced indicator moved to bottom right */}
           {!note.isProcessing && note.aiEnhanced && (
             <div className="flex items-center space-x-1 text-xs text-green-600">

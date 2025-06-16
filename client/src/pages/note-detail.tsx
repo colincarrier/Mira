@@ -219,7 +219,14 @@ export default function NoteDetail() {
         existingRichContext: note.richContext
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("Evolution endpoint error:", errorData);
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+
       const result = await response.json();
+      console.log("Evolution result:", result);
       
       // Refresh the note data
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
@@ -229,9 +236,10 @@ export default function NoteDetail() {
       });
     } catch (error) {
       console.error("Failed to update note:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Failed to update note",
-        description: "Please try again",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -862,6 +870,7 @@ export default function NoteDetail() {
         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
           <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
           <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
+          <div className="text-gray-400 font-mono">Note ID: #{note.id}</div>
         </div>
 
 
