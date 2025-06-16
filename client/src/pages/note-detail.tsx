@@ -229,10 +229,10 @@ export default function NoteDetail() {
 
       const result = await response.json();
       console.log("Evolution result:", result);
-      
+
       // Refresh the note data
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      
+
       toast({
         description: "Note updated successfully with AI assistance",
       });
@@ -443,7 +443,7 @@ export default function NoteDetail() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button

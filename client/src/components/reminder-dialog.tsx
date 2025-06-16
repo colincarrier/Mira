@@ -19,9 +19,7 @@ export function ReminderDialog({
 }: ReminderDialogProps) {
   
   const handleClose = () => {
-    // Preserve navigation state when closing dialog
-    window.history.replaceState(null, '', '/remind');
-    onReminderUpdated?.(); // Auto-save on close
+    // Don't trigger onReminderUpdated when just closing the dialog
     onOpenChange(false);
   };
 
@@ -36,7 +34,7 @@ export function ReminderDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
