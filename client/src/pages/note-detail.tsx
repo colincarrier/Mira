@@ -206,31 +206,35 @@ export default function NoteDetail() {
     }
   };
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     console.log("Sending message for note update:", text);
 
-    // Create context-aware update with full note context
-    const fullContext = {
-      currentContent: note.content,
-      todos: note.todos || [],
-      richContext: note.richContext,
-      aiContext: note.aiContext,
-      userModification: text.trim()
-    };
+    try {
+      // Use the evolution endpoint instead of the patch endpoint
+      const response = await apiRequest("POST", `/api/notes/${id}/evolve`, {
+        instruction: text.trim(),
+        existingContent: note.content,
+        existingContext: note.aiContext || "",
+        existingTodos: note.todos || [],
+        existingRichContext: note.richContext
+      });
 
-    // Send context-aware update request
-    updateNoteMutation.mutate({ 
-      content: note.content, 
-      updateInstruction: `User wants to modify this note: "${text.trim()}". 
-      Current note context: ${JSON.stringify(fullContext)}. 
-      Please intelligently update the note content, todos, priorities, timing, or other aspects based on the user's intent.
-      If they're adding items, add them. If removing, remove them. If checking off todos, mark them complete.
-      If changing details, priorities, or timing, update accordingly.`
-    });
-
-    toast({
-      description: "Updating note with AI assistance...",
-    });
+      const result = await response.json();
+      
+      // Refresh the note data
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      
+      toast({
+        description: "Note updated successfully with AI assistance",
+      });
+    } catch (error) {
+      console.error("Failed to update note:", error);
+      toast({
+        title: "Failed to update note",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatNoteForSharing = (note: NoteWithTodos) => {
