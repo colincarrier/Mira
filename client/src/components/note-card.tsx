@@ -382,16 +382,17 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className={`w-2 h-2 ${getModeColor(note.mode)} rounded-full`}></div>
         </div>
         <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="w-6 h-6 rounded-full bg-[#f9fafb] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
-                title="More options"
-              >
-                <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-              </button>
-            </DropdownMenuTrigger>
+            <span className="text-xs text-gray-400">#{note.id}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-6 h-6 rounded-full bg-[#f9fafb] active:bg-[hsl(var(--accent))] flex items-center justify-center transition-colors"
+                  title="More options"
+                >
+                  <MoreHorizontal className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+                </button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem>
                 <Star className="w-4 h-4 mr-2" />
