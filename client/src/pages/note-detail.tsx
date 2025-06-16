@@ -867,10 +867,10 @@ export default function NoteDetail() {
         })()}
 
         {/* Document Metadata - Bottom of page */}
-        <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
+        <div className="px-4 py-4 pb-28 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
           <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
           <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
-          <div className="text-gray-400 font-mono">Note ID: #{note.id}</div>
+          <div className="text-gray-400">Note ID: #{note.id}</div>
         </div>
 
 
