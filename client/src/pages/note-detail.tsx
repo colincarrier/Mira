@@ -403,8 +403,8 @@ export default function NoteDetail() {
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
       <div className="w-full">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] bg-[#f5f5f5]">
-          <div className="flex items-center gap-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between py-3 border-b border-[hsl(var(--border))] bg-[#f5f5f5]">
+          <div className="flex items-center gap-3 pl-4">
             <button
               onClick={() => {
                 // Check if we came from a specific page
@@ -443,7 +443,7 @@ export default function NoteDetail() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 mr-4">
+          <div className="flex items-center gap-2 pr-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
