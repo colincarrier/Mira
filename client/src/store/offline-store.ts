@@ -277,6 +277,51 @@ export const useOfflineStore = create<OfflineState>()(
         await indexedDBManager.saveCollection(newCollection, 'pending');
         await indexedDBManager.addToSyncQueue('create', 'collections', newCollection);
         
+
+
+// Process offline voice notes when connection is restored
+async function processOfflineVoiceNotes() {
+  const state = useOfflineStore.getState();
+  const offlineVoiceNotes = state.notes.filter(note => 
+    note.isOffline && note.mode === 'voice' && note.audioBlob
+  );
+
+  for (const note of offlineVoiceNotes) {
+    try {
+      // Convert to FormData and send to server
+      const formData = new FormData();
+      formData.append("audio", note.audioBlob, "recording.webm");
+      formData.append("duration", note.recordingDuration?.toString() || "0");
+      
+      const response = await fetch("/api/notes/voice", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const processedNote = await response.json();
+        
+        // Update the note with processed content
+        await state.updateNote(note.id, {
+          content: processedNote.content,
+          transcription: processedNote.transcription,
+          audioUrl: processedNote.audioUrl,
+          aiEnhanced: processedNote.aiEnhanced,
+          aiSuggestion: processedNote.aiSuggestion,
+          aiContext: processedNote.aiContext,
+          isOffline: false,
+          isProcessing: false
+        });
+        
+        console.log(`Processed offline voice note: ${note.id}`);
+      }
+    } catch (error) {
+      console.error(`Failed to process offline voice note ${note.id}:`, error);
+    }
+  }
+}
+
         set(state => ({ collections: [...state.collections, newCollection] }));
         return newCollection;
       },
@@ -325,6 +370,9 @@ export const useOfflineStore = create<OfflineState>()(
       // Sync actions
       syncWithServer: async () => {
         await syncService.syncWithServer();
+        
+        // Process offline voice notes
+        await processOfflineVoiceNotes();
         
         // Reload data after sync
         const { loadFromIndexedDB } = get();

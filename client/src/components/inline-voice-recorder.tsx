@@ -41,6 +41,28 @@ export default function InlineVoiceRecorder({
 
   const createVoiceNoteMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
+      // Check if online
+      if (!navigator.onLine) {
+        // Store offline voice note
+        const offlineNote = {
+          content: `🎤 Voice recording (${Math.round(recordingTime)}s) - Pending transcription`,
+          mode: "voice",
+          audioBlob: audioBlob,
+          audioUrl: URL.createObjectURL(audioBlob),
+          isProcessing: true,
+          isOffline: true,
+          recordingDuration: recordingTime,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Store in offline storage
+        const { useOfflineStore } = await import("@/store/offline-store");
+        const note = await useOfflineStore.getState().createNote(offlineNote);
+        
+        return note;
+      }
+
+      // Online flow - existing logic
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("duration", recordingTime.toString());
@@ -58,14 +80,22 @@ export default function InlineVoiceRecorder({
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (note) => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       handleReset();
-      toast({
-        title: "Voice note saved",
-        description: "Your voice note has been transcribed and enhanced by AI.",
-      });
+      
+      if (note.isOffline) {
+        toast({
+          title: "Voice note saved offline",
+          description: "Recording saved locally. Will be transcribed when internet is available.",
+        });
+      } else {
+        toast({
+          title: "Voice note saved",
+          description: "Your voice note has been transcribed and enhanced by AI.",
+        });
+      }
     },
     onError: (error) => {
       console.error("Voice note error:", error);
