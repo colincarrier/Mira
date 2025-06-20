@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
+import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,6 +13,111 @@ import { Button } from "@/components/ui/button";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { ReminderDialog } from "@/components/reminder-dialog";
+
+// Voice Note Player Component
+interface VoiceNotePlayerProps {
+  note: NoteWithTodos;
+}
+
+function VoiceNotePlayer({ note }: VoiceNotePlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlayback = () => {
+    if (!audioRef.current || !note.audioUrl) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const generateWaveform = () => {
+    const text = note.transcription || note.content;
+    const chars = text.split('');
+    return Array.from({ length: 24 }, (_, i) => {
+      const charCode = chars[i % chars.length]?.charCodeAt(0) || 65;
+      const amplitude = (charCode % 100) / 100 * 0.6 + 0.4;
+      return amplitude;
+    });
+  };
+
+  const waveformData = generateWaveform();
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center space-x-3 mb-3">
+      {note.audioUrl && (
+        <audio
+          ref={audioRef}
+          src={note.audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={() => setIsPlaying(false)}
+          preload="metadata"
+        />
+      )}
+      <button 
+        onClick={togglePlayback}
+        disabled={!note.audioUrl}
+        className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center disabled:opacity-50"
+      >
+        {isPlaying ? (
+          <Pause className="w-3 h-3 text-white" />
+        ) : (
+          <Play className="w-3 h-3 text-white ml-0.5" />
+        )}
+      </button>
+      <div className="flex-1 h-6 flex items-end justify-start space-x-0.5">
+        {waveformData.map((amplitude, i) => {
+          const progress = duration > 0 ? currentTime / duration : 0;
+          const isActive = i / waveformData.length <= progress;
+          return (
+            <div
+              key={i}
+              className={`w-0.5 rounded-full transition-colors ${
+                isActive 
+                  ? 'bg-gradient-to-t from-blue-700 to-blue-500' 
+                  : 'bg-gradient-to-t from-blue-600 to-blue-400 opacity-70'
+              }`}
+              style={{
+                height: `${Math.max(2, amplitude * 20)}px`
+              }}
+            />
+          );
+        })}
+      </div>
+      <span className="text-xs text-gray-600">
+        {duration > 0 ? formatTime(duration) : (
+          note.transcription 
+            ? `${Math.ceil(note.transcription.length / 150)}s`
+            : 'Voice note'
+        )}
+      </span>
+    </div>
+  );
+}
 
 interface NoteCardProps {
   note: NoteWithTodos;
