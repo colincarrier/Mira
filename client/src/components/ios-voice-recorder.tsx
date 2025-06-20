@@ -30,6 +30,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
+      formData.append("duration", recordingTime.toString());
 
       const response = await fetch("/api/notes/voice", {
         method: "POST",
@@ -38,7 +39,8 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create voice note");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to create voice note");
       }
 
       return response.json();

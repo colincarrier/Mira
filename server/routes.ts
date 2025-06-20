@@ -1810,6 +1810,16 @@ Respond with JSON:
         return res.status(400).json({ message: "No audio file provided" });
       }
 
+      // Check if duration is provided and validate minimum length
+      const duration = req.body.duration ? parseFloat(req.body.duration) : null;
+      if (duration !== null && duration < 1.5) {
+        console.log(`Voice recording too short: ${duration}s, rejecting`);
+        return res.status(400).json({ 
+          message: "Recording too short",
+          error: "Voice notes must be at least 1.5 seconds long."
+        });
+      }
+
       const noteId = req.body.noteId;
       let note;
 
@@ -1828,7 +1838,7 @@ Respond with JSON:
       }
 
       // Transcribe audio safely - never crash if AI fails
-      let transcription = "Audio note (transcription unavailable)";
+      let transcription = null;
       try {
         if (isOpenAIAvailable()) {
           transcription = await safeTranscribeAudio(req.file.buffer);
@@ -1836,8 +1846,21 @@ Respond with JSON:
           console.warn("Audio transcription skipped - OpenAI not available");
         }
       } catch (error) {
-        console.error("Audio transcription failed, using fallback:", error);
-        // Continue with fallback transcription - don't fail the entire request
+        console.error("Audio transcription failed:", error);
+        // If transcription fails, reject the note creation instead of creating a placeholder
+        return res.status(400).json({ 
+          message: "Audio transcription failed",
+          error: "Unable to process voice note. Please try again."
+        });
+      }
+
+      // If no transcription was obtained, reject the request
+      if (!transcription || transcription.trim().length === 0) {
+        console.log("No transcription obtained, rejecting voice note");
+        return res.status(400).json({ 
+          message: "No audio content detected",
+          error: "Unable to detect speech in the recording. Please try again."
+        });
       }
 
       if (noteId) {
