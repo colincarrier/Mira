@@ -146,23 +146,11 @@ export default function InlineVoiceRecorder({
       };
       
       mediaRecorderRef.current.onstop = () => {
-        // Check minimum duration (1.5 seconds) BEFORE saving
-        if (recordingTime < 1.5) {
-          console.log(`Voice recording too short: ${recordingTime}s, discarding`);
-          handleReset();
-          toast({
-            title: "Recording too short",
-            description: "Voice notes must be at least 1.5 seconds long.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
         const blob = new Blob(chunksRef.current, { type: selectedMimeType });
         setAudioBlob(blob);
         stopWaveformAnimation();
         
-        // Only save if duration is sufficient
+        // Auto-save the recording
         createVoiceNoteMutation.mutate(blob);
       };
       
@@ -198,14 +186,15 @@ export default function InlineVoiceRecorder({
   }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
 
   const updateWaveform = useCallback(() => {
-    if (!analyserRef.current || !dataArrayRef.current) return;
+    if (!analyserRef.current || !dataArrayRef.current || !isRecording) return;
     
+    // Read real-time audio frequency data from microphone
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
     
-    // Enhanced waveform processing for better visualization
+    // Process authentic audio data into visual bars
     const waveform: number[] = [];
     const bufferLength = dataArrayRef.current.length;
-    const samplesPerBar = Math.floor(bufferLength / 32); // More bars for smoother visualization
+    const samplesPerBar = Math.floor(bufferLength / 32);
     
     for (let i = 0; i < bufferLength; i += samplesPerBar) {
       let sum = 0;
@@ -214,23 +203,14 @@ export default function InlineVoiceRecorder({
         sum += dataArrayRef.current[i + j];
         count++;
       }
-      const avgAmplitude = count > 0 ? (sum / count) / 255 : 0;
-      // Apply logarithmic scaling for better visual representation
-      const scaledAmplitude = Math.pow(avgAmplitude, 0.7) * 1.2;
-      waveform.push(Math.min(1, scaledAmplitude));
+      const amplitude = count > 0 ? (sum / count) / 255 : 0;
+      waveform.push(amplitude);
     }
     
-    // Smooth the waveform data to reduce jitter
-    const smoothedWaveform = waveform.map((value, index) => {
-      if (index === 0 || index === waveform.length - 1) return value;
-      return (waveform[index - 1] + value + waveform[index + 1]) / 3;
-    });
+    setWaveformData(waveform);
     
-    setWaveformData(smoothedWaveform);
-    
-    if (isRecording) {
-      animationRef.current = requestAnimationFrame(updateWaveform);
-    }
+    // Continue real-time animation loop
+    animationRef.current = requestAnimationFrame(updateWaveform);
   }, [isRecording]);
 
   const startWaveformAnimation = useCallback(() => {
@@ -264,6 +244,18 @@ export default function InlineVoiceRecorder({
   };
 
   const stopRecording = () => {
+    // Check duration BEFORE stopping recorder
+    if (recordingTime < 1.5) {
+      console.log(`Voice recording too short: ${recordingTime}s, discarding`);
+      handleReset();
+      toast({
+        title: "Recording too short",
+        description: "Voice notes must be at least 1.5 seconds long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       onStopRecording();

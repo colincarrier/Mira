@@ -414,21 +414,6 @@ export default function InputBar({
       };
 
       mediaRecorder.onstop = () => {
-        const recordingDuration = Date.now() - recordingStartTime;
-
-        if (recordingDuration < 1500) { // Check BEFORE mutation
-          console.log(`Voice recording too short: ${recordingDuration}ms, discarding`);
-          toast({
-            title: "Recording too short",
-            description: "Voice notes must be at least 1.5 seconds long.",
-            variant: "destructive",
-          });
-          stream.getTracks().forEach(track => track.stop());
-          audioContext.close();
-          setWaveformData([]);
-          return; // Exit before mutation
-        }
-
         const mimeType = mediaRecorder.mimeType || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type: mimeType });
         createVoiceNoteMutation.mutate(blob);
