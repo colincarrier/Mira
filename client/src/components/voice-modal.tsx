@@ -73,6 +73,21 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       };
       
       mediaRecorder.onstop = () => {
+        // Check minimum duration (1.5 seconds)
+        if (recordingTime < 1.5) {
+          console.log(`Voice recording too short: ${recordingTime}s, discarding`);
+          setAudioBlob(null);
+          setRecordingTime(0);
+          setRecordingState('ready');
+          stream.getTracks().forEach(track => track.stop());
+          toast({
+            title: "Recording too short",
+            description: "Voice notes must be at least 1.5 seconds long.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioBlob(blob);
         setRecordingState('stopped');

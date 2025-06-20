@@ -130,6 +130,18 @@ export default function InlineVoiceRecorder({
       };
       
       mediaRecorderRef.current.onstop = () => {
+        // Check minimum duration (1.5 seconds)
+        if (recordingTime < 1.5) {
+          console.log(`Voice recording too short: ${recordingTime}s, discarding`);
+          handleReset();
+          toast({
+            title: "Recording too short",
+            description: "Voice notes must be at least 1.5 seconds long.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         setAudioBlob(blob);
         stopWaveformAnimation();
