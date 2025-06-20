@@ -7,6 +7,59 @@ interface PermissionState {
   mediaDevices: boolean;
 }
 
+interface PermissionCache {
+  camera: {
+    granted: boolean;
+    timestamp: number;
+    lastDenied: number;
+  };
+  microphone: {
+    granted: boolean;
+    timestamp: number;
+    lastDenied: number;
+  };
+}
+
+const PERMISSION_CACHE_KEY = 'mira-permissions-cache';
+const CACHE_VALIDITY_HOURS = 24;
+const DENIAL_COOLDOWN_MINUTES = 5;
+
+function loadPermissionCache(): PermissionCache {
+  try {
+    const cached = localStorage.getItem(PERMISSION_CACHE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.warn('Failed to load permission cache:', error);
+  }
+  
+  return {
+    camera: { granted: false, timestamp: 0, lastDenied: 0 },
+    microphone: { granted: false, timestamp: 0, lastDenied: 0 }
+  };
+}
+
+function savePermissionCache(cache: PermissionCache) {
+  try {
+    localStorage.setItem(PERMISSION_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.warn('Failed to save permission cache:', error);
+  }
+}
+
+function isCacheValid(timestamp: number): boolean {
+  const now = Date.now();
+  const hoursOld = (now - timestamp) / (1000 * 60 * 60);
+  return hoursOld < CACHE_VALIDITY_HOURS;
+}
+
+function isInDenialCooldown(lastDenied: number): boolean {
+  const now = Date.now();
+  const minutesSinceDenial = (now - lastDenied) / (1000 * 60);
+  return minutesSinceDenial < DENIAL_COOLDOWN_MINUTES;
+}
+
 export function usePermissions() {
   const [permissions, setPermissions] = useState<PermissionState>({
     camera: 'unknown',
@@ -14,22 +67,7 @@ export function usePermissions() {
     mediaDevices: false
   });
 
-  // Track if we've already requested permissions to avoid repeated prompts
-  const permissionRequestCache = useRef<{
-    camera: boolean;
-    microphone: boolean;
-    lastCameraRequest: number;
-    lastMicrophoneRequest: number;
-    cameraGranted: boolean;
-    microphoneGranted: boolean;
-  }>({
-    camera: false,
-    microphone: false,
-    lastCameraRequest: 0,
-    lastMicrophoneRequest: 0,
-    cameraGranted: false,
-    microphoneGranted: false
-  });
+  const permissionCache = useRef<PermissionCache>(loadPermissionCache());
 
   // Check existing permissions on mount
   useEffect(() => {
@@ -93,41 +131,70 @@ export function usePermissions() {
   }, []);
 
   const requestCameraPermission = useCallback(async (): Promise<boolean> => {
-    // Return true immediately if we already have permission
-    if (permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted) {
+    const cache = permissionCache.current;
+    
+    // Check persistent cache first
+    if (cache.camera.granted && isCacheValid(cache.camera.timestamp)) {
+      setPermissions(prev => ({ ...prev, camera: 'granted' }));
       return true;
     }
 
-    // Don't request again if user denied recently (within 60 seconds)
-    const now = Date.now();
-    const timeSinceLastRequest = now - permissionRequestCache.current.lastCameraRequest;
-    if (permissions.camera === 'denied' && timeSinceLastRequest < 60000) {
-      console.log('Camera permission denied recently, not requesting again');
-      return false;
+    // Check current browser permission state
+    if (permissions.camera === 'granted') {
+      // Update cache with fresh grant
+      cache.camera = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+      savePermissionCache(cache);
+      return true;
     }
 
-    // Don't request if we've already tried and it was denied
-    if (permissionRequestCache.current.camera && permissions.camera === 'denied') {
-      console.log('Camera permission previously denied');
+    // Don't request if recently denied
+    if (isInDenialCooldown(cache.camera.lastDenied)) {
+      console.log('Camera permission in denial cooldown');
       return false;
     }
 
     try {
-      permissionRequestCache.current.lastCameraRequest = now;
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true 
-      });
-      stream.getTracks().forEach(track => track.stop());
+      // Request with progressive fallback
+      let stream: MediaStream | null = null;
       
-      setPermissions(prev => ({ ...prev, camera: 'granted' }));
-      permissionRequestCache.current.camera = true;
-      permissionRequestCache.current.cameraGranted = true;
-      return true;
-    } catch (error) {
-      console.error('Camera permission denied:', error);
+      try {
+        // Try with ideal constraints first
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
+      } catch (specificError) {
+        console.log('Specific camera constraints failed, trying basic:', specificError);
+        // Fallback to basic video constraints
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Update both state and persistent cache
+        setPermissions(prev => ({ ...prev, camera: 'granted' }));
+        cache.camera = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+        savePermissionCache(cache);
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      console.error('Camera permission error details:', {
+        name: error?.name,
+        message: error?.message,
+        constraint: error?.constraint
+      });
+      
       setPermissions(prev => ({ ...prev, camera: 'denied' }));
-      permissionRequestCache.current.camera = false;
-      permissionRequestCache.current.cameraGranted = false;
+      cache.camera = { granted: false, timestamp: 0, lastDenied: Date.now() };
+      savePermissionCache(cache);
+      
       return false;
     }
   }, [permissions.camera]);
@@ -171,35 +238,51 @@ export function usePermissions() {
   }, [permissions.microphone]);
 
   const requestBothPermissions = useCallback(async (): Promise<{ camera: boolean; microphone: boolean }> => {
-    // Check if we already have both permissions
-    if ((permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted) && 
-        (permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted)) {
+    const cache = permissionCache.current;
+    
+    // Check if we already have both permissions from cache
+    const cameraValid = cache.camera.granted && isCacheValid(cache.camera.timestamp);
+    const microphoneValid = cache.microphone.granted && isCacheValid(cache.microphone.timestamp);
+    
+    if (cameraValid && microphoneValid) {
+      setPermissions(prev => ({ 
+        ...prev, 
+        camera: 'granted', 
+        microphone: 'granted' 
+      }));
       return { camera: true, microphone: true };
     }
 
     try {
+      // Request both at once with fallbacks
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
+        video: { facingMode: 'environment' },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
       });
+      
       stream.getTracks().forEach(track => track.stop());
 
+      const now = Date.now();
       setPermissions(prev => ({ 
         ...prev, 
         camera: 'granted', 
         microphone: 'granted' 
       }));
 
-      permissionRequestCache.current.camera = true;
-      permissionRequestCache.current.microphone = true;
-      permissionRequestCache.current.cameraGranted = true;
-      permissionRequestCache.current.microphoneGranted = true;
+      // Update cache for both
+      cache.camera = { granted: true, timestamp: now, lastDenied: 0 };
+      cache.microphone = { granted: true, timestamp: now, lastDenied: 0 };
+      savePermissionCache(cache);
 
       return { camera: true, microphone: true };
     } catch (error) {
-      console.error('Media permissions denied:', error);
+      console.error('Combined media permissions error:', error);
       
-      // Try to get individual permissions to see which one failed
+      // Try individual permissions with detailed error handling
       const cameraResult = await requestCameraPermission();
       const microphoneResult = await requestMicrophonePermission();
       
@@ -207,15 +290,37 @@ export function usePermissions() {
     }
   }, [permissions.camera, permissions.microphone, requestCameraPermission, requestMicrophonePermission]);
 
+  const clearPermissionCache = useCallback(() => {
+    localStorage.removeItem(PERMISSION_CACHE_KEY);
+    permissionCache.current = loadPermissionCache();
+    setPermissions({
+      camera: 'unknown',
+      microphone: 'unknown',
+      mediaDevices: !!navigator.mediaDevices
+    });
+  }, []);
+
+  // Initialize permissions from cache on mount
+  useEffect(() => {
+    const cache = permissionCache.current;
+    if (cache.camera.granted && isCacheValid(cache.camera.timestamp)) {
+      setPermissions(prev => ({ ...prev, camera: 'granted' }));
+    }
+    if (cache.microphone.granted && isCacheValid(cache.microphone.timestamp)) {
+      setPermissions(prev => ({ ...prev, microphone: 'granted' }));
+    }
+  }, []);
+
   return {
     permissions,
-    hasCamera: permissions.camera === 'granted' || permissionRequestCache.current.cameraGranted,
-    hasMicrophone: permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted,
+    hasCamera: permissions.camera === 'granted' || (permissionCache.current.camera.granted && isCacheValid(permissionCache.current.camera.timestamp)),
+    hasMicrophone: permissions.microphone === 'granted' || (permissionCache.current.microphone.granted && isCacheValid(permissionCache.current.microphone.timestamp)),
     canRequestPermissions: permissions.mediaDevices,
     requestCameraPermission,
     requestMicrophonePermission,
     requestBothPermissions,
-    needsCameraPermission: permissions.camera !== 'granted' && permissions.camera !== 'denied' && !permissionRequestCache.current.cameraGranted,
-    needsMicrophonePermission: permissions.microphone !== 'granted' && permissions.microphone !== 'denied' && !permissionRequestCache.current.microphoneGranted
+    clearPermissionCache,
+    needsCameraPermission: permissions.camera !== 'granted' && !isInDenialCooldown(permissionCache.current.camera.lastDenied),
+    needsMicrophonePermission: permissions.microphone !== 'granted' && !isInDenialCooldown(permissionCache.current.microphone.lastDenied)
   };
 }

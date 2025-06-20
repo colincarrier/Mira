@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, Mic, X, Send, ArrowLeft, Settings } from 'lucide-react';
 import { useNotes } from '@/hooks/use-notes';
 import { useToast } from '@/hooks/use-toast';
+import { usePermissions } from '@/hooks/use-permissions';
 import IOSVoiceRecorder from '@/components/ios-voice-recorder';
 import MediaContextDialog from '@/components/media-context-dialog';
 
@@ -68,24 +69,17 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
     try {
       console.log("Starting camera...");
 
-      // Check if we already have camera permission
-      if (hasCamera) {
-        console.log("Camera permission already granted, proceeding...");
-      } else if (permissions.camera === 'denied') {
-        toast({
-          title: "Camera Access Denied",
-          description: "Please enable camera access in your browser settings to use this feature.",
-          variant: "destructive",
-        });
-        return;
-      } else {
-        // Request permission if we don't have it
+      // Use centralized permission management
+      if (!hasCamera) {
         console.log("Requesting camera permission...");
         const granted = await requestCameraPermission();
         if (!granted) {
+          const isDenied = permissions.camera === 'denied';
           toast({
-            title: "Camera Permission Required",
-            description: "Camera access is needed to take photos. Please allow access and try again.",
+            title: isDenied ? "Camera Access Denied" : "Camera Permission Required",
+            description: isDenied 
+              ? "Please enable camera access in your browser settings to use this feature."
+              : "Camera access is needed to take photos. Please allow access and try again.",
             variant: "destructive",
           });
           return;
@@ -151,21 +145,26 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
           console.error('Video element error:', e);
         };
       }
-    } catch (error) {
-      console.error('Camera access error:', error);
+    } catch (error: any) {
+      console.error('Camera access error details:', {
+        name: error?.name,
+        message: error?.message,
+        constraint: error?.constraint,
+        stack: error?.stack
+      });
       
       let errorMessage = "Could not access camera. ";
       
-      if (error.name === 'NotAllowedError') {
+      if (error?.name === 'NotAllowedError') {
         errorMessage = "Camera permission was denied. Please enable camera access in your browser settings.";
-      } else if (error.name === 'NotFoundError') {
+      } else if (error?.name === 'NotFoundError') {
         errorMessage = "No camera found on this device.";
-      } else if (error.name === 'NotReadableError') {
+      } else if (error?.name === 'NotReadableError') {
         errorMessage = "Camera is already in use by another application.";
-      } else if (error.name === 'OverconstrainedError') {
-        errorMessage = "Camera settings are not supported by this device.";
+      } else if (error?.name === 'OverconstrainedError') {
+        errorMessage = `Camera settings not supported: ${error?.constraint || 'unknown constraint'}`;
       } else {
-        errorMessage += `${error.message || error.name || 'Unknown error'}`;
+        errorMessage += `${error?.message || error?.name || 'Unknown error'}`;
       }
       
       toast({
@@ -701,39 +700,4 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
 }
 
 // Placeholder for usePermissions hook
-function usePermissions() {
-  const [hasCamera, setHasCamera] = useState(false);
-  const [needsCameraPermission, setNeedsCameraPermission] = useState(true);
-
-  useEffect(() => {
-    const checkCameraPermission = async () => {
-      if (navigator.permissions) {
-        const { state } = await navigator.permissions.query({ name: 'camera' as PermissionName });
-        setHasCamera(state === 'granted');
-        setNeedsCameraPermission(state !== 'granted');
-      } else {
-        // Permissions API not supported - assume permission is needed
-        setNeedsCameraPermission(true);
-      }
-    };
-
-    checkCameraPermission();
-  }, []);
-
-  const requestCameraPermission = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach(track => track.stop());
-      setHasCamera(true);
-      setNeedsCameraPermission(false);
-      return true;
-    } catch (error) {
-      console.error("Camera permission error:", error);
-      setHasCamera(false);
-      setNeedsCameraPermission(true);
-      return false;
-    }
-  };
-
-  return { hasCamera, requestCameraPermission, needsCameraPermission };
-}
+// Remove local usePermissions - using centralized hook
