@@ -163,6 +163,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Permission System Consolidation Complete (June 20, 2025)
+- **Extended Permission Caching**: Increased cache validity from 24 hours to 30 days (720 hours)
+- **Centralized Permission Management**: Unified hook eliminating duplicate permission requests
+- **Enhanced Error Diagnostics**: Detailed error reporting for camera/microphone access issues
+- **Progressive Fallback Logic**: Camera constraints fallback from ideal to basic settings
+- **Persistent Permission State**: localStorage-based caching with denial cooldown protection
+- **Cross-Component Integration**: Full-screen capture and voice recorder using unified system
+
 ### Intelligence-V2 Processing Fully Restored (June 20, 2025)
 - **Critical Method Fix**: Corrected `processWithIntelligenceV2` to `processNoteV2` method name mismatch
 - **Schema Validation Fixed**: Resolved OpenAI response parsing with proper ActionLabel type mapping

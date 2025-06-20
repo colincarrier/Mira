@@ -22,7 +22,7 @@ interface PermissionCache {
 }
 
 const PERMISSION_CACHE_KEY = 'mira-permissions-cache';
-const CACHE_VALIDITY_HOURS = 24;
+const CACHE_VALIDITY_HOURS = 720; // 30 days - much longer caching
 const DENIAL_COOLDOWN_MINUTES = 5;
 
 function loadPermissionCache(): PermissionCache {
