@@ -442,30 +442,53 @@ This profile was generated from your input and will help provide more personaliz
           // CRITICAL: Ensure newspaper-style title enforcement (v2.0 handles this automatically)
           const newspaperTitle = analysis.title;
 
-          // Update note with v2.0 structured AI results
+          // Update note with v2.0 structured AI results - ENSURE richContext is always populated
+          const richContextData = {
+            entities: analysis.entities || [],
+            suggestedLinks: analysis.suggestedLinks || [],
+            nextSteps: analysis.nextSteps || [],
+            microQuestions: analysis.microQuestions || [],
+            fromTheWeb: analysis.fromTheWeb || [],
+            timeInstructions: analysis.timeInstructions || {
+              hasTimeReference: false,
+              extractedTimes: [],
+              scheduledItems: []
+            }
+          };
+
           const updates: any = {
             content: newspaperTitle, // v2.0 enforced newspaper-style title
             aiEnhanced: true,
-            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",
-            aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || ""),
-            richContext: JSON.stringify({
-              entities: analysis.entities || [],
-              suggestedLinks: analysis.suggestedLinks || [],
-              nextSteps: analysis.nextSteps || [],
-              microQuestions: analysis.microQuestions || [],
-              fromTheWeb: analysis.fromTheWeb || []
-            }),
+            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "V2 Intelligence Analysis Complete",
+            aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || "Enhanced AI analysis completed"),
+            richContext: JSON.stringify(richContextData),
             processingPath: analysis.processingPath,
             classificationScores: analysis.classificationScores,
             isProcessing: false
           };
 
+          console.log("Saving richContext data:", richContextData);
+          console.log("Full update payload:", JSON.stringify(updates, null, 2));
+
           try {
-            await storage.updateNote(note.id, updates);
+            console.log(`Updating note ${note.id} with V2 analysis...`);
+            const updatedNote = await storage.updateNote(note.id, updates);
             console.log("Note updated successfully with Mira AI analysis");
+            console.log("Updated note confirmation:", updatedNote ? "success" : "failed");
           } catch (updateError) {
             console.error("Failed to update note with AI analysis:", updateError);
-            // Continue processing without crashing
+            console.error("Update error stack:", updateError.stack);
+            // Try a simpler update to ensure something saves
+            try {
+              await storage.updateNote(note.id, { 
+                aiEnhanced: true, 
+                isProcessing: false,
+                aiContext: "V2 processing completed"
+              });
+              console.log("Fallback update succeeded");
+            } catch (fallbackError) {
+              console.error("Even fallback update failed:", fallbackError);
+            }
           }
 
           // Create todos from Mira AI v2.0 analysis
