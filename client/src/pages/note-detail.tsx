@@ -124,12 +124,8 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
           })}
         </div>
         <div className="flex flex-col items-end">
-          <div className="text-lg font-mono text-blue-600 font-medium">
-            {duration > 0 && isFinite(duration) && !isNaN(duration) ? formatTime(duration) : (
-              note.transcription 
-                ? `${Math.ceil(note.transcription.length / 150)}s`
-                : '0:00'
-            )}
+          <div className="text-sm font-mono text-blue-600 font-medium">
+            {duration > 0 && isFinite(duration) && !isNaN(duration) ? formatTime(duration) : '0:00'}
           </div>
           <div className="text-xs text-blue-500">
             {currentTime > 0 && duration > 0 && isFinite(currentTime) && !isNaN(currentTime) && isFinite(duration) && !isNaN(duration) ? formatTime(currentTime) : 'Voice Note'}
@@ -579,25 +575,9 @@ export default function NoteDetail() {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                onBlur={() => {
-                  // Update note with new title if changed and not empty
-                  if (editedTitle !== note?.content && editedTitle.trim() !== "") {
-                    console.log("Auto-saving title change");
-                    updateNoteMutation.mutate({ content: editedTitle.trim() });
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.currentTarget.blur(); // Trigger save on Enter
-                  }
-                }}
-                className="text-lg font-semibold bg-transparent border-none outline-none focus:bg-white focus:border focus:border-blue-300 rounded px-2 py-1"
-                placeholder="Note Title"
-              />
+              <div className="text-lg font-semibold px-2 py-1">
+                {note.content.split('\n')[0] || 'Untitled Note'}
+              </div>
               {!note.aiEnhanced && (
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>

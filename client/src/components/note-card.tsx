@@ -108,12 +108,8 @@ function VoiceNotePlayer({ note }: VoiceNotePlayerProps) {
           );
         })}
       </div>
-      <span className="text-xs text-gray-600">
-        {duration > 0 ? formatTime(duration) : (
-          note.transcription 
-            ? `${Math.ceil(note.transcription.length / 150)}s`
-            : 'Voice note'
-        )}
+      <span className="text-xs font-mono text-blue-600 font-medium">
+        {duration > 0 && isFinite(duration) && !isNaN(duration) ? formatTime(duration) : 'Voice note'}
       </span>
     </div>
   );
