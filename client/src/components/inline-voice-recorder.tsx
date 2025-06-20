@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mic, Square, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
 
 interface InlineVoiceRecorderProps {
   isRecording: boolean;
@@ -31,6 +32,12 @@ export default function InlineVoiceRecorder({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { 
+    hasMicrophone, 
+    requestMicrophonePermission, 
+    needsMicrophonePermission,
+    permissions 
+  } = usePermissions();
 
   const createVoiceNoteMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
@@ -71,6 +78,23 @@ export default function InlineVoiceRecorder({
 
   const setupAudioContext = useCallback(async () => {
     try {
+      // Use centralized permission management
+      if (!hasMicrophone) {
+        console.log("Requesting microphone permission...");
+        const granted = await requestMicrophonePermission();
+        if (!granted) {
+          const isDenied = permissions.microphone === 'denied';
+          toast({
+            title: isDenied ? "Microphone Access Denied" : "Microphone Permission Required",
+            description: isDenied 
+              ? "Please enable microphone access in your browser settings to record voice notes."
+              : "Microphone access is needed to record voice notes. Please allow access and try again.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -115,16 +139,35 @@ export default function InlineVoiceRecorder({
       };
       
       return true;
-    } catch (error) {
-      console.error("Error setting up audio:", error);
+    } catch (error: any) {
+      console.error("Error setting up audio details:", {
+        name: error?.name,
+        message: error?.message,
+        constraint: error?.constraint
+      });
+      
+      let errorMessage = "Unable to access microphone. ";
+      
+      if (error?.name === 'NotAllowedError') {
+        errorMessage = "Microphone permission was denied. Please enable microphone access in your browser settings.";
+      } else if (error?.name === 'NotFoundError') {
+        errorMessage = "No microphone found on this device.";
+      } else if (error?.name === 'NotReadableError') {
+        errorMessage = "Microphone is already in use by another application.";
+      } else if (error?.name === 'OverconstrainedError') {
+        errorMessage = `Microphone settings not supported: ${error?.constraint || 'unknown constraint'}`;
+      } else {
+        errorMessage += `${error?.message || error?.name || 'Unknown error'}`;
+      }
+      
       toast({
         title: "Microphone Error",
-        description: "Unable to access microphone. Please check permissions.",
+        description: errorMessage,
         variant: "destructive",
       });
       return false;
     }
-  }, [toast, createVoiceNoteMutation]);
+  }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
 
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current) return;
