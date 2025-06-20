@@ -68,6 +68,9 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
 
   const waveformData = generateWaveform();
   const formatTime = (time: number) => {
+    if (!time || !isFinite(time) || isNaN(time)) {
+      return '0:00';
+    }
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -103,7 +106,7 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
           style={{ maxWidth: 'calc(100vw - 200px)' }}
         >
           {waveformData.map((amplitude, i) => {
-            const progress = duration > 0 ? currentTime / duration : 0;
+            const progress = (duration > 0 && isFinite(duration) && !isNaN(duration) && isFinite(currentTime) && !isNaN(currentTime)) ? currentTime / duration : 0;
             const isActive = i / waveformData.length <= progress;
             return (
               <div
@@ -122,14 +125,14 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
         </div>
         <div className="flex flex-col items-end">
           <div className="text-lg font-mono text-blue-600 font-medium">
-            {duration > 0 ? formatTime(duration) : (
+            {duration > 0 && isFinite(duration) && !isNaN(duration) ? formatTime(duration) : (
               note.transcription 
                 ? `${Math.ceil(note.transcription.length / 150)}s`
                 : '0:00'
             )}
           </div>
           <div className="text-xs text-blue-500">
-            {currentTime > 0 && duration > 0 ? formatTime(currentTime) : 'Voice Note'}
+            {currentTime > 0 && duration > 0 && isFinite(currentTime) && !isNaN(currentTime) && isFinite(duration) && !isNaN(duration) ? formatTime(currentTime) : 'Voice Note'}
           </div>
         </div>
       </div>
