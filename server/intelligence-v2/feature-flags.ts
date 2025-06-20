@@ -35,7 +35,9 @@ export class FeatureFlagManager {
       VECTOR_SEARCH_ENABLED: process.env.FEATURE_VECTOR_SEARCH === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true',
       RECURSIVE_REASONING_ENABLED: process.env.FEATURE_RECURSIVE_REASONING === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true',
       RELATIONSHIP_MAPPING_ENABLED: process.env.FEATURE_RELATIONSHIP_MAPPING === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true',
-      PROACTIVE_DELIVERY_ENABLED: process.env.FEATURE_PROACTIVE_DELIVERY === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true'
+      PROACTIVE_DELIVERY_ENABLED: process.env.FEATURE_PROACTIVE_DELIVERY === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true',
+      ENHANCED_COLLECTIONS_ENABLED: process.env.FEATURE_ENHANCED_COLLECTIONS === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true',
+      ADVANCED_NOTIFICATIONS_ENABLED: process.env.FEATURE_ADVANCED_NOTIFICATIONS === 'true' || process.env.FEATURE_INTELLIGENCE_V2 === 'true'
     };
   }
 

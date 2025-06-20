@@ -423,6 +423,15 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     // Map V2 result to expected V1 format for compatibility
     const analysis = v2Result.recursiveAnalysis || {};
     
+    console.log('🔄 [V2→V1] Mapping analysis data:', {
+      hasAnalysis: !!analysis,
+      hasImmediate: !!analysis?.immediateProcessing,
+      hasRecursive: !!analysis?.recursiveReasoning,
+      hasProactive: !!analysis?.proactiveDelivery,
+      entitiesCount: analysis?.immediateProcessing?.entities?.length || 0,
+      actionsCount: analysis?.proactiveDelivery?.suggestedActions?.length || 0
+    });
+    
     return {
       uid: v2Result.id,
       title: v2Result.title,
