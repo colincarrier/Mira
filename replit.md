@@ -164,7 +164,7 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Permission System Consolidation Complete (June 20, 2025)
-- **Extended Permission Caching**: Increased cache validity from 24 hours to 30 days (720 hours)
+- **Extended Permission Caching**: Increased cache validity from 24 hours to 1 year (8760 hours)
 - **Centralized Permission Management**: Unified hook eliminating duplicate permission requests
 - **Enhanced Error Diagnostics**: Detailed error reporting for camera/microphone access issues
 - **Progressive Fallback Logic**: Camera constraints fallback from ideal to basic settings
