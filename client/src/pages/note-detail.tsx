@@ -128,7 +128,7 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
             {duration > 0 && isFinite(duration) && !isNaN(duration) ? formatTime(duration) : '0:00'}
           </div>
           <div className="text-xs text-blue-500">
-            {currentTime > 0 && duration > 0 && isFinite(currentTime) && !isNaN(currentTime) && isFinite(duration) && !isNaN(duration) ? formatTime(currentTime) : 'Voice Note'}
+            {currentTime > 0 && duration > 0 && isFinite(currentTime) && !isNaN(currentTime) ? formatTime(currentTime) : 'Voice Note'}
           </div>
         </div>
       </div>
