@@ -496,15 +496,28 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
       {note.mode === "voice" && note.transcription && (
-        <div className="flex items-center space-x-3 mb-3 p-3 bg-[hsl(var(--accent))] rounded-xl">
-          <button className="w-8 h-8 rounded-full bg-[hsl(var(--ocean-blue))] flex items-center justify-center">
+        <div className="flex items-center space-x-3 mb-3">
+          <button className="w-8 h-8 rounded-full bg-[hsl(var(--ocean-blue))] flex items-center justify-center hover:bg-[hsl(var(--ocean-blue))]/80 transition-colors">
             <Play className="w-3 h-3 text-white ml-0.5" />
           </button>
-          <div className="flex-1 flex items-center space-x-1">
-            <div className="h-1 bg-[hsl(var(--ocean-blue))] rounded-full w-[30%]"></div>
-            <div className="h-1 bg-[hsl(var(--border))] rounded-full w-[70%]"></div>
+          <div className="flex-1 h-6 flex items-end justify-start space-x-0.5">
+            {/* Static waveform visualization */}
+            {Array.from({ length: 24 }, (_, i) => {
+              const amplitude = Math.sin(i * 0.5) * 0.4 + 0.6; // Simulated waveform pattern
+              return (
+                <div
+                  key={i}
+                  className="w-0.5 bg-gradient-to-t from-[hsl(var(--ocean-blue))] to-blue-400 rounded-full opacity-60"
+                  style={{
+                    height: `${Math.max(2, amplitude * 20)}px`
+                  }}
+                />
+              );
+            })}
           </div>
-          <span className="text-xs text-[hsl(var(--muted-foreground))]">0:45</span>
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+            {note.metadata?.duration ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}` : 'Voice note'}
+          </span>
         </div>
       )}
 

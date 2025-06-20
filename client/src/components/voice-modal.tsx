@@ -135,6 +135,20 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
   };
 
   const handleSave = () => {
+    // Check minimum duration before saving
+    if (recordingTime < 1.5) {
+      console.log(`Voice recording too short: ${recordingTime}s, discarding`);
+      setAudioBlob(null);
+      setRecordingTime(0);
+      setRecordingState('ready');
+      toast({
+        title: "Recording too short",
+        description: "Voice notes must be at least 1.5 seconds long.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (audioBlob) {
       setRecordingState('processing');
       createVoiceNoteMutation.mutate(audioBlob);

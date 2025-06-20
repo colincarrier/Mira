@@ -146,7 +146,7 @@ export default function InlineVoiceRecorder({
       };
       
       mediaRecorderRef.current.onstop = () => {
-        // Check minimum duration (1.5 seconds)
+        // Check minimum duration (1.5 seconds) BEFORE saving
         if (recordingTime < 1.5) {
           console.log(`Voice recording too short: ${recordingTime}s, discarding`);
           handleReset();
@@ -158,11 +158,11 @@ export default function InlineVoiceRecorder({
           return;
         }
         
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: selectedMimeType });
         setAudioBlob(blob);
         stopWaveformAnimation();
         
-        // Auto-save the recording
+        // Only save if duration is sufficient
         createVoiceNoteMutation.mutate(blob);
       };
       
@@ -198,23 +198,35 @@ export default function InlineVoiceRecorder({
   }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
 
   const updateWaveform = useCallback(() => {
-    if (!analyserRef.current || !dataArrayRef.current) return;
+    if (!analyserRef.current || !dataArrayRef.current || !isRecording) return;
     
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
     
-    // Convert to waveform data for inline display
-    const waveform = [];
-    const step = Math.floor(dataArrayRef.current.length / 30); // 30 bars for inline waveform
+    // Enhanced waveform processing for better visualization
+    const waveform: number[] = [];
+    const bufferLength = dataArrayRef.current.length;
+    const samplesPerBar = Math.floor(bufferLength / 32); // More bars for smoother visualization
     
-    for (let i = 0; i < dataArrayRef.current.length; i += step) {
+    for (let i = 0; i < bufferLength; i += samplesPerBar) {
       let sum = 0;
-      for (let j = 0; j < step && i + j < dataArrayRef.current.length; j++) {
+      let count = 0;
+      for (let j = 0; j < samplesPerBar && i + j < bufferLength; j++) {
         sum += dataArrayRef.current[i + j];
+        count++;
       }
-      waveform.push(sum / step / 255); // Normalize to 0-1
+      const avgAmplitude = count > 0 ? (sum / count) / 255 : 0;
+      // Apply logarithmic scaling for better visual representation
+      const scaledAmplitude = Math.pow(avgAmplitude, 0.7) * 1.2;
+      waveform.push(Math.min(1, scaledAmplitude));
     }
     
-    setWaveformData(waveform);
+    // Smooth the waveform data to reduce jitter
+    const smoothedWaveform = waveform.map((value, index) => {
+      if (index === 0 || index === waveform.length - 1) return value;
+      return (waveform[index - 1] + value + waveform[index + 1]) / 3;
+    });
+    
+    setWaveformData(smoothedWaveform);
     
     if (isRecording) {
       animationRef.current = requestAnimationFrame(updateWaveform);
