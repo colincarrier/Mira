@@ -511,6 +511,39 @@ export default function NoteDetail() {
               </div>
             )}
 
+            {/* Voice Note Waveform Display */}
+            {note.mode === "voice" && note.transcription && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="flex items-center space-x-4">
+                  <button className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg">
+                    <Play className="w-5 h-5 text-white ml-0.5" />
+                  </button>
+                  <div className="flex-1 h-8 flex items-end justify-start space-x-1">
+                    {/* Enhanced waveform for detail view */}
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const amplitude = Math.sin(i * 0.25 + Math.cos(i * 0.5)) * 0.5 + 0.7;
+                      return (
+                        <div
+                          key={i}
+                          className="w-1 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full transition-all duration-200 hover:from-blue-700 hover:to-blue-500"
+                          style={{
+                            height: `${Math.max(4, amplitude * 24)}px`,
+                            opacity: 0.7 + amplitude * 0.2
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="text-lg font-mono text-blue-600 font-medium">
+                      {note.metadata?.duration ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}` : '0:00'}
+                    </div>
+                    <div className="text-xs text-blue-500">Voice Note</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={editedContent}

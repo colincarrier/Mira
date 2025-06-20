@@ -232,6 +232,9 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     if (!success) return;
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+      // Immediately show animated waveform before audio data arrives
+      setWaveformData(Array(40).fill(0).map(() => Math.random() * 0.3 + 0.1));
+      
       mediaRecorderRef.current.start(100); // Collect data every 100ms
       setRecordingState('recording');
       setRecordingTime(0);
@@ -289,6 +292,16 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
 
   const handleSave = () => {
     if (audioBlob) {
+      // Check minimum duration (1.5 seconds)
+      if (recordingTime < 2) {
+        toast({
+          title: "Voice note too short",
+          description: "Please record for at least 2 seconds",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setRecordingState('processing');
       createVoiceNoteMutation.mutate(audioBlob);
     }
@@ -385,13 +398,15 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
             <>
               <button
                 onClick={pauseRecording}
-                className="w-12 h-12 bg-yellow-500 hover:bg-yellow-600 rounded-full flex items-center justify-center text-white transition-colors"
+                className="w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white transition-colors"
+                title="Pause recording"
               >
                 <Pause className="w-5 h-5" />
               </button>
               <button
                 onClick={stopRecording}
                 className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-lg flex items-center justify-center text-white transition-colors"
+                title="Stop recording"
               >
                 <Square className="w-6 h-6" />
               </button>
@@ -399,20 +414,30 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
           )}
 
           {recordingState === 'paused' && (
-            <>
+            <div className="flex items-center space-x-3">
               <button
                 onClick={resumeRecording}
-                className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-colors"
+                className="w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white transition-colors"
+                title="Resume recording"
               >
                 <Play className="w-5 h-5 ml-1" />
               </button>
               <button
                 onClick={stopRecording}
-                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-lg flex items-center justify-center text-white transition-colors"
+                className="w-12 h-12 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center text-white transition-colors"
+                title="Stop recording"
               >
-                <Square className="w-6 h-6" />
+                <Square className="w-5 h-5" />
               </button>
-            </>
+              <button
+                onClick={handleSave}
+                className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors flex items-center space-x-2"
+                title="Send recording"
+              >
+                <Send className="w-4 h-4" />
+                <span>Send</span>
+              </button>
+            </div>
           )}
 
           {recordingState === 'stopped' && (

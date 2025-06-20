@@ -24,17 +24,17 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
-      
+
       const response = await fetch("/api/notes/voice", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create voice note");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -64,14 +64,14 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mediaRecorder;
-      
+
       const chunks: BlobPart[] = [];
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunks.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         // Check minimum duration (1.5 seconds)
         if (recordingTime < 1.5) {
@@ -87,22 +87,22 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
           });
           return;
         }
-        
+
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioBlob(blob);
         setRecordingState('stopped');
         stream.getTracks().forEach(track => track.stop());
       };
-      
+
       mediaRecorder.start();
       startListening();
       setRecordingState('recording');
       setRecordingTime(0);
-      
+
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
     } catch (error) {
       toast({
         title: "Microphone access needed",
@@ -113,11 +113,31 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
     }
   };
 
+  const pauseRecording = () => {
+    if (recordingState === 'recording') {
+      stopListening();
+      setRecordingState('paused');
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+  };
+
+  const resumeRecording = () => {
+    if (recordingState === 'paused') {
+      startListening();
+      setRecordingState('recording');
+      intervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && recordingState === 'recording') {
       mediaRecorderRef.current.stop();
       stopListening();
-      
+
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -148,7 +168,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       });
       return;
     }
-    
+
     if (audioBlob) {
       setRecordingState('processing');
       createVoiceNoteMutation.mutate(audioBlob);
@@ -162,7 +182,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       setRecordingTime(0);
       setAudioBlob(null);
     }
-    
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -182,7 +202,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 animate-fadeIn">
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white rounded-t-3xl p-6 safe-area-bottom animate-slideUp">
         <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-        
+
         <div className="text-center mb-8">
           <h3 className="text-xl font-semibold mb-2">
             {recordingState === 'ready' && 'Ready to Record'}
@@ -248,7 +268,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
           >
             <X className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
           </button>
-          
+
           {recordingState === 'ready' && (
             <button 
               onClick={startRecording}
@@ -258,7 +278,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
               <div className="w-6 h-6 rounded-full bg-white"></div>
             </button>
           )}
-          
+
           {recordingState === 'recording' && (
             <button 
               onClick={stopRecording}
@@ -268,7 +288,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
               <Square className="w-6 h-6 text-white" />
             </button>
           )}
-          
+
           {recordingState === 'stopped' && (
             <button 
               onClick={handleSave}
@@ -283,13 +303,13 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
               )}
             </button>
           )}
-          
+
           {recordingState === 'processing' && (
             <div className="w-16 h-16 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center">
               <div className="w-5 h-5 border-2 border-[hsl(var(--soft-sky-blue))] border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-          
+
           <div className="w-14 h-14"></div> {/* Spacer for balance */}
         </div>
       </div>
