@@ -521,7 +521,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             {richContextData.nextSteps.map((step: string, index: number) => (
               <div
                 key={index}
-                className="flex items-start space-x-2 text-xs p-2 bg-[hsl(var(--accent))] rounded-md"
+                className="flex items-start space-x-2 text-xs p-2 bg-[#d9d5c7] rounded-md"
               >
                 <Zap className="w-3 h-3 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" />
                 <span className="text-[hsl(var(--foreground))]">{step}</span>

@@ -447,7 +447,7 @@ export default function InputBar({
     }
   }, [createVoiceNoteMutation, toast]);
 
-  // Waveform animation
+  // Enhanced waveform animation with immediate feedback
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current || !isVoiceRecording) return;
 
@@ -455,20 +455,28 @@ export default function InputBar({
 
     const waveform: number[] = [];
     const bufferLength = dataArrayRef.current.length;
-    const step = Math.floor(bufferLength / 16);
+    const samplesPerBar = Math.floor(bufferLength / 24); // More bars for smoother visualization
 
-    for (let i = 0; i < bufferLength; i += step) {
+    for (let i = 0; i < bufferLength; i += samplesPerBar) {
       let sum = 0;
       let count = 0;
-      for (let j = 0; j < step && i + j < bufferLength; j++) {
+      for (let j = 0; j < samplesPerBar && i + j < bufferLength; j++) {
         sum += dataArrayRef.current[i + j];
         count++;
       }
       const avgAmplitude = count > 0 ? (sum / count) / 255 : 0;
-      waveform.push(Math.min(1, avgAmplitude * 3));
+      // Enhanced scaling for better visual representation
+      const scaledAmplitude = Math.pow(avgAmplitude, 0.6) * 1.5;
+      waveform.push(Math.min(1, scaledAmplitude));
     }
 
-    setWaveformData(waveform);
+    // Apply smoothing to reduce visual jitter
+    const smoothedWaveform = waveform.map((value, index) => {
+      if (index === 0 || index === waveform.length - 1) return value;
+      return (waveform[index - 1] + value + waveform[index + 1]) / 3;
+    });
+
+    setWaveformData(smoothedWaveform);
 
     if (isVoiceRecording) {
       animationRef.current = requestAnimationFrame(updateWaveform);

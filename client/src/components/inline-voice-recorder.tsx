@@ -116,9 +116,25 @@ export default function InlineVoiceRecorder({
       
       source.connect(analyserRef.current);
       
-      // Setup media recorder
+      // Setup media recorder with optimal settings
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus'
+      ];
+      
+      let selectedMimeType = 'audio/webm';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
       mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: selectedMimeType,
+        audioBitsPerSecond: 128000 // High quality audio
       });
       
       chunksRef.current = [];
@@ -317,24 +333,43 @@ export default function InlineVoiceRecorder({
         )}
       </div>
 
-      {/* Waveform visualization */}
-      <div className="flex-1 h-8 flex items-end justify-center space-x-1">
+      {/* Enhanced Streaming Waveform */}
+      <div className="flex-1 h-8 flex items-end justify-center space-x-0.5 overflow-hidden">
         {waveformData.length > 0 ? (
           waveformData.map((amplitude, index) => (
             <div
-              key={index}
-              className={`w-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-full transition-all duration-100 ${
-                isRecording ? 'animate-pulse' : ''
+              key={`${Date.now()}-${index}`}
+              className={`w-0.5 rounded-full transition-all duration-75 ease-out ${
+                isRecording 
+                  ? 'bg-gradient-to-t from-blue-600 via-blue-500 to-cyan-400' 
+                  : 'bg-gradient-to-t from-gray-400 to-gray-300'
               }`}
               style={{
-                height: `${Math.max(2, amplitude * 24)}px`,
-                opacity: isRecording ? 0.8 + amplitude * 0.2 : 0.6
+                height: `${Math.max(2, amplitude * 28)}px`,
+                opacity: isRecording ? Math.max(0.6, 0.8 + amplitude * 0.2) : 0.5,
+                transform: `scaleY(${Math.max(0.1, amplitude + 0.1)})`,
+                animation: isRecording && amplitude > 0.1 ? 'pulse 0.5s ease-in-out' : 'none'
               }}
             />
           ))
+        ) : isRecording ? (
+          // Immediate visual feedback while audio initializes
+          <div className="flex items-center space-x-1">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="w-0.5 h-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full animate-pulse"
+                style={{
+                  animationDelay: `${i * 0.1}s`,
+                  animationDuration: '1s'
+                }}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="text-gray-400 text-xs">
-            Recording...
+          <div className="text-gray-400 text-xs flex items-center">
+            <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
+            Ready to record
           </div>
         )}
       </div>
