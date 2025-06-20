@@ -1,9 +1,10 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-interface PermissionState {
-  camera: PermissionState | 'unknown';
-  microphone: PermissionState | 'unknown';
+type PermissionStatus = 'granted' | 'denied' | 'prompt' | 'unknown';
+
+interface MiraPermissionState {
+  camera: PermissionStatus;
+  microphone: PermissionStatus;
   mediaDevices: boolean;
 }
 
@@ -61,10 +62,10 @@ function isInDenialCooldown(lastDenied: number): boolean {
 }
 
 export function usePermissions() {
-  const [permissions, setPermissions] = useState<PermissionState>({
+  const [permissions, setPermissions] = useState<MiraPermissionState>({
     camera: 'unknown',
     microphone: 'unknown',
-    mediaDevices: false
+    mediaDevices: !!navigator.mediaDevices
   });
 
   const permissionCache = useRef<PermissionCache>(loadPermissionCache());
@@ -72,8 +73,9 @@ export function usePermissions() {
   // Check existing permissions on mount
   useEffect(() => {
     const checkPermissions = async () => {
+      setPermissions(prev => ({ ...prev, mediaDevices: !!navigator.mediaDevices }));
+      
       if (!navigator.permissions) {
-        setPermissions(prev => ({ ...prev, mediaDevices: !!navigator.mediaDevices }));
         return;
       }
 
@@ -84,46 +86,52 @@ export function usePermissions() {
         ]);
 
         setPermissions({
-          camera: cameraPermission.state,
-          microphone: microphonePermission.state,
+          camera: cameraPermission.state as PermissionStatus,
+          microphone: microphonePermission.state as PermissionStatus,
           mediaDevices: !!navigator.mediaDevices
         });
 
         // Update cache based on current permission state
+        const cache = permissionCache.current;
+        const now = Date.now();
+        
         if (cameraPermission.state === 'granted') {
-          permissionRequestCache.current.camera = true;
-          permissionRequestCache.current.cameraGranted = true;
+          cache.camera = { granted: true, timestamp: now, lastDenied: 0 };
         }
         if (microphonePermission.state === 'granted') {
-          permissionRequestCache.current.microphone = true;
-          permissionRequestCache.current.microphoneGranted = true;
+          cache.microphone = { granted: true, timestamp: now, lastDenied: 0 };
         }
+        
+        savePermissionCache(cache);
 
         // Listen for permission changes
         cameraPermission.addEventListener('change', () => {
-          setPermissions(prev => ({ ...prev, camera: cameraPermission.state }));
-          if (cameraPermission.state === 'granted') {
-            permissionRequestCache.current.camera = true;
-            permissionRequestCache.current.cameraGranted = true;
-          } else if (cameraPermission.state === 'denied') {
-            permissionRequestCache.current.camera = false;
-            permissionRequestCache.current.cameraGranted = false;
+          const newState = cameraPermission.state as PermissionStatus;
+          setPermissions(prev => ({ ...prev, camera: newState }));
+          
+          if (newState === 'granted') {
+            cache.camera = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+            savePermissionCache(cache);
+          } else if (newState === 'denied') {
+            cache.camera = { granted: false, timestamp: 0, lastDenied: Date.now() };
+            savePermissionCache(cache);
           }
         });
 
         microphonePermission.addEventListener('change', () => {
-          setPermissions(prev => ({ ...prev, microphone: microphonePermission.state }));
-          if (microphonePermission.state === 'granted') {
-            permissionRequestCache.current.microphone = true;
-            permissionRequestCache.current.microphoneGranted = true;
-          } else if (microphonePermission.state === 'denied') {
-            permissionRequestCache.current.microphone = false;
-            permissionRequestCache.current.microphoneGranted = false;
+          const newState = microphonePermission.state as PermissionStatus;
+          setPermissions(prev => ({ ...prev, microphone: newState }));
+          
+          if (newState === 'granted') {
+            cache.microphone = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+            savePermissionCache(cache);
+          } else if (newState === 'denied') {
+            cache.microphone = { granted: false, timestamp: 0, lastDenied: Date.now() };
+            savePermissionCache(cache);
           }
         });
       } catch (error) {
         console.log('Permission API not fully supported, will request as needed');
-        setPermissions(prev => ({ ...prev, mediaDevices: !!navigator.mediaDevices }));
       }
     };
 
@@ -200,39 +208,65 @@ export function usePermissions() {
   }, [permissions.camera]);
 
   const requestMicrophonePermission = useCallback(async (): Promise<boolean> => {
-    // Return true immediately if we already have permission
-    if (permissions.microphone === 'granted' || permissionRequestCache.current.microphoneGranted) {
+    const cache = permissionCache.current;
+    
+    // Check persistent cache first
+    if (cache.microphone.granted && isCacheValid(cache.microphone.timestamp)) {
+      setPermissions(prev => ({ ...prev, microphone: 'granted' }));
       return true;
     }
 
-    // Don't request again if user denied recently (within 60 seconds)
-    const now = Date.now();
-    const timeSinceLastRequest = now - permissionRequestCache.current.lastMicrophoneRequest;
-    if (permissions.microphone === 'denied' && timeSinceLastRequest < 60000) {
-      console.log('Microphone permission denied recently, not requesting again');
-      return false;
+    // Check current browser permission state
+    if (permissions.microphone === 'granted') {
+      // Update cache with fresh grant
+      cache.microphone = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+      savePermissionCache(cache);
+      return true;
     }
 
-    // Don't request if we've already tried and it was denied
-    if (permissionRequestCache.current.microphone && permissions.microphone === 'denied') {
-      console.log('Microphone permission previously denied');
+    // Don't request if recently denied
+    if (isInDenialCooldown(cache.microphone.lastDenied)) {
+      console.log('Microphone permission in denial cooldown');
       return false;
     }
 
     try {
-      permissionRequestCache.current.lastMicrophoneRequest = now;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Detect best audio format and constraints
+      const supportedFormats = [
+        'audio/webm',
+        'audio/webm;codecs=opus', 
+        'audio/mp4',
+        'audio/ogg;codecs=opus'
+      ].filter(format => MediaRecorder.isTypeSupported(format));
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 44100
+        }
+      });
+      
       stream.getTracks().forEach(track => track.stop());
       
+      // Update both state and persistent cache
       setPermissions(prev => ({ ...prev, microphone: 'granted' }));
-      permissionRequestCache.current.microphone = true;
-      permissionRequestCache.current.microphoneGranted = true;
+      cache.microphone = { granted: true, timestamp: Date.now(), lastDenied: 0 };
+      savePermissionCache(cache);
+      
       return true;
-    } catch (error) {
-      console.error('Microphone permission denied:', error);
+    } catch (error: any) {
+      console.error('Microphone permission error details:', {
+        name: error?.name,
+        message: error?.message,
+        constraint: error?.constraint
+      });
+      
       setPermissions(prev => ({ ...prev, microphone: 'denied' }));
-      permissionRequestCache.current.microphone = false;
-      permissionRequestCache.current.microphoneGranted = false;
+      cache.microphone = { granted: false, timestamp: 0, lastDenied: Date.now() };
+      savePermissionCache(cache);
+      
       return false;
     }
   }, [permissions.microphone]);
