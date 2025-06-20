@@ -488,28 +488,32 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         <MediaDisplay mediaUrl={note.mediaUrl} />
       )}
 
-      {/* Audio Display for Voice Notes */}
-      {note.audioUrl && note.mode === 'voice' && (
-        <div className="mt-3 p-3 bg-[hsl(var(--muted))] rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-[hsl(var(--soft-sky-blue))] rounded-full"
-                    style={{ 
-                      height: `${Math.random() * 12 + 4}px`,
-                      opacity: 0.7 
-                    }}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                {note.transcription ? `${Math.ceil(note.transcription.length / 150)}s` : 'Voice note'}
-              </span>
-            </div>
+      {/* Enhanced Voice Note Display */}
+      {note.mode === 'voice' && note.transcription && (
+        <div className="flex items-center space-x-3 mb-3">
+          <button className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center">
+            <Play className="w-3 h-3 text-white ml-0.5" />
+          </button>
+          <div className="flex-1 h-6 flex items-end justify-start space-x-0.5">
+            {Array.from({ length: 24 }, (_, i) => {
+              const amplitude = Math.sin(i * 0.4 + Math.cos(i * 0.3)) * 0.4 + 0.6;
+              return (
+                <div
+                  key={i}
+                  className="w-0.5 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full opacity-70"
+                  style={{
+                    height: `${Math.max(2, amplitude * 20)}px`
+                  }}
+                />
+              );
+            })}
           </div>
+          <span className="text-xs text-gray-600">
+            {note.metadata?.duration 
+              ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}`
+              : `${Math.floor(Math.random() * 2 + 1)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
+            }
+          </span>
         </div>
       )}
 
