@@ -128,19 +128,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateNote(id: number, updates: Partial<Note>): Promise<Note> {
+    console.log(`[Storage] Updating note ${id} with keys:`, Object.keys(updates));
+    console.log(`[Storage] Update values:`, JSON.stringify(updates, null, 2));
+    
     try {
-      // Filter out undefined and null values to prevent SQL errors
+      // Filter out undefined values but keep null values (they might be intentional)
       const cleanUpdates = Object.fromEntries(
-        Object.entries(updates).filter(([_, value]) => value !== undefined && value !== null)
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
       );
 
       if (Object.keys(cleanUpdates).length === 0) {
-        // If no valid updates, just return the existing note
+        console.log(`[Storage] No valid updates for note ${id}, returning existing`);
         const existingNote = await this.getNote(id);
         if (!existingNote) throw new Error("Note not found");
         return existingNote;
       }
 
+      console.log(`[Storage] Executing update with cleaned data:`, cleanUpdates);
+      
       const updatedNotes = await db
         .update(notes)
         .set(cleanUpdates)
@@ -150,9 +155,15 @@ export class DatabaseStorage implements IStorage {
       if (!updatedNotes || updatedNotes.length === 0) {
         throw new Error("Note not found");
       }
-      return updatedNotes[0];
+      
+      console.log(`[Storage] Update successful for note ${id}`);
+      const result = updatedNotes[0];
+      console.log(`[Storage] Verification - aiEnhanced: ${result.aiEnhanced}, richContext length: ${result.richContext?.length || 0}`);
+      
+      return result;
     } catch (error: any) {
-      console.error("Database update error:", error);
+      console.error(`[Storage] Database update error for note ${id}:`, error);
+      console.error(`[Storage] Failed update payload:`, updates);
       throw new Error(`Failed to update note: ${error.message}`);
     }
   }
