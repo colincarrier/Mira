@@ -464,6 +464,11 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
         complexity: analysis?.immediateProcessing?.complexity || 0,
         confidence: 0.9
       },
+      timeInstructions: {
+        hasTimeReference: false,
+        extractedTimes: [],
+        scheduledItems: []
+      },
       timestamp: v2Result.timestamp
     };
   }
