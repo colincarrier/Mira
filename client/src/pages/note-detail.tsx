@@ -7,6 +7,8 @@ import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
+import { useCriticalInfo } from "@/hooks/useCriticalInfo";
 
 // Voice Note Detail Player Component
 interface VoiceNoteDetailPlayerProps {
@@ -714,47 +716,44 @@ export default function NoteDetail() {
 
         
 
-        {/* Web Search Results - Minimal Display */}
-        {note.richContext && (
+        {/* Research Results - V2 Intelligence Data */}
+        {richContextData && (
           <div className="px-4 mb-4">
-            {(() => {
-              try {
-                const richData = JSON.parse(note.richContext);
-                return (
-                  <>
-                    {/* From the Web Section - Streamlined */}
-                    {richData.fromTheWeb && richData.fromTheWeb.length > 0 && (
-                      <div className="border-t border-gray-200 pt-4">
-                        <div className="text-sm text-gray-500 mb-3 font-medium">Related Results:</div>
-                        <div className="space-y-2">
-                          {richData.fromTheWeb.slice(0, 3).map((item: any, index: number) => (
-                            <div 
-                              key={index} 
-                              className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors"
-                              onClick={() => item.url && window.open(item.url, '_blank')}
-                            >
-                              <h4 className="font-medium text-gray-900 text-sm mb-1">{item.title}</h4>
-                              <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
-                              {item.rating && (
-                                <span className="text-xs text-yellow-600 mt-1 inline-block">
-                                  ⭐ {item.rating}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-
-
-
-                  </>
-                );
-              } catch (e) {
-                return null;
-              }
-            })()}
+            {/* Research Results from suggestedLinks + entities */}
+            {((richContextData.suggestedLinks && richContextData.suggestedLinks.length > 0) || 
+              (richContextData.entities && richContextData.entities.length > 0)) && (
+              <div className="border-t border-gray-200 pt-4">
+                <div className="text-sm text-gray-500 mb-3 font-medium">Research Results:</div>
+                <div className="space-y-2">
+                  {/* Display suggested links */}
+                  {richContextData.suggestedLinks?.slice(0, 3).map((item: any, index: number) => (
+                    <div 
+                      key={`link-${index}`} 
+                      className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors"
+                      onClick={() => item.url && window.open(item.url, '_blank')}
+                    >
+                      <h4 className="font-medium text-gray-900 text-sm mb-1">{item.title}</h4>
+                      <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                    </div>
+                  ))}
+                  
+                  {/* Display entities as research items */}
+                  {richContextData.entities?.slice(0, 2).map((entity: any, index: number) => (
+                    <div 
+                      key={`entity-${index}`} 
+                      className="p-3 bg-blue-50 rounded-lg border border-blue-200"
+                    >
+                      <h4 className="font-medium text-gray-900 text-sm mb-1">
+                        {entity.name?.name || entity.name}
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        {entity.type} - Relevance: {entity.name?.relevance ? (entity.name.relevance * 100).toFixed(0) + '%' : 'N/A'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
