@@ -376,6 +376,55 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   const richContextData = parseRichContext(note.richContext);
 
+  // Get next steps for card using new hierarchy
+  const getNextStepsForCard = (richContext: any) => {
+    if (!richContext) return [];
+    
+    const filterCriticalQuestions = (microQuestions: string[]) => {
+      if (!microQuestions || microQuestions.length === 0) return [];
+      
+      const criticalPatterns = [
+        /what (is|are) (this|that|it|these)/i,
+        /where (is|are|can I find|do I get)/i,
+        /who (makes|sells|provides|offers)/i,
+      ];
+      
+      return microQuestions.filter(q => 
+        criticalPatterns.some(pattern => pattern.test(q))
+      ).slice(0, 2);
+    };
+
+    const filterTimeSensitive = (nextSteps: string[]) => {
+      if (!nextSteps || nextSteps.length === 0) return [];
+      
+      return nextSteps.filter(step => 
+        /\b(today|tomorrow|urgent|deadline|asap|immediately|now)\b/i.test(step)
+      ).slice(0, 2);
+    };
+
+    const critical = filterCriticalQuestions(richContext.microQuestions || []);
+    const timeSensitive = filterTimeSensitive(richContext.nextSteps || []);
+    const todos = note.todos || [];
+    
+    // Priority 1: Critical questions (max 2)
+    let items = [...critical.slice(0, 2)];
+    
+    // Priority 2: If < 2 critical, add time-sensitive (combined max 2)
+    if (items.length < 2) {
+      items = [...items, ...timeSensitive.slice(0, 2 - items.length)];
+    }
+    
+    // Priority 3: If still < 4, add todos (combined max 4)
+    if (items.length < 4) {
+      const todoItems = todos.slice(0, 4 - items.length).map(todo => todo.title);
+      items = [...items, ...todoItems];
+    }
+    
+    return items.slice(0, 4);
+  };
+
+  const nextStepsForCard = getNextStepsForCard(richContextData);
+
   // Parse smart actions from aiSuggestion
   const parseSmartActions = (aiSuggestion: string | null) => {
     if (!aiSuggestion) return [];
@@ -595,15 +644,15 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
 
-      {/* Next Steps from Rich Context */}
-      {richContextData?.nextSteps && richContextData.nextSteps.length > 0 && (
+      {/* Next Steps with New Hierarchy */}
+      {nextStepsForCard.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center space-x-1 mb-2">
             <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
             <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Next Steps</span>
           </div>
           <div className="space-y-1">
-            {richContextData.nextSteps.map((step: string, index: number) => (
+            {nextStepsForCard.map((step: string, index: number) => (
               <div
                 key={index}
                 className="flex items-start space-x-2 text-xs p-2 bg-[#d9d5c7] rounded-md"

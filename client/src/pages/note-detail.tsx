@@ -159,6 +159,19 @@ export default function NoteDetail() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Parse rich context data if available
+  let richContextData = null;
+  try {
+    if (note?.richContext) {
+      richContextData = JSON.parse(note.richContext);
+    }
+  } catch (e) {
+    console.error("Failed to parse richContext:", e);
+  }
+
+  // Use critical info hook
+  const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
+
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
