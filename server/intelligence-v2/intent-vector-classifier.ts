@@ -13,9 +13,15 @@ export interface IntentVector {
 const schema = z.object({
   primaryActions: z.array(z.string()),
   domainContexts: z.array(z.string()),
-  temporalClass: z.string(),
-  collaborationScope: z.string(),
-  affectTone: z.string().optional()
+  temporalClass: z.union([z.string(), z.array(z.string())]).transform(val => 
+    Array.isArray(val) ? val[0] || 'immediate' : val
+  ),
+  collaborationScope: z.union([z.string(), z.array(z.string())]).transform(val => 
+    Array.isArray(val) ? val[0] || 'personal' : val
+  ),
+  affectTone: z.union([z.string(), z.array(z.string())]).transform(val => 
+    Array.isArray(val) ? val[0] || 'neutral' : val
+  ).optional()
 });
 
 export class IntentVectorClassifier {

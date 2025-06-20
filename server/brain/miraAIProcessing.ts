@@ -411,17 +411,17 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   if (
     featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') &&
     intelligenceV2Router !== null &&
-    typeof intelligenceV2Router.processWithIntelligenceV2 === 'function'
+    typeof intelligenceV2Router.processNoteV2 === 'function'
   ) {
-    // Assuming 'processWithIntelligenceV2' expects an object with specific properties.
-    const v2Result = await intelligenceV2Router.processWithIntelligenceV2({
+    // Use the correct V2 processing method
+    const v2Result = await intelligenceV2Router.processNoteV2({
       content: input.content,
       mode: input.mode,
       id: uid // Use generated uid
     });
 
     // Map V2 result to expected V1 format for compatibility
-    const analysis = v2Result.recursiveAnalysis;
+    const analysis = v2Result.recursiveAnalysis || {};
     
     return {
       uid: v2Result.id,
@@ -432,15 +432,15 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       urgency: analysis?.immediateProcessing?.urgency || 'medium',
       complexity: analysis?.immediateProcessing?.complexity || 5,
       confidence: 0.9,
-      todos: analysis?.proactiveDelivery?.suggestedActions?.map(action => ({
+      todos: analysis?.proactiveDelivery?.suggestedActions?.map((action: any) => ({
         title: action.action,
         priority: action.priority > 7 ? 'high' : action.priority > 5 ? 'medium' : 'low'
       })) || [],
-      smartActions: analysis?.proactiveDelivery?.suggestedActions?.map(action => ({
+      smartActions: analysis?.proactiveDelivery?.suggestedActions?.map((action: any) => ({
         label: action.action,
         action: action.reasoning
       })) || [],
-      entities: analysis?.immediateProcessing?.entities?.map(entity => ({
+      entities: analysis?.immediateProcessing?.entities?.map((entity: any) => ({
         name: entity,
         type: 'general'
       })) || [],
@@ -449,8 +449,8 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       microQuestions: analysis?.recursiveReasoning?.step1Anticipation?.followUpQuestions || [],
       fromTheWeb: [],
       tags: analysis?.immediateProcessing?.entities || [],
-      relatedTopics: analysis?.contextualIntelligence?.crossReferences?.map(ref => ref.relationship) || [],
-      processingPath: 'intelligence_v2',
+      relatedTopics: analysis?.contextualIntelligence?.crossReferences?.map((ref: any) => ref.relationship) || [],
+      processingPath: 'memory' as 'commerce' | 'memory',
       classificationScores: { 
         intelligence_v2: 1.0,
         complexity: analysis?.immediateProcessing?.complexity || 0,
