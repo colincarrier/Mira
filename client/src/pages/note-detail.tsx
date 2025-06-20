@@ -699,66 +699,7 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* Smart Action Buttons */}
-        {note.aiSuggestion && (
-          <div className="bg-white border-t border-[hsl(var(--border))] px-4 py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-[hsl(var(--primary))]" />
-              <span className="text-sm font-medium text-[hsl(var(--foreground))]">Quick Actions</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(() => {
-                const actions = [];
-                const suggestions = note.aiSuggestion.split(',').map((s: string) => s.trim());
-
-                for (const suggestion of suggestions) {
-                  if (suggestion.includes('Add to Calendar') || suggestion.includes('calendar')) {
-                    actions.push({
-                      type: 'calendar',
-                      label: 'Add to Calendar',
-                      icon: Calendar,
-                      action: () => {
-                        const calendarEvent = createCalendarEventFromContent(note.content, note.content);
-                        if (calendarEvent) {
-                          addToGoogleCalendar(calendarEvent);
-                          toast({
-                            description: "Opening Google Calendar with event details",
-                          });
-                        } else {
-                          // Fallback for notes without time information
-                          const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(note.content)}&details=${encodeURIComponent(note.aiContext || '')}`;
-                          window.open(calendarUrl, '_blank');
-                        }
-                      }
-                    });
-                  } else if (suggestion.includes('Reminder') || suggestion.includes('reminder')) {
-                    actions.push({
-                      type: 'reminder',
-                      label: 'Set Reminder',
-                      icon: Bell,
-                      action: () => {
-                        toast({
-                          description: "Reminder functionality coming soon!",
-                        });
-                      }
-                    });
-                  }
-                }
-
-                return actions.map((action, index) => (
-                  <button
-                    key={index}
-                    onClick={action.action}
-                    className="flex items-center space-x-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-sm font-medium hover:bg-[hsl(var(--primary))]/90 transition-colors"
-                  >
-                    <action.icon className="w-4 h-4" />
-                    <span>{action.label}</span>
-                  </button>
-                ));
-              })()}
-            </div>
-          </div>
-        )}
+        
 
         {/* Web Search Results - Minimal Display */}
         {note.richContext && (
