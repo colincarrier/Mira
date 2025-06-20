@@ -1,12 +1,141 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight, Undo2, AlertTriangle, CheckCircle, X, Play } from "lucide-react";
+import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, Brain, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight, Undo2, AlertTriangle, CheckCircle, X, Play, Pause } from "lucide-react";
 import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+
+// Voice Note Detail Player Component
+interface VoiceNoteDetailPlayerProps {
+  note: NoteWithTodos;
+}
+
+function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlayback = () => {
+    if (!audioRef.current || !note.audioUrl) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || duration === 0) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  // Generate waveform based on content
+  const generateWaveform = () => {
+    const text = note.transcription || note.content;
+    const chars = text.split('');
+    return Array.from({ length: 64 }, (_, i) => {
+      const charCode = chars[i % chars.length]?.charCodeAt(0) || 65;
+      const amplitude = (charCode % 100) / 100 * 0.6 + 0.4;
+      return amplitude;
+    });
+  };
+
+  const waveformData = generateWaveform();
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="mb-6 bg-white">
+      {note.audioUrl && (
+        <audio
+          ref={audioRef}
+          src={note.audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={() => setIsPlaying(false)}
+          preload="metadata"
+        />
+      )}
+      <div className="flex items-center space-x-4">
+        <button 
+          onClick={togglePlayback}
+          disabled={!note.audioUrl}
+          className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg disabled:opacity-50"
+        >
+          {isPlaying ? (
+            <Pause className="w-5 h-5 text-white" />
+          ) : (
+            <Play className="w-5 h-5 text-white ml-0.5" />
+          )}
+        </button>
+        <div 
+          className="flex-1 h-8 flex items-end justify-start space-x-0.5 cursor-pointer overflow-hidden"
+          onClick={handleSeek}
+          style={{ maxWidth: 'calc(100vw - 200px)' }}
+        >
+          {waveformData.map((amplitude, i) => {
+            const progress = duration > 0 ? currentTime / duration : 0;
+            const isActive = i / waveformData.length <= progress;
+            return (
+              <div
+                key={i}
+                className={`w-1 rounded-full transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-gradient-to-t from-blue-700 to-blue-500' 
+                    : 'bg-gradient-to-t from-blue-600 to-blue-400 opacity-70 hover:opacity-90'
+                }`}
+                style={{
+                  height: `${Math.max(4, amplitude * 28)}px`
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="flex flex-col items-end">
+          <div className="text-lg font-mono text-blue-600 font-medium">
+            {duration > 0 ? formatTime(duration) : (
+              note.transcription 
+                ? `${Math.ceil(note.transcription.length / 150)}s`
+                : '0:00'
+            )}
+          </div>
+          <div className="text-xs text-blue-500">
+            {currentTime > 0 && duration > 0 ? formatTime(currentTime) : 'Voice Note'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 import { createCalendarEventFromContent, addToGoogleCalendar } from "@/lib/calendarUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
@@ -508,37 +637,9 @@ export default function NoteDetail() {
               </div>
             )}
 
-            {/* Voice Note Waveform Display */}
+            {/* Enhanced Voice Note Player */}
             {note.mode === "voice" && note.transcription && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <div className="flex items-center space-x-4">
-                  <button className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg">
-                    <Play className="w-5 h-5 text-white ml-0.5" />
-                  </button>
-                  <div className="flex-1 h-8 flex items-end justify-start space-x-1">
-                    {/* Enhanced waveform for detail view */}
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const amplitude = Math.sin(i * 0.25 + Math.cos(i * 0.5)) * 0.5 + 0.7;
-                      return (
-                        <div
-                          key={i}
-                          className="w-1 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full transition-all duration-200 hover:from-blue-700 hover:to-blue-500"
-                          style={{
-                            height: `${Math.max(4, amplitude * 24)}px`,
-                            opacity: 0.7 + amplitude * 0.2
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <div className="text-lg font-mono text-blue-600 font-medium">
-                      {note.metadata?.duration ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}` : '0:00'}
-                    </div>
-                    <div className="text-xs text-blue-500">Voice Note</div>
-                  </div>
-                </div>
-              </div>
+              <VoiceNoteDetailPlayer note={note} />
             )}
 
             <textarea

@@ -922,8 +922,8 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               console.error("Error analyzing image:", error);
               storage.updateNote(note.id, { isProcessing: false });
             });
-          } else if (isClaudeAvailable() && imageBase64.length > 0) {
-            console.log("Fallback to Claude for image analysis");
+          } else if (isOpenAIAvailable() && imageBase64.length > 0) {
+            console.log("Using OpenAI for image analysis");
             const { analyzeImageContent } = await import('./anthropic');
             analyzeImageContent(imageBase64, noteContent)
             .then(async (analysis: any) => {
@@ -968,13 +968,13 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
 
           const aiAnalysisFunction = useOpenAI 
             ? (prompt: string) => safeAnalyzeWithOpenAI(prompt, noteData.mode)
-            : (prompt: string) => safeAnalyzeWithClaude(prompt, noteData.mode);
+            : (prompt: string) => analyzeWithOpenAI(prompt, noteData.mode);
 
           processNote(miraInput)
           .then(async (analysis: MiraAIResult) => {
             console.log("Mira AI analysis successful for note:", note.id);
 
-            apiUsageStats.claude.requests++;
+            apiUsageStats.openai.requests++;
             apiUsageStats.totalRequests++;
 
             // Use v2.0 structured results
@@ -1478,7 +1478,7 @@ Please provide an enhanced version that follows the clarified instruction precis
 
 Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what you changed", "todos": ["new todos if any"]}`;
 
-      const evolution = await safeAnalyzeWithClaude(evolutionPrompt, "clarification");
+      const evolution = await analyzeWithOpenAI(evolutionPrompt, "clarification");
 
       // Apply with higher confidence since user provided clarification
       const protectionResult = await DataProtectionService.safeApplyAIChanges(
@@ -1813,6 +1813,20 @@ Respond with JSON:
       const noteId = req.body.noteId;
       let note;
 
+      // Save audio file first
+      let audioUrl = null;
+      try {
+        const savedAudio = await saveAudioFile(
+          req.file.buffer, 
+          `voice-${Date.now()}.webm`,
+          req.file.mimetype || 'audio/webm'
+        );
+        audioUrl = savedAudio.url;
+        console.log("Voice audio saved:", audioUrl);
+      } catch (error) {
+        console.error("Failed to save audio file:", error);
+      }
+
       // Transcribe audio safely - never crash if AI fails
       let transcription = "Audio note (transcription unavailable)";
       try {
@@ -1831,6 +1845,7 @@ Respond with JSON:
         note = await storage.updateNote(parseInt(noteId), {
           content: transcription,
           transcription,
+          audioUrl,
           isProcessing: false,
         });
       } else {
@@ -1839,11 +1854,12 @@ Respond with JSON:
           content: transcription,
           mode: "voice",
           transcription,
+          audioUrl,
         });
       }
 
-      // Process with enhanced Mira AI Brain (non-blocking)
-      if (isClaudeAvailable()) {
+      // Process with Intelligence-V2 system via OpenAI (non-blocking)
+      if (isOpenAIAvailable()) {
         const miraInput: MiraAIInput = {
           content: transcription,
           mode: "voice",
@@ -1854,15 +1870,13 @@ Respond with JSON:
           }
         };
 
-        const aiAnalysisFunction = (prompt: string) => safeAnalyzeWithClaude(prompt, "voice");
-
         processNote(miraInput)
           .then(async (analysis: MiraAIResult) => {
             console.log("Mira AI analysis successful for voice note:", note.id);
 
             console.log("v2.0 Intelligence Layer analysis successful for voice note:", note.id);
 
-            apiUsageStats.claude.requests++;
+            apiUsageStats.openai.requests++;
             apiUsageStats.totalRequests++;
 
             // Use v2.0 structured results
@@ -1933,7 +1947,7 @@ Respond with JSON:
             console.error("Mira AI analysis failed:", error);
           });
       } else {
-        console.warn("Claude AI not available - skipping voice note analysis");
+        console.warn("OpenAI not available - skipping voice note analysis");
       }
 
       res.json(note);
@@ -2219,8 +2233,8 @@ Respond with a JSON object containing:
 
           // Use available AI service for evolution
           let evolution;
-          if (isClaudeAvailable()) {
-            evolution = await safeAnalyzeWithClaude(evolutionPrompt, "evolution");
+          if (isOpenAIAvailable()) {
+            evolution = await analyzeWithOpenAI(evolutionPrompt, "evolution");
           } else if (isOpenAIAvailable()) {
             evolution = await safeAnalyzeWithOpenAI(evolutionPrompt, "evolution");
           } else {

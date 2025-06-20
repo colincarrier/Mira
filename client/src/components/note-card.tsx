@@ -490,31 +490,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
       {/* Enhanced Voice Note Display */}
       {note.mode === 'voice' && note.transcription && (
-        <div className="flex items-center space-x-3 mb-3">
-          <button className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center">
-            <Play className="w-3 h-3 text-white ml-0.5" />
-          </button>
-          <div className="flex-1 h-6 flex items-end justify-start space-x-0.5">
-            {Array.from({ length: 24 }, (_, i) => {
-              const amplitude = Math.sin(i * 0.4 + Math.cos(i * 0.3)) * 0.4 + 0.6;
-              return (
-                <div
-                  key={i}
-                  className="w-0.5 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full opacity-70"
-                  style={{
-                    height: `${Math.max(2, amplitude * 20)}px`
-                  }}
-                />
-              );
-            })}
-          </div>
-          <span className="text-xs text-gray-600">
-            {note.transcription 
-              ? `${Math.ceil(note.transcription.length / 150)}s`
-              : 'Voice note'
-            }
-          </span>
-        </div>
+        <VoiceNotePlayer note={note} />
       )}
 
 
