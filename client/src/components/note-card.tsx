@@ -509,9 +509,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             })}
           </div>
           <span className="text-xs text-gray-600">
-            {note.metadata?.duration 
-              ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}`
-              : `${Math.floor(Math.random() * 2 + 1)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
+            {note.transcription 
+              ? `${Math.ceil(note.transcription.length / 150)}s`
+              : 'Voice note'
             }
           </span>
         </div>
