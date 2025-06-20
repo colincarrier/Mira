@@ -2176,9 +2176,20 @@ Respond with JSON:
         return res.status(404).json({ message: "Note not found" });
       }
 
+      // If this is just a direct content update (like iOS Notes typing), save it directly
+      if (content && !updateInstruction && !contextUpdate) {
+        console.log("Direct content update - saving like iOS Notes");
+        const updatedNote = await storage.updateNote(noteId, { 
+          content: content.trim(),
+          lastUserEdit: new Date().toISOString(),
+          ...otherUpdates 
+        });
+        return res.json(updatedNote);
+      }
+
       // If there's an updateInstruction, use AI to intelligently modify the note
       if (updateInstruction) {
-        console.log("Processing context-aware note update:", updateInstruction);
+        console.log("Processing AI-assisted note update:", updateInstruction);
 
         try {
           // Create comprehensive context for AI
@@ -2296,14 +2307,22 @@ Respond with a JSON object containing:
 
         } catch (aiError) {
           console.error("AI evolution failed:", aiError);
-          // Fallback to simple content update
-          const updatedNote = await storage.updateNote(noteId, { content, ...otherUpdates });
-          res.json(updatedNote);
+          // Fallback to simple content update if AI fails
+          const updatedNote = await storage.updateNote(noteId, { 
+            content: content || existingNote.content, 
+            lastUserEdit: new Date().toISOString(),
+            ...otherUpdates 
+          });
+          return res.json(updatedNote);
         }
       } else {
-        // Simple update without AI
-        const updatedNote = await storage.updateNote(noteId, { content, ...otherUpdates });
-        res.json(updatedNote);
+        // Simple update without AI for direct edits
+        const updatedNote = await storage.updateNote(noteId, { 
+          content: content || existingNote.content,
+          lastUserEdit: new Date().toISOString(),
+          ...otherUpdates 
+        });
+        return res.json(updatedNote);
       }
 
     } catch (error) {

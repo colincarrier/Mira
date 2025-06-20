@@ -45,12 +45,12 @@ function VoiceNoteDetailPlayer({ note }: VoiceNoteDetailPlayerProps) {
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!audioRef.current || duration === 0) return;
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = clickX / rect.width;
     const newTime = percentage * duration;
-    
+
     audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
@@ -177,21 +177,41 @@ export default function NoteDetail() {
   // Mutations
   const updateNoteMutation = useMutation({
     mutationFn: async ({ content, newContext, updateInstruction }: { content: string; newContext?: string; updateInstruction?: string }) => {
-      const response = await apiRequest("PATCH", `/api/notes/${id}`, {
-        content,
-        ...(newContext && { contextUpdate: newContext }),
-        ...(updateInstruction && { updateInstruction })
+      const response = await fetch(`/api/notes/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content,
+          ...(newContext && { contextUpdate: newContext }),
+          ...(updateInstruction && { updateInstruction })
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to update note: ${response.status} - ${errorData}`);
+      }
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      toast({ title: "Note updated successfully" });
+      // Only show success toast for AI updates, not direct edits
+      if (arguments[1]?.updateInstruction) {
+        toast({ description: "Note updated successfully" });
+      }
       setIsEditing(false);
       setShowContextDialog(false);
     },
-    onError: () => {
-      toast({ title: "Failed to update note", variant: "destructive" });
+    onError: (error) => {
+      console.error("Note update error:", error);
+      toast({ 
+        title: "Failed to save note", 
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive" 
+      });
     }
   });
 
@@ -335,16 +355,22 @@ export default function NoteDetail() {
   };
 
   const handleSendMessage = async (text: string) => {
-    console.log("Sending message for note update:", text);
+    console.log("Sending AI instruction for note evolution:", text);
 
     try {
-      // Use the evolution endpoint instead of the patch endpoint
-      const response = await apiRequest("POST", `/api/notes/${id}/evolve`, {
-        instruction: text.trim(),
-        existingContent: note.content,
-        existingContext: note.aiContext || "",
-        existingTodos: note.todos || [],
-        existingRichContext: note.richContext
+      // Use the evolution endpoint for AI-assisted updates that considers existing content
+      const response = await fetch(`/api/notes/${id}/evolve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          instruction: text.trim(),
+          existingContent: note?.content || "",
+          existingContext: note?.aiContext || "",
+          existingTodos: note?.todos || [],
+          existingRichContext: note?.richContext
+        }),
       });
 
       if (!response.ok) {
@@ -354,19 +380,21 @@ export default function NoteDetail() {
       }
 
       const result = await response.json();
-      console.log("Evolution result:", result);
+      console.log("AI evolution result:", result);
 
       // Refresh the note data
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
       toast({
-        description: "Note updated successfully with AI assistance",
+        description: "Note enhanced with AI assistance",
       });
     } catch (error) {
-      console.error("Failed to update note:", error);
+      console.error("Failed to enhance note with AI:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
-        title: "Failed to update note",
+        title: "Failed to enhance note",
         description: errorMessage,
         variant: "destructive"
       });
@@ -553,9 +581,15 @@ export default function NoteDetail() {
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
                 onBlur={() => {
-                  // Update note with new title if changed
-                  if (editedTitle !== note.content) {
-                    updateNoteMutation.mutate({ content: editedTitle });
+                  // Update note with new title if changed and not empty
+                  if (editedTitle !== note?.content && editedTitle.trim() !== "") {
+                    console.log("Auto-saving title change");
+                    updateNoteMutation.mutate({ content: editedTitle.trim() });
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur(); // Trigger save on Enter
                   }
                 }}
                 className="text-lg font-semibold bg-transparent border-none outline-none focus:bg-white focus:border focus:border-blue-300 rounded px-2 py-1"
