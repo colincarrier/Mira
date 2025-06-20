@@ -11,13 +11,21 @@ export interface IntentVector {
 }
 
 const schema = z.object({
-  primaryActions: z.array(z.string()),
+  primaryActions: z.array(z.string()).transform(actions => 
+    actions.map(action => {
+      const actionMap: Record<string, ActionLabel> = {
+        'remind': 'remind', 'buy': 'buy', 'research': 'research', 
+        'log': 'log', 'schedule': 'schedule', 'delegate': 'delegate', 'track': 'track'
+      };
+      return actionMap[action.toLowerCase()] || 'research';
+    }) as ActionLabel[]
+  ),
   domainContexts: z.array(z.string()),
   temporalClass: z.union([z.string(), z.array(z.string())]).transform(val => 
     Array.isArray(val) ? val[0] || 'immediate' : val
   ),
   collaborationScope: z.union([z.string(), z.array(z.string())]).transform(val => 
-    Array.isArray(val) ? val[0] || 'personal' : val
+    Array.isArray(val) ? val[0] || 'private' : val
   ),
   affectTone: z.union([z.string(), z.array(z.string())]).transform(val => 
     Array.isArray(val) ? val[0] || 'neutral' : val

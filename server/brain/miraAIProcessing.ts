@@ -427,7 +427,6 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       uid: v2Result.id,
       title: v2Result.title,
       summary: v2Result.summary,
-      enhancedContent: v2Result.enhancedContent,
       intent: analysis?.immediateProcessing?.intent || 'research',
       urgency: analysis?.immediateProcessing?.urgency || 'medium',
       complexity: analysis?.immediateProcessing?.complexity || 5,
