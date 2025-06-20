@@ -483,45 +483,35 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         ) : null}
       </div>
 
-      {/* Media Display - Enhanced thumbnail with hover controls */}
+      {/* Media Display */}
       {note.mediaUrl && (
-        <div className="mb-3 group">
-          <MediaDisplay 
-            mediaUrl={note.mediaUrl} 
-            filename={note.mediaUrl.split('/').pop()}
-            className="max-h-32 w-auto rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-            showControls={true}
-          />
-        </div>
+        <MediaDisplay mediaUrl={note.mediaUrl} />
       )}
 
-      {note.mode === "voice" && note.transcription && (
-        <div className="flex items-center space-x-3 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-          <button className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors">
-            <Play className="w-3 h-3 text-white ml-0.5" />
-          </button>
-          <div className="flex-1 h-6 flex items-end justify-start space-x-0.5">
-            {/* Enhanced waveform visualization matching recording interface */}
-            {Array.from({ length: 32 }, (_, i) => {
-              const amplitude = Math.sin(i * 0.3 + Math.cos(i * 0.7)) * 0.4 + 0.6;
-              return (
-                <div
-                  key={i}
-                  className="w-0.5 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full"
-                  style={{
-                    height: `${Math.max(3, amplitude * 18)}px`,
-                    opacity: 0.7 + amplitude * 0.2
-                  }}
-                />
-              );
-            })}
-          </div>
-          <div className="text-xs font-mono text-blue-600 min-w-[2.5rem]">
-            {note.metadata?.duration ? `${Math.floor(note.metadata.duration / 60)}:${(note.metadata.duration % 60).toString().padStart(2, '0')}` : '0:00'}
+      {/* Audio Display for Voice Notes */}
+      {note.audioUrl && note.mode === 'voice' && (
+        <div className="mt-3 p-3 bg-[hsl(var(--muted))] rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-[hsl(var(--soft-sky-blue))] rounded-full"
+                    style={{ 
+                      height: `${Math.random() * 12 + 4}px`,
+                      opacity: 0.7 
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                {note.transcription ? `${Math.ceil(note.transcription.length / 150)}s` : 'Voice note'}
+              </span>
+            </div>
           </div>
         </div>
       )}
-
 
 
       {/* Next Steps from Rich Context */}

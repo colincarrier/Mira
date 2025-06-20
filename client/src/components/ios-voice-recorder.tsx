@@ -232,19 +232,19 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
     if (!success) return;
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
-      // Immediately show animated waveform before audio data arrives
-      setWaveformData(Array(40).fill(0).map(() => Math.random() * 0.3 + 0.1));
-      
       mediaRecorderRef.current.start(100); // Collect data every 100ms
       setRecordingState('recording');
       setRecordingTime(0);
 
+      // Initialize waveform with immediate animation
+      setWaveformData(Array(40).fill(0).map(() => Math.random() * 0.4 + 0.2));
+      
       // Start timer
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
-      // Start waveform animation
+      // Start waveform animation immediately
       startWaveformAnimation();
     }
   };
@@ -293,10 +293,10 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
   const handleSave = () => {
     if (audioBlob) {
       // Check minimum duration (1.5 seconds)
-      if (recordingTime < 2) {
+      if (recordingTime < 1.5) {
         toast({
           title: "Voice note too short",
-          description: "Please record for at least 2 seconds",
+          description: "Please record for at least 1.5 seconds",
           variant: "destructive",
         });
         return;
@@ -430,11 +430,20 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
                 <Square className="w-5 h-5" />
               </button>
               <button
-                onClick={handleSave}
+                onClick={() => {
+                  if (recordingTime >= 1.5) {
+                    handleSave();
+                  } else {
+                    toast({
+                      title: "Voice note too short",
+                      description: "Please record for at least 1.5 seconds",
+                      variant: "destructive",
+                    });
+                  }
+                }}
                 className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors flex items-center space-x-2"
                 title="Send recording"
               >
-                <Send className="w-4 h-4" />
                 <span>Send</span>
               </button>
             </div>

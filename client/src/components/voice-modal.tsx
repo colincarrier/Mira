@@ -162,8 +162,8 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       setRecordingTime(0);
       setRecordingState('ready');
       toast({
-        title: "Recording too short",
-        description: "Voice notes must be at least 1.5 seconds long.",
+        title: "Voice note too short", 
+        description: "Please record for at least 1.5 seconds",
         variant: "destructive",
       });
       return;
@@ -172,6 +172,12 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
     if (audioBlob) {
       setRecordingState('processing');
       createVoiceNoteMutation.mutate(audioBlob);
+    } else {
+      toast({
+        title: "No recording found",
+        description: "Please record audio before saving",
+        variant: "destructive",
+      });
     }
   };
 
