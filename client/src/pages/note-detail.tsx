@@ -31,16 +31,13 @@ export default function NoteDetail() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: noteData, isLoading, error } = useQuery<NoteWithTodos>({
+  const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
     refetchInterval: (data) => {
-      const note = Array.isArray(data) ? data[0] : data;
-      return note && !note.aiEnhanced ? 2000 : false;
+      return data && !data.aiEnhanced ? 2000 : false;
     },
   });
-
-  const note = Array.isArray(noteData) ? noteData[0] : noteData;
 
   // Get version history
   const { data: versionHistory } = useQuery({

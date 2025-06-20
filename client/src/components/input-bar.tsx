@@ -416,18 +416,22 @@ export default function InputBar({
       mediaRecorder.onstop = () => {
         const recordingDuration = Date.now() - recordingStartTime;
 
-        if (recordingDuration >= 1500) { // 1.5 seconds minimum
-          const mimeType = mediaRecorder.mimeType || 'audio/webm';
-          const blob = new Blob(chunksRef.current, { type: mimeType });
-          createVoiceNoteMutation.mutate(blob);
-        } else {
+        if (recordingDuration < 1500) { // Check BEFORE mutation
           console.log(`Voice recording too short: ${recordingDuration}ms, discarding`);
           toast({
             title: "Recording too short",
             description: "Voice notes must be at least 1.5 seconds long.",
             variant: "destructive",
           });
+          stream.getTracks().forEach(track => track.stop());
+          audioContext.close();
+          setWaveformData([]);
+          return; // Exit before mutation
         }
+
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        createVoiceNoteMutation.mutate(blob);
 
         stream.getTracks().forEach(track => track.stop());
         audioContext.close();
@@ -683,30 +687,39 @@ export default function InputBar({
             </div>
           )}
 
-          {/* Recording waveform display */}
+          {/* Enhanced streaming waveform display */}
           {isVoiceRecording && (
-            <div className="absolute left-3 right-20 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white/95 rounded-lg px-3 py-2 z-20">
-              <div className="text-xs font-mono text-red-600 min-w-[2.5rem]">
+            <div className="absolute left-3 right-20 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur rounded-lg px-3 py-2 z-20 shadow-lg">
+              <div className="text-xs font-mono text-red-600 dark:text-red-400 min-w-[2.5rem]">
                 {formatTime(recordingTime)}
               </div>
               <div className="flex-1 h-6 flex items-end justify-start space-x-0.5 overflow-hidden">
                 {waveformData.length > 0 ? (
-                  waveformData.slice(0, 20).map((amplitude, index) => (
+                  waveformData.slice(0, 24).map((amplitude, index) => (
                     <div
-                      key={index}
-                      className="w-0.5 bg-gradient-to-t from-red-600 to-red-400 rounded-full transition-all duration-75"
+                      key={`${Date.now()}-${index}`}
+                      className="w-0.5 bg-gradient-to-t from-red-600 via-red-500 to-orange-400 dark:from-red-500 dark:via-red-400 dark:to-orange-300 rounded-full transition-all duration-50 ease-out"
                       style={{
-                        height: `${Math.max(2, amplitude * 20)}px`,
-                        opacity: 0.7 + amplitude * 0.3
+                        height: `${Math.max(2, amplitude * 22)}px`,
+                        opacity: Math.max(0.5, 0.7 + amplitude * 0.3),
+                        transform: `scaleY(${Math.max(0.2, amplitude + 0.1)})`,
+                        animation: amplitude > 0.1 ? 'pulse 0.3s ease-in-out' : 'none'
                       }}
                     />
                   ))
                 ) : (
                   <div className="flex items-center space-x-1">
-                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
-                    <div className="w-1 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <span className="text-xs text-red-600 ml-2">Recording...</span>
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-0.5 h-2 bg-gradient-to-t from-red-600 to-orange-400 rounded-full animate-pulse"
+                        style={{
+                          animationDelay: `${i * 0.1}s`,
+                          animationDuration: '1s'
+                        }}
+                      />
+                    ))}
+                    <span className="text-xs text-red-600 dark:text-red-400 ml-2">Recording...</span>
                   </div>
                 )}
               </div>

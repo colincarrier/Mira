@@ -198,7 +198,7 @@ export default function InlineVoiceRecorder({
   }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
 
   const updateWaveform = useCallback(() => {
-    if (!analyserRef.current || !dataArrayRef.current || !isRecording) return;
+    if (!analyserRef.current || !dataArrayRef.current) return;
     
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
     

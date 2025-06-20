@@ -163,11 +163,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Voice Recording Quality Improvements (June 20, 2025)
-- **Minimum Duration Filter**: Implemented 1.5-second minimum for voice notes across all components
-- **Smart Discard Logic**: Short recordings automatically discarded with user notification
-- **Cross-Component Consistency**: Applied filter to inline recorder, voice modal, and input bar
-- **User Experience**: Clear feedback when recordings are too short to prevent confusion
+### Voice Recording System Overhaul (June 20, 2025)
+- **Real-Time Waveform Visualization**: Implemented 60fps streaming waveform with immediate visual feedback
+- **Enhanced Audio Processing**: Logarithmic scaling and smoothing for better visual representation
+- **Fixed Duration Validation**: Moved 1.5-second check before mutation to prevent success toasts on short recordings
+- **Dynamic Voice Note Display**: Replaced hardcoded "0:45" with actual duration and realistic waveform patterns
+- **Cross-Component Consistency**: Updated all voice recording components with enhanced visualization
+- **Note Detail Page Fix**: Resolved loading issues by removing Array.isArray query confusion
 
 ### Permission System Consolidation Complete (June 20, 2025)
 - **Extended Permission Caching**: Increased cache validity from 24 hours to 1 year (8760 hours)
