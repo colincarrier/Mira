@@ -284,25 +284,32 @@ export default function Profile() {
                 {userProfile?.personalBio ? (
                   <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-green-900">AI Assistant Bio</span>
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-900">AI Assistant Bio Added</span>
+                      <span className="text-xs text-green-600 ml-auto">
+                        {new Date().toLocaleDateString()}
+                      </span>
                     </div>
-                    <div className="text-xs text-green-700 mb-2">
-                      {userProfile.personalBio.slice(0, 150)}...
+                    <div className="text-xs text-green-700 mb-3 leading-relaxed">
+                      {userProfile.personalBio.length > 200 
+                        ? userProfile.personalBio.slice(0, 200) + '...' 
+                        : userProfile.personalBio
+                      }
                     </div>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => setShowBioPreview(true)}
-                        className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                        className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1 px-2 py-1 rounded bg-green-100 hover:bg-green-200"
                       >
                         <Info className="w-3 h-3" />
-                        Read Full Bio
+                        View Full Bio
                       </button>
                       <button 
                         onClick={() => setShowQuickProfile(true)}
-                        className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                        className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1 px-2 py-1 rounded bg-green-100 hover:bg-green-200"
                       >
                         <Edit3 className="w-3 h-3" />
-                        Update
+                        Update Bio
                       </button>
                     </div>
                   </div>

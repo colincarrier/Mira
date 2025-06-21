@@ -410,7 +410,7 @@ export default function Settings() {
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Brain size={20} className="text-gray-500" />
+                <GraduationCap size={20} className="text-gray-500" />
                 <div>
                   <div className="text-sm font-medium text-gray-900">AI Model</div>
                   <div className="text-xs text-gray-500">Choose your preferred AI provider</div>
