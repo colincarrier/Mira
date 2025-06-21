@@ -591,7 +591,7 @@ export default function NoteDetail() {
             </button>
             <div className="flex items-center gap-2">
               <div className="text-lg font-semibold px-2 py-1">
-                {note.content.split('\n')[0] || 'Untitled Note'}
+                {note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled Note'}
               </div>
               {!note.aiEnhanced && (
                 <div className="flex items-center gap-1">
@@ -674,6 +674,14 @@ export default function NoteDetail() {
               <VoiceNoteDetailPlayer note={note} />
             )}
 
+            {/* What You Wrote Section - only show if AI generated a different title */}
+            {note.aiGeneratedTitle && note.aiGeneratedTitle !== note.content && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-medium text-gray-900 mb-2 text-sm">What you wrote:</h4>
+                <div className="text-gray-700 text-sm leading-relaxed">{note.content}</div>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={editedContent}
@@ -694,7 +702,7 @@ export default function NoteDetail() {
                 target.style.height = target.scrollHeight + 'px';
               }}
               className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
-              placeholder="Start writing..."
+              placeholder={note.aiGeneratedTitle ? "AI analysis and enhanced content..." : "Start writing..."}
               style={{ 
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 overflow: 'hidden'
