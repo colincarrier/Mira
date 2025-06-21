@@ -148,7 +148,7 @@ export const getUniqueCollectionIcon = (collectionName: string) => {
     return { icon: 'graduation-cap', color: 'blue' };
   }
   if (name.includes('learn') || name.includes('study') || name.includes('course')) {
-    return { icon: 'brain', color: 'blue' };
+    return { icon: 'graduation-cap', color: 'blue' };
   }
   if (name.includes('movie') || name.includes('film') || name.includes('cinema')) {
     return { icon: 'film', color: 'pink' };
