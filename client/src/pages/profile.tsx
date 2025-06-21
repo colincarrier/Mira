@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search, Database, Bell } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, GraduationCap, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle, Folder, Search, Database, Bell } from "lucide-react";
 import type { NoteWithTodos, Collection } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";

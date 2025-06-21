@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock, Brain } from "lucide-react";
+import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -649,7 +649,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           {note.aiContext && note.aiContext !== "Enhanced AI analysis completed" && (
             <div className="mb-2">
               <div className="flex items-center space-x-1 mb-1">
-                <Brain className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+                <Zap className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
                 <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">AI Analysis</span>
               </div>
               <p className="text-xs text-[hsl(var(--foreground))] bg-blue-50 p-2 rounded-md line-clamp-2">

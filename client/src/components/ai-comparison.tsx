@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Loader2, Brain, Zap } from "lucide-react";
+import { Loader2, GraduationCap, Zap } from "lucide-react";
 
 interface ComparisonResult {
   original: string;
@@ -147,7 +147,7 @@ export default function AIComparison() {
           {/* Claude Results */}
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-orange-500 opacity-20" />
+              <GraduationCap className="w-5 h-5 text-orange-500 opacity-20" />
               <h3 className="text-lg font-semibold">Claude Results</h3>
             </div>
             

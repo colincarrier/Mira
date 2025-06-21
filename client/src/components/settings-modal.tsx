@@ -1,4 +1,4 @@
-import { ChevronLeft, Brain } from "lucide-react";
+import { ChevronLeft, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import AIComparison from "./ai-comparison";
@@ -113,7 +113,7 @@ export default function SettingsModal({ isOpen, onClose, activeTab, onTabChange,
                   className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Brain className="w-5 h-5 text-blue-500" />
+                    <Zap className="w-5 h-5 text-blue-500" />
                     <div className="text-left">
                       <p className="font-medium">AI Comparison Tool</p>
                       <p className="text-sm text-[hsl(var(--ios-gray))]">Compare OpenAI vs Claude results</p>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, Brain, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Palette, Info, Moon, Sun, Monitor, Trash2, Trophy, Zap, GraduationCap, Target, Crown, Star, TrendingUp, User, Edit3, LogIn, LogOut, X, Wifi, WifiOff, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -380,7 +380,7 @@ export default function Settings() {
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-3 border-b border-gray-100">
             <h2 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              <Brain className="w-4 h-4 text-purple-500" />
+              <GraduationCap className="w-4 h-4 text-purple-500" />
               AI Usage
             </h2>
           </div>
