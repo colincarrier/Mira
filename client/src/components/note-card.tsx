@@ -620,7 +620,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
               </li>
             ))}
           </ul>
-        ) : note.aiContext ? (
+        ) : (note.aiContext && note.aiContext !== "Enhanced AI analysis completed") ? (
           <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
             {note.aiContext}
           </p>

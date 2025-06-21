@@ -470,8 +470,8 @@ This profile was generated from your input and will help provide more personaliz
           const updates: any = {
             aiGeneratedTitle: aiGeneratedTitle, // AI-generated title with emojis and shorthand
             aiEnhanced: true,
-            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "V2 Intelligence Analysis Complete",
-            aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || "Enhanced AI analysis completed"),
+            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.action || a.label}: ${a.action || a.reasoning}`).slice(0, 2).join(", ") || "V2 Intelligence Analysis Complete",
+            aiContext: (analysis.context && analysis.context !== analysis.title) ? analysis.context : (analysis.summary || "Enhanced AI analysis completed"),
             richContext: JSON.stringify(richContextData),
             processingPath: analysis.processingPath,
             classificationScores: analysis.classificationScores,
