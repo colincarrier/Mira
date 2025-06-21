@@ -6,6 +6,7 @@ import { z } from "zod";
 export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
+  aiGeneratedTitle: text("ai_generated_title"),
   mode: text("mode").notNull(), // 'text', 'voice', 'image'
   userId: varchar("user_id").references(() => users.id),
   isShared: boolean("is_shared").default(false),

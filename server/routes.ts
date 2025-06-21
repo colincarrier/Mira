@@ -439,8 +439,8 @@ This profile was generated from your input and will help provide more personaliz
           // Track usage
           apiUsageStats.totalRequests++;
 
-          // CRITICAL: Ensure newspaper-style title enforcement (v2.0 handles this automatically)
-          const newspaperTitle = analysis.title;
+          // Generate AI title with shorthand and emojis (preserve original content)
+          const aiGeneratedTitle = analysis.title || makeTitle(note.content, note.mode);
 
           // Update note with v2.0 structured AI results - ENSURE richContext is always populated
           const richContextData = {
@@ -457,7 +457,7 @@ This profile was generated from your input and will help provide more personaliz
           };
 
           const updates: any = {
-            content: newspaperTitle, // v2.0 enforced newspaper-style title
+            aiGeneratedTitle: aiGeneratedTitle, // AI-generated title with emojis and shorthand
             aiEnhanced: true,
             aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "V2 Intelligence Analysis Complete",
             aiContext: (analysis.intent === "simple-task" && analysis.summary === analysis.title) ? "" : (analysis.summary || "Enhanced AI analysis completed"),
