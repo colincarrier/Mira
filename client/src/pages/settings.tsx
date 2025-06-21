@@ -76,24 +76,30 @@ export default function Settings() {
 
   const quickProfileMutation = useMutation({
     mutationFn: async (profileData: string) => {
-      return await apiRequest("/api/profile/quick", "POST", {
+      console.log('Submitting quick profile:', profileData.substring(0, 100) + '...');
+      const response = await apiRequest("/api/profile/quick", "POST", {
         profileData,
         userId: "demo"
       });
+      console.log('Quick profile response:', response);
+      return response;
     },
     onSuccess: (result) => {
+      console.log('Quick profile mutation success:', result);
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", "demo"] });
       toast({
-        title: "Profile Created",
+        title: "Profile Created Successfully",
         description: "Your personal bio has been generated and saved!",
       });
       setShowQuickProfile(false);
       setProfileText('');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Quick profile mutation error:', error);
       toast({
-        title: "Error",
-        description: "Failed to create profile",
+        title: "Error Creating Profile",
+        description: "Failed to create profile. Please try again.",
         variant: "destructive"
       });
     }
@@ -126,8 +132,16 @@ export default function Settings() {
   };
 
   const handleQuickProfile = () => {
+    console.log('Handle quick profile clicked, text length:', profileText.length);
     if (profileText.trim()) {
-      quickProfileMutation.mutate(profileText);
+      console.log('Triggering quick profile mutation...');
+      quickProfileMutation.mutate(profileText.trim());
+    } else {
+      toast({
+        title: "Empty Profile",
+        description: "Please enter some information about yourself first.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -640,9 +654,9 @@ export default function Settings() {
                   <button 
                     onClick={handleQuickProfile}
                     disabled={!profileText.trim() || quickProfileMutation.isPending}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {quickProfileMutation.isPending ? 'Generating...' : 'Generate AI Profile'}
+                    {quickProfileMutation.isPending ? 'Generating Profile...' : 'Add Profile'}
                   </button>
                 </div>
               </div>
