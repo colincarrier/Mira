@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
-import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
+import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock, Brain } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";

@@ -54,6 +54,8 @@ export default function Profile() {
     queryKey: ["/api/stats/api-usage"],
   });
 
+
+
   const { data: userProfile } = useQuery<{
     personalBio?: string;
     preferences?: any;
@@ -89,28 +91,48 @@ export default function Profile() {
 
   const quickProfileMutation = useMutation({
     mutationFn: async (profileData: string) => {
-      return await apiRequest("/api/profile/quick", "POST", {
+      console.log('Submitting quick profile:', profileData.substring(0, 100) + '...');
+      const response = await apiRequest("/api/profile/quick", "POST", {
         profileData,
         userId: "demo"
       });
+      console.log('Quick profile response:', response);
+      return response;
     },
     onSuccess: (result) => {
+      console.log('Quick profile mutation success:', result);
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile", "demo"] });
       toast({
-        title: "Profile Created",
+        title: "Profile Created Successfully",
         description: "Your personal bio has been generated and saved!",
       });
       setShowQuickProfile(false);
       setProfileText('');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Quick profile mutation error:', error);
       toast({
-        title: "Error",
-        description: "Failed to create profile",
+        title: "Error Creating Profile",
+        description: "Failed to create profile. Please try again.",
         variant: "destructive"
       });
     }
   });
+
+  const handleQuickProfile = () => {
+    console.log('Handle quick profile clicked, text length:', profileText.length);
+    if (profileText.trim()) {
+      console.log('Triggering quick profile mutation...');
+      quickProfileMutation.mutate(profileText.trim());
+    } else {
+      toast({
+        title: "Empty Profile",
+        description: "Please enter some information about yourself first.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const onboardingQuestions = [
     { id: 'name', question: 'What should I call you?', placeholder: 'Your preferred name...' },
@@ -136,12 +158,6 @@ export default function Profile() {
       return;
     }
     onboardingMutation.mutate(onboardingAnswers);
-  };
-
-  const handleQuickProfile = () => {
-    if (profileText.trim()) {
-      quickProfileMutation.mutate(profileText);
-    }
   };
 
   const handleClearData = async () => {
@@ -565,7 +581,94 @@ export default function Profile() {
         </div>
       )}
 
-      {/* All the existing modals remain the same... */}
+      {/* Quick Profile Modal */}
+      {showQuickProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Quick Profile</h2>
+                <button 
+                  onClick={() => {
+                    setShowQuickProfile(false);
+                    setProfileText('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Paste information about yourself - bio, resume, personality test results, or anything that helps Mira understand you better.
+                </p>
+                
+                <textarea
+                  value={profileText}
+                  onChange={(e) => setProfileText(e.target.value)}
+                  placeholder="Tell me about yourself... your role, interests, goals, work style, or anything else that would help an AI assistant understand you better."
+                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={8}
+                />
+                
+                <div className="flex gap-3 justify-end">
+                  <button 
+                    onClick={() => {
+                      setShowQuickProfile(false);
+                      setProfileText('');
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleQuickProfile}
+                    disabled={!profileText.trim() || quickProfileMutation.isPending}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {quickProfileMutation.isPending ? 'Generating Profile...' : 'Add Profile'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bio Preview Modal */}
+      {showBioPreview && userProfile?.personalBio && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Your AI Assistant Profile</h2>
+                <button 
+                  onClick={() => setShowBioPreview(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="prose prose-sm max-w-none">
+                <div className="whitespace-pre-line text-gray-700">
+                  {userProfile.personalBio}
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-6 pt-4 border-t">
+                <button 
+                  onClick={() => setShowBioPreview(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
