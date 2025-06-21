@@ -7,7 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
-import { processNote, type MiraAIInput, type MiraAIResult } from "./utils/brain/miraAIProcessing";
+import { processNote, type MiraAIInput, type MiraAIResult } from "./brain/miraAIProcessing";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -3111,7 +3111,7 @@ Provide a concise, actionable response that adds value beyond just the task titl
       });
 
       // Process with AI to create reminder
-      const miraModule = await import('./utils/brain/miraAIProcessing');
+      const miraModule = await import('./brain/miraAIProcessing');
       const analysis = await miraModule.processNote({
         content,
         mode: "text",
