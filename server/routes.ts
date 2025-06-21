@@ -456,6 +456,17 @@ This profile was generated from your input and will help provide more personaliz
             }
           };
 
+          // Debug V2 analysis structure
+          console.log("V2 Analysis structure:", {
+            hasAnalysis: !!analysis,
+            hasTodos: !!analysis.todos,
+            todosLength: analysis.todos?.length || 0,
+            hasNextSteps: !!analysis.nextSteps,
+            nextStepsLength: analysis.nextSteps?.length || 0,
+            hasEntities: !!analysis.entities,
+            entitiesLength: analysis.entities?.length || 0
+          });
+
           const updates: any = {
             aiGeneratedTitle: aiGeneratedTitle, // AI-generated title with emojis and shorthand
             aiEnhanced: true,

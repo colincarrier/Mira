@@ -642,24 +642,42 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
 
-      {/* Next Steps with New Hierarchy */}
-      {nextStepsForCard.length > 0 && (
+      {/* V2 Intelligence Content - Next Steps and AI Analysis */}
+      {(nextStepsForCard.length > 0 || (note.aiContext && note.aiContext !== "Enhanced AI analysis completed")) && (
         <div className="mb-3">
-          <div className="flex items-center space-x-1 mb-2">
-            <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Next Steps</span>
-          </div>
-          <div className="space-y-1">
-            {nextStepsForCard.map((step: string, index: number) => (
-              <div
-                key={index}
-                className="flex items-start space-x-2 text-xs p-2 bg-[#d9d5c7] rounded-md"
-              >
-                <Zap className="w-3 h-3 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" />
-                <span className="text-[hsl(var(--foreground))]">{step}</span>
+          {/* AI Context Summary */}
+          {note.aiContext && note.aiContext !== "Enhanced AI analysis completed" && (
+            <div className="mb-2">
+              <div className="flex items-center space-x-1 mb-1">
+                <Brain className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+                <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">AI Analysis</span>
               </div>
-            ))}
-          </div>
+              <p className="text-xs text-[hsl(var(--foreground))] bg-blue-50 p-2 rounded-md line-clamp-2">
+                {note.aiContext}
+              </p>
+            </div>
+          )}
+          
+          {/* Next Steps */}
+          {nextStepsForCard.length > 0 && (
+            <div>
+              <div className="flex items-center space-x-1 mb-2">
+                <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+                <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Next Steps</span>
+              </div>
+              <div className="space-y-1">
+                {nextStepsForCard.map((step: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-2 text-xs p-2 bg-[#d9d5c7] rounded-md"
+                  >
+                    <Zap className="w-3 h-3 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" />
+                    <span className="text-[hsl(var(--foreground))]">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

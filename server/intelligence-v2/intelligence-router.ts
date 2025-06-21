@@ -42,6 +42,14 @@ export class IntelligenceV2Router {
         console.log('🔄 [V2] Starting recursive analysis...');
         analysis=await this.reason.performRecursiveAnalysis(input.content,{},matches,{});
         console.log('✅ [V2] Recursive analysis completed:', analysis ? 'success' : 'empty');
+        if (analysis) {
+          console.log('📊 [V2] Analysis data:', {
+            entities: analysis.entities?.length || 0,
+            nextSteps: analysis.nextSteps?.length || 0,
+            microQuestions: analysis.microQuestions?.length || 0,
+            todos: analysis.todos?.length || 0
+          });
+        }
       }catch(e){
         console.warn('❌ [V2] Recursion failed:',e);
         // Create fallback analysis structure
@@ -92,6 +100,12 @@ export class IntelligenceV2Router {
     
     console.log('🎉 [V2] Processing complete with enhanced analysis');
     
+    // Extract structured data from analysis for compatibility
+    const entities = analysis?.immediateProcessing?.entities || [];
+    const nextSteps = analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || [];
+    const microQuestions = analysis?.recursiveReasoning?.step1Anticipation?.followUpQuestions || [];
+    const smartActions = analysis?.proactiveDelivery?.suggestedActions || [];
+    
     return{ 
       id:input.id??'temp', 
       title:makeTitle(input.content),
@@ -99,7 +113,14 @@ export class IntelligenceV2Router {
       enhancedContent:input.content, 
       timestamp:new Date().toISOString(),
       recursiveAnalysis: analysis,
-      intentVector: intent
+      intentVector: intent,
+      // V2 structured outputs for UI compatibility
+      entities: entities,
+      nextSteps: nextSteps,
+      microQuestions: microQuestions,
+      suggestedLinks: [],
+      smartActions: smartActions,
+      todos: [] // Will be handled separately in routes
     };
   }
 
