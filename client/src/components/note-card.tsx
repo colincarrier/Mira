@@ -601,23 +601,21 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         </div>
       )}
 
-      {/* Content with iOS Notes-style formatting */}
+      {/* iOS Notes-style clean content display */}
       <div className="mb-3">
-        {/* AI-Generated Title with emojis and shorthand */}
-        <h3 className={`text-lg font-semibold leading-tight mb-1 text-[hsl(var(--foreground))] ${
-          formattedContent.description || formattedContent.hasStructure ? 'line-clamp-1' : 'line-clamp-3'
+        {/* Single source of truth - show original user content as primary */}
+        <div className={`text-base leading-relaxed text-[hsl(var(--foreground))] ${
+          formattedContent.hasStructure ? '' : 'line-clamp-3'
         }`}>
-          {note.aiGeneratedTitle || formattedContent.title}
-        </h3>
-
-        {/* Description or bullets - smaller, single-spaced */}
-        {formattedContent.hasStructure ? (
-          <ul className="space-y-0.5 text-sm leading-tight text-[hsl(var(--muted-foreground))]">
-            {formattedContent.bullets.map((bullet, idx) => (
-              <li key={idx} className="flex items-start">
-                <span className="mr-2 mt-0.5 flex-shrink-0">•</span>
-                <span className="line-clamp-1">{bullet}</span>
-              </li>
+          {formattedContent.hasStructure ? (
+            <>
+              <div className="font-medium mb-1">{formattedContent.title}</div>
+              <ul className="space-y-0.5 text-sm leading-tight text-[hsl(var(--muted-foreground))]">
+                {formattedContent.bullets.map((bullet, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="mr-2 mt-0.5 flex-shrink-0">•</span>
+                    <span className="line-clamp-1">{bullet}</span>
+                  </li>
             ))}
           </ul>
         ) : note.aiContext ? (
@@ -642,42 +640,27 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
 
-      {/* V2 Intelligence Content - Next Steps and AI Analysis */}
-      {(nextStepsForCard.length > 0 || (note.aiContext && note.aiContext !== "Enhanced AI analysis completed")) && (
+      {/* V2 Intelligence Content - Next Steps Only (no redundant AI context) */}
+      {nextStepsForCard.length > 0 && (
         <div className="mb-3">
-          {/* AI Context Summary */}
-          {note.aiContext && note.aiContext !== "Enhanced AI analysis completed" && (
-            <div className="mb-2">
-              <div className="flex items-center space-x-1 mb-1">
-                <Zap className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-                <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">AI Analysis</span>
-              </div>
-              <p className="text-xs text-[hsl(var(--foreground))] bg-blue-50 p-2 rounded-md line-clamp-2">
-                {note.aiContext}
-              </p>
-            </div>
-          )}
-          
           {/* Next Steps */}
-          {nextStepsForCard.length > 0 && (
-            <div>
-              <div className="flex items-center space-x-1 mb-2">
-                <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
-                <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Next Steps</span>
-              </div>
-              <div className="space-y-1">
-                {nextStepsForCard.map((step: string, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-2 text-xs p-2 bg-[#d9d5c7] rounded-md"
-                  >
-                    <Zap className="w-3 h-3 text-[hsl(var(--primary))] mt-0.5 flex-shrink-0" />
-                    <span className="text-[hsl(var(--foreground))]">{step}</span>
-                  </div>
-                ))}
-              </div>
+          <div>
+            <div className="flex items-center space-x-1 mb-2">
+              <ArrowRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Suggested</span>
             </div>
-          )}
+            <div className="space-y-1">
+              {nextStepsForCard.map((step: string, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-start space-x-2 text-xs p-2 bg-blue-50 rounded-md"
+                >
+                  <span className="text-blue-600 mt-0.5 flex-shrink-0">•</span>
+                  <span className="text-gray-700">{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
