@@ -1,0 +1,82 @@
+###############################################################################
+#  PATCH ▸  Intelligence‑V2 Bio & Layout Fix (copy‑paste in Repl Shell)
+###############################################################################
+set -e
+
+echo "🛠 1) Standardise feature flag key"
+# feature‑flags-runtime.ts  – rename INTELLIGENCE_V2_ENABLED to match call sites
+sed -i 's/INTELLIGENCE_V2_ENABLED/FEATURE_INTELLIGENCE_V2/g' server/feature-flags-runtime.ts
+
+echo "🛠 2) Correct import path typo in intelligence-router"
+sed -i 's/\.\.\/feature-flags-runtime/..\/feature-flags-runtime/' \
+  server/intelligence-v2/intelligence-router.ts
+
+echo "🛠 3) Load user bio in routes and pass to V2 router"
+apply='
+/const note = await storage.createNote/ a\
+      const userProfile = await storage.getUser(userId || "demo");\
+\
+      const v2Input = {\
+        content,\
+        mode,\
+        noteId: note.id.toString(),\
+        userId,\
+        userProfile\
+      };\
+\
+      const v2Result = await processWithIntelligenceV2(v2Input);\
+'
+sed -i "${apply}" server/routes.ts
+
+echo "🛠 4) Use bio inside intelligence-router prompt"
+grep -q "userProfile" server/intelligence-v2/intelligence-router.ts || \
+sed -i '/async processNoteV2/a\
+    const userProfile = input.userProfile || { personalBio: "" };' \
+  server/intelligence-v2/intelligence-router.ts
+
+# inject bio into the prompt builder (simple concat)
+sed -i 's/input.content/input.content + "\nUSER_BIO:\\n" + userProfile.personalBio/' \
+  server/intelligence-v2/intelligence-router.ts
+
+echo "🛠 5) Export correct helper and call from routes"
+sed -i 's/await processNote(v2Input)/await processWithIntelligenceV2(v2Input)/' server/routes.ts
+
+echo "🛠 6) New richContext contract (title • original • aiBody)"
+cat > server/ai/presentation-composer.ts <<'EOF'
+export function composeRichContext(raw, analysis){
+  const cleanedTitle = raw.length>55? raw.slice(0,52)+'…' : raw.split('\n')[0];
+  const originalSnippet = cleanedTitle===raw? "" : raw;
+  const aiBody = buildAiBody(analysis);          // stub – implement as needed
+  return { title: cleanedTitle, original: originalSnippet, aiBody };
+}
+function buildAiBody(analysis){
+  if(!analysis) return "";
+  const bullets = analysis.proactiveDelivery?.suggestedActions?.slice(0,3).map(a=>"• "+a.action) || [];
+  return bullets.join('\n');
+}
+EOF
+
+echo "🛠 7) Call composer before saving note"
+sed -i '/richContext:/c\            richContext: JSON.stringify(composeRichContext(content, v2Result.recursiveAnalysis)),' \
+  server/routes.ts
+
+echo "🛠 8) Front‑end NoteDetail layout (Title → Original → AI)"
+cat > client/src/components/NoteDetailSimple.tsx <<'TSX'
+import React from 'react';
+export default function NoteDetailSimple({note}){
+  const rc = note.richContext ? JSON.parse(note.richContext) : {title:note.aiGeneratedTitle||note.content};
+  return(
+    <div className="p-4 space-y-4">
+      <h1 className="text-xl font-semibold">{rc.title}</h1>
+      {rc.original && <p className="text-gray-700 whitespace-pre-wrap">{rc.original}</p>}
+      {rc.aiBody && <pre className="bg-gray-50 p-3 whitespace-pre-wrap text-sm">{rc.aiBody}</pre>}
+    </div>
+  );
+}
+TSX
+
+echo "🛠 9) Swap NoteDetail route component"
+sed -i 's/NoteDetail/NoteDetailSimple/' client/src/App.tsx
+
+echo "✅  Patch applied – run  'npm run build && npm run dev'  then create a test note."
+###############################################################################
