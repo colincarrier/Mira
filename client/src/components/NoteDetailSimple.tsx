@@ -63,6 +63,15 @@ export default function NoteDetailSimple() {
     };
   }
 
+  // Debug logging
+  console.log('Note detail debug:', { 
+    noteId: note.id, 
+    hasContent: !!note.content, 
+    contentLength: note.content?.length,
+    hasRichContext: !!note.richContext,
+    rcData: rc 
+  });
+
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
       {/* Header */}
@@ -88,14 +97,14 @@ export default function NoteDetailSimple() {
 
       {/* Content */}
       <div className="p-4 space-y-4">
-        {/* Original Content */}
-        {rc.original && (
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-              {rc.original}
-            </div>
+
+        
+        {/* Note Content - Always show the actual content */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-base">
+            {note.content}
           </div>
-        )}
+        </div>
 
         {/* AI Enhancement */}
         {rc.aiBody && (

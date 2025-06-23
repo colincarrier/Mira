@@ -603,25 +603,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
       {/* iOS Notes-style clean content display */}
       <div className="mb-3">
-        {/* Single source of truth - show original user content as primary */}
-        <div className={`text-base leading-relaxed text-[hsl(var(--foreground))] ${
-          formattedContent.hasStructure ? '' : 'line-clamp-3'
-        }`}>
-          {formattedContent.hasStructure ? (
-            <>
-              <div className="font-medium mb-1">{formattedContent.title}</div>
-              <ul className="space-y-0.5 text-sm leading-tight text-[hsl(var(--muted-foreground))]">
-                {formattedContent.bullets.map((bullet, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="mr-2 mt-0.5 flex-shrink-0">•</span>
-                    <span className="line-clamp-1">{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <div className="line-clamp-3">{note.content}</div>
-          )}
+        {/* Display note content directly */}
+        <div className="text-base leading-relaxed text-gray-900 line-clamp-3">
+          {note.content}
         </div>
       </div>
 
