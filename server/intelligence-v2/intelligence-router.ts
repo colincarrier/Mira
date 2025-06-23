@@ -7,7 +7,13 @@ import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
 import { makeTitle } from '../utils/title-governor.js';
 
-export interface IntelligenceV2Input { id?:string; content:string; mode:'text'|'voice'|'image'|'file'; }
+export interface IntelligenceV2Input { 
+  id?:string; 
+  content:string; 
+  mode:'text'|'voice'|'image'|'file'; 
+  userId?: string;
+  userProfile?: any;
+}
 export interface IntelligenceV2Result { id:string; title:string; summary:string; enhancedContent:string; timestamp:string; }
 
 export class IntelligenceV2Router {
@@ -15,7 +21,8 @@ export class IntelligenceV2Router {
   constructor(openai:OpenAI){ this.vector=new VectorEngine(openai); this.reason=new RecursiveReasoningEngine(openai,this.vector); }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
-    const intent:IntentVector = await IntentVectorClassifier.classify(input.content);
+    const userProfile = input.userProfile || { personalBio: "" };
+    const intent:IntentVector = await IntentVectorClassifier.classify(input.content + "\nUSER_BIO:\n" + userProfile.personalBio);
     const notes=await storage.getAllNotes();
     const matches=await this.vector.performSemanticSearch({query:input.content,limit:10},notes);
 

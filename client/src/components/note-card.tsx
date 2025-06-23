@@ -622,10 +622,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           ) : (
             <div className="line-clamp-3">{note.content}</div>
           )}
-          <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
-            {formattedContent.description}
-          </p>
-        ) : null}
+        </div>
       </div>
 
       {/* Media Display */}

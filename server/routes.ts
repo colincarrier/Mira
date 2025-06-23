@@ -7,7 +7,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
-import { processNote, type MiraAIInput, type MiraAIResult } from "./brain/miraAIProcessing";
+import { processNote, processWithIntelligenceV2, type MiraAIInput, type MiraAIResult } from "./brain/miraAIProcessing";
+import { composeRichContext } from "./ai/presentation-composer";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -424,10 +425,15 @@ This profile was generated from your input and will help provide more personaliz
         // Import and use new orthogonal AI processing
         const miraModule = await import('./brain/miraAIProcessing');
 
+        // Load user profile for bio integration
+        const userProfile = await storage.getUser("demo");
+        
         const miraInput = {
-          id: note.id.toString(), // Pass the actual database note ID
+          id: note.id.toString(),
           content: noteData.content,
           mode: noteData.mode === 'file' ? 'text' : (noteData.mode as 'text' | 'image' | 'voice'),
+          userId: "demo",
+          userProfile,
           req: req, // Pass request for location detection
         };
 
