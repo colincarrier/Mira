@@ -1,0 +1,12 @@
+MIRA AI MEMORY ASSISTANT - COMPLETE SOURCE CODE STRUCTURE
+================================================================
+
+Project Structure:
+/client/                 - React Frontend (PWA)
+/server/                 - Express Backend
+/shared/                 - Shared Types & Schema
+/drizzle/               - Database Migrations
+/tests/                 - Test Files
+/scripts/               - Build Scripts
+
+Key Files by Component:

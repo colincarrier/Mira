@@ -616,13 +616,12 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                     <span className="mr-2 mt-0.5 flex-shrink-0">•</span>
                     <span className="line-clamp-1">{bullet}</span>
                   </li>
-            ))}
-          </ul>
-        ) : note.aiContext ? (
-          <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
-            {note.aiContext}
-          </p>
-        ) : formattedContent.description ? (
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div className="line-clamp-3">{note.content}</div>
+          )}
           <p className="text-sm leading-tight text-[hsl(var(--muted-foreground))] line-clamp-2">
             {formattedContent.description}
           </p>
