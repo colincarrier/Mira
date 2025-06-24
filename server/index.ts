@@ -11,7 +11,7 @@ process.env.FEATURE_ENHANCED_COLLECTIONS = 'true';
 process.env.FEATURE_ADVANCED_NOTIFICATIONS = 'true';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
-import routes from "./routes";
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
@@ -59,10 +59,10 @@ app.use((req, res, next) => {
   await initializeDatabase();
   await initializeStandardCollections();
 
-  app.use('/api', routes);
+  const server = await registerRoutes(app);
 
   if (app.get("env") === "development") {
-    await setupVite(app);
+    await setupVite(app, server);
   } else {
     serveStatic(app);
   }
@@ -77,7 +77,7 @@ app.use((req, res, next) => {
 
   // Use Replit's assigned PORT for preview pane compatibility, fallback to 5000
   const port = Number(process.env.PORT) || 5000;
-  const server = app.listen({
+  server.listen({
     port,
     host: "0.0.0.0",
   }, async () => {
