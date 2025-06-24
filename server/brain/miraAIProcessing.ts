@@ -413,6 +413,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     intelligenceV2Router !== null &&
     typeof intelligenceV2Router.processNoteV2 === 'function'
   ) {
+    console.log('🧠 [Mira AI] Routing to Intelligence-V2 system');
     // Use the correct V2 processing method
     const v2Result = await intelligenceV2Router.processNoteV2({
       content: input.content,
@@ -436,6 +437,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       uid: v2Result.id,
       title: v2Result.title,
       summary: v2Result.summary,
+      richContext: v2Result.richContext, // Pass through richContext from V2
       intent: analysis?.immediateProcessing?.intent || 'research',
       urgency: analysis?.immediateProcessing?.urgency || 'medium',
       complexity: analysis?.immediateProcessing?.complexity || 5,
