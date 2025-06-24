@@ -72,23 +72,30 @@ The three-layer execution plan is architecturally complete and correct:
 
 **The Blocker**: JSON parsing still fails despite markdown cleaning logic being present. The issue appears to be that the workflow restart didn't apply the fix, or there's a caching issue with the intelligence router.
 
-## NEXT STEPS TO COMPLETE
+## CURRENT TEST STATUS
 
-1. Verify markdown cleaning is actually executing in the updated router
-2. Test the complete pipeline end-to-end with a new note
-3. Confirm todos and reminders are created via persistSideEffects()
-4. Validate frontend displays rich context with proper formatting
+**Latest Test: Note 501 - "Final verification: schedule meeting with John tomorrow at 3pm"**
 
-## EXPECTED FINAL RESULT
+Processing pipeline verification:
+1. **Prompt Generation**: Three-layer schema sent to OpenAI ✓
+2. **OpenAI Response**: Awaiting JSON response with markdown wrapper
+3. **Markdown Cleaning**: Testing if cleaning logic activates
+4. **JSON Parsing**: Critical test - should parse successfully now
+5. **Side Effects**: Should create meeting todo and reminder
+6. **Database Update**: Should save richContext with proper structure
 
-Once JSON parsing is resolved, the system should:
-- Take user input: "Buy groceries: milk, bread, eggs"
-- Generate perfect prompt with three-layer schema
-- Receive clean JSON from OpenAI
-- Parse successfully and create richContext
-- Save aiEnhanced: true, richContext: {title, aiBody, perspective, etc}
-- Create 3 todos via persistSideEffects()
-- Display rich content in frontend with markdown bullets
-- Show original content in blue box if different from title
+## EXPECTED BEHAVIOR
 
-The architecture is sound - just need the JSON parsing fix to activate.
+If the three-layer execution plan works correctly:
+- **Layer A**: buildPrompt() creates perfect prompt contract
+- **Layer B**: persistSideEffects() creates todos and reminders  
+- **Layer C**: Frontend displays rich context with markdown support
+
+**Success Criteria:**
+- aiEnhanced: true
+- richContext: populated with {title, aiBody, perspective, todos, reminder}
+- New todos created for meeting preparation
+- Reminder scheduled for appropriate lead time
+- Frontend displays formatted content with markdown bullets
+
+The system architecture is complete - this test will confirm whether the JSON parsing fix resolved the core issue preventing the three-layer execution plan from functioning.

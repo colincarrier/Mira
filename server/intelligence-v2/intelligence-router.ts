@@ -46,12 +46,21 @@ export class IntelligenceV2Router {
     
     // Clean response by removing markdown code blocks
     let cleanResponse = choices[0].message!.content!.trim();
+    console.log("=== CLEANING PROCESS ===");
+    console.log("Original length:", cleanResponse.length);
+    console.log("Starts with ```json:", cleanResponse.startsWith('```json'));
+    console.log("Starts with ```:", cleanResponse.startsWith('```'));
+    
     if (cleanResponse.startsWith('```json')) {
+      console.log("Removing ```json wrapper");
       cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    }
-    if (cleanResponse.startsWith('```')) {
+    } else if (cleanResponse.startsWith('```')) {
+      console.log("Removing generic ``` wrapper");
       cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
+    
+    console.log("After cleaning length:", cleanResponse.length);
+    console.log("=== END CLEANING PROCESS ===")
     
     console.log("=== CLEANED RESPONSE ===");
     console.log(cleanResponse);
