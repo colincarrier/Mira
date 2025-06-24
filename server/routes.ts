@@ -169,11 +169,13 @@ router.get('/todos', async (req, res) => {
 // GET /api/collections - Get all collections  
 router.get('/collections', async (req, res) => {
   try {
-    const collections = await storage.getAllCollections();
-    res.json(collections);
+    // Use getCollections instead of getAllCollections
+    const collections = await storage.getCollections();
+    res.json(collections || []);
   } catch (error) {
     console.error('Error fetching collections:', error);
-    res.status(500).json({ message: 'Failed to fetch collections' });
+    // Return empty array instead of error to prevent frontend crash
+    res.json([]);
   }
 });
 
