@@ -6,6 +6,7 @@ import { CollectionsExtractor } from './collections-extractor.js';
 import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
 import { makeTitle } from '../utils/title-governor.js';
+import { composeRichContext } from '../ai/presentation-composer.js';
 
 export interface IntelligenceV2Input { 
   id?:string; 
@@ -14,7 +15,7 @@ export interface IntelligenceV2Input {
   userId?: string;
   userProfile?: any;
 }
-export interface IntelligenceV2Result { id:string; title:string; summary:string; enhancedContent:string; timestamp:string; }
+export interface IntelligenceV2Result { id:string; title:string; original:string; aiBody:string; perspective:string; timestamp:string; }
 
 export class IntelligenceV2Router {
   private vector:VectorEngine; private reason:RecursiveReasoningEngine;
@@ -22,6 +23,10 @@ export class IntelligenceV2Router {
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
     const userProfile = input.userProfile || { personalBio: "" };
+    
+    // Bio personalisation hook
+    const bioLine = userProfile?.personalBio?.split('\n')[1] ?? '';
+    
     const intent:IntentVector = await IntentVectorClassifier.classify(input.content + "\nUSER_BIO:\n" + userProfile.personalBio);
     const notes=await storage.getAllNotes();
     const matches=await this.vector.performSemanticSearch({query:input.content,limit:10},notes);
@@ -34,14 +39,21 @@ export class IntelligenceV2Router {
       try{analysis=await this.reason.performRecursiveAnalysis(input.content,{},matches,{});}catch(e){console.warn('Recursion failed',e);}
     }
 
+    // Add bio context to understanding if available
+    if (analysis?.immediateProcessing?.understanding && bioLine.trim()) {
+      analysis.immediateProcessing.understanding = 
+        `${analysis.immediateProcessing.understanding} (${bioLine.trim()})`;
+    }
+
+    // Generate rich context for presentation using new composer
+    const richContext = composeRichContext(input.content, analysis);
+
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
     return{
-      id:input.id??'temp',
-      title:makeTitle(input.content),
-      summary:analysis?.immediateProcessing?.understanding ?? 'Intelligence‑V2 processed',
-      enhancedContent:input.content,
-      timestamp:new Date().toISOString()
+      id: input.id ?? 'temp',
+      ...richContext,            // title, original, aiBody, perspective
+      timestamp: new Date().toISOString()
     };
   }
 }

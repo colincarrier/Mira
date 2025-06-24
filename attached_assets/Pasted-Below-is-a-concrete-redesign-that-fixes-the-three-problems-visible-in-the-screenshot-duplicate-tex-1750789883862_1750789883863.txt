@@ -1,0 +1,149 @@
+Below is a concrete redesign that fixes the three problems visible in the screenshot — duplicate text, meaningless “Deep semantic comprehension”, and title that doesn’t feel like an iOS‑Notes heading — while still exposing V2’s deep reasoning in a way that’s subtle but useful.
+
+## 1 · New display contract for every note
+
+Zone	What shows	Source field
+A Title bar	AI‑cleaned title (≤ 45 chars, Camel‑case, no period)	richContext.title
+B Original snippet
+(only if needed)	What the user actually typed (wrapped)	richContext.original
+C Smart note body	Concise AI help — bullets, links, or paragraph	richContext.aiBody
+D Muted “Why / Next”	two tiny sentences: reasoning + next action	richContext.perspective
+
+If the original text ≤ 45 chars and becomes the title, Zone B is omitted — no duplication.
+
+## 2 · Algorithm to generate the four fields
+
+ts
+Copy
+function composeRichContext(raw: string, analysis: RecursiveAnalysis): RichContext {
+  // ------------ A  Title ------------
+  const cleaned = raw.trim().replace(/\s+/g,' ');
+  const title = cleaned.length <= 45 ? cleaned
+        : (cleaned.slice(0, 42) + '…');
+
+  // show original only if it differs
+  const original = cleaned === title ? "" : raw;
+
+  // ------------ C  AI body ------------
+  let aiBody = "";
+  if (analysis?.immediateProcessing?.intent === 'remind') {
+    aiBody = `• Reminder set for ${analysis.temporalAnalysis.explicitTimes[0]?.parsed}`;
+  } else if (analysis?.proactiveDelivery?.suggestedActions?.length) {
+    aiBody = analysis.proactiveDelivery.suggestedActions
+               .slice(0,3)
+               .map(a => '• ' + a.action)
+               .join('\n');
+  } else if (analysis?.contextualIntelligence?.crossReferences?.length) {
+    aiBody = analysis.contextualIntelligence.crossReferences
+               .slice(0,2)
+               .map(c => `• Related note #${c.contentId} (${(c.strength*100).toFixed(0)} %)`)
+               .join('\n');
+  }
+
+  // fallback to NOTHING – never emit “Deep semantic comprehension”
+  if (!aiBody.trim()) aiBody = "";
+
+  // ------------ D  Perspective ------------
+  const p1 = analysis?.immediateProcessing?.understanding?.slice(0,80);
+  const p2 = analysis?.recursiveReasoning?.step1Anticipation?.likelyNextNeeds?.[0];
+  const perspective = [p1, p2].filter(Boolean).join('\n');
+
+  return { title, original, aiBody, perspective };
+}
+The string “Deep semantic comprehension” came from the old default summary; the above logic removes it unless real content exists.
+
+## 3 · Back‑end patch (three files)
+
+### 3.1 presentation-composer.ts
+
+Replace its export with the function above.
+
+### 3.2 intelligence-router.ts
+
+ts
+Copy
+import { composeRichContext } from '../ai/presentation-composer';
+
+...
+
+const richContext = composeRichContext(input.content, analysis);
+
+return {
+   id: input.id ?? 'temp',
+   ...richContext,            // title, original, aiBody, perspective
+   timestamp: new Date().toISOString()
+};
+### 3.3 routes.ts (note creation update block)
+
+ts
+Copy
+await storage.updateNote(note.id, {
+   aiGeneratedTitle: v2Result.title,       // still stored
+   richContext: JSON.stringify(v2Result),  // store whole object
+   aiEnhanced: true,
+   isProcessing: false
+});
+## 4 · Front‑end: new minimal NoteDetail component
+
+tsx
+Copy
+import React from 'react';
+export default function NoteDetail({note}){
+  const rc = note.richContext ? JSON.parse(note.richContext) : {};
+  return (
+    <div className="space-y-6 px-4 py-6">
+      {/* Title bar styled like iOS heading */}
+      <h1 className="text-2xl font-semibold leading-snug">{rc.title}</h1>
+
+      {/* Original snippet (only if needed) */}
+      {rc.original && (
+        <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap">
+          {rc.original}
+        </div>
+      )}
+
+      {/* AI body */}
+      {rc.aiBody && (
+        <pre className="whitespace-pre-wrap text-base leading-relaxed">{rc.aiBody}</pre>
+      )}
+
+      {/* Perspective */}
+      {rc.perspective && (
+        <p className="text-xs text-gray-500 whitespace-pre-wrap">{rc.perspective}</p>
+      )}
+    </div>
+  );
+}
+Remove the old “What you wrote:” heading—the blue box itself signals it.
+
+## 5 · Bio personalisation hook (single line)
+
+In intelligence-router.ts, after you load userProfile:
+
+ts
+Copy
+const bioLine = userProfile?.personalBio?.split('\n')[1] ?? '';
+analysis.immediateProcessing.understanding =
+  `${analysis.immediateProcessing.understanding} (${bioLine.trim()})`;
+Now comprehension sentences reflect the user’s identity (“Hands‑on developer” etc.).
+
+## 6 · What users will see (for your IVF gift note)
+
+pgsql
+Copy
+get Adam and Dana a gift…
+────────────────────────────
+What you wrote
+get Adam and Dana a gift symbolizing good luck
+with their IVF appointment happening tomorrow.
+They live in Malibu on Busch road
+────────────────────────────
+• Reminder set for tomorrow 09:00
+• Check Malibu same‑day delivery options
+────────────────────────────
+I matched a fertility‑related gift idea. Next I’ll pull 3 eco‑friendly options before 08:00.
+No duplicate paragraph, no meaningless filler, clear next actions.
+
+### Copy‑paste
+
+Apply the three backend edits and swap the NoteDetail component; rebuild the frontend.

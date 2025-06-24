@@ -47,30 +47,7 @@ export default function NoteDetailSimple() {
     );
   }
 
-  // Parse rich context for new layout
-  let rc;
-  try {
-    rc = note.richContext ? JSON.parse(note.richContext) : { 
-      title: note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
-      original: note.content,
-      aiBody: note.aiContext || ''
-    };
-  } catch (e) {
-    rc = { 
-      title: note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
-      original: note.content,
-      aiBody: note.aiContext || ''
-    };
-  }
-
-  // Debug logging
-  console.log('Note detail debug:', { 
-    noteId: note.id, 
-    hasContent: !!note.content, 
-    contentLength: note.content?.length,
-    hasRichContext: !!note.richContext,
-    rcData: rc 
-  });
+  const rc = note.richContext ? JSON.parse(note.richContext) : {};
 
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
@@ -96,53 +73,25 @@ export default function NoteDetailSimple() {
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-4">
+      <div className="space-y-6 px-4 py-6">
+        {/* Title bar styled like iOS heading */}
+        <h1 className="text-2xl font-semibold leading-snug">{rc.title}</h1>
 
-        
-        {/* Note Content - Always show the actual content */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-base">
-            {note.content}
-          </div>
-        </div>
-
-        {/* AI Enhancement */}
-        {rc.aiBody && (
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">AI Analysis</h3>
-            <pre className="whitespace-pre-wrap text-sm text-blue-800">
-              {rc.aiBody}
-            </pre>
+        {/* Original snippet (only if needed) */}
+        {rc.original && (
+          <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap">
+            {rc.original}
           </div>
         )}
 
-        {/* Todos */}
-        {note.todos && note.todos.length > 0 && (
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Action Items</h3>
-            <div className="space-y-2">
-              {note.todos.map((todo) => (
-                <div key={todo.id} className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded border-2 mt-0.5 flex-shrink-0 ${
-                    todo.completed 
-                      ? 'bg-green-500 border-green-500' 
-                      : 'border-gray-300'
-                  }`}>
-                    {todo.completed && (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                      </div>
-                    )}
-                  </div>
-                  <span className={`text-sm ${
-                    todo.completed ? 'text-gray-500 line-through' : 'text-gray-700'
-                  }`}>
-                    {todo.title}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* AI body */}
+        {rc.aiBody && (
+          <pre className="whitespace-pre-wrap text-base leading-relaxed">{rc.aiBody}</pre>
+        )}
+
+        {/* Perspective */}
+        {rc.perspective && (
+          <p className="text-xs text-gray-500 whitespace-pre-wrap">{rc.perspective}</p>
         )}
       </div>
     </div>

@@ -474,13 +474,9 @@ This profile was generated from your input and will help provide more personaliz
           });
 
           const updates: any = {
-            aiGeneratedTitle: aiGeneratedTitle, // AI-generated title with emojis and shorthand
+            aiGeneratedTitle: v2Result.title,       // still stored
+            richContext: JSON.stringify(v2Result),  // store whole object
             aiEnhanced: true,
-            aiSuggestion: analysis.smartActions?.map((a: any) => `${a.action || a.label}: ${a.action || a.reasoning}`).slice(0, 2).join(", ") || "V2 Intelligence Analysis Complete",
-            aiContext: (analysis.context && analysis.context !== analysis.title) ? analysis.context : (analysis.summary || "Enhanced AI analysis completed"),
-            richContext: JSON.stringify(richContextData),
-            processingPath: analysis.processingPath,
-            classificationScores: analysis.classificationScores,
             isProcessing: false
           };
 
