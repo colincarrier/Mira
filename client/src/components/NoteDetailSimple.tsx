@@ -11,6 +11,8 @@ export default function NoteDetailSimple() {
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
+    staleTime: 60000, // Cache individual notes for 1 minute
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
   if (isLoading) {

@@ -127,9 +127,9 @@ export class DatabaseStorage implements IStorage {
         protectedContent: notes.protectedContent,
         processingPath: notes.processingPath,
         classificationScores: notes.classificationScores
-      }).from(notes).orderBy(desc(notes.createdAt)),
-      db.select().from(todos),
-      db.select().from(collections)
+      }).from(notes).orderBy(desc(notes.createdAt)).limit(50), // Limit to 50 most recent notes
+      db.select().from(todos).limit(200), // Limit todos query
+      db.select().from(collections).limit(20) // Limit collections query
     ]);
 
     // Group todos by noteId for efficient lookup

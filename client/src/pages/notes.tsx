@@ -20,8 +20,9 @@ export default function Notes() {
   // Check for any notes currently being processed with optimized caching
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
-    staleTime: 30000, // Cache for 30 seconds to reduce requests
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 120000, // Cache for 2 minutes for faster navigation
+    gcTime: 600000, // Keep in cache for 10 minutes
+    refetchOnMount: false, // Don't refetch when component mounts if data is fresh
   });
   
   const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
