@@ -469,7 +469,6 @@ This profile was generated from your input and will help provide more personaliz
             aiSuggestion: parsed.perspective || '',
             aiContext: "Reprocessed with V2"
           });
-            aiGeneratedTitle: parsed.title,
             richContext: JSON.stringify(parsed),
             aiEnhanced: true,
             isProcessing: false,
