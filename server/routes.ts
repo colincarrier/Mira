@@ -474,14 +474,14 @@ This profile was generated from your input and will help provide more personaliz
           });
 
           const updates: any = {
-            aiGeneratedTitle: v2Result.richContext?.title || v2Result.title,
-            richContext: JSON.stringify(v2Result.richContext),
+            aiGeneratedTitle: analysis.title || aiGeneratedTitle,
+            richContext: JSON.stringify(analysis.richContext || {}),
             aiEnhanced: true,
             isProcessing: false
           };
 
-          console.log("Saving v2Result data:", v2Result);
-          console.log("RichContext data:", v2Result.richContext);
+          console.log("Saving analysis data:", analysis);
+          console.log("RichContext data:", analysis.richContext);
           console.log("Full update payload:", JSON.stringify(updates, null, 2));
 
           try {
