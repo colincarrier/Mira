@@ -422,22 +422,6 @@ This profile was generated from your input and will help provide more personaliz
         return res.status(404).json({ message: "Note not found" });
       }
       
-      // Reset processing state
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-        isProcessing: true,
-        aiEnhanced: false,
-        richContext: null,
-        aiSuggestion: null,
-        aiContext: null
-      });
-      
       // Load user profile for bio integration
       const userProfile = await storage.getUser("demo");
       
@@ -464,19 +448,8 @@ This profile was generated from your input and will help provide more personaliz
           
           const parsed = analysis.richContext || analysis;
           
-          // Persist side effects
-          const { persistSideEffects } = await import('./ai/persist-side-effects');
-          await persistSideEffects(parsed, noteId);
-          
           // Update note with results
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
+          await storage.updateNote(noteId, {
             aiGeneratedTitle: parsed.title,
             richContext: JSON.stringify(parsed),
             aiEnhanced: true,
@@ -489,11 +462,7 @@ This profile was generated from your input and will help provide more personaliz
         })
         .catch(async (error) => {
           console.error("Reprocessing failed for note:", noteId, error);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
+          await storage.updateNote(noteId, {
           aiEnhanced:true,
           isProcessing:false
         });
