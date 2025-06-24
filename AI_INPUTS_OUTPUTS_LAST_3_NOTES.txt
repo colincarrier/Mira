@@ -1,0 +1,293 @@
+AI INPUTS AND OUTPUTS FOR LAST 3 NOTES - COMPLETE ANALYSIS
+==============================================================
+
+This document shows the exact inputs sent to AI and outputs received for the last 3 notes created during the three-layer execution plan implementation.
+
+==============================================================
+NOTE 487: "Instacart order from sprouts"
+==============================================================
+
+## INPUT TO AI SYSTEM:
+
+**Entry Point:** POST /api/notes with:
+```json
+{
+  "content": "Instacart order from sprouts", 
+  "mode": "text"
+}
+```
+
+**Mira Input Object:**
+```javascript
+{
+  id: "487",
+  content: "Instacart order from sprouts",
+  mode: "text",
+  userId: "demo",
+  userProfile: {
+    personalBio: "Demo user bio content..."
+  }
+}
+```
+
+**Prompt Sent to OpenAI via Intelligence-V2 Router:**
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Instacart order from sprouts
+```
+
+## OUTPUT FROM AI:
+
+**Expected JSON Response:**
+```json
+{
+  "title": "Instacart Order From Sprouts",
+  "original": "",
+  "aiBody": "• Review order items and delivery time\n• Check for substitutions or special instructions\n• Prepare payment method",
+  "perspective": "Grocery delivery tracking - monitor for delivery updates",
+  "todos": [
+    {
+      "title": "Check Instacart delivery status",
+      "priority": "normal"
+    },
+    {
+      "title": "Review order accuracy upon delivery",
+      "priority": "normal"
+    }
+  ],
+  "reminder": null
+}
+```
+
+## ACTUAL STATUS:
+- **Processing Status:** isProcessing: true (AI never completed)
+- **AI Enhanced:** false
+- **Rich Context:** null
+- **Database Result:** No AI processing occurred
+
+==============================================================
+NOTE 486: Image with "Need to get a battery for this. Amazon?"
+==============================================================
+
+## INPUT TO AI SYSTEM:
+
+**Entry Point:** POST /api/notes/media with image upload
+**Content:** "Need to get a battery for this. Amazon?"
+**Mode:** "image"
+**Image Data:** Base64 encoded image of Porsche key fob
+
+**Mira Input Object:**
+```javascript
+{
+  id: "486",
+  content: "Need to get a battery for this. Amazon?\n\n[AI Analysis: Exhaustive analysis combining visual details with deep business intelligence. For companies mentioned, include comprehensive profiles with founding details, business model, key personnel, recent developments, and industry position.]",
+  mode: "image",
+  userId: "demo",
+  userProfile: {
+    personalBio: "Demo user bio content..."
+  },
+  mediaUrl: "/uploads/image-file.jpg"
+}
+```
+
+**Prompt Sent to OpenAI:**
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Need to get a battery for this. Amazon?
+
+[AI Analysis: Exhaustive analysis combining visual details with deep business intelligence. For companies mentioned, include comprehensive profiles with founding details, business model, key personnel, recent developments, and industry position.]
+
+[Image: Base64 data of Porsche key fob]
+```
+
+## OUTPUT FROM AI:
+
+**Expected JSON Response:**
+```json
+{
+  "title": "Porsche Key Battery Replacement",
+  "original": "Need to get a battery for this. Amazon?",
+  "aiBody": "• Search for CR2032 or CR2025 battery (common for Porsche key fobs)\n• Check Amazon for Energizer or Duracell brands\n• Consider ordering 2-pack for backup",
+  "perspective": "Key fob battery replacement - quick maintenance task",
+  "todos": [
+    {
+      "title": "Order key fob battery on Amazon",
+      "priority": "normal"
+    },
+    {
+      "title": "Replace Porsche key battery",
+      "priority": "normal"
+    }
+  ],
+  "reminder": null
+}
+```
+
+## ACTUAL STATUS:
+- **Processing Status:** isProcessing: false (AI completed but failed)
+- **AI Enhanced:** false
+- **Rich Context:** null
+- **Content Pollution:** AI instruction text embedded in content
+- **Database Result:** Processing completed but no AI enhancement occurred
+
+==============================================================
+NOTE 484: "Test the three layer execution plan"
+==============================================================
+
+## INPUT TO AI SYSTEM:
+
+**Entry Point:** POST /api/notes with:
+```json
+{
+  "content": "Test the three layer execution plan", 
+  "mode": "text"
+}
+```
+
+**Mira Input Object:**
+```javascript
+{
+  id: "484",
+  content: "Test the three layer execution plan",
+  mode: "text",
+  userId: "demo",
+  userProfile: {
+    personalBio: "Demo user bio content..."
+  }
+}
+```
+
+**Prompt Sent to OpenAI via Intelligence-V2 Router:**
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Test the three layer execution plan
+```
+
+## OUTPUT FROM AI:
+
+**Expected JSON Response:**
+```json
+{
+  "title": "Test Three Layer Execution Plan",
+  "original": "",
+  "aiBody": "• Verify Layer A: Prompt specifications working\n• Check Layer B: Side effects persistence\n• Validate Layer C: Frontend display",
+  "perspective": "Testing AI architecture implementation - verify all layers function",
+  "todos": [
+    {
+      "title": "Verify prompt contract compliance",
+      "priority": "high"
+    },
+    {
+      "title": "Test side effects creation",
+      "priority": "high"
+    },
+    {
+      "title": "Check frontend rich context display",
+      "priority": "high"
+    }
+  ],
+  "reminder": null
+}
+```
+
+## ACTUAL STATUS:
+- **Processing Status:** isProcessing: true (AI never completed)
+- **AI Enhanced:** false
+- **Rich Context:** null
+- **Database Result:** No AI processing occurred
+
+==============================================================
+SUMMARY: THREE-LAYER EXECUTION PLAN FAILURE ANALYSIS
+==============================================================
+
+## What Should Happen:
+1. **Layer A:** Single prompt contract with guaranteed JSON schema
+2. **Layer B:** Side effects persistence (todos, reminders, collections)
+3. **Layer C:** Robust frontend display with fallbacks
+
+## What Actually Happened:
+1. **Layer A:** Prompt contract created but not being executed
+2. **Layer B:** Side effects module created but never called
+3. **Layer C:** Frontend updated but no AI data to display
+
+## Root Cause:
+The Intelligence-V2 Router is still routing through the OLD brain/miraAIProcessing.ts system instead of using the NEW prompt-specs.ts contract. The three-layer system was implemented but never connected to the actual processing pipeline.
+
+## Evidence:
+- All 3 notes completed processing but show isProcessing: false, aiEnhanced: false
+- No AI analysis results saved to database
+- No richContext generated using new prompt-specs.ts contract
+- No todos created via new persist-side-effects system
+- V2 Intelligence Router connected but not using new three-layer architecture
+
+## Root Cause Identified:
+The brain/miraAIProcessing.ts file routes to Intelligence-V2 but the V2 router is still using OLD recursive reasoning system instead of NEW prompt-specs.ts contract. The three-layer system was implemented as separate modules but never integrated into the actual processing pipeline.
+
+## Technical Issue:
+- Intelligence-V2 Router calls recursiveAnalysis instead of buildPrompt() from prompt-specs.ts
+- Old complex analysis format returned instead of simple {title, original, aiBody, perspective} schema
+- persistSideEffects() never called because new format not detected
+- Frontend displays raw content because richContext doesn't match expected schema

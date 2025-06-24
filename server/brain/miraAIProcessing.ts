@@ -414,40 +414,30 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     typeof intelligenceV2Router.processNoteV2 === 'function'
   ) {
     console.log('🧠 [Mira AI] Routing to Intelligence-V2 system');
-    // Use the correct V2 processing method
+    // Use the correct V2 processing method with userProfile
     const v2Result = await intelligenceV2Router.processNoteV2({
       content: input.content,
       mode: input.mode,
-      id: uid // Use generated uid
+      id: uid,
+      userProfile: input.userProfile
     });
 
-    // Map V2 result to expected V1 format for compatibility
-    const analysis = v2Result.recursiveAnalysis || {};
+    console.log('🧠 [V2] Direct three-layer result:', v2Result);
     
-    console.log('🔄 [V2→V1] Mapping analysis data:', {
-      hasAnalysis: !!analysis,
-      hasImmediate: !!analysis?.immediateProcessing,
-      hasRecursive: !!analysis?.recursiveReasoning,
-      hasProactive: !!analysis?.proactiveDelivery,
-      entitiesCount: analysis?.immediateProcessing?.entities?.length || 0,
-      actionsCount: analysis?.proactiveDelivery?.suggestedActions?.length || 0
-    });
-    
+    // V2 now returns the exact three-layer format: {title, original, aiBody, perspective, todos, reminder}
+    // No mapping needed - pass through directly
     return {
       uid: v2Result.id,
-      title: v2Result.title,
-      summary: v2Result.summary,
-      richContext: v2Result.richContext, // Pass through richContext from V2
-      intent: analysis?.immediateProcessing?.intent || 'research',
-      urgency: analysis?.immediateProcessing?.urgency || 'medium',
-      complexity: analysis?.immediateProcessing?.complexity || 5,
+      title: v2Result.title || v2Result.richContext?.title,
+      summary: v2Result.richContext?.perspective || '',
+      richContext: v2Result.richContext, // This is the three-layer format
+      intent: 'general',
+      urgency: 'medium',
+      complexity: 5,
       confidence: 0.9,
-      todos: analysis?.proactiveDelivery?.suggestedActions?.map((action: any) => ({
-        title: action.action,
-        priority: action.priority > 7 ? 'high' : action.priority > 5 ? 'medium' : 'low'
-      })) || [],
-      smartActions: analysis?.proactiveDelivery?.suggestedActions?.map((action: any) => ({
-        label: action.action,
+      todos: v2Result.richContext?.todos || [],
+      smartActions: (v2Result.richContext?.todos || []).map((todo: any) => ({
+        label: todo.title,
         action: action.reasoning
       })) || [],
       entities: analysis?.immediateProcessing?.entities?.map((entity: any) => ({
