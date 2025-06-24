@@ -1,0 +1,160 @@
+Below is a three‑layer execution plan that puts us back on the original Intelligence‑V2 vision and makes the system deterministically deliver the right content‑→UI flow every time.
+
+## Layer A – Prompt & Output Contract (smarter, controllable)
+
+### A‑1 Single author‑source of truth
+Create /server/ai/prompt‑specs.ts:
+
+ts
+Copy
+export const PROMPT_HEADER = /* md */`
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+`;
+
+export function buildPrompt(userBio:string, note:string){
+  return PROMPT_HEADER + `\nUSER_BIO:\n${userBio}\nNOTE_TEXT:\n${note}`;
+}
+All future prompt tweaks happen once here; the router just imports it.
+
+### A‑2 Router uses contract
+
+ts
+Copy
+import { buildPrompt } from '../ai/prompt-specs';
+
+const prompt = buildPrompt(userProfile.personalBio || "", input.content);
+const { choices } = await openai.chat.completions.create({
+   model:'gpt-4o',
+   messages:[{role:'system', content:prompt}],
+   temperature:0.4
+});
+const parsed = JSON.parse(choices[0].message!.content);
+Now every AI response matches the schema the frontend expects.
+
+## Layer B – Back‑end processing & DB writes
+
+### B‑1 Create helper to persist todos / reminders / collections
+
+ts
+Copy
+import { storage } from '../storage';
+export async function persistSideEffects(parsed, noteId:number){
+  // Todos
+  for (const t of parsed.todos){
+     await storage.createTodo({ title:t.title, priority:t.priority, noteId });
+  }
+  // Reminder
+  if (parsed.reminder?.timeISO){
+     await storage.createReminder({
+        title: parsed.title,
+        reminderTime: new Date(parsed.reminder.timeISO),
+        noteId
+     });
+  }
+  // Bullet‑to‑collection (sample)
+  if (parsed.aiBody.startsWith('•')) {
+     const bullets = parsed.aiBody.split('\n').map(b=>b.replace(/^•\s*/,''));
+     const col = await storage.findOrCreateSmartCollection('Bullets');
+     for (const text of bullets){
+        await storage.createItem({ title:text, type:'bullet', collectionId:col.id, sourceNoteId:noteId });
+     }
+  }
+}
+### B‑2 routes.ts update path
+
+ts
+Copy
+const parsed = v2Result;               // already JSON from router
+await persistSideEffects(parsed, note.id);
+
+await storage.updateNote(note.id,{
+   aiGeneratedTitle: parsed.title,
+   richContext     : JSON.stringify(parsed),
+   aiEnhanced      : true,
+   isProcessing    : false
+});
+## Layer C – Frontend robust display (never blank)
+
+### C‑1 Unified NoteDetail component
+
+tsx
+Copy
+const rc = note.richContext ? JSON.parse(note.richContext) : {};
+const safe = {
+  title: rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
+  original: rc.original || ((rc.title||'') !== note.content ? note.content : ''),
+  aiBody: rc.aiBody || '',
+  perspective: rc.perspective || ''
+};
+
+return (
+ <div className="p-5 space-y-5">
+   <h1 className="text-2xl font-semibold">{safe.title}</h1>
+
+   {safe.original && (
+     <div className="bg-blue-50 rounded p-4 text-sm whitespace-pre-wrap">
+       {safe.original}
+     </div>
+   )}
+
+   {safe.aiBody && (
+     <div className="prose whitespace-pre-wrap" dangerouslySetInnerHTML={{__html: mdToHtml(safe.aiBody)}}/>
+   )}
+
+   {safe.perspective && (
+     <p className="text-xs text-gray-500 whitespace-pre-wrap">{safe.perspective}</p>
+   )}
+ </div>
+);
+(Add a tiny mdToHtml helper or use marked; this gives bullets, bold, links.)
+
+### C‑2 Todos, reminders, collections pages need no change – they already read their tables.
+
+## Execution checklist for you
+
+Add prompt-specs.ts; export buildPrompt.
+
+Import & use buildPrompt in intelligence-router.ts.
+
+Remove any legacy prompt blocks (like “Exhaustive visual analysis…”).
+
+Replace router result mapping with parsed (schema‑compliant).
+
+Add persistSideEffects(parsed,note.id) before updating note.
+
+Swap NoteDetail component for the robust version above.
+
+Rebuild, create notes:
+
+“Buy groceries: milk, bread, eggs” → should create three todos & a collection “Bullets”.
+
+“Pick up dry cleaning Fri 17:00” → should generate a high‑priority todo + reminder 16:50.
+
+“Send poem to GF” → AI body shows 3 poem drafts; perspective says “Next I’ll refine meter”.
+
+## Why this solves the current pain points
+
+Single prompt spec avoids drift; UI & DB take exactly what the model returns.
+
+No generic filler lines – if aiBody is empty, nothing is shown.
+
+Backend side‑effects (todos, reminders, collections) are created in the same transaction, so pages always stay in sync.
+
+Frontend fall‑backs guarantee content even if AI temporarily fails.
+

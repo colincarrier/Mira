@@ -6,7 +6,7 @@ import { CollectionsExtractor } from './collections-extractor.js';
 import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
 import { makeTitle } from '../utils/title-governor.js';
-import { composeRichContext } from '../ai/presentation-composer.js';
+import { buildPrompt } from '../ai/prompt-specs.js';
 
 export interface IntelligenceV2Input { 
   id?:string; 
@@ -18,53 +18,33 @@ export interface IntelligenceV2Input {
 export interface IntelligenceV2Result { id:string; title:string; original:string; aiBody:string; perspective:string; timestamp:string; }
 
 export class IntelligenceV2Router {
-  private vector:VectorEngine; private reason:RecursiveReasoningEngine;
-  constructor(openai:OpenAI){ this.vector=new VectorEngine(openai); this.reason=new RecursiveReasoningEngine(openai,this.vector); }
+  private vector:VectorEngine; private reason:RecursiveReasoningEngine; private openai:OpenAI;
+  constructor(openai:OpenAI){ this.openai=openai; this.vector=new VectorEngine(openai); this.reason=new RecursiveReasoningEngine(openai,this.vector); }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
     const userProfile = input.userProfile || { personalBio: "" };
     
-    // Bio personalisation hook
-    const bioLine = userProfile?.personalBio?.split('\n')[1] ?? '';
+    const prompt = buildPrompt(userProfile.personalBio || "", input.content);
     
-    const intent:IntentVector = await IntentVectorClassifier.classify(input.content + "\nUSER_BIO:\n" + userProfile.personalBio);
-    const notes=await storage.getAllNotes();
-    const matches=await this.vector.performSemanticSearch({query:input.content,limit:10},notes);
-
-    if(FEATURE_FLAGS.ENHANCED_COLLECTIONS_ENABLED){
-      await CollectionsExtractor.extract(input.id??'',input.content);
-    }
-
-    let analysis; if(FEATURE_FLAGS.RECURSIVE_REASONING_ENABLED){
-      try{analysis=await this.reason.performRecursiveAnalysis(input.content,{},matches,{});}catch(e){console.warn('Recursion failed',e);}
-    }
-
-    // Add bio context to understanding if available
-    if (analysis?.immediateProcessing?.understanding && bioLine.trim()) {
-      analysis.immediateProcessing.understanding = 
-        `${analysis.immediateProcessing.understanding} (${bioLine.trim()})`;
-    }
-
-    // Generate rich context for presentation using new composer
-    const richContext = composeRichContext(input.content, analysis);
+    const { choices } = await this.openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'system', content: prompt }],
+      temperature: 0.4
+    });
+    
+    const parsed = JSON.parse(choices[0].message!.content!);
 
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
     console.log("=== V2 ROUTER OUTPUT DEBUG ===");
-    console.log("Generated richContext:", richContext);
-    console.log("Final V2 result structure:", {
-      id: input.id ?? 'temp',
-      timestamp: new Date().toISOString(),
-      richContext,
-      ...richContext
-    });
+    console.log("Generated parsed result:", parsed);
     console.log("=== END V2 DEBUG ===");
 
     return{
       id: input.id ?? 'temp',
       timestamp: new Date().toISOString(),
-      richContext,                    // attach here
-      ...richContext                  // keep title/body in root for convenience
+      richContext: parsed,
+      ...parsed
     };
   }
 }
