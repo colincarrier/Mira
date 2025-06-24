@@ -344,14 +344,10 @@ This profile was generated from your input and will help provide more personaliz
 
       for (const note of notes) {
         if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
+          await storage.updateNote(note.id, {
+            aiSuggestion: "",
+            aiContext: "Content cleaned"
+          });
           cleaned++;
         }
       }
@@ -593,11 +589,11 @@ This profile was generated from your input and will help provide more personaliz
           });
 
           const updates: any = {
-            aiGeneratedTitle: parsed.title,
-            richContext: JSON.stringify(parsed),
+            aiGeneratedTitle: v2Result.title,
+            richContext: JSON.stringify(v2Result.richContext || v2Result),
             aiEnhanced: true,
             isProcessing: false,
-            aiSuggestion: parsed.perspective || '',
+            aiSuggestion: v2Result.richContext?.perspective || '',
             aiContext: "V2 processing completed"
           };
 
