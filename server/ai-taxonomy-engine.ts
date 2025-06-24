@@ -209,8 +209,8 @@ export async function analyzeTaxonomy(content: string): Promise<TaxonomyAnalysis
 }
 
 function generateContextualInsights(category: string, content: string): string[] {
-  // Generate specific insights based on category and content
-  const insights: Record<string, string[]> = {
+  // AI should generate insights, not hardcoded templates
+  return [];
     food_decision: [
       'Consider checking recent reviews for food safety',
       'Peak dining times may require reservations',
