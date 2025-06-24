@@ -344,28 +344,10 @@ This profile was generated from your input and will help provide more personaliz
 
       for (const note of notes) {
         if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
+          await storage.updateNote(note.id, {
+            aiSuggestion: "",
+            aiContext: "Cleaned problematic suggestion"
+          });
           cleaned++;
         }
       }
@@ -441,21 +423,7 @@ This profile was generated from your input and will help provide more personaliz
       }
       
       // Reset processing state and initialize V2 processing
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
+      await storage.updateNote(note.id, {
         isProcessing: true,
         aiEnhanced: false,
         richContext: null,
@@ -489,33 +457,18 @@ This profile was generated from your input and will help provide more personaliz
           
           const parsed = analysis.richContext || analysis;
           
-          // Persist side effects
+          // Persist side effects and update note with results
           const { persistSideEffects } = await import('./ai/persist-side-effects');
           await persistSideEffects(parsed, noteId);
           
-          // Update note with results
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        const { persistSideEffects } = await import("./ai/persist-side-effects");
-        await persistSideEffects(v2Result, note.id);
-        await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
-        });
+          await storage.updateNote(noteId, {
+            aiGeneratedTitle: parsed.title,
+            richContext: JSON.stringify(parsed),
+            aiEnhanced: true,
+            isProcessing: false,
+            aiSuggestion: parsed.perspective || '',
+            aiContext: "Reprocessed with V2"
+          });
             aiGeneratedTitle: parsed.title,
             richContext: JSON.stringify(parsed),
             aiEnhanced: true,
