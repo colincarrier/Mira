@@ -286,8 +286,16 @@ The Intelligence-V2 Router is still routing through the OLD brain/miraAIProcessi
 ## Root Cause Identified:
 The brain/miraAIProcessing.ts file routes to Intelligence-V2 but the V2 router is still using OLD recursive reasoning system instead of NEW prompt-specs.ts contract. The three-layer system was implemented as separate modules but never integrated into the actual processing pipeline.
 
-## Technical Issue:
-- Intelligence-V2 Router calls recursiveAnalysis instead of buildPrompt() from prompt-specs.ts
-- Old complex analysis format returned instead of simple {title, original, aiBody, perspective} schema
-- persistSideEffects() never called because new format not detected
-- Frontend displays raw content because richContext doesn't match expected schema
+## Technical Issue Found:
+- Intelligence-V2 Router DOES use buildPrompt() from prompt-specs.ts correctly
+- OpenAI API calls are being made but responses never reach database
+- brain/miraAIProcessing.ts was expecting old recursive format instead of new three-layer format
+- persistSideEffects() never called because routes.ts expects different format
+
+## Latest Test Results:
+- Note 488: "Test fixed three layer system" - isProcessing: true (still processing)
+- Note 489: "Pick up groceries..." - isProcessing: true (still processing)
+- Vector updates working but AI enhancement failing
+
+## Current Status:
+The three-layer prompt system is sending correct prompts to OpenAI but responses are not being processed correctly by the wrapper functions.

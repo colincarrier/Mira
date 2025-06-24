@@ -26,19 +26,31 @@ export class IntelligenceV2Router {
     
     const prompt = buildPrompt(userProfile.personalBio || "", input.content);
     
+    console.log("=== EXACT OPENAI INPUT ===");
+    console.log("MODEL:", 'gpt-4o');
+    console.log("TEMPERATURE:", 0.4);
+    console.log("SYSTEM PROMPT (word-for-word):");
+    console.log(prompt);
+    console.log("=== END OPENAI INPUT ===");
+    
     const { choices } = await this.openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [{ role: 'system', content: prompt }],
       temperature: 0.4
     });
     
+    console.log("=== EXACT OPENAI OUTPUT ===");
+    console.log("RAW RESPONSE:");
+    console.log(choices[0].message!.content);
+    console.log("=== END OPENAI OUTPUT ===");
+    
     const parsed = JSON.parse(choices[0].message!.content!);
 
-    if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
+    console.log("=== PARSED JSON RESULT ===");
+    console.log(JSON.stringify(parsed, null, 2));
+    console.log("=== END PARSED RESULT ===");
 
-    console.log("=== V2 ROUTER OUTPUT DEBUG ===");
-    console.log("Generated parsed result:", parsed);
-    console.log("=== END V2 DEBUG ===");
+    if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
     return{
       id: input.id ?? 'temp',

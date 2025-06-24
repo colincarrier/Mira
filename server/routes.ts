@@ -442,7 +442,8 @@ This profile was generated from your input and will help provide more personaliz
           console.log("=== FULL AI PROCESSING DEBUG ===");
           console.log("1. INPUT TO AI:", JSON.stringify(miraInput, null, 2));
           console.log("2. FULL ANALYSIS OUTPUT:", JSON.stringify(analysis, null, 2));
-          console.log("3. ANALYSIS.RICHCONTEXT:", analysis.richContext);
+          console.log("3. ANALYSIS.RICHCONTEXT:", JSON.stringify(analysis.richContext, null, 2));
+          console.log("4. PARSED VARIABLE:", JSON.stringify(parsed, null, 2));
           console.log("=== END DEBUG ===");
 
           const parsed = analysis.richContext || analysis;

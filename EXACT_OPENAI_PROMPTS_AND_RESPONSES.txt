@@ -1,0 +1,320 @@
+EXACT OPENAI PROMPTS AND RESPONSES - LAST 3 NOTES
+===================================================
+
+This document captures the word-for-word prompts sent to OpenAI and the exact responses received for debugging the three-layer execution system.
+
+===================================================
+NOTE 490: "Quick test: buy coffee at 3pm"
+===================================================
+
+## EXACT PROMPT SENT TO OPENAI:
+
+**Model:** gpt-4o
+**Temperature:** 0.4
+**System Prompt (word-for-word):**
+
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Quick test: buy coffee at 3pm
+```
+
+## EXACT OPENAI RESPONSE:
+
+**Raw Response:**
+```json
+{
+  "title": "Buy Coffee At 3pm",
+  "original": "",
+  "aiBody": "• Quick coffee run scheduled\n• Choose preferred location or order ahead\n• Consider timing for afternoon energy boost",
+  "perspective": "Simple task with specific time - prep options for smooth execution",
+  "todos": [
+    {
+      "title": "Buy coffee at 3pm",
+      "priority": "normal"
+    }
+  ],
+  "reminder": {
+    "timeISO": "2025-06-24T15:00:00.000Z",
+    "leadMins": 10
+  }
+}
+```
+
+## PROCESSING RESULT:
+
+**Brain Processing Output:**
+```json
+{
+  "id": "490",
+  "timestamp": "2025-06-24T19:50:18.548Z",
+  "richContext": {
+    "title": "Buy Coffee At 3pm",
+    "original": "",
+    "aiBody": "• Quick coffee run scheduled\n• Choose preferred location or order ahead\n• Consider timing for afternoon energy boost",
+    "perspective": "Simple task with specific time - prep options for smooth execution",
+    "todos": [
+      {
+        "title": "Buy coffee at 3pm",
+        "priority": "normal"
+      }
+    ],
+    "reminder": {
+      "timeISO": "2025-06-24T15:00:00.000Z",
+      "leadMins": 10
+    }
+  }
+}
+```
+
+**Database Update Status:**
+- isProcessing: false
+- aiEnhanced: false (FAILED TO SAVE)
+- richContext: null (NOT SAVED)
+
+===================================================
+NOTE 489: "Pick up groceries: milk, bread, eggs for dinner tonight"
+===================================================
+
+## EXACT PROMPT SENT TO OPENAI:
+
+**Model:** gpt-4o
+**Temperature:** 0.4
+**System Prompt (word-for-word):**
+
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Pick up groceries: milk, bread, eggs for dinner tonight
+```
+
+## EXACT OPENAI RESPONSE:
+
+**Raw Response:**
+```json
+{
+  "title": "Grocery Run For Dinner Tonight",
+  "original": "",
+  "aiBody": "• **Milk**: Dairy for cooking/drinking\n• **Bread**: Fresh loaf for meals\n• **Eggs**: Protein for dinner prep\n\nShop early to avoid evening rush and ensure freshness for tonight's dinner.",
+  "perspective": "Time-sensitive grocery run - shop soon for freshest ingredients",
+  "todos": [
+    {
+      "title": "Buy milk at grocery store",
+      "priority": "high"
+    },
+    {
+      "title": "Buy bread at grocery store", 
+      "priority": "high"
+    },
+    {
+      "title": "Buy eggs at grocery store",
+      "priority": "high"
+    }
+  ],
+  "reminder": null
+}
+```
+
+## PROCESSING RESULT:
+
+**Brain Processing Output:**
+```json
+{
+  "id": "489",
+  "timestamp": "2025-06-24T19:49:56.473Z",
+  "richContext": {
+    "title": "Grocery Run For Dinner Tonight",
+    "original": "",
+    "aiBody": "• **Milk**: Dairy for cooking/drinking\n• **Bread**: Fresh loaf for meals\n• **Eggs**: Protein for dinner prep\n\nShop early to avoid evening rush and ensure freshness for tonight's dinner.",
+    "perspective": "Time-sensitive grocery run - shop soon for freshest ingredients",
+    "todos": [
+      {
+        "title": "Buy milk at grocery store",
+        "priority": "high"
+      },
+      {
+        "title": "Buy bread at grocery store", 
+        "priority": "high"
+      },
+      {
+        "title": "Buy eggs at grocery store",
+        "priority": "high"
+      }
+    ],
+    "reminder": null
+  }
+}
+```
+
+**Database Update Status:**
+- isProcessing: false
+- aiEnhanced: false (FAILED TO SAVE)
+- richContext: null (NOT SAVED)
+
+===================================================
+NOTE 488: "Test fixed three layer system"
+===================================================
+
+## EXACT PROMPT SENT TO OPENAI:
+
+**Model:** gpt-4o
+**Temperature:** 0.4
+**System Prompt (word-for-word):**
+
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+Demo user bio content...
+
+NOTE_TEXT:
+Test fixed three layer system
+```
+
+## EXACT OPENAI RESPONSE:
+
+**Raw Response:**
+```json
+{
+  "title": "Test Three Layer System",
+  "original": "",
+  "aiBody": "• **Layer A**: Prompt specification validation\n• **Layer B**: Side effects persistence testing\n• **Layer C**: Frontend display verification\n\nSystematic testing approach to ensure all components work together.",
+  "perspective": "Architecture validation - verify each layer functions correctly",
+  "todos": [
+    {
+      "title": "Verify prompt contract compliance",
+      "priority": "high"
+    },
+    {
+      "title": "Test side effects creation",
+      "priority": "high"
+    },
+    {
+      "title": "Check frontend display",
+      "priority": "normal"
+    }
+  ],
+  "reminder": null
+}
+```
+
+## PROCESSING RESULT:
+
+**Brain Processing Output:**
+```json
+{
+  "id": "488",
+  "timestamp": "2025-06-24T19:49:47.152Z",
+  "richContext": {
+    "title": "Test Three Layer System",
+    "original": "",
+    "aiBody": "• **Layer A**: Prompt specification validation\n• **Layer B**: Side effects persistence testing\n• **Layer C**: Frontend display verification\n\nSystematic testing approach to ensure all components work together.",
+    "perspective": "Architecture validation - verify each layer functions correctly",
+    "todos": [
+      {
+        "title": "Verify prompt contract compliance",
+        "priority": "high"
+      },
+      {
+        "title": "Test side effects creation",
+        "priority": "high"
+      },
+      {
+        "title": "Check frontend display",
+        "priority": "normal"
+      }
+    ],
+    "reminder": null
+  }
+}
+```
+
+**Database Update Status:**
+- isProcessing: false
+- aiEnhanced: false (FAILED TO SAVE)
+- richContext: null (NOT SAVED)
+
+===================================================
+CRITICAL DISCOVERY
+===================================================
+
+## OpenAI Integration Status: PERFECT ✓
+- Prompts are correctly formatted using prompt-specs.ts
+- OpenAI responses match exact three-layer schema
+- JSON parsing successful
+- V2 Intelligence Router working correctly
+
+## Database Integration Status: BROKEN ✗
+- AI processing completes successfully
+- Rich context generated correctly
+- Data never saved to database
+- persistSideEffects() never called
+- Routes.ts update logic failing
+
+## Root Cause Identified:
+The three-layer execution plan works perfectly for AI processing but the database update logic in routes.ts is not correctly handling the new format. The "parsed" variable extraction and database update sequence needs to be fixed.
+
+## Evidence:
+All 3 notes show identical pattern:
+1. Perfect OpenAI prompt/response cycle
+2. Correct richContext generation  
+3. Zero database persistence
+4. No todos created despite perfect AI output
+
+The issue is in the database persistence layer, not the AI processing layer.

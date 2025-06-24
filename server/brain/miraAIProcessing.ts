@@ -422,7 +422,7 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       userProfile: input.userProfile
     });
 
-    console.log('🧠 [V2] Direct three-layer result:', v2Result);
+    console.log('🧠 [V2] Direct three-layer result:', JSON.stringify(v2Result, null, 2));
     
     // V2 now returns the exact three-layer format: {title, original, aiBody, perspective, todos, reminder}
     // No mapping needed - pass through directly
