@@ -11,7 +11,7 @@ process.env.FEATURE_ENHANCED_COLLECTIONS = 'true';
 process.env.FEATURE_ADVANCED_NOTIFICATIONS = 'true';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
-import { registerRoutes } from "./routes";
+import routes from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
@@ -59,7 +59,7 @@ app.use((req, res, next) => {
   await initializeDatabase();
   await initializeStandardCollections();
 
-  const server = await registerRoutes(app);
+  const server = await app.use('/api', routes);
 
   if (app.get("env") === "development") {
     await setupVite(app, server);
