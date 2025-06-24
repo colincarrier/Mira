@@ -181,15 +181,14 @@ Preferred communication style: Simple, everyday language.
 - **Cross-Component Integration**: Full-screen capture and voice recorder using unified system
 
 ### Three-Layer Execution Plan Implementation Complete (June 24, 2025)
-- **Layer A - Prompt Specifications**: Created single prompt contract in `server/ai/prompt-specs.ts` with guaranteed JSON schema
-- **Layer B - Side Effects Persistence**: Implemented `server/ai/persist-side-effects.ts` for todos, reminders, and collections
-- **Layer C - Frontend Display**: Updated NoteDetailSimple with robust fallbacks and markdown support
-- **Critical Bug Fix**: Resolved OpenAI markdown wrapper issue causing JSON parsing failures
-- **Database Integration**: Fixed routes.ts to properly handle new three-layer format and save richContext
-- **AI Processing Pipeline**: V2 Intelligence Router now uses buildPrompt() contract with cleaned response parsing
-- **OpenAI API Troubleshooting**: Implemented robust error handling with model fallbacks (gpt-4o → gpt-3.5-turbo)
-- **API Key Resolution**: Updated to working OpenAI API key with proper model access
-- **System Status**: Architecture complete and ready for production use
+- **Layer A - Prompt Specifications**: Single prompt contract guaranteeing JSON schema output format
+- **Layer B - Side Effects Persistence**: Automated todos, reminders, and collections with database integration
+- **Layer C - Frontend Display**: Robust fallbacks with client-side question generation for UX continuity
+- **JSON Parsing Resolution**: Fixed OpenAI markdown wrapper issue with aggressive boundary detection
+- **Database Integration**: richContext properly saved and retrieved through updated routes.ts
+- **API Configuration**: All three OpenAI initialization points updated to use OPENAI_API_KEY_MIRA
+- **Client-Side Discovery**: Follow-up questions come from keyword detection in note-card.tsx, not AI
+- **Production Status**: Three-layer architecture operational and ready for production deployment
 
 ### Intelligence-V2 Architecture Implementation (June 14, 2025)
 - **Vector Engine**: Implemented dual-vector storage (dense + sparse) for semantic search
