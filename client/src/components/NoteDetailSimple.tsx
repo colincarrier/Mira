@@ -3,6 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
 import { NoteWithTodos } from '@shared/schema';
+import { marked } from 'marked';
+
+// Helper function to convert markdown to HTML
+function mdToHtml(markdown: string): string {
+  return marked(markdown) as string;
+}
 
 export default function NoteDetailSimple() {
   const { id } = useParams<{ id: string }>();
@@ -49,11 +55,21 @@ export default function NoteDetailSimple() {
     );
   }
 
-  const rc = note.richContext ? JSON.parse(note.richContext) : {};
-  const displayTitle = rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled';
-  const displayOrig = rc.original || (displayTitle !== note.content ? note.content : '');
-  const displayBody = rc.aiBody ?? '';
-  const displayPersp = rc.perspective ?? '';
+  // Parse richContext with robust fallbacks
+  const rc = note.richContext ? (() => {
+    try {
+      return JSON.parse(note.richContext);
+    } catch {
+      return {};
+    }
+  })() : {};
+  
+  const safe = {
+    title: rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
+    original: rc.original || ((rc.title || '') !== note.content ? note.content : ''),
+    aiBody: rc.aiBody || '',
+    perspective: rc.perspective || ''
+  };
 
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
@@ -67,7 +83,7 @@ export default function NoteDetailSimple() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900">{displayTitle}</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{safe.title}</h1>
             {note.isProcessing && (
               <div className="flex items-center gap-1 mt-1">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
@@ -80,33 +96,22 @@ export default function NoteDetailSimple() {
 
       {/* Content */}
       <div className="space-y-6 px-4 py-6">
-        {/* Title bar styled like iOS heading */}
-        <h1 className="text-2xl font-semibold leading-snug">{displayTitle}</h1>
-
-        {/* Original content - show only if different from title */}
-        {displayOrig && (
-          <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap">
-            {displayOrig}
-          </div>
-        )}
-
-        {/* Show raw content if no richContext processed yet */}
-        {!rc.title && note.content && (
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="whitespace-pre-wrap text-base leading-relaxed">
-              {note.content}
-            </div>
+        {/* Original content if different from title */}
+        {safe.original && (
+          <div className="bg-blue-50 rounded p-4 text-sm whitespace-pre-wrap">
+            {safe.original}
           </div>
         )}
 
         {/* AI body */}
-        {displayBody && (
-          <pre className="whitespace-pre-wrap text-base leading-relaxed">{displayBody}</pre>
+        {safe.aiBody && (
+          <div className="prose whitespace-pre-wrap" 
+               dangerouslySetInnerHTML={{__html: mdToHtml(safe.aiBody)}} />
         )}
 
         {/* Perspective */}
-        {displayPersp && (
-          <p className="text-xs text-gray-500 whitespace-pre-wrap">{displayPersp}</p>
+        {safe.perspective && (
+          <p className="text-xs text-gray-500 whitespace-pre-wrap">{safe.perspective}</p>
         )}
       </div>
     </div>

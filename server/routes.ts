@@ -445,6 +445,12 @@ This profile was generated from your input and will help provide more personaliz
           console.log("3. ANALYSIS.RICHCONTEXT:", analysis.richContext);
           console.log("=== END DEBUG ===");
 
+          const parsed = analysis.richContext || analysis;
+          
+          // Persist side effects
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
+          await persistSideEffects(parsed, note.id);
+
           // Track usage
           apiUsageStats.totalRequests++;
 
