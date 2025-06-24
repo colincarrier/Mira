@@ -55,52 +55,15 @@ export class IntelligenceV2Router {
     console.log("API Key first 10 chars:", actualKey?.substring(0, 10) || 'undefined');
     console.log("Prompt length:", prompt.length);
     
+    let response;
     try {
-      // Use GPT-4o with clean JSON processing
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o", 
-        messages: [{role: "system", content: prompt}], 
-        temperature: 0.4,
-        response_format: { type: "json_object" }
-      });
-      
-      // Get semantic matches for context
-      const allNotes = await storage.getAllNotes();
-      const matches = []; // simplified for stability
-      
-      // Parse OpenAI response directly (JSON mode guarantees valid JSON)
-      const rawResponse = response.choices[0].message!.content!.trim();
-      const parsed = JSON.parse(rawResponse);
-      
-      console.log("GPT-4o response parsed successfully:", parsed.title);
-      
-      // Use recursive analysis from existing engine
-      const analysis = await this.reason.performRecursiveAnalysis(
-        input.content, {}, matches, {});
-      const richContext = composeFromAnalysis(input.content, analysis);
-      
-      // Update vectors if valid note ID
-      if(input.id){ 
-        this.vector.updateNoteVectors(Number(input.id), input.content, storage).catch(()=>{}); 
-      }
+      // Use gpt-3.5-turbo with strict JSON mode
+    const gpt = await this.openai.chat.completions.create({
+       model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
+    const analysis = await this.reason.performRecursiveAnalysis(
+       input.content, {}, matches, {});
+    const parsed = composeFromAnalysis(input.content, analysis);
 
-      // Return the composed result with OpenAI data merged in
-      return {
-        ...richContext,
-        id: input.id ?? "temp", 
-        timestamp: new Date().toISOString(), 
-        richContext: { ...richContext, ...parsed }
-      };
-    } catch (error) {
-      console.error('Intelligence V2 processing failed:', error);
-      // Return fallback result
-      return {
-        id: input.id ?? "temp",
-        title: input.content.split(' ').slice(0, 5).join(' ') || 'Untitled',
-        timestamp: new Date().toISOString(),
-        richContext: { title: input.content, perspective: "Processing failed" }
-      };
-    }
   }
 }
 

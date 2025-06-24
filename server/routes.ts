@@ -344,10 +344,14 @@ This profile was generated from your input and will help provide more personaliz
 
       for (const note of notes) {
         if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
-          await storage.updateNote(note.id, {
-            aiSuggestion: "",
-            aiContext: "Content cleaned"
-          });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           cleaned++;
         }
       }
@@ -422,6 +426,22 @@ This profile was generated from your input and will help provide more personaliz
         return res.status(404).json({ message: "Note not found" });
       }
       
+      // Reset processing state
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
+        isProcessing: true,
+        aiEnhanced: false,
+        richContext: null,
+        aiSuggestion: null,
+        aiContext: null
+      });
+      
       // Load user profile for bio integration
       const userProfile = await storage.getUser("demo");
       
@@ -448,8 +468,19 @@ This profile was generated from your input and will help provide more personaliz
           
           const parsed = analysis.richContext || analysis;
           
+          // Persist side effects
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
+          await persistSideEffects(parsed, noteId);
+          
           // Update note with results
-          await storage.updateNote(noteId, {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             aiGeneratedTitle: parsed.title,
             richContext: JSON.stringify(parsed),
             aiEnhanced: true,
@@ -462,7 +493,14 @@ This profile was generated from your input and will help provide more personaliz
         })
         .catch(async (error) => {
           console.error("Reprocessing failed for note:", noteId, error);
-          await storage.updateNote(noteId, {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             isProcessing: false,
             aiContext: "Reprocessing failed"
           });
@@ -520,6 +558,8 @@ This profile was generated from your input and will help provide more personaliz
           console.log("=== END DEBUG ===");
           
           // Persist side effects
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
+          await persistSideEffects(parsed, note.id);
 
           // Track usage
           apiUsageStats.totalRequests++;
@@ -553,11 +593,11 @@ This profile was generated from your input and will help provide more personaliz
           });
 
           const updates: any = {
-            aiGeneratedTitle: v2Result.title || "Processing completed",
-            richContext: JSON.stringify(v2Result.richContext || v2Result),
+            aiGeneratedTitle: parsed.title,
+            richContext: JSON.stringify(parsed),
             aiEnhanced: true,
             isProcessing: false,
-            aiSuggestion: v2Result.richContext?.perspective || '',
+            aiSuggestion: parsed.perspective || '',
             aiContext: "V2 processing completed"
           };
 
@@ -567,9 +607,11 @@ This profile was generated from your input and will help provide more personaliz
 
           try {
             console.log(`Updating note ${note.id} with V2 analysis...`);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -580,9 +622,11 @@ This profile was generated from your input and will help provide more personaliz
             console.error("Update error stack:", updateError.stack);
             // Try a simpler update to ensure something saves
             try {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -730,9 +774,11 @@ This profile was generated from your input and will help provide more personaliz
             }
 
             if (collectionId) {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -756,9 +802,11 @@ This profile was generated from your input and will help provide more personaliz
           console.error("AI analysis failed for note:", note.id);
           console.error("Error details:", error.message);
           console.error("Full error:", error);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -978,9 +1026,11 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 isProcessing: false,
               };
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1016,9 +1066,11 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   collectionId = targetCollection.id;
 
                   // Update note to belong to this collection
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1095,9 +1147,11 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 isProcessing: false,
               };
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1156,9 +1210,11 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               isProcessing: false,
             };
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1245,9 +1301,11 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
         }
       } else {
         // If no content to process, just mark as not processing
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1480,9 +1538,11 @@ Respond with a JSON object containing:
       }
 
       // Update the note with protected content
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1520,9 +1580,11 @@ Respond with a JSON object containing:
           collectionId = newCollection.id;
         }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1607,9 +1669,11 @@ Respond with a JSON object containing:
       );
 
       if (protectionResult.success) {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -1682,9 +1746,11 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
       );
 
       if (protectionResult.success) {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2059,9 +2125,11 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2119,9 +2187,11 @@ Respond with JSON:
             // NEVER overwrite original transcription with AI analysis
             // The transcribed content must be preserved as the user's actual words
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2167,9 +2237,11 @@ Respond with JSON:
                 collectionId = newCollection.id;
               }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2203,9 +2275,11 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2236,9 +2310,11 @@ Respond with JSON:
             updates.content = analysis.enhancedContent;
           }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2264,9 +2340,11 @@ Respond with JSON:
               collectionId = newCollection.id;
             }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2297,9 +2375,11 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2360,9 +2440,11 @@ Respond with JSON:
             updates.content = analysis.title;
           }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2407,9 +2489,11 @@ Respond with JSON:
               collectionId = newCollection.id;
             }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2441,9 +2525,11 @@ Respond with JSON:
       // If this is just a direct content update (like iOS Notes typing), save it directly
       if (content && !updateInstruction && !contextUpdate) {
         console.log("Direct content update - saving like iOS Notes");
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2533,9 +2619,11 @@ Respond with a JSON object containing:
           }
 
           // Update the note
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2570,9 +2658,11 @@ Respond with a JSON object containing:
               collectionId = newCollection.id;
             }
 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2585,9 +2675,11 @@ Respond with a JSON object containing:
         } catch (aiError) {
           console.error("AI evolution failed:", aiError);
           // Fallback to simple content update if AI fails
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -2599,9 +2691,11 @@ Respond with a JSON object containing:
         }
       } else {
         // Simple update without AI for direct edits
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
@@ -3349,9 +3443,11 @@ Provide a concise, actionable response that adds value beyond just the task titl
       });
 
       // Update note with AI analysis
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle: "Processing failed",
-          richContext: null,
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
           aiEnhanced:true,
           isProcessing:false
         });
