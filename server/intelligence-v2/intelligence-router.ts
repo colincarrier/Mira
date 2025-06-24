@@ -1,5 +1,4 @@
-import { buildPrompt } from "../ai/prompt-specs";
-import { composeFromAnalysis } from "../ai/compose-v2";
+
 import OpenAI from 'openai';
 import { VectorEngine } from './vector-engine.js';
 import { RecursiveReasoningEngine } from './recursive-reasoning-engine.js';
@@ -39,6 +38,7 @@ export class IntelligenceV2Router {
     const parsed = composeFromAnalysis(input.content, analysis);
 
     
+    const { buildPrompt } = await import('../ai/prompt-specs');
     const prompt = buildPrompt(userProfile.personalBio || "", input.content);
     
     console.log("=== EXACT OPENAI INPUT ===");
@@ -57,15 +57,69 @@ export class IntelligenceV2Router {
     
     let response;
     try {
-      // Use gpt-3.5-turbo with strict JSON mode
-    const gpt = await this.openai.chat.completions.create({
-       model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
-    const analysis = await this.reason.performRecursiveAnalysis(
-       input.content, {}, matches, {});
-    const parsed = composeFromAnalysis(input.content, analysis);
+      // Use GPT-4o with JSON mode - simplified approach
+      response = await this.openai.chat.completions.create({
+        model: "gpt-4o", 
+        messages: [
+          { role: "system", content: "You are an AI assistant. Respond only with valid JSON." },
+          { role: "user", content: prompt }
+        ], 
+        temperature: 0.4,
+        response_format: { type: "json_object" }
+      });
+      console.log("GPT-4o call successful");
+    } catch (apiError: any) {
+      console.error("OpenAI API Error:", apiError.message);
+      throw new Error(`AI processing failed: ${apiError.message}`);
+    }
+    
+    // Simple JSON parsing - same approach as working image processing
+    const rawContent = response.choices[0].message?.content?.trim();
+    
+    if (!rawContent) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    console.log("Raw OpenAI response (first 100 chars):", rawContent.substring(0, 100));
+    
+    let parsed;
+    try {
+      // Direct JSON parsing - no complex cleaning
+      parsed = JSON.parse(rawContent);
+      console.log("JSON parsing successful");
+    } catch (parseError) {
+      console.error("JSON parsing failed:", parseError);
+      console.error("Raw response:", rawContent);
+      throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
+    if(input.id){ 
+      this.vector.updateNoteVectors(Number(input.id), input.content, storage).catch(()=>{}); 
+    }
+
+    return {
+      id: input.id || 'temp',
+      title: parsed.title || input.content.split(' ').slice(0,5).join(' ') || 'Untitled',
+      summary: parsed.perspective || '',
+      richContext: JSON.stringify(parsed),
+      intent: 'general',
+      urgency: 'medium' as const,
+      complexity: 5,
+      confidence: 0.9,
+      todos: parsed.todos || [],
+      nextSteps: [],
+      entities: [],
+      suggestedLinks: [],
+      microQuestions: [],
+      fromTheWeb: [],
+      tags: [],
+      relatedTopics: [],
+      processingPath: 'memory' as const,
+      classificationScores: {},
+      timeInstructions: {hasTimeReference:false,extractedTimes:[],scheduledItems:[]},
+      timestamp: new Date().toISOString()
+    };
   }
-}
 
 /* singleton + helper export */
 const openai=new OpenAI({apiKey:process.env.OPENAI_API_KEY!});
