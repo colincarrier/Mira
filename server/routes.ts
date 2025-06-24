@@ -344,7 +344,14 @@ This profile was generated from your input and will help provide more personaliz
 
       for (const note of notes) {
         if (note.aiSuggestion && (note.aiSuggestion.includes("You are Mira") || note.aiSuggestion.length > 200)) {
-          await storage.updateNote(note.id, { aiSuggestion: "" });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           cleaned++;
         }
       }
@@ -420,7 +427,14 @@ This profile was generated from your input and will help provide more personaliz
       }
       
       // Reset processing state
-      await storage.updateNote(noteId, {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
         isProcessing: true,
         aiEnhanced: false,
         richContext: null,
@@ -459,7 +473,14 @@ This profile was generated from your input and will help provide more personaliz
           await persistSideEffects(parsed, noteId);
           
           // Update note with results
-          await storage.updateNote(noteId, {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             aiGeneratedTitle: parsed.title,
             richContext: JSON.stringify(parsed),
             aiEnhanced: true,
@@ -472,7 +493,14 @@ This profile was generated from your input and will help provide more personaliz
         })
         .catch(async (error) => {
           console.error("Reprocessing failed for note:", noteId, error);
-          await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             isProcessing: false,
             aiContext: "Reprocessing failed"
           });
@@ -579,7 +607,14 @@ This profile was generated from your input and will help provide more personaliz
 
           try {
             console.log(`Updating note ${note.id} with V2 analysis...`);
-            const updatedNote = await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             console.log("Note updated successfully with Mira AI analysis");
             console.log("Updated note confirmation:", updatedNote ? "success" : "failed");
           } catch (updateError) {
@@ -587,7 +622,14 @@ This profile was generated from your input and will help provide more personaliz
             console.error("Update error stack:", updateError.stack);
             // Try a simpler update to ensure something saves
             try {
-              await storage.updateNote(note.id, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
                 aiEnhanced: true, 
                 isProcessing: false,
                 aiContext: "V2 processing completed"
@@ -732,7 +774,14 @@ This profile was generated from your input and will help provide more personaliz
             }
 
             if (collectionId) {
-              await storage.updateNote(note.id, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
               console.log("Assigned note to collection:", finalCollectionName);
             }
           }
@@ -753,7 +802,14 @@ This profile was generated from your input and will help provide more personaliz
           console.error("AI analysis failed for note:", note.id);
           console.error("Error details:", error.message);
           console.error("Full error:", error);
-          await storage.updateNote(note.id, { isProcessing: false });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
         });
       }
 
@@ -970,7 +1026,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 isProcessing: false,
               };
 
-              await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
               // Create todos from analysis
               if (analysis.todos && analysis.todos.length > 0) {
@@ -1003,7 +1066,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                   collectionId = targetCollection.id;
 
                   // Update note to belong to this collection
-                  await storage.updateNote(note.id, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
                 } catch (error) {
                   console.error("Error creating/assigning collection:", error);
@@ -1077,7 +1147,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
                 isProcessing: false,
               };
 
-              await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             })
             .catch((error: any) => {
               console.error("Error analyzing image with Claude:", error);
@@ -1133,7 +1210,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
               isProcessing: false,
             };
 
-            await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
             // Create todos if found
             if (analysis.todos && analysis.todos.length > 0) {
@@ -1217,7 +1301,14 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
         }
       } else {
         // If no content to process, just mark as not processing
-        await storage.updateNote(note.id, { isProcessing: false });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
       }
 
       console.log("Media note created successfully:", note.id);
@@ -1447,7 +1538,14 @@ Respond with a JSON object containing:
       }
 
       // Update the note with protected content
-      await storage.updateNote(noteId, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
       // Create new todos from AI analysis
 
@@ -1482,7 +1580,14 @@ Respond with a JSON object containing:
           collectionId = newCollection.id;
         }
 
-        await storage.updateNote(noteId, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
       }
 
       // Return the updated note
@@ -1564,7 +1669,14 @@ Respond with a JSON object containing:
       );
 
       if (protectionResult.success) {
-        await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: protectionResult.appliedChanges,
           aiEnhanced: true 
         });
@@ -1634,7 +1746,14 @@ Respond with JSON: {"enhancedContent": "improved content", "suggestion": "what y
       );
 
       if (protectionResult.success) {
-        await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: protectionResult.appliedChanges,
           aiEnhanced: true,
           aiSuggestion: evolution.suggestion
@@ -2006,7 +2125,14 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
-        note = await storage.updateNote(parseInt(noteId), {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: transcription,
           transcription,
           audioUrl,
@@ -2061,7 +2187,14 @@ Respond with JSON:
             // NEVER overwrite original transcription with AI analysis
             // The transcribed content must be preserved as the user's actual words
 
-            await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
             // Create v2.0 todos if found
             console.log("Creating", analysis.todos?.length || 0, "v2.0 todos for voice note:", note.id);
@@ -2104,7 +2237,14 @@ Respond with JSON:
                 collectionId = newCollection.id;
               }
 
-              await storage.updateNote(note.id, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             }
           })
           .catch(error => {
@@ -2135,7 +2275,14 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
-        note = await storage.updateNote(parseInt(noteId), {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: `📸 Analyzing image...`,
           imageData: imageBase64,
           isProcessing: false,
@@ -2163,7 +2310,14 @@ Respond with JSON:
             updates.content = analysis.enhancedContent;
           }
 
-          await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
           // Create todos if found
           for (const todoTitle of analysis.todos) {
@@ -2186,7 +2340,14 @@ Respond with JSON:
               collectionId = newCollection.id;
             }
 
-            await storage.updateNote(note.id, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           }
         })
           .catch(error => {
@@ -2214,7 +2375,14 @@ Respond with JSON:
 
       if (noteId) {
         // Update existing placeholder note
-        note = await storage.updateNote(parseInt(noteId), {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: `📄 Analyzing file...`,
           isProcessing: false,
         });
@@ -2272,7 +2440,14 @@ Respond with JSON:
             updates.content = analysis.title;
           }
 
-          await storage.updateNote(note.id, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
           // Create v2.0 todos if found
           if (analysis.todos && analysis.todos.length > 0) {
@@ -2314,7 +2489,14 @@ Respond with JSON:
               collectionId = newCollection.id;
             }
 
-            await storage.updateNote(note.id, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           }
         })
         .catch((error: any) => {
@@ -2343,7 +2525,14 @@ Respond with JSON:
       // If this is just a direct content update (like iOS Notes typing), save it directly
       if (content && !updateInstruction && !contextUpdate) {
         console.log("Direct content update - saving like iOS Notes");
-        const updatedNote = await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: content.trim(),
           lastUserEdit: new Date().toISOString(),
           ...otherUpdates 
@@ -2430,7 +2619,14 @@ Respond with a JSON object containing:
           }
 
           // Update the note
-          const updatedNote = await storage.updateNote(noteId, updates);
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
 
           // Create new todos if provided
           if (evolution.todos && evolution.todos.length > 0) {
@@ -2462,7 +2658,14 @@ Respond with a JSON object containing:
               collectionId = newCollection.id;
             }
 
-            await storage.updateNote(noteId, { collectionId });
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           }
 
           // Return the updated note with todos
@@ -2472,7 +2675,14 @@ Respond with a JSON object containing:
         } catch (aiError) {
           console.error("AI evolution failed:", aiError);
           // Fallback to simple content update if AI fails
-          const updatedNote = await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
             content: content || existingNote.content, 
             lastUserEdit: new Date().toISOString(),
             ...otherUpdates 
@@ -2481,7 +2691,14 @@ Respond with a JSON object containing:
         }
       } else {
         // Simple update without AI for direct edits
-        const updatedNote = await storage.updateNote(noteId, { 
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
           content: content || existingNote.content,
           lastUserEdit: new Date().toISOString(),
           ...otherUpdates 
@@ -3226,7 +3443,14 @@ Provide a concise, actionable response that adds value beyond just the task titl
       });
 
       // Update note with AI analysis
-      await storage.updateNote(note.id, {
+        const { persistSideEffects } = await import("./ai/persist-side-effects");
+        await persistSideEffects(v2Result, note.id);
+        await storage.updateNote(note.id,{
+          aiGeneratedTitle:v2Result.title,
+          richContext:JSON.stringify(v2Result),
+          aiEnhanced:true,
+          isProcessing:false
+        });
         content: analysis.title,
         aiEnhanced: true,
         aiSuggestion: analysis.smartActions?.map((a: any) => `${a.label}: ${a.action}`).join(", ") || "",

@@ -180,14 +180,14 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Permission State**: localStorage-based caching with denial cooldown protection
 - **Cross-Component Integration**: Full-screen capture and voice recorder using unified system
 
-### AI-First Implementation Complete (June 24, 2025)
-- **JSON Processing Fix**: OpenAI now uses strict JSON mode with response_format enforcement
-- **Client-Side Elimination**: Removed all hardcoded follow-up questions and fallback content
-- **Prompt Engineering**: Rebuilt prompts for guaranteed JSON output without conversational responses  
-- **Image Processing**: Updated image analysis to use Intelligence V2 pipeline consistently
-- **UI Components**: Added InputBar to all note detail pages for complete functionality
-- **Fallback Removal**: Disabled all non-AI content generation systems
-- **Production Status**: True AI-first architecture with no client-side content generation
+### Intelligence V2 Hot-Fix Implementation (June 24, 2025)
+- **Unified Prompt System**: Created single source of truth for GPT schema in prompt-specs.ts
+- **Simplified Processing**: Added compose-v2.ts to distill recursive analysis to clean JSON format
+- **Side Effects Handler**: Implemented persist-side-effects.ts for automatic todo/reminder creation
+- **Router Simplification**: Patched intelligence-router.ts to use GPT-4o with simplified prompt processing
+- **Frontend Robustness**: Replaced NoteDetail with NoteDetailSimple for reliable rich context display
+- **Processing Path Fix**: Unified text and image processing to eliminate JSON parsing corruption
+- **Production Ready**: Complete hot-fix addressing root causes identified in processing analysis
 
 ### Intelligence-V2 Architecture Implementation (June 14, 2025)
 - **Vector Engine**: Implemented dual-vector storage (dense + sparse) for semantic search
