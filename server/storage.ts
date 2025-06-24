@@ -98,22 +98,65 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNotes(): Promise<NoteWithTodos[]> {
-    const allNotes = await db
-      .select()
-      .from(notes)
-      .orderBy(desc(notes.createdAt));
+    // Optimized: Get all data in parallel batches instead of N+1 queries
+    const [allNotes, allTodos, allCollections] = await Promise.all([
+      db.select({
+        id: notes.id,
+        content: notes.content,
+        aiGeneratedTitle: notes.aiGeneratedTitle,
+        mode: notes.mode,
+        userId: notes.userId,
+        isShared: notes.isShared,
+        shareId: notes.shareId,
+        privacyLevel: notes.privacyLevel,
+        createdAt: notes.createdAt,
+        audioUrl: notes.audioUrl,
+        mediaUrl: notes.mediaUrl,
+        transcription: notes.transcription,
+        imageData: notes.imageData,
+        aiEnhanced: notes.aiEnhanced,
+        aiSuggestion: notes.aiSuggestion,
+        aiContext: notes.aiContext,
+        richContext: notes.richContext,
+        isProcessing: notes.isProcessing,
+        collectionId: notes.collectionId,
+        // Exclude heavy vector data from list view
+        version: notes.version,
+        originalContent: notes.originalContent,
+        lastUserEdit: notes.lastUserEdit,
+        protectedContent: notes.protectedContent,
+        processingPath: notes.processingPath,
+        classificationScores: notes.classificationScores
+      }).from(notes).orderBy(desc(notes.createdAt)),
+      db.select().from(todos),
+      db.select().from(collections)
+    ]);
 
-    const notesWithTodos = await Promise.all(
-      allNotes.map(async (note) => {
-        const noteTodos = await this.getTodosByNoteId(note.id);
-        const collection = note.collectionId 
-          ? await this.getCollection(note.collectionId) 
-          : undefined;
-        return { ...note, todos: noteTodos, collection };
-      })
-    );
+    // Group todos by noteId for efficient lookup
+    const todosByNoteId = allTodos.reduce((acc, todo) => {
+      if (!acc[todo.noteId]) acc[todo.noteId] = [];
+      acc[todo.noteId].push(todo);
+      return acc;
+    }, {} as Record<number, Todo[]>);
 
-    return notesWithTodos.reverse(); // Most recent first
+    // Group collections by id for efficient lookup
+    const collectionsById = allCollections.reduce((acc, collection) => {
+      acc[collection.id] = collection;
+      return acc;
+    }, {} as Record<number, Collection>);
+
+    // Combine data efficiently
+    const notesWithTodos = allNotes.map(note => ({
+      ...note,
+      todos: todosByNoteId[note.id] || [],
+      collection: note.collectionId ? collectionsById[note.collectionId] : undefined,
+      // Add missing fields with defaults
+      vectorDense: null,
+      vectorSparse: null,
+      intentVector: null
+    }));
+
+    return notesWithTodos;
   }
 
   async getNote(id: number): Promise<NoteWithTodos | undefined> {

@@ -603,9 +603,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
       {/* iOS Notes-style clean content display */}
       <div className="mb-3">
-        {/* Display note content directly */}
+        {/* Always show note content with fallback logic */}
         <div className="text-base leading-relaxed text-gray-900 line-clamp-3">
-          {note.content}
+          {note.content || note.aiGeneratedTitle || 'No content available'}
         </div>
       </div>
 

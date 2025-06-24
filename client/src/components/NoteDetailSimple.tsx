@@ -49,6 +49,12 @@ export default function NoteDetailSimple() {
 
   const rc = note.richContext ? JSON.parse(note.richContext) : {};
 
+  // Add fallbacks for missing richContext
+  const displayTitle = rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled';
+  const displayOriginal = rc.original || (rc.title !== note.content ? note.content : '');
+  const displayAiBody = rc.aiBody || '';
+  const displayPerspective = rc.perspective || '';
+
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
       {/* Header */}
@@ -61,7 +67,7 @@ export default function NoteDetailSimple() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900">{rc.title}</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{displayTitle}</h1>
             {note.isProcessing && (
               <div className="flex items-center gap-1 mt-1">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
@@ -75,23 +81,32 @@ export default function NoteDetailSimple() {
       {/* Content */}
       <div className="space-y-6 px-4 py-6">
         {/* Title bar styled like iOS heading */}
-        <h1 className="text-2xl font-semibold leading-snug">{rc.title}</h1>
+        <h1 className="text-2xl font-semibold leading-snug">{displayTitle}</h1>
 
-        {/* Original snippet (only if needed) */}
-        {rc.original && (
+        {/* Original content - always show if we have content */}
+        {displayOriginal && (
           <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap">
-            {rc.original}
+            {displayOriginal}
+          </div>
+        )}
+
+        {/* Show raw content if no richContext processed yet */}
+        {!rc.title && note.content && (
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="whitespace-pre-wrap text-base leading-relaxed">
+              {note.content}
+            </div>
           </div>
         )}
 
         {/* AI body */}
-        {rc.aiBody && (
-          <pre className="whitespace-pre-wrap text-base leading-relaxed">{rc.aiBody}</pre>
+        {displayAiBody && (
+          <pre className="whitespace-pre-wrap text-base leading-relaxed">{displayAiBody}</pre>
         )}
 
         {/* Perspective */}
-        {rc.perspective && (
-          <p className="text-xs text-gray-500 whitespace-pre-wrap">{rc.perspective}</p>
+        {displayPerspective && (
+          <p className="text-xs text-gray-500 whitespace-pre-wrap">{displayPerspective}</p>
         )}
       </div>
     </div>

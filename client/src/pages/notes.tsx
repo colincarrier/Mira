@@ -17,9 +17,11 @@ export default function Notes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check for any notes currently being processed
+  // Check for any notes currently being processed with optimized caching
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
+    staleTime: 30000, // Cache for 30 seconds to reduce requests
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
   
   const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
