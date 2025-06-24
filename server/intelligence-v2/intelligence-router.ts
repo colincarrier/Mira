@@ -13,89 +13,62 @@ export interface IntelligenceV2Input {
   id?:string; 
   content:string; 
   mode:'text'|'voice'|'image'|'file'; 
-  userProfile?:any;
+  userId?: string;
+  userProfile?: any;
 }
-
-export interface IntelligenceV2Result {
-  id: string;
-  title: string;
-  summary?: string;
-  richContext?: any;
-  intent?: string;
-  urgency?: string;
-  complexity?: number;
-  confidence?: number;
-  todos?: any[];
-  nextSteps?: any[];
-  entities?: any[];
-  suggestedLinks?: any[];
-  microQuestions?: any[];
-  fromTheWeb?: any[];
-  tags?: any[];
-  relatedTopics?: any[];
-  processingPath?: string;
-  classificationScores?: any;
-  timeInstructions?: any;
-  timestamp: string;
-}
+export interface IntelligenceV2Result { id:string; title:string; original:string; aiBody:string; perspective:string; timestamp:string; }
 
 export class IntelligenceV2Router {
-  private openai: OpenAI;
-  private vector: VectorEngine;
-  private reason: RecursiveReasoningEngine;
-
-  constructor(openai: OpenAI) {
-    this.openai = openai;
-    this.vector = new VectorEngine();
-    this.reason = new RecursiveReasoningEngine();
+  private vector:VectorEngine; private reason:RecursiveReasoningEngine; private openai:OpenAI;
+  constructor(openai:OpenAI){ 
+    console.log("IntelligenceV2Router initialized with API key:", openai ? "present" : "missing");
+    // Test the OpenAI instance immediately
+    this.testAPIConnection(openai);
+    this.openai=openai; 
+    this.vector=new VectorEngine(openai); 
+    this.reason=new RecursiveReasoningEngine(openai,this.vector); 
   }
 
-  async processNoteV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
-    const userProfile = input.userProfile || { personalBio: "" };
-    
-    const prompt = buildPrompt(userProfile.personalBio || "", input.content);
-    
-    console.log("=== FIXED OPENAI CALL ===");
-    console.log("Model: gpt-4o");
-    console.log("Prompt:", prompt.substring(0, 100) + "...");
-    
+  private async testAPIConnection(openai: OpenAI) {
     try {
-      // Simple OpenAI call with JSON mode
+      console.log("Testing OpenAI connection with simple call...");
     const gpt = await this.openai.chat.completions.create({
        model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
     const analysis = await this.reason.performRecursiveAnalysis(
        input.content, {}, matches, {});
     const parsed = composeFromAnalysis(input.content, analysis);
 
-        id: input.id ?? "temp",
-        title: input.content.split(' ').slice(0, 5).join(' ') || 'Untitled',
-        summary: '',
-        richContext: { title: input.content, perspective: 'Processing failed' },
-        intent: 'general',
-        urgency: 'medium',
-        complexity: 5,
-        confidence: 0.5,
-        todos: [],
-        nextSteps: [],
-        entities: [],
-        suggestedLinks: [],
-        microQuestions: [],
-        fromTheWeb: [],
-        tags: [],
-        relatedTopics: [],
-        processingPath: 'memory',
-        classificationScores: {},
-        timeInstructions: { hasTimeReference: false, extractedTimes: [], scheduledItems: [] },
-        timestamp: new Date().toISOString()
-      };
-    }
+    
+    const prompt = buildPrompt(userProfile.personalBio || "", input.content);
+    
+    console.log("=== EXACT OPENAI INPUT ===");
+    console.log("MODEL:", 'gpt-4o');
+    console.log("TEMPERATURE:", 0.4);
+    console.log("SYSTEM PROMPT (word-for-word):");
+    console.log(prompt);
+    console.log("=== END OPENAI INPUT ===");
+    
+    console.log("=== OPENAI API CALL DEBUG ===");
+    console.log("Model: gpt-4o");
+    const actualKey = process.env.OPENAI_API_KEY_MIRA || process.env.OPENAI_API_KEY;
+    console.log("API Key present:", !!actualKey);
+    console.log("API Key first 10 chars:", actualKey?.substring(0, 10) || 'undefined');
+    console.log("Prompt length:", prompt.length);
+    
+    let response;
+    try {
+      // Use gpt-3.5-turbo with strict JSON mode
+    const gpt = await this.openai.chat.completions.create({
+       model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
+    const analysis = await this.reason.performRecursiveAnalysis(
+       input.content, {}, matches, {});
+    const parsed = composeFromAnalysis(input.content, analysis);
+
   }
 }
 
 /* singleton + helper export */
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-const singleton = new IntelligenceV2Router(openai);
-export async function processWithIntelligenceV2(i: IntelligenceV2Input) { 
-  return singleton.processNoteV2(i); 
-}
+const openai=new OpenAI({apiKey:process.env.OPENAI_API_KEY!});
+const singleton=new IntelligenceV2Router(openai);
+export async function processWithIntelligenceV2(i:IntelligenceV2Input){ return singleton.processNoteV2(i);}
 export default singleton;
