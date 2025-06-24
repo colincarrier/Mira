@@ -1,0 +1,605 @@
+COMPLETE AI SYSTEM ANALYSIS - MIRA INTELLIGENCE PROCESSING
+===========================================================
+
+This document contains the complete AI processing pipeline analysis including:
+1. Exact prompts sent to AI partners (word-for-word)
+2. AI output formats and data structures
+3. What the app displays vs what it receives
+4. Code governing each part of the system
+
+===========================================================
+PART 1: AI INPUT PROCESSING - WHAT GETS SENT TO AI
+===========================================================
+
+## 1.1 NOTE CREATION PIPELINE (server/routes.ts lines 69-144)
+
+When a note is created via POST /api/notes:
+
+INPUT PROCESSING:
+```javascript
+const { content, mode = "text", mediaUrl, audioUrl, transcription } = req.body;
+
+// Create note first
+const note = await storage.createNote({
+  content,
+  mode,
+  mediaUrl: mode === 'image' ? mediaUrl : null,
+  audioUrl: mode === 'voice' ? audioUrl : null,
+  transcription: mode === 'voice' ? transcription : null,
+  isProcessing: true,
+  aiEnhanced: false
+});
+
+// Then process with AI asynchronously
+processNoteAsync(note.id, {
+  content,
+  mode,
+  mediaUrl,
+  audioUrl,
+  transcription
+});
+```
+
+## 1.2 V2 INTELLIGENCE ROUTER (server/intelligence-v2/intelligence-router.ts)
+
+ENTRY POINT:
+```javascript
+async processNoteV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
+  const userProfile = input.userProfile || { personalBio: "" };
+  
+  // Bio personalisation hook
+  const bioLine = userProfile?.personalBio?.split('\n')[1] ?? '';
+  
+  const intent = await IntentVectorClassifier.classify(
+    input.content + "\nUSER_BIO:\n" + userProfile.personalBio
+  );
+  
+  const notes = await storage.getAllNotes();
+  const matches = await this.vector.performSemanticSearch({
+    query: input.content, 
+    limit: 10
+  }, notes);
+
+  // Recursive reasoning analysis
+  analysis = await this.reason.performRecursiveAnalysis(
+    input.content, 
+    {}, 
+    matches, 
+    {}
+  );
+  
+  // Generate rich context for presentation
+  const richContext = composeRichContext(input.content, analysis);
+  
+  return {
+    id: input.id ?? 'temp',
+    timestamp: new Date().toISOString(),
+    richContext,
+    ...richContext
+  };
+}
+```
+
+## 1.3 OPENAI INTEGRATION (server/openai.ts)
+
+### TEXT ANALYSIS PROMPTS SENT TO OPENAI:
+
+**System Message:**
+```
+You are Mira, an intelligent analysis system. Always respond with valid JSON following the exact structure provided in the prompt.
+```
+
+**User Message for Text Content:**
+```
+Analyze: "${userQuery}"
+
+Generate comprehensive, detailed analysis with specific recommendations and organized insights. Match ChatGPT's depth and quality. Always respond with valid JSON only.
+
+Required JSON Structure:
+{
+  "title": "string (concise, descriptive title)",
+  "summary": "string (brief overview)",
+  "suggestion": "string (actionable recommendation)",
+  "intent": "string (user's primary intent)",
+  "urgency": "string (low|medium|high|critical)",
+  "complexity": "number (1-10 scale)",
+  "entities": ["array of identified entities"],
+  "nextSteps": ["array of recommended actions"],
+  "relatedTopics": ["array of related subjects"],
+  "potentialObstacles": ["array of potential challenges"],
+  "skillsRequired": ["array of needed skills"],
+  "resourcesNeeded": ["array of required resources"]
+}
+```
+
+### IMAGE ANALYSIS PROMPTS SENT TO OPENAI:
+
+**System Message:**
+```
+You are an expert visual analyst with comprehensive knowledge across technology, business, culture, and current events. Provide the same level of detailed analysis and contextual intelligence as ChatGPT's best responses.
+```
+
+**User Message for Images:**
+```
+MISSION: Deliver exhaustive analysis combining visual recognition with deep domain knowledge.
+
+🎯 ENHANCED ANALYSIS PROTOCOL:
+1. PRECISE TEXT EXTRACTION: Read all visible text word-for-word, including subtle details, fonts, styling, foreign languages
+2. ENTITY RECOGNITION WITH INTELLIGENCE: Identify brands, companies, products with comprehensive background research
+3. BUSINESS INTELLIGENCE: For any company/brand mentioned, provide detailed profiles including:
+   - Core business model and primary products/services
+   - Industry position, competitive landscape, market cap/valuation
+   - Founding story, key executives, notable investors
+   - Recent developments, product launches, strategic direction
+   - Cultural significance, brand positioning, target demographics
+   - Technical architecture or unique differentiators
+4. CONTEXTUAL RESEARCH: Connect visual elements to broader trends, cultural movements, or industry insights
+5. COMPREHENSIVE SCENE ANALYSIS: Environmental details, composition, artistic choices, implied narratives
+
+📚 FOR BOOKS & PUBLICATIONS:
+- Exact title (word-for-word from spine/cover)
+- Complete author name(s)
+- Publisher name if visible
+- Edition/year if shown
+- ISBN if readable
+- Book condition and format (hardcover/paperback)
+- Cover art description and color scheme
+- Genre indicators from cover design
+
+🛍️ FOR PRODUCTS & ITEMS:
+- Precise product name and model number
+- Brand/manufacturer
+- Visible specifications or features
+- Price tags or labels
+- Condition assessment
+- Color, size, material descriptions
+- Packaging details if applicable
+
+🏢 FOR BRANDS & COMPANIES:
+- Company name (exact spelling/styling)
+- Primary business focus and target market
+- Founding date and key milestones
+- Current market position and recent news
+- Product ecosystem and strategic partnerships
+- Cultural impact and brand recognition
+
+🎨 FOR ARTISTIC & DESIGN ELEMENTS:
+- Color palette and artistic style
+- Typography and design choices
+- Cultural or historical references
+- Artistic movement or design philosophy
+- Technical execution and craftsmanship
+
+Required JSON Response Format:
+{
+  "title": "Concise, descriptive title of the main subject",
+  "textExtraction": "All visible text, word-for-word",
+  "primaryEntities": ["Array of main subjects/brands/products identified"],
+  "detailedAnalysis": "Comprehensive analysis combining visual and contextual intelligence",
+  "businessIntelligence": [
+    {
+      "entity": "Company/Brand name",
+      "businessModel": "Core business description",
+      "industryPosition": "Market position and competition",
+      "foundingStory": "Company history and milestones",
+      "recentDevelopments": "Latest news and developments",
+      "culturalSignificance": "Brand impact and recognition"
+    }
+  ],
+  "visualAnalysis": {
+    "composition": "Scene layout and visual organization",
+    "colorPalette": "Dominant colors and schemes",
+    "lighting": "Lighting conditions and quality",
+    "style": "Artistic or photographic style",
+    "context": "Environmental and situational context"
+  },
+  "actionableInsights": [
+    "Specific recommendations or next steps based on analysis"
+  ],
+  "culturalContext": "Broader cultural, historical, or industry context",
+  "technicalDetails": "Any technical specifications or details visible",
+  "qualityAssessment": "Condition, authenticity, or quality indicators"
+}
+
+CRITICAL: Respond ONLY with valid JSON. No additional text, explanations, or formatting outside the JSON structure.
+```
+
+===========================================================
+PART 2: AI OUTPUT FORMATS - WHAT AI RETURNS
+===========================================================
+
+## 2.1 OPENAI TEXT ANALYSIS OUTPUT FORMAT:
+
+```json
+{
+  "title": "Pick up dry cleaning and car wash",
+  "summary": "Personal errands to complete before Friday deadline",
+  "suggestion": "Schedule both tasks for Thursday to avoid Friday rush",
+  "intent": "task-management",
+  "urgency": "medium",
+  "complexity": 3,
+  "entities": ["dry cleaning", "car wash", "Friday deadline"],
+  "nextSteps": [
+    "Call dry cleaner to confirm pickup time",
+    "Schedule car wash appointment",
+    "Set reminder for Thursday completion"
+  ],
+  "relatedTopics": ["time management", "weekly planning", "personal errands"],
+  "potentialObstacles": ["busy Friday schedule", "service availability"],
+  "skillsRequired": ["time management", "planning"],
+  "resourcesNeeded": ["phone", "car", "time"]
+}
+```
+
+## 2.2 OPENAI IMAGE ANALYSIS OUTPUT FORMAT (Note 476 example):
+
+```json
+{
+  "environmentalContext": "The key fob is placed on a light-colored surface, possibly a countertop or table, with natural lighting.",
+  "itemRelationships": "The key fob is a standalone item, typically associated with luxury vehicles.",
+  "organizationalInsights": "The item is centrally placed, suggesting focus on the key fob itself.",
+  "recommendedActions": [
+    {
+      "title": "Order Battery Replacement",
+      "description": "Purchase a compatible battery for the Porsche key fob.",
+      "priority": "high",
+      "estimatedTime": "10 minutes",
+      "links": [
+        {
+          "title": "Amazon Battery Search",
+          "url": "https://www.amazon.com/s?k=porsche+key+fob+battery"
+        }
+      ]
+    }
+  ],
+  "researchResults": [
+    {
+      "title": "Porsche AG",
+      "description": "Porsche is a German automobile manufacturer specializing in high-performance sports cars, SUVs, and sedans.",
+      "rating": "Highly reputable luxury brand",
+      "keyPoints": [
+        "Founded in 1931 by Ferdinand Porsche",
+        "Headquartered in Stuttgart, Germany",
+        "Part of Volkswagen Group",
+        "Known for iconic models like the 911"
+      ],
+      "contact": "Porsche customer service or local dealership"
+    }
+  ],
+  "quickInsights": [
+    "Porsche key fobs are often designed to resemble the car's silhouette.",
+    "Battery replacement is a common maintenance task for key fobs."
+  ]
+}
+```
+
+## 2.3 V2 INTELLIGENCE ROUTER OUTPUT PROCESSING:
+
+```javascript
+// From intelligence-router.ts processNoteV2()
+const richContext = composeRichContext(input.content, analysis);
+
+return {
+  id: input.id ?? 'temp',
+  timestamp: new Date().toISOString(),
+  richContext,        // This is the key field
+  ...richContext      // Spreads title, original, aiBody, perspective
+};
+```
+
+## 2.4 PRESENTATION COMPOSER OUTPUT (server/ai/presentation-composer.ts):
+
+**EXPECTED FORMAT FOR FRONTEND:**
+```javascript
+interface RichContext {
+  title: string;
+  original?: string;
+  aiBody?: string;
+  perspective?: string;
+}
+
+function composeRichContext(raw: string, analysis: any): RichContext {
+  // Clean raw content - remove AI instruction artifacts
+  let cleanContent = raw.trim()
+    .replace(/\[AI Analysis:.*?\]/g, '')
+    .replace(/\[AI Context:.*?\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const title = cleanContent.length <= 45 ? cleanContent : cleanContent.slice(0, 42) + '…';
+  const original = cleanContent === title ? '' : cleanContent;
+
+  // Generate meaningful AI body from actual analysis
+  let aiBody = '';
+  if (analysis?.proactiveDelivery?.suggestedActions?.length) {
+    const actions = analysis.proactiveDelivery.suggestedActions
+      .filter((a: any) => a.action && !a.action.includes('research'))
+      .slice(0, 3)
+      .map((a: any) => '• ' + a.action);
+    
+    if (actions.length > 0) {
+      aiBody = actions.join('\n');
+    }
+  }
+
+  // Generate concise perspective
+  let perspective = '';
+  if (analysis?.immediateProcessing?.understanding) {
+    perspective = analysis.immediateProcessing.understanding
+      .replace(/\(.*?\)/g, '') // Remove bio context
+      .slice(0, 100)
+      .trim();
+  }
+
+  return { title, original, aiBody, perspective };
+}
+```
+
+===========================================================
+PART 3: DATABASE STORAGE - HOW AI OUTPUT IS SAVED
+===========================================================
+
+## 3.1 NOTE STORAGE SCHEMA (shared/schema.ts):
+
+```javascript
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  aiGeneratedTitle: text("ai_generated_title"),
+  mode: text("mode").notNull().default("text"),
+  userId: text("user_id"),
+  
+  // AI Processing Fields
+  aiEnhanced: boolean("ai_enhanced").default(false),
+  aiSuggestion: text("ai_suggestion"),
+  aiContext: text("ai_context"),
+  richContext: text("rich_context"),  // JSON string
+  isProcessing: boolean("is_processing").default(false),
+  
+  // V2 Intelligence Fields
+  vectorDense: text("vector_dense"),     // JSON array
+  vectorSparse: text("vector_sparse"),   // JSON array  
+  intentVector: text("intent_vector"),   // JSON object
+  processingPath: text("processing_path"),
+  classificationScores: text("classification_scores"), // JSON object
+  
+  // Media Fields
+  audioUrl: text("audio_url"),
+  mediaUrl: text("media_url"),
+  transcription: text("transcription"),
+  imageData: text("image_data"),
+  
+  // Versioning and Protection
+  version: integer("version").default(1),
+  originalContent: text("original_content"),
+  lastUserEdit: timestamp("last_user_edit").defaultNow(),
+  protectedContent: text("protected_content")
+});
+```
+
+## 3.2 AI PROCESSING UPDATES (server/routes.ts):
+
+```javascript
+// After AI processing completes
+await storage.updateNote(note.id, {
+  aiGeneratedTitle: analysis.title,
+  richContext: JSON.stringify(analysis.richContext || {}),
+  aiEnhanced: true,
+  isProcessing: false,
+  aiSuggestion: analysis.suggestion,
+  aiContext: analysis.context,
+  vectorDense: JSON.stringify(analysis.vectorDense),
+  vectorSparse: JSON.stringify(analysis.vectorSparse),
+  intentVector: JSON.stringify(analysis.intentVector)
+});
+```
+
+===========================================================
+PART 4: FRONTEND DISPLAY - WHAT THE APP SHOWS
+===========================================================
+
+## 4.1 RICH CONTEXT PARSING (client/src/components/NoteDetailSimple.tsx):
+
+```javascript
+// Frontend expects this structure:
+interface RichContext {
+  title: string;
+  original?: string;
+  aiBody?: string;
+  perspective?: string;
+}
+
+// Parse richContext from database
+let parsedRichContext = null;
+if (note.richContext) {
+  try {
+    parsedRichContext = JSON.parse(note.richContext);
+  } catch (e) {
+    console.error('Failed to parse richContext:', e);
+  }
+}
+
+// Display logic
+const title = parsedRichContext?.title || note.content.slice(0, 45);
+const aiBody = parsedRichContext?.aiBody;
+const perspective = parsedRichContext?.perspective;
+```
+
+## 4.2 NOTE CARD DISPLAY (client/src/components/note-card.tsx):
+
+```javascript
+// Action items from richContext.aiBody
+const actionItems = parsedRichContext?.aiBody?.split('\n').filter(Boolean) || [];
+
+// Lightbulb insights from richContext.perspective  
+const insights = parsedRichContext?.perspective ? [parsedRichContext.perspective] : [];
+
+// Display in UI
+{actionItems.map((item, index) => (
+  <div key={index} className="flex items-start gap-2">
+    <CheckSquare className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+    <span className="text-sm text-gray-700">{item.replace('• ', '')}</span>
+  </div>
+))}
+
+{insights.map((insight, index) => (
+  <div key={index} className="flex items-start gap-2">
+    <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+    <span className="text-sm text-gray-600">{insight}</span>
+  </div>
+))}
+```
+
+===========================================================
+PART 5: CURRENT SYSTEM PROBLEMS - ROOT CAUSE ANALYSIS
+===========================================================
+
+## 5.1 NOTES 480 & 479 - AI PROCESSING FAILURE:
+
+**PROBLEM:** AI processing never completes
+**STATUS:** isProcessing: true, aiEnhanced: false, richContext: null
+**ROOT CAUSE:** V2 Intelligence Router fails silently
+**RESULT:** App shows only raw content, no rich sections
+
+## 5.2 NOTE 476 - WRONG OUTPUT FORMAT:
+
+**PROBLEM:** AI generates complex nested structure instead of simple richContext
+**AI OUTPUTS:** 
+```json
+{
+  "environmentalContext": "...",
+  "itemRelationships": "...", 
+  "recommendedActions": [...],
+  "researchResults": [...],
+  "quickInsights": [...]
+}
+```
+
+**FRONTEND EXPECTS:**
+```json
+{
+  "title": "...",
+  "original": "...",
+  "aiBody": "...",
+  "perspective": "..."
+}
+```
+
+**RESULT:** Frontend compatibility: FALSE - No rich sections display
+
+## 5.3 CONTENT POLLUTION:
+
+**PROBLEM:** AI instruction text embedded in user content
+**EXAMPLE:** "Need to order battery replacement. Amazon?\n\n[AI Analysis: Exhaustive analysis...]"
+**ROOT CAUSE:** System appends prompts to user content instead of keeping separate
+
+## 5.4 GENERIC AI OUTPUTS:
+
+**PROBLEM:** Meaningless insights and todos
+**EXAMPLES:**
+- Insights: "Porsche key fobs are designed to resemble car silhouette"
+- Todos: "Business intelligence gathering steps", "Deep research tasks"
+**ROOT CAUSE:** AI optimized for comprehensive analysis rather than actionable user assistance
+
+===========================================================
+PART 6: V2 RECURSIVE REASONING PROMPTS - WHAT'S SENT TO AI
+===========================================================
+
+## 6.1 RECURSIVE REASONING ENGINE (server/intelligence-v2/recursive-reasoning-engine.ts):
+
+**STEP 1 PROMPT:**
+```
+You are a predictive intelligence engine. Analyze user input and think 2-3 steps ahead.
+
+USER INPUT: "${content}"
+SEMANTIC CONTEXT: ${JSON.stringify(semanticMatches)}
+
+Provide recursive analysis following this exact JSON structure:
+{
+  "immediateProcessing": {
+    "understanding": "What the user actually wants/needs",
+    "intent": "primary goal classification", 
+    "urgency": "low|medium|high|critical",
+    "complexity": 1-10,
+    "entities": ["key items/concepts identified"],
+    "timeContext": "any time-sensitive elements"
+  },
+  "recursiveReasoning": {
+    "step1Anticipation": {
+      "likelyNextNeeds": ["what user will need next"],
+      "potentialQuestions": ["questions that might arise"],
+      "preparatoryActions": ["things to prepare in advance"]
+    },
+    "step2Prediction": {
+      "downstreamEffects": ["consequences of actions"],
+      "alternativeScenarios": ["different ways this could unfold"],
+      "optimizationOpportunities": ["ways to improve outcomes"]
+    },
+    "step3Strategy": {
+      "successFactors": ["what needs to go right"],
+      "riskMitigation": ["potential problems and solutions"],
+      "resourceOptimization": ["how to be most efficient"]
+    }
+  },
+  "proactiveDelivery": {
+    "suggestedActions": [
+      {
+        "action": "specific actionable step",
+        "priority": 1-10,
+        "reasoning": "why this is important",
+        "timing": "when to do this"
+      }
+    ],
+    "contextualRecommendations": ["relevant suggestions"],
+    "learningOpportunities": ["ways to improve for next time"]
+  }
+}
+```
+
+===========================================================
+PART 7: CODE LOCATIONS - WHERE EACH PART IS GOVERNED
+===========================================================
+
+## 6.1 AI PROCESSING ENTRY POINTS:
+- `server/routes.ts` lines 69-144: Note creation and async AI processing
+- `server/brain/miraAIProcessing.ts` lines 406-450: Main processNote() function
+- `server/intelligence-v2/intelligence-router.ts` lines 24-69: V2 processing
+
+## 6.2 AI INTEGRATION:
+- `server/openai.ts` lines 211-300: Image analysis prompts and processing
+- `server/openai.ts` lines 100-200: Text analysis prompts and processing
+
+## 6.3 OUTPUT FORMATTING:
+- `server/ai/presentation-composer.ts` lines 9-45: RichContext generation
+- `server/routes.ts` lines 490-570: Database updates with AI results
+
+## 6.4 FRONTEND DISPLAY:
+- `client/src/components/NoteDetailSimple.tsx`: Rich context parsing and display
+- `client/src/components/note-card.tsx`: Action items and insights display
+
+## 6.5 TODO GENERATION:
+- `server/routes.ts` lines 512-570: Todo creation from AI analysis
+- Applied filters: research, investigation, business intelligence keywords
+
+===========================================================
+SUMMARY: WHAT'S WORKING VS BROKEN
+===========================================================
+
+**WORKING:**
+- Note creation and storage
+- Image analysis with comprehensive prompts
+- Todo filtering (removes generic tasks)
+- Presentation composer format (when used)
+
+**BROKEN:**
+- Notes 480 & 479: AI processing completely fails
+- Note 476: Wrong richContext format breaks frontend display
+- Content pollution with AI instruction text
+- Generic, unhelpful AI insights
+- V2 Intelligence Router not generating proper output structure
+
+**SOLUTION NEEDED:**
+1. Fix V2 processing pipeline to complete for text notes
+2. Ensure presentation composer is used for ALL AI outputs
+3. Remove AI instruction artifacts from user content
+4. Improve AI prompt quality to generate actionable insights
