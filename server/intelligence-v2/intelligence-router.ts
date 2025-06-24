@@ -44,29 +44,47 @@ export class IntelligenceV2Router {
     console.log(choices[0].message!.content);
     console.log("=== END OPENAI OUTPUT ===");
     
-    // Clean response by removing markdown code blocks
+    // Robust markdown cleaning
     let cleanResponse = choices[0].message!.content!.trim();
     console.log("=== CLEANING PROCESS ===");
-    console.log("Original length:", cleanResponse.length);
-    console.log("Starts with ```json:", cleanResponse.startsWith('```json'));
-    console.log("Starts with ```:", cleanResponse.startsWith('```'));
+    console.log("Original response length:", cleanResponse.length);
+    console.log("First 50 chars:", cleanResponse.substring(0, 50));
+    console.log("Last 50 chars:", cleanResponse.substring(cleanResponse.length - 50));
     
-    if (cleanResponse.startsWith('```json')) {
-      console.log("Removing ```json wrapper");
-      cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (cleanResponse.startsWith('```')) {
-      console.log("Removing generic ``` wrapper");
-      cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    // Remove all markdown wrappers - be more aggressive
+    cleanResponse = cleanResponse
+      .replace(/^```json\s*/m, '')
+      .replace(/^```\s*/m, '')
+      .replace(/\s*```\s*$/m, '')
+      .trim();
+    
+    // Additional safety - find the JSON object boundaries
+    const jsonStart = cleanResponse.indexOf('{');
+    const jsonEnd = cleanResponse.lastIndexOf('}');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1);
+      console.log("Extracted JSON boundaries");
     }
     
     console.log("After cleaning length:", cleanResponse.length);
-    console.log("=== END CLEANING PROCESS ===")
+    console.log("Cleaned first 50 chars:", cleanResponse.substring(0, 50));
+    console.log("=== END CLEANING PROCESS ===");
     
     console.log("=== CLEANED RESPONSE ===");
     console.log(cleanResponse);
     console.log("=== END CLEANED RESPONSE ===");
     
-    const parsed = JSON.parse(cleanResponse);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanResponse);
+      console.log("=== JSON PARSING SUCCESS ===");
+    } catch (parseError) {
+      console.error("=== JSON PARSING FAILED ===");
+      console.error("Parse error:", parseError.message);
+      console.error("Problematic content:", cleanResponse.substring(0, 200));
+      throw new Error(`JSON parsing failed: ${parseError.message}`);
+    }
 
     console.log("=== PARSED JSON RESULT ===");
     console.log(JSON.stringify(parsed, null, 2));
