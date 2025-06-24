@@ -4,6 +4,7 @@ import { useParams, useLocation } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
 import { NoteWithTodos } from '@shared/schema';
 import { marked } from 'marked';
+import InputBar from '@/components/input-bar';
 
 // Helper function to convert markdown to HTML
 function mdToHtml(markdown: string): string {

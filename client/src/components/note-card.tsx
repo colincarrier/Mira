@@ -142,69 +142,16 @@ const getModeColor = (mode: string) => {
   }
 };
 
-// Helper function to generate intelligent follow-up questions with time-sensitivity detection
-const getFollowUpQuestions = (content: string, todos: any[]) => {
-  const questions = [];
-  const lowerContent = content.toLowerCase();
-
-  // Check for time-sensitive events first
-  const timeSensitiveTerms = [
-    'birthday', 'party', 'anniversary', 'wedding', 'graduation', 'deadline',
-    'appointment', 'meeting', 'interview', 'flight', 'reservation', 'event',
-    'surprise', 'gift', 'holiday', 'vacation', 'trip'
-  ];
-
-  const hasTimeSensitive = timeSensitiveTerms.some(term => lowerContent.includes(term));
-
-  if (hasTimeSensitive) {
-    // For time-sensitive items, prioritize date/timing questions
-    if (lowerContent.includes('party') || lowerContent.includes('surprise') || lowerContent.includes('birthday')) {
-      questions.push("🚨 When is this happening? (Date needed for planning)");
-      questions.push("Who else needs to know about this?");
-      return questions;
-    }
-    if (lowerContent.includes('appointment') || lowerContent.includes('meeting') || lowerContent.includes('interview')) {
-      questions.push("🚨 What's the exact date and time?");
-      questions.push("Where is this taking place?");
-      return questions;
-    }
-    if (lowerContent.includes('flight') || lowerContent.includes('trip') || lowerContent.includes('vacation')) {
-      questions.push("🚨 What are your travel dates?");
-      questions.push("Have you booked accommodations?");
-      return questions;
-    }
-  }
-
-  // For non-time-sensitive items, be more helpful and less annoying
-
-  // Simple tasks that don't need AI overkill
-  const simpleTaskPatterns = [
-    /pick up .+ at \d+/,
-    /buy .+/,
-    /call .+/,
-    /email .+/,
-    /text .+/
-  ];
-
-  if (simpleTaskPatterns.some(pattern => pattern.test(lowerContent))) {
-    // Don't add follow-up questions for obvious simple tasks
+// Follow-up questions should only come from AI processing, not client-side generation
+const getAIFollowUpQuestions = (richContext: any) => {
+  if (!richContext) return [];
+  
+  try {
+    const parsed = typeof richContext === 'string' ? JSON.parse(richContext) : richContext;
+    return parsed.microQuestions || [];
+  } catch {
     return [];
   }
-
-  // Restaurant/food related - focus on helpful info
-  if (lowerContent.includes('restaurant') || lowerContent.includes('food')) {
-    questions.push("What type of cuisine or atmosphere?");
-    questions.push("Price range preference?");
-  }
-
-  // Book/movie/entertainment - focus on preferences
-  else if (lowerContent.includes('book') || lowerContent.includes('movie') || lowerContent.includes('show')) {
-    questions.push("What genre interests you?");
-    questions.push("Any specific recommendations?");
-  }
-
-  // Only return questions if they add real value
-  return questions.slice(0, 2);
 };
 
 export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
@@ -220,7 +167,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
   const [showTodosModal, setShowTodosModal] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
 
-  const followUpQuestions = getFollowUpQuestions(note.content, note.todos);
+  const followUpQuestions = getAIFollowUpQuestions(note.richContext);
 
   // Helper to format content with proper title length limits
   const formatContent = (content: string) => {
