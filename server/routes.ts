@@ -430,17 +430,13 @@ This profile was generated from your input and will help provide more personaliz
         const { persistSideEffects } = await import("./ai/persist-side-effects");
         await persistSideEffects(v2Result, note.id);
         await storage.updateNote(note.id,{
-          aiGeneratedTitle:v2Result.title,
-          richContext:JSON.stringify(v2Result),
-          aiEnhanced:true,
-          isProcessing:false
+          aiGeneratedTitle: analysis.title || note.content.substring(0, 50),
+          richContext: JSON.stringify(analysis.richContext || {}),
+          aiEnhanced: true,
+          isProcessing: false,
+          aiSuggestion: analysis.summary || '',
+          aiContext: 'V2 processing completed'
         });
-        isProcessing: true,
-        aiEnhanced: false,
-        richContext: null,
-        aiSuggestion: null,
-        aiContext: null
-      });
       
       // Load user profile for bio integration
       const userProfile = await storage.getUser("demo");

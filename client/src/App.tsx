@@ -13,7 +13,7 @@ import Notes from "@/pages/notes";
 import Remind from "@/pages/remind";
 
 import Profile from "@/pages/profile";
-import NoteDetailSimpleSimple from "@/components/NoteDetailSimple";
+import NoteDetail from "@/components/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
 import NotFound from "@/pages/not-found";
@@ -49,7 +49,7 @@ export default function App() {
               <Route path="/" component={Notes} />
               <Route path="/remind" component={Remind} />
               <Route path="/profile" component={Profile} />
-              <Route path="/notes/:id" component={NoteDetailSimpleSimple} />
+              <Route path="/notes/:id" component={NoteDetail} />
               <Route path="/collection/:id" component={CollectionDetail} />
               <Route path="/todo/:id" component={TodoDetail} />
               <Route component={NotFound} />

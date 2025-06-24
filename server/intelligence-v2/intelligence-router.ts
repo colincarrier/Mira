@@ -28,25 +28,24 @@ export class IntelligenceV2Router {
     this.reason=new RecursiveReasoningEngine(openai,this.vector); 
   }
 
-  private async testAPIConnection(openai: OpenAI) {
-    try {
-      console.log("Testing OpenAI connection with simple call...");
-    const gpt = await this.openai.chat.completions.create({
-       model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
-    const analysis = await this.reason.performRecursiveAnalysis(
-       input.content, {}, matches, {});
-    const parsed = composeFromAnalysis(input.content, analysis);
+  async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
+    const userProfile = input.userProfile || { personalBio: "" };
+    
+    // Create simple prompt inline
+    const prompt = `Analyze this note and respond with valid JSON only:
 
-    
-    const { buildPrompt } = await import('../ai/prompt-specs');
-    const prompt = buildPrompt(userProfile.personalBio || "", input.content);
-    
-    console.log("=== EXACT OPENAI INPUT ===");
-    console.log("MODEL:", 'gpt-4o');
-    console.log("TEMPERATURE:", 0.4);
-    console.log("SYSTEM PROMPT (word-for-word):");
-    console.log(prompt);
-    console.log("=== END OPENAI INPUT ===");
+{
+  "title": "Brief title (max 45 chars)",
+  "aiBody": "Enhanced content with bullets or analysis", 
+  "perspective": "Brief reasoning (max 80 chars)",
+  "todos": [{"title": "Action item", "priority": "normal"}]
+}
+
+User context: ${userProfile.personalBio || "General user"}
+Note content: ${input.content}`;
+
+    try {
+      console.log("Processing with simplified GPT-4o call...");
     
     console.log("=== OPENAI API CALL DEBUG ===");
     console.log("Model: gpt-4o");
