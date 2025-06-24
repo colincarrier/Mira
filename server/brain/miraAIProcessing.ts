@@ -17,7 +17,9 @@ const featureFlags = FeatureFlagManager.getInstance();
 
 let intelligenceV2Router: IntelligenceV2Router | null = null;
 if (featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED')) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const apiKey = process.env.OPENAI_API_KEY_MIRA || process.env.OPENAI_API_KEY;
+  console.log('Initializing Intelligence-V2 with API key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined');
+  const openai = new OpenAI({ apiKey });
   intelligenceV2Router = new IntelligenceV2Router(openai);
   console.log('✅ [Bootstrap] Intelligence‑V2 router initialised successfully');
 } else {
