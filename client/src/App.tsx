@@ -13,7 +13,7 @@ import Notes from "@/pages/notes";
 import Remind from "@/pages/remind";
 
 import Profile from "@/pages/profile";
-import NoteDetail from "@/components/note-detail";
+import NoteDetail from "@/pages/note-detail";
 import CollectionDetail from "@/pages/collection-detail";
 import TodoDetail from "@/pages/todo-detail";
 import NotFound from "@/pages/not-found";
