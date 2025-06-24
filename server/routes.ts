@@ -443,10 +443,10 @@ This profile was generated from your input and will help provide more personaliz
           console.log("1. INPUT TO AI:", JSON.stringify(miraInput, null, 2));
           console.log("2. FULL ANALYSIS OUTPUT:", JSON.stringify(analysis, null, 2));
           console.log("3. ANALYSIS.RICHCONTEXT:", JSON.stringify(analysis.richContext, null, 2));
+          
+          const parsed = analysis.richContext || analysis;
           console.log("4. PARSED VARIABLE:", JSON.stringify(parsed, null, 2));
           console.log("=== END DEBUG ===");
-
-          const parsed = analysis.richContext || analysis;
           
           // Persist side effects
           const { persistSideEffects } = await import('./ai/persist-side-effects');
@@ -484,10 +484,12 @@ This profile was generated from your input and will help provide more personaliz
           });
 
           const updates: any = {
-            aiGeneratedTitle: analysis.title || aiGeneratedTitle,
-            richContext: JSON.stringify(analysis.richContext || {}),
+            aiGeneratedTitle: parsed.title,
+            richContext: JSON.stringify(parsed),
             aiEnhanced: true,
-            isProcessing: false
+            isProcessing: false,
+            aiSuggestion: parsed.perspective || '',
+            aiContext: "V2 processing completed"
           };
 
           console.log("Saving analysis data:", analysis);

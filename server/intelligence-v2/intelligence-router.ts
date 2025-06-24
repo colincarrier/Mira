@@ -44,7 +44,20 @@ export class IntelligenceV2Router {
     console.log(choices[0].message!.content);
     console.log("=== END OPENAI OUTPUT ===");
     
-    const parsed = JSON.parse(choices[0].message!.content!);
+    // Clean response by removing markdown code blocks
+    let cleanResponse = choices[0].message!.content!.trim();
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    }
+    if (cleanResponse.startsWith('```')) {
+      cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    console.log("=== CLEANED RESPONSE ===");
+    console.log(cleanResponse);
+    console.log("=== END CLEANED RESPONSE ===");
+    
+    const parsed = JSON.parse(cleanResponse);
 
     console.log("=== PARSED JSON RESULT ===");
     console.log(JSON.stringify(parsed, null, 2));

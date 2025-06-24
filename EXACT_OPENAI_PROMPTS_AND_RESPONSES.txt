@@ -310,11 +310,37 @@ CRITICAL DISCOVERY
 ## Root Cause Identified:
 The three-layer execution plan works perfectly for AI processing but the database update logic in routes.ts is not correctly handling the new format. The "parsed" variable extraction and database update sequence needs to be fixed.
 
-## Evidence:
-All 3 notes show identical pattern:
-1. Perfect OpenAI prompt/response cycle
-2. Correct richContext generation  
-3. Zero database persistence
-4. No todos created despite perfect AI output
+## CRITICAL ISSUE DISCOVERED:
 
-The issue is in the database persistence layer, not the AI processing layer.
+**OpenAI Response Format Problem:**
+OpenAI returns responses wrapped in markdown code blocks:
+```
+```json
+{
+  "title": "Buy Lunch At Noon",
+  ...
+}
+```
+```
+
+**Our Code Expects:**
+Pure JSON without markdown formatting.
+
+**Result:**
+JSON.parse() fails with error: "Unexpected token '`'"
+
+## Evidence from Note 493:
+- **Prompt sent correctly** using three-layer schema
+- **OpenAI response received** with perfect JSON content
+- **JSON parsing failed** due to markdown wrapper
+- **Database update never executed** due to parsing error
+- **Final status:** isProcessing: false, aiEnhanced: false, richContext: null
+
+## Fix Applied:
+Added markdown cleaning to remove ```json wrapper before JSON.parse()
+
+## Expected Result:
+The three-layer execution plan should now work completely:
+- Layer A: Prompt contract ✓ (working)
+- Layer B: Side effects persistence ✓ (should work after fix)
+- Layer C: Frontend display ✓ (should work after fix)
