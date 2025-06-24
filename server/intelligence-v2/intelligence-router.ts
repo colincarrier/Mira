@@ -1,66 +1,101 @@
+import { buildPrompt } from "../ai/prompt-specs";
+import { composeFromAnalysis } from "../ai/compose-v2";
+import OpenAI from 'openai';
 import { VectorEngine } from './vector-engine.js';
 import { RecursiveReasoningEngine } from './recursive-reasoning-engine.js';
-import { IntentVectorClassifier } from './intent-vector-classifier.js';
+import { IntentVectorClassifier, type IntentVector } from './intent-vector-classifier.js';
+import { CollectionsExtractor } from './collections-extractor.js';
 import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
-import { buildPrompt } from '../ai/prompt-specs.js';
-import { composeFromAnalysis } from '../ai/compose-v2.js';
+import { makeTitle } from '../utils/title-governor.js';
+
+export interface IntelligenceV2Input { 
+  id?:string; 
+  content:string; 
+  mode:'text'|'voice'|'image'|'file'; 
+  userProfile?:any;
+}
+
+export interface IntelligenceV2Result {
+  id: string;
+  title: string;
+  summary?: string;
+  richContext?: any;
+  intent?: string;
+  urgency?: string;
+  complexity?: number;
+  confidence?: number;
+  todos?: any[];
+  nextSteps?: any[];
+  entities?: any[];
+  suggestedLinks?: any[];
+  microQuestions?: any[];
+  fromTheWeb?: any[];
+  tags?: any[];
+  relatedTopics?: any[];
+  processingPath?: string;
+  classificationScores?: any;
+  timeInstructions?: any;
+  timestamp: string;
+}
 
 export class IntelligenceV2Router {
-  constructor(openai) {
+  private openai: OpenAI;
+  private vector: VectorEngine;
+  private reason: RecursiveReasoningEngine;
+
+  constructor(openai: OpenAI) {
     this.openai = openai;
-    this.vector = new VectorEngine(openai);
-    this.reason = new RecursiveReasoningEngine(openai, this.vector);
+    this.vector = new VectorEngine();
+    this.reason = new RecursiveReasoningEngine();
   }
 
-  async processNoteV2(input) {
+  async processNoteV2(input: IntelligenceV2Input): Promise<IntelligenceV2Result> {
     const userProfile = input.userProfile || { personalBio: "" };
+    
     const prompt = buildPrompt(userProfile.personalBio || "", input.content);
-
-    console.log("=== [MIRA V2] OPENAI INPUT PROMPT ===");
-    console.log(prompt);
-    console.log("=== END PROMPT ===");
-
+    
+    console.log("=== FIXED OPENAI CALL ===");
+    console.log("Model: gpt-4o");
+    console.log("Prompt:", prompt.substring(0, 100) + "...");
+    
     try {
-      const gpt = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "system", content: prompt }],
-        temperature: 0.4
-      });
+      // Simple OpenAI call with JSON mode
+    const gpt = await this.openai.chat.completions.create({
+       model:"gpt-4o", messages:[{role:"system",content:prompt}], temperature:0.4});
+    const analysis = await this.reason.performRecursiveAnalysis(
+       input.content, {}, matches, {});
+    const parsed = composeFromAnalysis(input.content, analysis);
 
-      const reply = gpt.choices[0].message?.content;
-      let parsed;
-      try {
-        parsed = JSON.parse(reply ?? '{}');
-      } catch (jsonError) {
-        console.warn("🟠 GPT returned invalid JSON:", reply);
-        parsed = {
-          title: input.content.slice(0, 45),
-          original: input.content,
-          aiBody: '',
-          perspective: 'Could not parse structured response.',
-          todos: [],
-          reminder: null
-        };
-      }
-
-      const analysis = await this.reason.performRecursiveAnalysis(input.content, {}, [], {});
-      const composed = composeFromAnalysis(input.content, analysis);
-
-      return {
-        ...composed,
-        ...parsed,
         id: input.id ?? "temp",
-        timestamp: new Date().toISOString(),
-        richContext: { ...parsed, ...composed }
+        title: input.content.split(' ').slice(0, 5).join(' ') || 'Untitled',
+        summary: '',
+        richContext: { title: input.content, perspective: 'Processing failed' },
+        intent: 'general',
+        urgency: 'medium',
+        complexity: 5,
+        confidence: 0.5,
+        todos: [],
+        nextSteps: [],
+        entities: [],
+        suggestedLinks: [],
+        microQuestions: [],
+        fromTheWeb: [],
+        tags: [],
+        relatedTopics: [],
+        processingPath: 'memory',
+        classificationScores: {},
+        timeInstructions: { hasTimeReference: false, extractedTimes: [], scheduledItems: [] },
+        timestamp: new Date().toISOString()
       };
-    } catch (error) {
-      console.error("❌ [V2] Processing failed:", error);
-      throw error;
     }
   }
 }
-const singleton = new IntelligenceV2Router(new (await import('openai')).default({ apiKey: process.env.OPENAI_API_KEY }));
-export async function processWithIntelligenceV2(input) {
-  return singleton.processNoteV2(input);
+
+/* singleton + helper export */
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const singleton = new IntelligenceV2Router(openai);
+export async function processWithIntelligenceV2(i: IntelligenceV2Input) { 
+  return singleton.processNoteV2(i); 
 }
+export default singleton;

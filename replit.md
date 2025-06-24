@@ -180,14 +180,15 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Permission State**: localStorage-based caching with denial cooldown protection
 - **Cross-Component Integration**: Full-screen capture and voice recorder using unified system
 
-### AI-First Implementation Complete (June 24, 2025)
-- **JSON Processing Fix**: OpenAI now uses strict JSON mode with response_format enforcement
-- **Client-Side Elimination**: Removed all hardcoded follow-up questions and fallback content
-- **Prompt Engineering**: Rebuilt prompts for guaranteed JSON output without conversational responses  
-- **Image Processing**: Updated image analysis to use Intelligence V2 pipeline consistently
-- **UI Components**: Added InputBar to all note detail pages for complete functionality
-- **Fallback Removal**: Disabled all non-AI content generation systems
-- **Production Status**: True AI-first architecture with no client-side content generation
+### Intelligence V2 Hot-Fix Implementation (June 24, 2025)
+- **Shell Script Execution**: Applied complete hot-fix via atomic shell script operation
+- **Clean Git Reset**: Rolled back corrupted manual changes and executed script exactly as provided
+- **Unified Prompt System**: Created server/ai/prompt-specs.ts with single source of truth for GPT schema
+- **Analysis Composition**: Added server/ai/compose-v2.ts to distill recursive analysis to clean format
+- **Side Effects Handler**: Implemented server/ai/persist-side-effects.ts for automatic todo/reminder creation
+- **Router Patching**: Used sed commands to patch intelligence-router.ts with precise pattern matching
+- **Routes Integration**: Applied sed patches to routes.ts for v2Result handling and side effects persistence
+- **Frontend Component**: Created NoteDetailSimple.tsx with robust rich context parsing and display
 
 ### Intelligence-V2 Architecture Implementation (June 14, 2025)
 - **Vector Engine**: Implemented dual-vector storage (dense + sparse) for semantic search
