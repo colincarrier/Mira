@@ -33,11 +33,58 @@ export class IntelligenceV2Router {
     console.log(prompt);
     console.log("=== END OPENAI INPUT ===");
     
-    const { choices } = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'system', content: prompt }],
-      temperature: 0.4
-    });
+    console.log("=== OPENAI API CALL DEBUG ===");
+    console.log("Model: gpt-4o");
+    console.log("API Key present:", !!process.env.OPENAI_API_KEY);
+    console.log("API Key first 10 chars:", process.env.OPENAI_API_KEY?.substring(0, 10) || 'undefined');
+    console.log("Prompt length:", prompt.length);
+    
+    let response;
+    try {
+      response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 1000
+      });
+      console.log("OpenAI API call successful");
+    } catch (apiError: any) {
+      console.error("=== OPENAI API ERROR DETAILS ===");
+      console.error("Error type:", apiError.constructor.name);
+      console.error("Status code:", apiError.status);
+      console.error("Error message:", apiError.message);
+      console.error("Request ID:", apiError.requestID);
+      console.error("Error code:", apiError.code);
+      console.error("Error param:", apiError.param);
+      console.error("Error type field:", apiError.type);
+      
+      // Check if it's a 404 indicating model or API key issue
+      if (apiError.status === 404) {
+        console.error("404 Error - Possible causes:");
+        console.error("1. Invalid API key");
+        console.error("2. Model 'gpt-4o' not available for this API key");
+        console.error("3. API endpoint issue");
+        
+        // Try with a fallback model
+        console.log("Attempting fallback to gpt-4...");
+        try {
+          response = await this.openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [{ role: 'system', content: prompt }],
+            temperature: 0.4,
+            max_tokens: 1000
+          });
+          console.log("Fallback to gpt-4 successful");
+        } catch (fallbackError: any) {
+          console.error("Fallback also failed:", fallbackError.message);
+          throw new Error(`OpenAI API failed: ${apiError.message}. Please verify your API key has access to GPT-4 models.`);
+        }
+      } else {
+        throw apiError;
+      }
+    }
+    
+    const { choices } = response;
     
     console.log("=== EXACT OPENAI OUTPUT ===");
     console.log("RAW RESPONSE:");
