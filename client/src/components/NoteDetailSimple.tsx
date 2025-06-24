@@ -50,12 +50,10 @@ export default function NoteDetailSimple() {
   }
 
   const rc = note.richContext ? JSON.parse(note.richContext) : {};
-
-  // Add fallbacks for missing richContext
   const displayTitle = rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled';
-  const displayOriginal = rc.original || (rc.title !== note.content ? note.content : '');
-  const displayAiBody = rc.aiBody || '';
-  const displayPerspective = rc.perspective || '';
+  const displayOrig = rc.original || (displayTitle !== note.content ? note.content : '');
+  const displayBody = rc.aiBody ?? '';
+  const displayPersp = rc.perspective ?? '';
 
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
@@ -85,10 +83,10 @@ export default function NoteDetailSimple() {
         {/* Title bar styled like iOS heading */}
         <h1 className="text-2xl font-semibold leading-snug">{displayTitle}</h1>
 
-        {/* Original content - always show if we have content */}
-        {displayOriginal && (
+        {/* Original content - show only if different from title */}
+        {displayOrig && (
           <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap">
-            {displayOriginal}
+            {displayOrig}
           </div>
         )}
 
@@ -102,13 +100,13 @@ export default function NoteDetailSimple() {
         )}
 
         {/* AI body */}
-        {displayAiBody && (
-          <pre className="whitespace-pre-wrap text-base leading-relaxed">{displayAiBody}</pre>
+        {displayBody && (
+          <pre className="whitespace-pre-wrap text-base leading-relaxed">{displayBody}</pre>
         )}
 
         {/* Perspective */}
-        {displayPerspective && (
-          <p className="text-xs text-gray-500 whitespace-pre-wrap">{displayPerspective}</p>
+        {displayPersp && (
+          <p className="text-xs text-gray-500 whitespace-pre-wrap">{displayPersp}</p>
         )}
       </div>
     </div>

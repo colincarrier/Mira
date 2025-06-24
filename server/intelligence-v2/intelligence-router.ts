@@ -52,8 +52,9 @@ export class IntelligenceV2Router {
 
     return{
       id: input.id ?? 'temp',
-      ...richContext,            // title, original, aiBody, perspective
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      richContext,                    // attach here
+      ...richContext                  // keep title/body in root for convenience
     };
   }
 }

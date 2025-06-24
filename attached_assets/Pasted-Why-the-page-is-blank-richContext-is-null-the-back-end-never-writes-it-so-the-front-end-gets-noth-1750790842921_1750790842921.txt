@@ -1,0 +1,100 @@
+Why the page is blank
+richContext is null – the back‑end never writes it, so the front‑end gets nothing to render.
+
+The NoteDetail component has no fall‑backs when richContext is missing.
+
+You already drafted sensible fall‑backs for the component; the bigger fix is to be sure the router actually produces and saves richContext.
+
+## 1 · Back‑end patch – always write richContext
+
+Add the composer, call it, and store the result.
+
+ts
+Copy
+// server/ai/presentation-composer.ts  (create if it doesn’t exist)
+import { RecursiveAnalysis } from '../intelligence-v2/recursive-reasoning-engine';
+
+export interface RichContext {
+  title: string;
+  original?: string;
+  aiBody?: string;
+  perspective?: string;
+}
+
+/** Build the four fields shown in the UI */
+export function composeRichContext(raw: string, analysis: RecursiveAnalysis|null): RichContext {
+  const clean = raw.trim().replace(/\s+/g,' ');
+  const title = clean.length<=45 ? clean : clean.slice(0,42)+'…';
+  const original = clean===title ? '' : raw;
+
+  let aiBody = '';
+  if (analysis?.proactiveDelivery?.suggestedActions?.length) {
+    aiBody = analysis.proactiveDelivery.suggestedActions
+             .slice(0,3).map(a=>'• '+a.action).join('\n');
+  }
+  const p1 = analysis?.immediateProcessing?.understanding?.slice(0,80);
+  const p2 = analysis?.recursiveReasoning?.step1Anticipation?.likelyNextNeeds?.[0];
+  const perspective = [p1,p2].filter(Boolean).join('\n');
+
+  return { title, original, aiBody, perspective };
+}
+ts
+Copy
+// server/intelligence-v2/intelligence-router.ts
+import { composeRichContext } from '../ai/presentation-composer';
+
+...
+
+const analysis = await this.reason.performRecursiveAnalysis(
+                   input.content, userContext, matches, {});
+const richContext = composeRichContext(input.content, analysis);
+
+return {
+  id        : input.id ?? 'temp',
+  timestamp : new Date().toISOString(),
+  richContext,                    // <<–– attach here
+  ...richContext                  // keep title/body in root for convenience
+};
+ts
+Copy
+// server/routes.ts  (inside the note‑update block after V2 finishes)
+await storage.updateNote(note.id, {
+  aiGeneratedTitle : v2Result.richContext.title,
+  richContext      : JSON.stringify(v2Result.richContext),
+  aiEnhanced       : true,
+  isProcessing     : false
+});
+Re‑run one or two new notes. GET /api/notes/:id should now return a non‑null richContext blob like:
+
+json
+Copy
+{
+  "title":"get Adam and Dana a gift…",
+  "original":"get Adam and Dana a gift symbolizing …",
+  "aiBody":"• Reminder set for tomorrow 09:00\n• Check Malibu florist",
+  "perspective":"Matched fertility‑related gift. Next I’ll pull 3 eco options."
+}
+## 2 · Front‑end fall‑backs (your draft, polished)
+
+Replace the calculation block near the top of NoteDetailSimple.tsx:
+
+tsx
+Copy
+const rc           = note.richContext ? JSON.parse(note.richContext) : {};
+const displayTitle = rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled';
+const displayOrig  = rc.original || (displayTitle !== note.content ? note.content : '');
+const displayBody  = rc.aiBody ?? '';
+const displayPersp = rc.perspective ?? '';
+and keep your rendering logic that shows displayOrig only if present.
+
+## 3 · Result in the UI
+
+Title bar shows the cleaned heading.
+
+Blue “What you wrote” box appears only when the title was shortened.
+
+AI body contains actual next actions (bullets), never the placeholder “Deep semantic comprehension”.
+
+Muted perspective sentence explains why Mira chose those actions.
+
+Create one new note after rebuilding; you should see all four zones populated. If richContext is still null in the API response, send me the first 20 lines of the server log after creating the note—I’ll trace the write path.
