@@ -1,6 +1,98 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
 .DS_Store
-server/public
-vite.config.ts.*
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Uploads and media
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.svg
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+.npm/
+.yarn/
+
+# Replit specific
+.replit
+.upm/
+
+# Archives and exports
 *.tar.gz
+*.zip
+*.rar
+
+# Backup files
+*.backup
+*.bak
+
+# Test files
+test-*.js
+test-*.mjs
+
+# Documentation exports (keep main docs)
+attached_assets/
+mira-export-*/
+mira-complete-*/
+*-export-*.tar.gz
+*-complete-*.tar.gz
+COMPLETE_*.md
+MIRA_COMPLETE_*.md
+AI_*.md
+TEST_*.md
+COMPREHENSIVE_*.md
