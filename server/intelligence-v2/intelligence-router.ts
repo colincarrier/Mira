@@ -19,7 +19,12 @@ export interface IntelligenceV2Result { id:string; title:string; original:string
 
 export class IntelligenceV2Router {
   private vector:VectorEngine; private reason:RecursiveReasoningEngine; private openai:OpenAI;
-  constructor(openai:OpenAI){ this.openai=openai; this.vector=new VectorEngine(openai); this.reason=new RecursiveReasoningEngine(openai,this.vector); }
+  constructor(openai:OpenAI){ 
+    console.log("IntelligenceV2Router initialized with API key:", openai ? "present" : "missing");
+    this.openai=openai; 
+    this.vector=new VectorEngine(openai); 
+    this.reason=new RecursiveReasoningEngine(openai,this.vector); 
+  }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
     const userProfile = input.userProfile || { personalBio: "" };
