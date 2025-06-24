@@ -508,10 +508,21 @@ This profile was generated from your input and will help provide more personaliz
             }
           }
 
-          // Create todos from Mira AI v2.0 analysis
+          // Create todos from Mira AI v2.0 analysis - filter out generic tasks
           if (analysis.todos && analysis.todos.length > 0) {
-            console.log("Creating", analysis.todos.length, "v2.0 todos for note:", note.id);
-            for (const todo of analysis.todos) {
+            const meaningfulTodos = analysis.todos.filter((todo: any) => 
+              todo.title && 
+              !todo.title.toLowerCase().includes('research') &&
+              !todo.title.toLowerCase().includes('investigation') &&
+              !todo.title.toLowerCase().includes('business intelligence') &&
+              !todo.title.toLowerCase().includes('deep') &&
+              !todo.title.toLowerCase().includes('gathering') &&
+              !todo.title.toLowerCase().includes('analysis') &&
+              todo.title.length > 10
+            );
+            
+            console.log("Creating", meaningfulTodos.length, "meaningful todos for note:", note.id);
+            for (const todo of meaningfulTodos) {
               const todoData: any = {
                 noteId: note.id,
                 title: todo.title,
