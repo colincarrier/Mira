@@ -59,10 +59,10 @@ app.use((req, res, next) => {
   await initializeDatabase();
   await initializeStandardCollections();
 
-  const server = await app.use('/api', routes);
+  app.use('/api', routes);
 
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    await setupVite(app);
   } else {
     serveStatic(app);
   }
@@ -77,7 +77,7 @@ app.use((req, res, next) => {
 
   // Use Replit's assigned PORT for preview pane compatibility, fallback to 5000
   const port = Number(process.env.PORT) || 5000;
-  server.listen({
+  const server = app.listen({
     port,
     host: "0.0.0.0",
   }, async () => {
