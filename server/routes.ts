@@ -480,7 +480,7 @@ This profile was generated from your input and will help provide more personaliz
             isProcessing: false
           };
 
-          console.log("Saving richContext data:", richContextData);
+          console.log("Saving v2Result data:", v2Result);
           console.log("Full update payload:", JSON.stringify(updates, null, 2));
 
           try {
