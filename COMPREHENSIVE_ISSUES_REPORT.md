@@ -27,8 +27,13 @@
 **Intelligence V2 Router:** ✅ Connection test successful
 **Application Processing:** ❌ Pipeline failing silently
 
-### Root Cause Discovery
-The issue is in the async processing pipeline - notes get created with `isProcessing: true` but the `miraModule.processNote()` calls fail silently. Modified processNote() to use Intelligence V2 directly.
+### Root Cause Discovery & Fix
+**Issue:** OpenAI returning conversational text instead of JSON
+**Fix Applied:** 
+- Modified prompt to be strict JSON processor
+- Added `response_format: { type: "json_object" }` to OpenAI call
+- Updated message structure for better JSON compliance
+- Fixed image processing to use Intelligence V2 pipeline
 
 ## REMAINING CLIENT-SIDE FALLBACKS TO AUDIT
 

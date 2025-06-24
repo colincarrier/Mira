@@ -64,14 +64,18 @@ export class IntelligenceV2Router {
     
     let response;
     try {
-      // Start with gpt-3.5-turbo since we confirmed it works
+      // Use gpt-3.5-turbo with strict JSON mode
       response = await this.openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'system', content: prompt }],
-        temperature: 0.4,
-        max_tokens: 1000
+        messages: [
+          { role: 'system', content: 'You are a JSON processor. Respond only with valid JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 1500,
+        response_format: { type: "json_object" }
       });
-      console.log("OpenAI API call successful with gpt-3.5-turbo");
+      console.log("OpenAI API call successful with JSON mode");
     } catch (apiError: any) {
       console.error("=== OPENAI API ERROR DETAILS ===");
       console.error("Error type:", apiError.constructor.name);
