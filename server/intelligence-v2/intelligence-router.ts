@@ -65,19 +65,19 @@ export class IntelligenceV2Router {
         console.error("2. Model 'gpt-4o' not available for this API key");
         console.error("3. API endpoint issue");
         
-        // Try with a fallback model
-        console.log("Attempting fallback to gpt-4...");
+        // Try with more accessible models
+        console.log("Attempting fallback to gpt-3.5-turbo...");
         try {
           response = await this.openai.chat.completions.create({
-            model: 'gpt-4',
+            model: 'gpt-3.5-turbo',
             messages: [{ role: 'system', content: prompt }],
             temperature: 0.4,
             max_tokens: 1000
           });
-          console.log("Fallback to gpt-4 successful");
+          console.log("Fallback to gpt-3.5-turbo successful");
         } catch (fallbackError: any) {
-          console.error("Fallback also failed:", fallbackError.message);
-          throw new Error(`OpenAI API failed: ${apiError.message}. Please verify your API key has access to GPT-4 models.`);
+          console.error("GPT-3.5-turbo also failed:", fallbackError.message);
+          throw new Error(`OpenAI API access issue: ${apiError.message}. Please verify your API key is valid and has proper model access.`);
         }
       } else {
         throw apiError;
