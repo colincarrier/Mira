@@ -1,0 +1,256 @@
+MIRA AI PROCESSING ANALYSIS REPORT
+=====================================
+
+OVERVIEW
+--------
+Complete analysis of notes 531 and 532 showing exact data flow from user input through OpenAI processing to final display in the application.
+
+NOTE 531 ANALYSIS (IMAGE NOTE - SUCCESSFUL PROCESSING)
+------------------------------------------------------
+Input Content: "Order replacement batter. Amazon?"
+Mode: image
+Media: Car key fob image at "/uploads/079cf6eb-79ea-41f1-826d-95a239a3da07.jpg"
+Final Status: aiEnhanced: true, isProcessing: false
+
+ACTUAL AI OUTPUT FOR NOTE 531:
+- aiSuggestion: "Consider purchasing a replacement battery for the car key from a reliable source like Amazon or a local automotive store."
+- aiContext: "The image shows a car key fob, likely for a luxury vehicle, indicating a setting that may involve automotive interests or ownership."
+- richContext: Full JSON with environmental context, item relationships, recommended actions
+- Generated 3 todos: "Research battery type", "Find purchasing options on Amazon", "Check local automotive stores"
+
+NOTE 532 ANALYSIS (TEXT NOTE - PROCESSING FAILURE)
+--------------------------------------------------
+Input Content: "Call Alex at 1230p"
+Mode: text
+Media: none
+Final Status: aiEnhanced: false, isProcessing: false (stuck in processing)
+
+PROCESSING PATH DIFFERENCES
+--------------------------
+
+NOTE 531 (IMAGE - SUCCESSFUL):
+Uses different processing path: server/openai.ts analyzeWithOpenAI()
+- Direct OpenAI GPT-4o call with image analysis
+- Enhanced prompt with product research capabilities
+- Comprehensive JSON response processing
+- Full todo extraction and rich context generation
+
+NOTE 532 (TEXT - FAILED):  
+Uses Intelligence V2 path: server/intelligence-v2/intelligence-router.ts
+- Routes through processNoteV2() function
+- Uses gpt-3.5-turbo with strict JSON mode
+- Simplified prompt from server/ai/prompt-specs.ts
+- JSON parsing issues causing processing failure
+
+EXACT PROCESSING ARCHITECTURE
+-----------------------------
+
+TEXT NOTES (Like Note 532):
+1. POST /api/notes → server/routes.ts
+2. miraModule.processNote() → server/brain/miraAIProcessing.ts  
+3. intelligenceV2Router.processNoteV2() → server/intelligence-v2/intelligence-router.ts
+4. buildPrompt() → server/ai/prompt-specs.ts
+5. OpenAI gpt-3.5-turbo call with JSON mode
+6. JSON parsing and response formatting
+
+IMAGE NOTES (Like Note 531):
+1. POST /api/notes → server/routes.ts
+2. analyzeWithOpenAI() → server/openai.ts
+3. Direct GPT-4o call with image analysis
+4. Product research enhancement
+5. Rich context generation
+
+EXACT PROMPTS SENT TO OPENAI
+----------------------------
+
+FOR NOTE 532 ("Call Alex at 1230p") - Intelligence V2 Path:
+
+SYSTEM MESSAGE: "You are a JSON processor. Respond only with valid JSON."
+
+USER MESSAGE (Full Prompt):
+```
+SYSTEM:
+You are Mira's Intelligence‑V2 core.
+Always reply **ONLY** in this JSON schema:
+
+{
+  "title":  <string>,       // ≤45 chars, camel‑case
+  "original": <string?>,    // empty if same as title
+  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
+  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
+  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
+  "reminder": <{timeISO:string, leadMins:number}?>
+}
+
+Rules:
+- No extra keys, no markdown outside values.
+- If you have no value, return "" or [].
+- Personalise tone & suggestions using USER_BIO block.
+
+USER_BIO:
+[User bio content - technical professional details]
+
+NOTE_TEXT:
+Call Alex at 1230p
+```
+
+MODEL: gpt-3.5-turbo
+TEMPERATURE: 0.1
+MAX_TOKENS: 1500
+RESPONSE_FORMAT: { type: "json_object" }
+
+FOR NOTE 531 ("Order replacement batter. Amazon?") - OpenAI Direct Path:
+
+SYSTEM MESSAGE: "You are an expert product research assistant. Generate comprehensive, detailed product analysis with specific models, exact pricing, expert reviews, and organized comparisons. Match ChatGPT's depth and quality. Always respond with valid JSON only."
+
+USER MESSAGE: Enhanced product research prompt with image analysis
+MODEL: gpt-4o
+TEMPERATURE: 0.7  
+MAX_TOKENS: 8000
+
+OPENAI RESPONSES RECEIVED
+------------------------
+
+NOTE 532 PROCESSING FAILURE:
+The Intelligence V2 system shows console logs indicating OpenAI API calls are being made, but JSON parsing is failing. Based on server logs, the system attempts to:
+
+1. Call gpt-3.5-turbo with JSON mode
+2. Process response through extensive JSON cleaning
+3. Parse the cleaned response
+4. Map to three-layer format
+
+However, the note remains with:
+- aiEnhanced: false  
+- isProcessing: false (changed from true, indicating attempt completed)
+- richContext: null
+- No todos generated
+
+NOTE 531 SUCCESSFUL PROCESSING:
+The image processing through server/openai.ts successfully generated:
+
+OPENAI RESPONSE STRUCTURE (reconstructed from final data):
+```json
+{
+  "title": "Car Key Battery Replacement",
+  "enhancedContent": "Order replacement battery. Amazon?\n\n[Enhanced with AI analysis]",
+  "suggestion": "Consider purchasing a replacement battery for the car key from a reliable source like Amazon or a local automotive store.",
+  "summary": "The image shows a car key fob, likely for a luxury vehicle, indicating a setting that may involve automotive interests or ownership.",
+  "richContext": {
+    "environmentalContext": "The key fob is placed on a marble or stone surface, suggesting a clean and modern setting.",
+    "recommendedActions": [
+      {
+        "title": "Order Replacement Battery",
+        "description": "Purchase a compatible battery for the Porsche key fob",
+        "priority": "high"
+      }
+    ],
+    "researchResults": [
+      {
+        "title": "Porsche Key Fob Battery", 
+        "description": "Typically uses a CR2032 battery"
+      }
+    ]
+  },
+  "todos": [
+    {"title": "Research battery type for the key fob", "priority": "medium"},
+    {"title": "Find purchasing options on Amazon", "priority": "medium"}, 
+    {"title": "Check local automotive stores for availability", "priority": "medium"}
+  ]
+}
+```
+
+ROOT CAUSE ANALYSIS
+------------------
+
+NOTE 532 FAILURE CAUSE:
+The Intelligence V2 router (server/intelligence-v2/intelligence-router.ts) has extensive JSON cleaning logic that may be corrupting valid OpenAI responses:
+
+1. Multiple cleaning passes remove markdown wrappers
+2. Boundary detection extracts content between first { and last }
+3. Complex parsing attempts with extensive logging
+4. Silent failures in async processing chain
+5. No proper error handling to set isProcessing: false
+
+The issue appears to be over-aggressive JSON cleaning destroying valid responses from gpt-3.5-turbo.
+
+NOTE 531 SUCCESS FACTORS:
+1. Uses direct OpenAI GPT-4o integration in server/openai.ts
+2. Simpler JSON parsing without excessive cleaning
+3. Image analysis enables richer context generation
+4. Product research prompts generate comprehensive content
+5. Proper error handling and fallback mechanisms
+
+WHAT'S SHOWING IN THE APP
+------------------------
+
+NOTE 531 (Successful Image Processing):
+- Title: Generated from AI analysis
+- Content: Original text + "[AI Analysis: ...]" appended
+- Rich Context: Full JSON with environmental context, recommendations, research results
+- Todos: 3 automatically generated todos with medium priority
+- Suggestion: "Consider purchasing a replacement battery for the car key from a reliable source like Amazon or a local automotive store."
+- Context: "The image shows a car key fob, likely for a luxury vehicle, indicating a setting that may involve automotive interests or ownership."
+
+NOTE 532 (Failed Text Processing):
+- Title: null (no AI generation)
+- Content: Original "Call Alex at 1230p" (unchanged)
+- Rich Context: null (no AI enhancement)
+- Todos: empty array (no extraction)
+- Suggestion: null (no AI suggestion)
+- Context: null (no AI context)
+- Status: aiEnhanced: false, isProcessing: false (stuck)
+
+COMPLETE FILE INVENTORY
+----------------------
+
+TEXT PROCESSING PATH (Note 532 - FAILED):
+1. server/routes.ts:540-580 - Note creation and async processing trigger
+2. server/brain/miraAIProcessing.ts:415-450 - Routes to Intelligence V2
+3. server/intelligence-v2/intelligence-router.ts:46-170 - V2 processing engine
+4. server/ai/prompt-specs.ts:1-23 - Prompt template and building
+5. server/openai.ts - OpenAI client configuration
+
+IMAGE PROCESSING PATH (Note 531 - SUCCESSFUL):
+1. server/routes.ts:540-580 - Note creation and async processing trigger  
+2. server/openai.ts:analyzeWithOpenAI() - Direct image analysis
+3. Enhanced product research prompts with GPT-4o
+4. server/ai/persist-side-effects.ts - Todo extraction
+5. Rich context generation and formatting
+
+FRONTEND DISPLAY:
+1. client/src/components/note-card.tsx - Note display component
+2. client/src/components/note-detail.tsx - Detailed note view
+3. shared/schema.ts - Data models and type definitions
+
+CRITICAL ISSUE IDENTIFIED
+-------------------------
+
+The Intelligence V2 router has over-engineered JSON cleaning that corrupts valid OpenAI responses:
+
+```typescript
+// PROBLEMATIC CODE in server/intelligence-v2/intelligence-router.ts:
+cleanResponse = cleanResponse
+  .replace(/^```json\s*/m, '')
+  .replace(/^```\s*/m, '')
+  .replace(/\s*```\s*$/m, '')
+  .trim();
+
+const jsonStart = cleanResponse.indexOf('{');
+const jsonEnd = cleanResponse.lastIndexOf('}');
+if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+  cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1);
+}
+```
+
+This aggressive cleaning removes valid JSON content when OpenAI returns properly formatted responses.
+
+SOLUTION RECOMMENDATION
+-----------------------
+
+1. Simplify JSON processing in Intelligence V2 router
+2. Use the working OpenAI integration from server/openai.ts for text notes
+3. Implement proper error logging and timeout handling
+4. Add fallback mechanisms for processing failures
+5. Unify processing paths to use the successful image processing approach
+
+The two-path system creates complexity - image notes succeed while text notes fail due to different processing engines.
