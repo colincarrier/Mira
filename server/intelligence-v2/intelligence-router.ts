@@ -21,9 +21,26 @@ export class IntelligenceV2Router {
   private vector:VectorEngine; private reason:RecursiveReasoningEngine; private openai:OpenAI;
   constructor(openai:OpenAI){ 
     console.log("IntelligenceV2Router initialized with API key:", openai ? "present" : "missing");
+    // Test the OpenAI instance immediately
+    this.testAPIConnection(openai);
     this.openai=openai; 
     this.vector=new VectorEngine(openai); 
     this.reason=new RecursiveReasoningEngine(openai,this.vector); 
+  }
+
+  private async testAPIConnection(openai: OpenAI) {
+    try {
+      console.log("Testing OpenAI connection with simple call...");
+      const testResponse = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 5
+      });
+      console.log("✅ OpenAI connection test successful:", testResponse.choices[0].message.content);
+    } catch (error: any) {
+      console.error("❌ OpenAI connection test failed:", error.message);
+      console.error("Status:", error.status);
+    }
   }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
