@@ -1,3 +1,5 @@
+import { buildPrompt } from "../ai/prompt-specs";
+import { composeFromAnalysis } from "../ai/compose-v2";
 import OpenAI from 'openai';
 import { VectorEngine } from './vector-engine.js';
 import { RecursiveReasoningEngine } from './recursive-reasoning-engine.js';
@@ -65,12 +67,6 @@ export class IntelligenceV2Router {
        input.content, {}, matches, {});
     const parsed = composeFromAnalysis(input.content, analysis);
 
-      
-    } catch (error) {
-      console.error("Intelligence V2 processing failed:", error);
-      
-      // Fallback processing
-    return { ...parsed, id:input.id??"temp", timestamp:new Date().toISOString(), richContext:parsed };
         id: input.id ?? "temp",
         title: input.content.split(' ').slice(0, 5).join(' ') || 'Untitled',
         summary: '',
