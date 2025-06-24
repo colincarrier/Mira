@@ -1,0 +1,134 @@
+#!/bin/bash
+set -e
+
+echo "🧠 Starting MIRA V2 Patch Script..."
+
+# 1. Create prompt-specs.ts
+cat > server/ai/prompt-specs.ts << 'EOF'
+export const PROMPT = `
+SYSTEM: Reply ONLY in this exact JSON. No markdown, no commentary.
+
+{
+ "title":      <string>,
+ "original":   <string>,
+ "aiBody":     <string>,
+ "perspective":<string>,
+ "todos":      <{title:string,priority:"low"|"normal"|"high"}[]>,
+ "reminder":   <{timeISO:string,leadMins:number}|null>
+}
+###
+`;
+export const buildPrompt = (bio, note) =>
+  PROMPT + "USER_BIO:\n" + bio + "\nNOTE_TEXT:\n" + note;
+EOF
+
+# 2. Create compose-v2.ts
+cat > server/ai/compose-v2.ts << 'EOF'
+export function composeFromAnalysis(raw, a) {
+  const clean = raw.trim().replace(/\s+/g,' ');
+  const title = clean.length <= 45 ? clean : clean.slice(0,42)+'…';
+  const original = title === clean ? "" : raw;
+
+  let bullets = [];
+  if (a?.proactiveDelivery?.suggestedActions) {
+    bullets = a.proactiveDelivery.suggestedActions
+      .filter(x => !/^Research /i.test(x.action))
+      .slice(0, 3)
+      .map(x => '• ' + x.action);
+  }
+  if (bullets.length === 0 && a?.recursiveReasoning?.step1Anticipation?.likelyNextNeeds) {
+    bullets.push('• ' + a.recursiveReasoning.step1Anticipation.likelyNextNeeds[0]);
+  }
+
+  const aiBody = bullets.join('\n');
+  const p1 = a?.immediateProcessing?.understanding?.slice(0, 80) || '';
+  const p2 = a?.recursiveReasoning?.step1Anticipation?.followUpQuestions?.[0] || '';
+  const perspective = [p1, p2].filter(Boolean).join('  ');
+
+  return { title, original, aiBody, perspective, todos: [], reminder: null };
+}
+EOF
+
+# 3. Create persist-side-effects.ts
+cat > server/ai/persist-side-effects.ts << 'EOF'
+import { storage } from '../storage';
+import { detectTimeReferences } from '../brain/miraAIProcessing';
+
+export async function persistSideEffects(rc, noteId) {
+  if (rc.aiBody?.startsWith('•')) {
+    for (const line of rc.aiBody.split('\\n')) {
+      const title = line.replace(/^•\\s*/, '').trim();
+      if (title) {
+        await storage.createTodo({ title, noteId });
+      }
+    }
+  }
+
+  const { shouldCreateReminder, extractedTimes } = detectTimeReferences(rc.original || "");
+  if (shouldCreateReminder && extractedTimes[0]) {
+    const dt = new Date(); // stub, replace with proper parser
+    await storage.createReminder({
+      title: rc.title,
+      reminderTime: dt,
+      noteId
+    });
+  }
+}
+EOF
+
+# 4. Patch imports in intelligence-router.ts
+sed -i '/import .*prompt-specs/d' server/intelligence-v2/intelligence-router.ts
+sed -i '/import .*compose-v2/d' server/intelligence-v2/intelligence-router.ts
+sed -i '1i import { buildPrompt } from "../ai/prompt-specs";' server/intelligence-v2/intelligence-router.ts
+sed -i '2i import { composeFromAnalysis } from "../ai/compose-v2";' server/intelligence-v2/intelligence-router.ts
+
+# 5. Replace OpenAI prompt with schema call
+sed -i '/const prompt = /c\    const prompt = buildPrompt(userProfile.personalBio || "", input.content);' server/intelligence-v2/intelligence-router.ts
+sed -i '/openai.chat.completions.create/,/};/c\    const gpt = await this.openai.chat.completions.create({ model: "gpt-4o", messages: [{ role: "system", content: prompt }], temperature: 0.4 });\n    const analysis = await this.reason.performRecursiveAnalysis(input.content, {}, matches, {});\n    const parsed = composeFromAnalysis(input.content, analysis);' server/intelligence-v2/intelligence-router.ts
+sed -i '/return {/c\    return { ...parsed, id: input.id ?? "temp", timestamp: new Date().toISOString(), richContext: parsed };' server/intelligence-v2/intelligence-router.ts
+
+# 6. Patch routes.ts to use new schema and write side effects
+sed -i '/const v2Result =/c\        const v2Result = await processWithIntelligenceV2(v2Input);' server/routes.ts
+sed -i '/await storage.updateNote(/c\        const { persistSideEffects } = await import("./ai/persist-side-effects");\n        await persistSideEffects(v2Result, note.id);\n        await storage.updateNote(note.id, {\n          aiGeneratedTitle: v2Result.title,\n          richContext: JSON.stringify(v2Result),\n          aiEnhanced: true,\n          isProcessing: false\n        });' server/routes.ts
+
+# 7. Create NoteDetailSimple.tsx (new renderer)
+cat > client/src/components/NoteDetailSimple.tsx << 'EOF'
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useLocation } from 'wouter';
+import { ArrowLeft } from 'lucide-react';
+import { NoteWithTodos } from '@shared/schema';
+
+export default function NoteDetailSimple() {
+  const { id } = useParams();
+  const [, setLoc] = useLocation();
+  const { data: note, isLoading } = useQuery<NoteWithTodos>({ queryKey: [`/api/notes/${id}`], enabled: !!id });
+  if (isLoading || !note) return null;
+
+  const rc = note.richContext ? JSON.parse(note.richContext) : {};
+  const title = rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled';
+  const original = rc.original || (title !== note.content ? note.content : '');
+
+  return (
+    <div className="min-h-screen bg-[#f1efe8] pb-20">
+      <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center gap-3">
+        <button onClick={() => setLoc('/')} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <h1 className="text-lg font-semibold">{title}</h1>
+      </div>
+      <div className="space-y-6 px-4 py-6">
+        <h1 className="text-2xl font-semibold">{title}</h1>
+        {original && <div className="bg-blue-50 p-4 rounded whitespace-pre-wrap text-sm">{original}</div>}
+        {rc.aiBody && <pre className="whitespace-pre-wrap text-base">{rc.aiBody}</pre>}
+        {rc.perspective && <p className="text-xs text-gray-500 whitespace-pre-wrap">{rc.perspective}</p>}
+      </div>
+    </div>
+  );
+}
+EOF
+
+# 8. Wire up NoteDetailSimple in App.tsx
+sed -i 's/NoteDetail/NoteDetailSimple/' client/src/App.tsx
+
+echo "✅ Script completed successfully – now click ▶ Run and test a new note."
