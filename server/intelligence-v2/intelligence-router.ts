@@ -50,6 +50,16 @@ export class IntelligenceV2Router {
 
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
+    console.log("=== V2 ROUTER OUTPUT DEBUG ===");
+    console.log("Generated richContext:", richContext);
+    console.log("Final V2 result structure:", {
+      id: input.id ?? 'temp',
+      timestamp: new Date().toISOString(),
+      richContext,
+      ...richContext
+    });
+    console.log("=== END V2 DEBUG ===");
+
     return{
       id: input.id ?? 'temp',
       timestamp: new Date().toISOString(),

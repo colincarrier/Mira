@@ -439,8 +439,11 @@ This profile was generated from your input and will help provide more personaliz
 
         miraModule.processNote(miraInput)
         .then(async (analysis: any) => {
-          console.log("Mira AI v2.0 analysis successful for note:", note.id);
-          console.log("Analysis result:", JSON.stringify(analysis, null, 2));
+          console.log("=== FULL AI PROCESSING DEBUG ===");
+          console.log("1. INPUT TO AI:", JSON.stringify(miraInput, null, 2));
+          console.log("2. FULL ANALYSIS OUTPUT:", JSON.stringify(analysis, null, 2));
+          console.log("3. ANALYSIS.RICHCONTEXT:", analysis.richContext);
+          console.log("=== END DEBUG ===");
 
           // Track usage
           apiUsageStats.totalRequests++;
