@@ -404,6 +404,87 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
+  // Reprocess existing note endpoint
+  app.post("/api/reprocess-note", async (req, res) => {
+    try {
+      const { noteId } = req.body;
+      
+      if (!noteId) {
+        return res.status(400).json({ message: "noteId is required" });
+      }
+      
+      // Get the existing note
+      const note = await storage.getNote(parseInt(noteId));
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      
+      // Reset processing state
+      await storage.updateNote(noteId, {
+        isProcessing: true,
+        aiEnhanced: false,
+        richContext: null,
+        aiSuggestion: null,
+        aiContext: null
+      });
+      
+      // Load user profile for bio integration
+      const userProfile = await storage.getUser("demo");
+      
+      const miraInput = {
+        id: noteId.toString(),
+        content: note.content,
+        mode: note.mode as 'text' | 'image' | 'voice',
+        userId: "demo",
+        userProfile,
+        mediaUrl: note.mediaUrl,
+        audioUrl: note.audioUrl,
+        transcription: note.transcription
+      };
+      
+      // Process with AI
+      const miraModule = await import('./brain/miraAIProcessing');
+      console.log("Reprocessing note:", noteId, "with content:", note.content.substring(0, 100));
+      
+      miraModule.processNote(miraInput)
+        .then(async (analysis: any) => {
+          console.log("=== REPROCESS DEBUG ===");
+          console.log("Analysis result:", JSON.stringify(analysis, null, 2));
+          console.log("=== END REPROCESS DEBUG ===");
+          
+          const parsed = analysis.richContext || analysis;
+          
+          // Persist side effects
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
+          await persistSideEffects(parsed, noteId);
+          
+          // Update note with results
+          await storage.updateNote(noteId, {
+            aiGeneratedTitle: parsed.title,
+            richContext: JSON.stringify(parsed),
+            aiEnhanced: true,
+            isProcessing: false,
+            aiSuggestion: parsed.perspective || '',
+            aiContext: "Reprocessed with V2"
+          });
+          
+          console.log("Reprocessing completed for note:", noteId);
+        })
+        .catch(async (error) => {
+          console.error("Reprocessing failed for note:", noteId, error);
+          await storage.updateNote(noteId, { 
+            isProcessing: false,
+            aiContext: "Reprocessing failed"
+          });
+        });
+      
+      res.json({ message: "Note reprocessing started", noteId });
+    } catch (error) {
+      console.error("Reprocess endpoint error:", error);
+      res.status(500).json({ message: "Failed to start reprocessing" });
+    }
+  });
+
   app.post("/api/notes", async (req, res) => {
     try {
       const noteData = insertNoteSchema.parse(req.body);
