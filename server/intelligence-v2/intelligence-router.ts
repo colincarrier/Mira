@@ -40,19 +40,21 @@ export class IntelligenceV2Router {
     
     console.log("=== OPENAI API CALL DEBUG ===");
     console.log("Model: gpt-4o");
-    console.log("API Key present:", !!process.env.OPENAI_API_KEY);
-    console.log("API Key first 10 chars:", process.env.OPENAI_API_KEY?.substring(0, 10) || 'undefined');
+    const actualKey = process.env.OPENAI_API_KEY_MIRA || process.env.OPENAI_API_KEY;
+    console.log("API Key present:", !!actualKey);
+    console.log("API Key first 10 chars:", actualKey?.substring(0, 10) || 'undefined');
     console.log("Prompt length:", prompt.length);
     
     let response;
     try {
+      // Start with gpt-3.5-turbo since we confirmed it works
       response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-3.5-turbo',
         messages: [{ role: 'system', content: prompt }],
         temperature: 0.4,
         max_tokens: 1000
       });
-      console.log("OpenAI API call successful");
+      console.log("OpenAI API call successful with gpt-3.5-turbo");
     } catch (apiError: any) {
       console.error("=== OPENAI API ERROR DETAILS ===");
       console.error("Error type:", apiError.constructor.name);
@@ -70,18 +72,18 @@ export class IntelligenceV2Router {
         console.error("2. Model 'gpt-4o' not available for this API key");
         console.error("3. API endpoint issue");
         
-        // Try with more accessible models
-        console.log("Attempting fallback to gpt-3.5-turbo...");
+        // Try with gpt-4o as fallback
+        console.log("Attempting fallback to gpt-4o...");
         try {
           response = await this.openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-4o',
             messages: [{ role: 'system', content: prompt }],
             temperature: 0.4,
             max_tokens: 1000
           });
-          console.log("Fallback to gpt-3.5-turbo successful");
+          console.log("Fallback to gpt-4o successful");
         } catch (fallbackError: any) {
-          console.error("GPT-3.5-turbo also failed:", fallbackError.message);
+          console.error("gpt-4o also failed:", fallbackError.message);
           throw new Error(`OpenAI API access issue: ${apiError.message}. Please verify your API key is valid and has proper model access.`);
         }
       } else {
