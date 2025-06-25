@@ -445,6 +445,7 @@ This profile was generated from your input and will help provide more personaliz
       // Process with AI
       const miraModule = await import('./brain/miraAIProcessing');
       console.log("Reprocessing note:", noteId, "with content:", note.content.substring(0, 100));
+      console.log('🔍 [REPROCESS] launching processNoteAsync');
       
       miraModule.processNote(miraInput)
         .then(async (analysis: any) => {
