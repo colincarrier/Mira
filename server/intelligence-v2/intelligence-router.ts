@@ -166,13 +166,26 @@ export class IntelligenceV2Router {
     console.log(JSON.stringify(parsed, null, 2));
     console.log("=== END PARSED RESULT ===");
 
+    /* --- recursive enhancement --- */
+    const reasoningResult = await this.reason.enhance(
+      parsed,
+      input.content
+    );
+
+    /* --- compose deterministic fallback then merge with GPT JSON --- */
+    const composed = composeFromAnalysis(input.content, reasoningResult);
+    const rich = { ...composed, ...parsed };  // GPT wins where present
+
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
     return{
       id: input.id ?? 'temp',
-      timestamp: new Date().toISOString(),
-      richContext: parsed,
-      ...parsed
+      title: rich.title,
+      summary: rich.aiBody.slice(0,120),
+      richContext: rich,
+      todos: rich.todos,
+      collections: rich.collections ?? [],
+      timestamp: new Date().toISOString()
     };
   }
 }
