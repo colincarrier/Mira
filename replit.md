@@ -163,14 +163,6 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Intelligence V2 Integration Complete (June 25, 2025)
-- **Patch Application**: Successfully applied ChatGPT Intelligence V2 patches via shell script
-- **New AI Modules**: Added prompt-specs.ts, compose-v2.ts, and persist-side-effects.ts
-- **Router Integration**: Connected composeFromAnalysis to intelligence-router.ts processing pipeline
-- **Recursive Enhancement**: Integrated recursive reasoning with deterministic fallback composition
-- **Side Effects Processing**: Enabled automatic todo creation and reminder scheduling from AI analysis
-- **Production Status**: Intelligence V2 system fully operational with enhanced note processing
-
 ### GitHub Repository Integration (June 24, 2025)
 - **Repository Connected**: Successfully linked to https://github.com/colincarrier/Mira.git
 - **Comprehensive Export**: Generated complete codebase archives (157,295 lines of code)
