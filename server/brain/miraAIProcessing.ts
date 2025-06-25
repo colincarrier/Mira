@@ -410,6 +410,11 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
   const timestamp = input.timestamp ?? new Date().toISOString();
 
   // Switch between V1 and V2 processing  (null‑safe)
+  console.log('🔍 [DEBUG] V2 Routing Check:', {
+    flagEnabled: featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED'),
+    routerExists: intelligenceV2Router !== null,
+    methodExists: typeof intelligenceV2Router?.processNoteV2 === 'function'
+  });
   if (
     featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') &&
     intelligenceV2Router !== null &&

@@ -44,6 +44,7 @@ export class IntelligenceV2Router {
   }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
+    console.time(`v2-${input.id}`);          // ① start a timer at top of method
     const userProfile = input.userProfile || { personalBio: "" };
     
     const prompt = buildPrompt(userProfile.personalBio || "", input.content);
@@ -76,6 +77,8 @@ export class IntelligenceV2Router {
         response_format: { type: "json_object" }
       });
       console.log("OpenAI API call successful with JSON mode");
+      console.log('=== GPT RAW ===');          // ② dump what we got
+      console.log(response.choices[0]?.message?.content);
     } catch (apiError: any) {
       console.error("=== OPENAI API ERROR DETAILS ===");
       console.error("Error type:", apiError.constructor.name);
@@ -167,6 +170,7 @@ export class IntelligenceV2Router {
 
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
+    console.timeEnd(`v2-${input.id}`);       // ③ should always appear unless we throw
     return{
       id: input.id ?? 'temp',
       timestamp: new Date().toISOString(),
