@@ -455,7 +455,7 @@ This profile was generated from your input and will help provide more personaliz
           const parsed = analysis.richContext || analysis;
           
           // Persist side effects
-          const { persistSideEffects } = await import('./ai/persist-side-effects.js');
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
           await persistSideEffects(parsed, noteId);
           
           // Update note with results
@@ -530,7 +530,7 @@ This profile was generated from your input and will help provide more personaliz
           console.log("=== END DEBUG ===");
           
           // Persist side effects
-          const { persistSideEffects } = await import('./ai/persist-side-effects.js');
+          const { persistSideEffects } = await import('./ai/persist-side-effects');
           await persistSideEffects(parsed, note.id);
 
           // Track usage
