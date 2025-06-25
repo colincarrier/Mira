@@ -7,6 +7,7 @@ import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
 import { makeTitle } from '../utils/title-governor.js';
 import { buildPrompt } from '../ai/prompt-specs.js';
+import { composeFromAnalysis } from '../ai/compose-v2.js';
 
 export interface IntelligenceV2Input { 
   id?:string; 
@@ -150,28 +151,36 @@ export class IntelligenceV2Router {
     console.log(cleanResponse);
     console.log("=== END CLEANED RESPONSE ===");
     
-    let parsed;
+    let structuredOutput: any = {};
     try {
-      parsed = JSON.parse(cleanResponse);
+      structuredOutput = JSON.parse(cleanResponse);
       console.log("=== JSON PARSING SUCCESS ===");
     } catch (parseError) {
-      console.error("=== JSON PARSING FAILED ===");
-      console.error("Parse error:", parseError.message);
-      console.error("Problematic content:", cleanResponse.substring(0, 200));
-      throw new Error(`JSON parsing failed: ${parseError.message}`);
+      console.log("=== JSON PARSING FAILED - USING COMPOSER FALLBACK ===");
+      console.log("Parse error:", parseError.message);
     }
 
-    console.log("=== PARSED JSON RESULT ===");
-    console.log(JSON.stringify(parsed, null, 2));
-    console.log("=== END PARSED RESULT ===");
+    // Get recursive reasoning result
+    const reasoningResult = await this.reasoningEngine.enhance(structuredOutput, input.content);
+    
+    // Compose deterministic fallback then merge with GPT JSON
+    const composed = composeFromAnalysis(input.content, reasoningResult);
+    const rich = { ...composed, ...structuredOutput }; // GPT wins where present
+
+    console.log("=== FINAL COMPOSED RESULT ===");
+    console.log(JSON.stringify(rich, null, 2));
+    console.log("=== END COMPOSED RESULT ===");
 
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
     return{
       id: input.id ?? 'temp',
-      timestamp: new Date().toISOString(),
-      richContext: parsed,
-      ...parsed
+      title: rich.title,
+      summary: rich.aiBody?.slice(0,120) || '',
+      richContext: rich,
+      todos: rich.todos || [],
+      collections: rich.collections || [],
+      timestamp: new Date().toISOString()
     };
   }
 }
