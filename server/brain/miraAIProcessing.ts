@@ -444,22 +444,19 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
       todos: v2Result.richContext?.todos || [],
       smartActions: (v2Result.richContext?.todos || []).map((todo: any) => ({
         label: todo.title,
-        action: action.reasoning
+        action: todo.title
       })) || [],
-      entities: analysis?.immediateProcessing?.entities?.map((entity: any) => ({
-        name: entity,
-        type: 'general'
-      })) || [],
-      suggestedLinks: [],
-      nextSteps: analysis?.recursiveReasoning?.step1Anticipation?.potentialActions || [],
-      microQuestions: analysis?.recursiveReasoning?.step1Anticipation?.followUpQuestions || [],
-      fromTheWeb: [],
-      tags: analysis?.immediateProcessing?.entities || [],
-      relatedTopics: analysis?.contextualIntelligence?.crossReferences?.map((ref: any) => ref.relationship) || [],
+      entities: v2Result.richContext?.entities || [],
+      suggestedLinks: v2Result.richContext?.suggestedLinks || [],
+      nextSteps: v2Result.richContext?.nextSteps || [],
+      microQuestions: v2Result.richContext?.microQuestions || [],
+      fromTheWeb: v2Result.richContext?.fromTheWeb || [],
+      tags: v2Result.richContext?.tags || [],
+      relatedTopics: v2Result.richContext?.relatedTopics || [],
       processingPath: 'memory' as 'commerce' | 'memory',
       classificationScores: { 
         intelligence_v2: 1.0,
-        complexity: analysis?.immediateProcessing?.complexity || 0,
+        complexity: v2Result.richContext?.complexity || 5,
         confidence: 0.9
       },
       timeInstructions: {

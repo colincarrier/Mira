@@ -449,6 +449,7 @@ This profile was generated from your input and will help provide more personaliz
       
       miraModule.processNote(miraInput)
         .then(async (analysis: any) => {
+          console.log("✅ [REPROCESS] Promise resolved successfully");
           console.log("=== REPROCESS DEBUG ===");
           console.log("Analysis result:", JSON.stringify(analysis, null, 2));
           console.log("=== END REPROCESS DEBUG ===");
