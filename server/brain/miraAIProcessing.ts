@@ -432,45 +432,40 @@ export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
     
     // V2 now returns the exact three-layer format: {title, original, aiBody, perspective, todos, reminder}
     // No mapping needed - pass through directly
-    try {
-      return {
-        uid: v2Result.id,
-        title: v2Result.title || v2Result.richContext?.title,
-        summary: v2Result.richContext?.perspective || '',
-        richContext: v2Result.richContext, // This is the three-layer format
-        intent: 'general',
-        urgency: 'medium',
-        complexity: 5,
-        confidence: 0.9,
-        todos: v2Result.richContext?.todos || [],
-        smartActions: (v2Result.richContext?.todos || []).map((todo: any) => ({
-          label: todo.title,
-          action: todo.title
-        })) || [],
-        entities: v2Result.richContext?.entities || [],
-        suggestedLinks: v2Result.richContext?.suggestedLinks || [],
-        nextSteps: v2Result.richContext?.nextSteps || [],
-        microQuestions: v2Result.richContext?.microQuestions || [],
-        fromTheWeb: v2Result.richContext?.fromTheWeb || [],
-        tags: v2Result.richContext?.tags || [],
-        relatedTopics: v2Result.richContext?.relatedTopics || [],
-        processingPath: 'memory' as 'commerce' | 'memory',
-        classificationScores: { 
-          intelligence_v2: 1.0,
-          complexity: v2Result.richContext?.complexity || 5,
-          confidence: 0.9
-        },
-        timeInstructions: {
-          hasTimeReference: false,
-          extractedTimes: [],
-          scheduledItems: []
-        },
-        timestamp: v2Result.timestamp
-      };
-    } catch (err) {
-      console.error('❌ Post‑router throw:', err && err.stack || err);
-      throw err;
-    }
+    return {
+      uid: v2Result.id,
+      title: v2Result.title || v2Result.richContext?.title,
+      summary: v2Result.richContext?.perspective || '',
+      richContext: v2Result.richContext, // This is the three-layer format
+      intent: 'general',
+      urgency: 'medium',
+      complexity: 5,
+      confidence: 0.9,
+      todos: v2Result.richContext?.todos || [],
+      smartActions: (v2Result.richContext?.todos || []).map((todo: any) => ({
+        label: todo.title,
+        action: todo.title
+      })) || [],
+      entities: v2Result.richContext?.entities || [],
+      suggestedLinks: v2Result.richContext?.suggestedLinks || [],
+      nextSteps: v2Result.richContext?.nextSteps || [],
+      microQuestions: v2Result.richContext?.microQuestions || [],
+      fromTheWeb: v2Result.richContext?.fromTheWeb || [],
+      tags: v2Result.richContext?.tags || [],
+      relatedTopics: v2Result.richContext?.relatedTopics || [],
+      processingPath: 'memory' as 'commerce' | 'memory',
+      classificationScores: { 
+        intelligence_v2: 1.0,
+        complexity: v2Result.richContext?.complexity || 5,
+        confidence: 0.9
+      },
+      timeInstructions: {
+        hasTimeReference: false,
+        extractedTimes: [],
+        scheduledItems: []
+      },
+      timestamp: v2Result.timestamp
+    };
   }
 
   try {
