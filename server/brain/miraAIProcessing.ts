@@ -406,15 +406,14 @@ OUTPUT ONLY JSON:`;
  */
 import { storage } from '../storage.js';
 export async function processNote(input: MiraAIInput): Promise<MiraAIResult> {
+  console.log('🔍 [ENTRY] processNote', { id: input.id, mode: input.mode });
   const uid = input.id ?? uuid();
   const timestamp = input.timestamp ?? new Date().toISOString();
 
   // Switch between V1 and V2 processing  (null‑safe)
-  console.log('🔍 [DEBUG] V2 Routing Check:', {
-    flagEnabled: featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED'),
-    routerExists: intelligenceV2Router !== null,
-    methodExists: typeof intelligenceV2Router?.processNoteV2 === 'function'
-  });
+  console.log('🔍 [ROUTING] V2 flag:',
+    featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED'));
+  console.log('🔍 [ROUTING] router null?', intelligenceV2Router === null);
   if (
     featureFlags.isEnabled('INTELLIGENCE_V2_ENABLED') &&
     intelligenceV2Router !== null &&

@@ -44,10 +44,12 @@ export class IntelligenceV2Router {
   }
 
   async processNoteV2(input:IntelligenceV2Input):Promise<IntelligenceV2Result>{
-    console.time(`v2-${input.id}`);          // ① start a timer at top of method
-    const userProfile = input.userProfile || { personalBio: "" };
-    
-    const prompt = buildPrompt(userProfile.personalBio || "", input.content);
+    console.time(`v2-${input.id}`);
+    try {
+      console.log(`🔍 [V2] start note ${input.id}`);
+      const userProfile = input.userProfile || { personalBio: "" };
+      
+      const prompt = buildPrompt(userProfile.personalBio || "", input.content);
     
     console.log("=== EXACT OPENAI INPUT ===");
     console.log("MODEL:", 'gpt-4o');
@@ -170,13 +172,19 @@ export class IntelligenceV2Router {
 
     if(input.id){ this.vector.updateNoteVectors(Number(input.id),input.content,storage).catch(()=>{}); }
 
-    console.timeEnd(`v2-${input.id}`);       // ③ should always appear unless we throw
-    return{
-      id: input.id ?? 'temp',
-      timestamp: new Date().toISOString(),
-      richContext: parsed,
-      ...parsed
-    };
+      console.log(`🔍 [V2] end note ${input.id}`);
+      return{
+        id: input.id ?? 'temp',
+        timestamp: new Date().toISOString(),
+        richContext: parsed,
+        ...parsed
+      };
+    } catch (err) {
+      console.error('❌ [V2] threw:', err && err.stack || err);
+      throw err;           // re‑throw so outer try/catch logs as well
+    } finally {
+      console.timeEnd(`v2-${input.id}`);
+    }
   }
 }
 
