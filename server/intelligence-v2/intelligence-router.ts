@@ -7,6 +7,7 @@ import { FEATURE_FLAGS } from '../feature-flags-runtime.js';
 import { storage } from '../storage.js';
 import { makeTitle } from '../utils/title-governor.js';
 import { buildPrompt } from '../ai/prompt-specs.js';
+import { composeFromAnalysis } from '../ai/compose-v2.js';
 
 export interface IntelligenceV2Input { 
   id?:string; 
