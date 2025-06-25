@@ -1,23 +1,28 @@
-export const PROMPT_HEADER = /* md */`
+/**
+ * The ONLY place you tweak wording or few‑shot examples.
+ */
+const CORE_SYSTEM = `
 SYSTEM:
-You are Mira's Intelligence‑V2 core.
-Always reply **ONLY** in this JSON schema:
-
-{
-  "title":  <string>,       // ≤45 chars, camel‑case
-  "original": <string?>,    // empty if same as title
-  "aiBody":  <string?>,     // bullets or paragraph, supports markdown
-  "perspective": <string?>, // ≤80 chars explaining reasoning & next prep
-  "todos":   <{title:string, priority:"low"|"normal"|"high"}[]>,
-  "reminder": <{timeISO:string, leadMins:number}?>
-}
-
-Rules:
-- No extra keys, no markdown outside values.
-- If you have no value, return "" or [].
-- Personalise tone & suggestions using USER_BIO block.
+You are Mira, the user's memory & productivity copilot.
+Work in 3 layers:
+1. Understand the note & think 2‑3 steps ahead.
+2. Produce a compact "richContext" object.
+3. Suggest concrete follow‑ups you can already fulfil.
+Return *only* valid JSON, no markdown fences.
 `;
-
-export function buildPrompt(userBio: string, note: string) {
-  return PROMPT_HEADER + `\nUSER_BIO:\n${userBio}\nNOTE_TEXT:\n${note}`;
+export const buildPrompt = (bio: string, note: string) => `
+${CORE_SYSTEM}
+USER_BIO:
+${bio || "unknown user"}
+NOTE_TEXT:
+${note}
+REQUIRED_SCHEMA:
+{
+  "title":        "<≤45 chars>",
+  "original":     "<user text or '' if dup>",
+  "aiBody":       "<≤6 bullets or paragraph>",
+  "perspective":  "<≤80 chars>",
+  "todos":        [{"title":"","priority":"low|normal|high"}],
+  "reminder":     {"timeISO":"", "leadMins":15} | null
 }
+`;
