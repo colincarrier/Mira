@@ -8,3 +8,5 @@ export const FEATURE_FLAGS = {
   ENHANCED_COLLECTIONS_ENABLED:   process.env.FEATURE_ENHANCED_COLLECTIONS !== 'false',
   ADVANCED_NOTIFICATIONS_ENABLED: process.env.FEATURE_ADVANCED_NOTIFICATIONS !== 'false',
 } as const;
+/* ---- V3 PHASED ROLLOUT: STEP‑1 ----------------------------------- */
+export const V3_STEP_1_ENABLED = process.env.V3_STEP_1_ENABLED === 'true';
