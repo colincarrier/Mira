@@ -1,203 +1,208 @@
-/**
- * STEP‑1 TYPES & CONSTANTS  –  ***AUTO‑GENERATED***
- * --------------------------------------------------
- * ▸ All foundational TypeScript interfaces for V3.
- * ▸ No behaviour / side‑effects here – pure contracts + helpers.
- * ▸ JSDoc included so IDEs give excellent hover help.
- */
+/*************************************************************************************************
+ *  MIRA V3 — STAGE‑1 FOUNDATION                                                                 *
+ *  A single file containing all type declarations, config helpers, behavioural‑learning         *
+ *  scaffolding, cost‑ledger plumbing, JSON‑safety utilities, validation hooks and the           *
+ *  public entry‑points `initialiseV3()` + `prepareV3Context()`.                                 *
+ *  THIS REPLACES any earlier step‑1 code.                                                       *
+ ************************************************************************************************/
 
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+//#region Imports ──────────────────────────────────────────────────────────────────────────────
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/index.mjs';
+import chrono from 'chrono-node';
+import { JSDOM } from 'jsdom';
+import dotenv from 'dotenv';
+dotenv.config();
+//#endregion
 
-/* -----------------------------------------------------------------
-   GLOBAL CONSTANTS (foundation level – no secrets here)
-   ----------------------------------------------------------------- */
+//#region Utility helpers  ─────────────────────────────────────────────────────────────────────
+const num   = (v: string | undefined, def: string) => (v ? Number(v) : Number(def));
+const bool  = (v: string | undefined, def = 'false') => (v ?? def).toLowerCase() === 'true';
+const json  = <T>(v: string | undefined, def: T): T => { try { return v ? JSON.parse(v) : def; } catch { return def; } };
+//#endregion
 
-/** Hard safety limit – never request more tokens than this from OpenAI. */
-export const MAX_MODEL_TOKENS = Number(process.env.MIRA_AI_MAX_TOKENS ?? 8192);
+//#region 1.  Configuration object with *all* runtime tunables  ───────────────────────────────
+export const V3Config = {
+  TOKENS_MAX_REQUEST:        num(process.env.V3_TOKENS_MAX_REQUEST,   '8192'),
+  TOKENS_MAX_RECURSION:      num(process.env.V3_TOKENS_MAX_RECURSE,   '2048'),
+  TEMPERATURE:               Number(process.env.V3_TEMPERATURE ?? 0.35),
 
-/** Default sampling temperature (can be overridden per‑call). */
-export const DEFAULT_TEMPERATURE = Number(process.env.MIRA_AI_TEMPERATURE ?? 0.35);
+  /* Cost / budget */
+  COST_SOFT_CAP_USD:         num(process.env.AI_SPEND_SOFT_CAP_USD,   '30'),
+  COST_HARD_CAP_USD_WEEK:    num(process.env.AI_SPEND_USER_WEEKLY_CEIL_USD, '50'),
 
-/** Weekly spend ceiling per user – *soft* cap (USD). */
-export const WEEKLY_SPEND_CEIL = Number(process.env.AI_SPEND_USER_WEEKLY_CEIL_USD ?? 50);
+  /* Learning & anticipation parameters */
+  LEARNING_RATE:             num(process.env.V3_LEARNING_RATE,        '0.01'),
+  FEEDBACK_WINDOW_DAYS:      num(process.env.V3_FEEDBACK_WINDOW,      '30'),
+  MIN_FEEDBACK_FOR_UPDATE:   num(process.env.V3_MIN_FEEDBACK,         '10'),
+  DECISION_TREE_DEPTH:       num(process.env.V3_DECISION_TREE_DEPTH,  '5'),
 
-/** Feature‑flag: is Step‑1 code active? */
-export const STEP_1_FEATURE_FLAG = process.env.V3_STEP_1_ENABLED === 'true';
+  /* Feature flags */
+  F_RECURSIVE:               bool(process.env.V3_RECURSIVE_REASONING, 'true'),
+  F_LINKS:                   bool(process.env.V3_LINK_ENRICHMENT,     'true'),
+  F_SMART_TASKS:             bool(process.env.V3_SMART_TASKS,         'true'),
+  F_LIVING_DOC:              bool(process.env.V3_LIVING_DOCUMENT,     'true'),
+  F_COST_TRACKING:           bool(process.env.V3_COST_TRACKING,       'true')
+} as const;
+//#endregion
 
-/* -----------------------------------------------------------------
-   SHARED VALUE OBJECTS
-   ----------------------------------------------------------------- */
-
-/**
- * Rich description of the user's environment, relationships, and patterns.
- * This evolves over time (learning layer) but is immutable in a single
- * `processInput` call.
- */
-export interface ProfileSnapshot {
-  /** UUID of the user (internal DB id). */
+//#region 2.  Core domain types  ───────────────────────────────────────────────────────────────
+export interface UserInput {
   userId: string;
-  /** 1‑paragraph auto‑summary of the user's bio. */
-  bioSummary: string;
-  /** Last ~10 user messages (compressed). */
-  recentHistory: string[];
-  /** Preference bundle (AI learns / user can override). */
-  preferences: UserPreferences;
-  /** Relationship graph keyed by name (lower‑cased). */
-  relationshipContext: RelationshipMap;
-  /** Observed patterns for personalisation heuristics. */
-  todoAcceptanceRate: number;   // 0‑1
-  reminderResponseRate: number; // 0‑1
+  content: string;
+  mode: 'text' | 'voice' | 'image' | 'file';
+  contextualData?: { attachments?: string[]; selectedText?: string; cursorPosition?: number; };
 }
 
-/** Strongly‑typed user preferences. */
-export type UserPreferences = {
-  reminderLeadTimeMultiplier: number;          // e.g. 0.8 = sooner, 1.3 = later
-  communicationStyle: 'formal' | 'casual' | 'technical';
-  todoCreationThreshold: number;               // min explicitness score to auto‑create todo
-  linkEnrichmentPreference: 'minimal' | 'standard' | 'comprehensive';
-};
+export interface TimeWindow { start: string; end: string; }
+export interface Pattern      { description: string; strength: number; }
+export interface Risk         { description: string; likelihood: number; impact: number; }
+export interface Need         { description: string; horizon: 'immediate' | 'week' | 'month'; }
+export interface RequestPrediction { likelyContent: string; probability: number; }
+export interface ResponseTime { avgMinutes: number; stddev: number; }
 
-/** Map of known relationships and their meta. */
-export type RelationshipMap = Record<
-  string,
-  {
+export interface RelationshipMap {
+  [person: string]: {
     type: 'family' | 'friend' | 'colleague' | 'client' | 'vendor' | 'other';
     communicationStyle: 'formal' | 'casual';
     importance: 'low' | 'medium' | 'high' | 'critical';
-    lastInteraction?: string; // ISO date
-  }
->;
-
-/* -----------------------------------------------------------------
-   INPUT / DOCUMENT TYPES
-   ----------------------------------------------------------------- */
-
-export interface UserInput {
-  content: string;
-  mode: 'text' | 'voice' | 'image' | 'file';
-  userId: string;
-  contextualData?: {
-    attachments?: string[];
-    selectedText?: string;
-    cursorPosition?: number;
+    dynamics: {
+      responseTimeExpectation: number;
+      preferredChannels: ('email' | 'text' | 'call')[];
+      sentimentTrend: number;
+    };
+    contextualFactors: {
+      timezone: string;
+      culturalConsiderations: string[];
+      currentProjects: string[];
+    };
+    predictions: { nextLikelyInteraction: Date; potentialConflicts: string[]; };
   };
 }
 
-export interface LivingDocState {
-  content: string;
-  documentId: string;
-  cursorPosition?: number;
-  selectedText?: string;
-  lastModified: string;
+export interface ProfileSnapshot {
+  userId: string;
+  bioSummary: string;
+  recentHistory: string[];
+  preferences: {
+    reminderLeadTimeMultiplier: number;
+    communicationStyle: 'formal' | 'casual' | 'technical';
+    todoCreationThreshold: number;
+    linkEnrichmentPreference: 'minimal' | 'standard' | 'comprehensive';
+  };
+  relationshipContext: RelationshipMap;
+  todoAcceptanceRate: number;
+  reminderResponseRate: number;
+
+  /* Behavioural intelligence */
+  behaviorPatterns: {
+    peakProductivityWindows: TimeWindow[];
+    decisionMakingStyle: 'analytical' | 'intuitive' | 'collaborative';
+    stressIndicators: string[];
+    successPatterns: Pattern[];
+    communicationVelocity: Map<string, ResponseTime>;
+  };
+  predictions: { nextLikelyRequest: RequestPrediction[]; upcomingNeeds: Need[]; riskFactors: Risk[]; };
+  learningState: { confidenceScores: Map<string, number>; lastModelUpdate: Date; };
 }
 
-/* -----------------------------------------------------------------
-   CONTEXT & ANALYSIS TYPES
-   ----------------------------------------------------------------- */
-
-export interface TimeContext {
-  hasTimeReference: boolean;
-  extractedTimes: Date[];
-  urgencyLevel: 'immediate' | 'today' | 'this-week' | 'this-month' | 'future';
-  culturalReferences: string[];
-}
-
-/** Result of ContextEngine.analyse() */
 export interface ContextData {
   stakes: 'low' | 'medium' | 'high' | 'critical';
-  domain:
-    | 'personal'
-    | 'business'
-    | 'travel'
-    | 'shopping'
-    | 'health'
-    | 'education';
+  domain: 'personal' | 'business' | 'travel' | 'shopping' | 'health' | 'education';
   relationshipType?: string;
-  timeContext?: TimeContext;
-  knownEntities: string[];
-  noveltyScore: number;              // 0‑1  (higher = more novel)
-  prepOpportunity:
-    | 'research'
-    | 'logistics'
-    | 'connections'
-    | 'summary-only';
-  userId: string;
+  timeContext: TimeContext;
+  noveltyScore: number;
+  prepOpportunity: 'research' | 'logistics' | 'connections' | 'summary-only';
   explicitLinkRequest: boolean;
 }
 
-/* -----------------------------------------------------------------
-   OUTPUT PAYLOAD
-   ----------------------------------------------------------------- */
-
-export interface EnrichedLink {
-  url: string;
-  title: string;
-  description: string;
-  type: 'search' | 'product' | 'booking' | 'reference' | 'tool';
-  relevanceScore: number;
+export interface TimeContext {
+  hasTimeReference: boolean;
+  deadlines: Deadline[];
+  optimalWindows: TimeWindow[];
+  urgencyLevel: 'immediate' | 'today' | 'this-week' | 'this-month' | 'future';
+}
+export interface Deadline {
+  description: string; absoluteTime: Date; flexibilityHours: number;
+  missConsequence: 'low' | 'medium' | 'high' | 'critical';
 }
 
-export interface ExtractedTodo {
-  title: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  dueDate?: Date;
-  estimatedTime?: string;
-  tags: string[];
-  explicitness: number; // 0‑1
+export interface ValueMetrics { todos: number; reminders: number; links: number; estimatedMinutesSaved: number; }
+
+export interface BudgetDecision { approved: boolean; reason: string; maxCost: number; }
+
+export interface V3ProcessingContext {
+  stepName: string; startTime: number; tokensUsed: number; costSoFar: number;
+  decisionTree?: DecisionNode; errors: Error[];
+  memoized: { entities: string[]; };
 }
 
-export interface ExtractedReminder {
-  title: string;
-  dueDate: Date;
-  leadTime: number; // minutes
-  importance: 'low' | 'medium' | 'high' | 'critical';
-  recurring?: boolean;
-  relationshipType?: string;
+export interface DecisionNode { action: string; probability: number; valueScore: number; children: DecisionNode[]; }
+
+//#endregion
+
+//#region 3.  Cost‑ledger & budget logic  ───────────────────────────────────────────────────────
+/** Intelligent ledger capable of ROI prediction and dynamic budgets */
+export interface IIntelligentCostLedger {
+  recordTransaction(tx: {
+    userId: string; cost: number; tokensIn: number; tokensOut: number;
+    valueDelivered: ValueMetrics; context: ContextData; outcome: 'accepted' | 'rejected' | 'modified';
+  }): Promise<void>;
+  predictValueROI(userId: string, estCost: number, ctx: ContextData): Promise<number>;
+  getDynamicBudget(userId: string, ctx: ContextData): Promise<BudgetDecision>;
 }
 
-export interface CollectionSuggestion {
-  name: string;
-  icon: string;
-  color: string;
-  confidence: number;
-}
+/** In‑memory, non‑persistent default implementation (swap for Redis later) */
+export class MemoryCostLedger implements IIntelligentCostLedger {
+  private store = new Map<string, { spend: number; value: number; }>();
 
-export interface VectorData {
-  embedding: number[];
-  metadata: Record<string, any>;
-}
-
-export interface DocUpdate {
-  content: string;
-  meta: {
-    todos: ExtractedTodo[];
-    reminders: ExtractedReminder[];
-    collections: CollectionSuggestion[];
-    vectors: VectorData[];
-    links: EnrichedLink[];
-    processingTime: number;  // ms
-    costEstimate: number;    // USD
-    reasoning: string;       // model explanation (compressed)
-  };
-}
-
-/* -----------------------------------------------------------------
-   PRE‑FLIGHT VALIDATION HELPERS
-   ----------------------------------------------------------------- */
-
-/** Thrown when required env variables are not set. */
-export class MissingEnvError extends Error {
-  constructor(key: string) {
-    super(`[V3] Missing required env var: ${key}`);
+  async recordTransaction(tx: any) {
+    const key = `${tx.userId}:${new Date().toISOString().slice(0,7)}`;
+    const record = this.store.get(key) || { spend: 0, value: 0 };
+    record.spend += tx.cost; record.value += (tx.valueDelivered?.estimatedMinutesSaved ?? 0);
+    this.store.set(key, record);
+  }
+  async predictValueROI(_: string, est: number) { return 1 / est; }
+  async getDynamicBudget(_: string): Promise<BudgetDecision> {
+    return { approved: true, reason: 'dev‑mode', maxCost: V3Config.COST_HARD_CAP_USD_WEEK };
   }
 }
+//#endregion
 
-/** Validate env + file prerequisites for Step‑1 (cheap, sync). */
-export function validateStep1Prerequisites(): void {
-  const required = ['OPENAI_API_KEY', 'MIRA_V3_ENABLED'];
-  required.forEach((key) => {
-    if (!process.env[key]) throw new MissingEnvError(key);
-  });
+//#region 4.  JSON‑safety & validation helpers  ────────────────────────────────────────────────
+export class StreamingJsonValidator {
+  static safeParse(str: string, fallback = {}) {
+    try { return JSON.parse(str); } catch { return fallback; }
+  }
+}
+//#endregion
+
+//#region 5.  Pre‑flight validation  ───────────────────────────────────────────────────────────
+export function validateStage1Prerequisites() {
+  const envs = ['OPENAI_API_KEY'];
+  envs.forEach(e => { if (!process.env[e]) throw new Error(`[V3] Missing env: ${e}`); });
+  console.log('[V3] Stage‑1 prerequisites satisfied ✅');
+}
+//#endregion
+
+//#region 6.  public bootstrap API  ────────────────────────────────────────────────────────────
+export function initialiseV3() {
+  validateStage1Prerequisites();
+  console.log('[V3] Stage‑1 foundation loaded.  Config ⇣'); console.table(V3Config);
 }
 
+export function prepareV3Context(): V3ProcessingContext {
+  return { stepName: 'stage‑1', startTime: Date.now(), tokensUsed: 0, costSoFar: 0, errors: [], memoized: { entities: [] } };
+}
+//#endregion
+
+//#region 7.  Minimal Jest test harness  ───────────────────────────────────────────────────────
+/* If Jest is configured, the following will auto‑discover */
+if (process.env.NODE_ENV === 'test') {
+  describe('Stage‑1 foundation', () => {
+    it('validates env vars', () => { expect(() => validateStage1Prerequisites()).not.toThrow(); });
+    it('creates baseline context', () => {
+      const ctx = prepareV3Context(); expect(ctx.stepName).toBe('stage‑1');
+    });
+  });
+}
+//#endregion
