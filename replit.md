@@ -163,6 +163,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Stage-2B Context Engine Implementation Complete (July 20, 2025)
+- **Production Safe Installation**: Implemented additive-only Stage-2B installer with comprehensive safety measures
+- **Entity Extraction Engine**: Context-aware extractor with pattern + NLP processing, LRU caching, and confidence scoring
+- **Database Schema Extension**: Added extraction_method, extraction_confidence, context_data, and last_accessed columns to facts table
+- **Pool Reuse Implementation**: Micro-fix A & B applied - exported Stage-2A pool and reused for context engine (no connection duplication)
+- **Comprehensive Test Suite**: Stage-2B context tests passing (5 entities extracted, 2 facts stored, cache functionality verified)
+- **Memory Integration**: Proper Stage-2A API usage with metadata merging and error handling
+- **Performance Optimizations**: 16KB input limits, 25 entity maximum, 10-minute cache TTL, 5MB cache size limit
+- **Configuration System**: Database-driven config table for dynamic cache sizing and confidence thresholds
+- **Type Safety**: Fixed union types and import issues, TypeScript compilation successful for context engine modules
+
 ### Intelligence V3 Architecture Planning Complete (June 27, 2025)
 - **Comprehensive Blueprint**: Created detailed V3_CHANGEOVER_PLAN.md with 8-phase implementation strategy
 - **Single-Source Intelligence**: Consolidated architecture with `server/ai/mira-superintelligence.ts` as master file

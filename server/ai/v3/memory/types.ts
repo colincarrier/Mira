@@ -40,8 +40,10 @@ export interface Pattern {
   created_at: Date;
 }
 
-export interface MemResult<T> {
-  success: true;  data: T;
+export type MemResult<T> = {
+  success: true;  
+  data: T;
 } | {
-  success: false; error: string;
+  success: false; 
+  error: string;
 }

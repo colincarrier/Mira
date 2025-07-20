@@ -2,7 +2,7 @@ import pg from 'pg';
 import { v4 as uuid } from 'uuid';
 import { Fact, Event, Pattern, EntityKind, MemResult } from './types.js';
 
-const pool = new pg.Pool({
+export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   max: 10,
   idleTimeoutMillis: 30_000,
