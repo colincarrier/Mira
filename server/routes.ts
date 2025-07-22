@@ -503,7 +503,8 @@ This profile was generated from your input and will help provide more personaliz
           const { contextPool } = await import('./ai/v3/context/db-pool');
           await contextPool.query(
             `INSERT INTO memory.enhance_queue (note_id, user_id, text)
-             VALUES ($1, $2, $3)`,
+             VALUES ($1, $2, $3)
+             ON CONFLICT (note_id) DO NOTHING`,
             [note.id, "demo", noteData.content] // Using "demo" as user_id for consistency
           );
           console.log(`[Stage-4A] Note ${note.id} queued for AI enhancement`);
@@ -781,6 +782,30 @@ This profile was generated from your input and will help provide more personaliz
     } catch (error) {
       console.error("Failed to create note:", error);
       res.status(400).json({ message: "Failed to create note", error: error.message });
+    }
+  });
+
+  // Stage-4A Enhancement Queue Monitoring
+  app.get("/api/enhance-queue/stats", async (req, res) => {
+    try {
+      const { getQueueStats } = await import('./ai/v3/enhance/queue-worker');
+      const stats = await getQueueStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Failed to get queue stats:', error);
+      res.status(500).json({ message: 'Failed to get queue stats' });
+    }
+  });
+
+  app.get("/api/enhance-queue/failed", async (req, res) => {
+    try {
+      const { getFailedJobs } = await import('./ai/v3/enhance/queue-worker');
+      const limit = parseInt(req.query.limit as string) || 10;
+      const failedJobs = await getFailedJobs(limit);
+      res.json(failedJobs);
+    } catch (error) {
+      console.error('Failed to get failed jobs:', error);
+      res.status(500).json({ message: 'Failed to get failed jobs' });
     }
   });
 
