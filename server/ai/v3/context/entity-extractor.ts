@@ -70,7 +70,19 @@ export class ContextAwareExtractor {
       const cacheSize = await getContextConfig('extractor_cache_size', 1000);
       const minConf = await getContextConfig('min_confidence_threshold', DEFAULT_MIN_CONFIDENCE);
       
-      this.cache.resize(Number(cacheSize));
+      // Apply new cache size - recreate cache if size changed
+      const newCacheSize = Number(cacheSize);
+      if (newCacheSize !== this.cache.max) {
+        const oldEntries = Array.from(this.cache.entries());
+        this.cache = new LRU({
+          max: newCacheSize,
+          ttl: 10 * 60 * 1000, // 10 minutes
+          maxSize: 5 * 1024 * 1024, // 5MB
+          sizeCalculation: (value: ExtractedEntity[]) => JSON.stringify(value).length
+        });
+        // Restore entries up to new limit
+        oldEntries.slice(0, newCacheSize).forEach(([k, v]) => this.cache.set(k, v));
+      }
       this.minConfidence = Number(minConf);
       
       console.log(`Context extractor configured: cache=${cacheSize}, minConf=${minConf}`);
