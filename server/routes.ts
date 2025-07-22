@@ -497,6 +497,22 @@ This profile was generated from your input and will help provide more personaliz
         isProcessing: noteData.content ? true : false
       });
 
+      // Stage‑4A: enqueue for Intelligence V2 background enhancement
+      if (noteData.content) {
+        try {
+          const { contextPool } = await import('./ai/v3/context/db-pool');
+          await contextPool.query(
+            `INSERT INTO memory.enhance_queue (note_id, user_id, text)
+             VALUES ($1, $2, $3)`,
+            [note.id, "demo", noteData.content] // Using "demo" as user_id for consistency
+          );
+          console.log(`[Stage-4A] Note ${note.id} queued for AI enhancement`);
+        } catch (queueError) {
+          console.error('[Stage-4A] Failed to enqueue note for enhancement:', queueError);
+          // Continue - don't fail note creation if queue fails
+        }
+      }
+
       // Process with available AI (single analysis for speed)
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
@@ -520,9 +536,13 @@ This profile was generated from your input and will help provide more personaliz
           req: req, // Pass request for location detection
         };
 
+        // Return fast response - let queue handle AI processing
+        res.json(note);
+
+        // Keep existing immediate processing as fallback (will be deprecated once queue is stable)
         miraModule.processNote(miraInput)
         .then(async (analysis: any) => {
-          console.log("=== FULL AI PROCESSING DEBUG ===");
+          console.log("=== FULL AI PROCESSING DEBUG (FALLBACK) ===");
           console.log("1. INPUT TO AI:", JSON.stringify(miraInput, null, 2));
           console.log("2. FULL ANALYSIS OUTPUT:", JSON.stringify(analysis, null, 2));
           console.log("3. ANALYSIS.RICHCONTEXT:", JSON.stringify(analysis.richContext, null, 2));
@@ -758,12 +778,9 @@ This profile was generated from your input and will help provide more personaliz
           await storage.updateNote(note.id, { isProcessing: false });
         });
       }
-
-      // Return the note with any updated metadata from AI processing
-      const finalNote = await storage.getNote(note.id);
-      res.json(finalNote);
     } catch (error) {
-      res.status(400).json({ message: "Invalid note data" });
+      console.error("Failed to create note:", error);
+      res.status(400).json({ message: "Failed to create note", error: error.message });
     }
   });
 

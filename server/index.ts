@@ -72,6 +72,15 @@ app.use((req, res, next) => {
   const tasksRouter = await import('./api/v3/tasks/router.js');
   app.use('/api/v3/tasks', tasksRouter.default);
 
+  // Stage-4A: Start enhancement queue worker
+  try {
+    const { startEnhancer } = await import('./ai/v3/enhance/queue-worker.js');
+    startEnhancer();
+    console.log('✅ [Stage-4A] Enhancement queue worker started');
+  } catch (error) {
+    console.error('❌ [Stage-4A] Failed to start enhancement worker:', error);
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
