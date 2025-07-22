@@ -638,7 +638,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         <div className="pt-3 border-t border-[hsl(var(--border))]">
           <div className="space-y-2">
             <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">Follow-up questions:</p>
-            {followUpQuestions.map((question, index) => (
+            {followUpQuestions.map((question: string, index: number) => (
               <div
                 key={index}
                 className="text-xs px-2 py-1 bg-[hsl(var(--muted))] rounded-md text-[#4f453b]"
