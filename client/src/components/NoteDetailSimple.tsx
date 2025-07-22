@@ -57,8 +57,15 @@ export default function NoteDetailSimple() {
     );
   }
 
-  // Parse richContext with robust fallbacks
-  const rc = parseRichContext(note.richContext);
+  // Parse richContext with robust fallbacks and error handling
+  const rc = React.useMemo(() => {
+    try {
+      return parseRichContext(note.richContext);
+    } catch (error) {
+      console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note.id);
+      return null;
+    }
+  }, [note.richContext, note.id]);
   
   const safe = {
     title: rc?.title ?? note.aiGeneratedTitle ?? note.content.split('\n')[0] ?? 'Untitled',

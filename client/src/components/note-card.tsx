@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import type { NoteWithTodos } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone, ShoppingCart, Copy, Edit3, Archive, ChevronRight, ExternalLink, X, Check, ArrowUpRight, MoreHorizontal, Plus, Trash2, CheckCircle2, Loader2, Bell, Zap, ArrowRight, Info, Clock } from "lucide-react";
@@ -312,7 +312,15 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     });
   };
 
-  const richContextData = parseRichContext(note.richContext);
+  // Safe parsing with error handling
+  const richContextData = React.useMemo(() => {
+    try {
+      return parseRichContext(note.richContext);
+    } catch (error) {
+      console.error('🚨 parseRichContext error:', error, 'for note:', note.id);
+      return null;
+    }
+  }, [note.richContext, note.id]);
 
   // Get next steps for card using new hierarchy
   const getNextStepsForCard = (richContext: any) => {
