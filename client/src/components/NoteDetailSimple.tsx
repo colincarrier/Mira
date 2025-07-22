@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { NoteWithTodos } from '@shared/schema';
 import { marked } from 'marked';
 import InputBar from '@/components/input-bar';
+import { parseRichContext } from '@/utils/parseRichContext';
 
 // Helper function to convert markdown to HTML
 function mdToHtml(markdown: string): string {
@@ -57,19 +58,13 @@ export default function NoteDetailSimple() {
   }
 
   // Parse richContext with robust fallbacks
-  const rc = note.richContext ? (() => {
-    try {
-      return JSON.parse(note.richContext);
-    } catch {
-      return {};
-    }
-  })() : {};
+  const rc = parseRichContext(note.richContext);
   
   const safe = {
-    title: rc.title || note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
-    original: rc.original || ((rc.title || '') !== note.content ? note.content : ''),
-    aiBody: rc.aiBody || '',
-    perspective: rc.perspective || ''
+    title: rc?.title ?? note.aiGeneratedTitle ?? note.content.split('\n')[0] ?? 'Untitled',
+    original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
+    aiBody: rc?.aiBody ?? '',
+    perspective: rc?.perspective ?? ''
   };
 
   return (

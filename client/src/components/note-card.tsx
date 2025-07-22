@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { ReminderDialog } from "@/components/reminder-dialog";
+import { parseRichContext } from "@/utils/parseRichContext";
 
 // Voice Note Player Component
 interface VoiceNotePlayerProps {
@@ -309,16 +310,6 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       todoId: todo.id, 
       completed: !todo.completed 
     });
-  };
-
-  // Parse rich context data
-  const parseRichContext = (richContext: string | null) => {
-    if (!richContext) return null;
-    try {
-      return JSON.parse(richContext);
-    } catch {
-      return null;
-    }
   };
 
   const richContextData = parseRichContext(note.richContext);
