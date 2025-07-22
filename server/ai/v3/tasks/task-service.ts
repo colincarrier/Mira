@@ -3,6 +3,22 @@ import { v4 as uuid } from 'uuid';
 import { contextPool as pool } from '../context/db-pool.js';
 import { Task } from './types.js';
 
+// Stage-3B Types
+export type TaskStatus = 'pending' | 'completed' | 'archived';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
+export interface TaskFilter {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  limit: number;
+  offset: number;
+}
+
+export interface CountFilter {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+}
+
 function assert(cond: boolean, msg: string): void {
   if (!cond) throw new Error(msg);
 }
@@ -78,5 +94,61 @@ export class TaskService {
       [userId, limit]
     );
     return rows as Task[];
+  }
+
+  // Stage-3B Filter Helper
+  static buildFilterClause(
+    baseParams: any[],
+    filter: { status?: TaskStatus; priority?: TaskPriority }
+  ): { whereSql: string; params: any[] } {
+    const conds: string[] = [];
+    if (filter.status) {
+      conds.push(`status = $${baseParams.length + conds.length + 1}`);
+      baseParams.push(filter.status);
+    }
+    if (filter.priority) {
+      conds.push(`priority = $${baseParams.length + conds.length + 1}`);
+      baseParams.push(filter.priority);
+    }
+    return {
+      whereSql: conds.length ? ' AND ' + conds.join(' AND ') : '',
+      params: baseParams
+    };
+  }
+
+  /** list tasks with limit/offset & optional filters */
+  static async listByFilter(
+    userId: string,
+    { status, priority, limit, offset }: TaskFilter
+  ): Promise<Task[]> {
+
+    const baseParams: any[] = [userId];
+    const { whereSql, params } = TaskService.buildFilterClause(baseParams, { status, priority });
+
+    const { rows } = await pool.query(
+      `SELECT id,user_id,title,natural_text,priority,status,
+              parsed_due_date,due_date_confidence,confidence,created_at
+         FROM memory.tasks
+        WHERE user_id = $1${whereSql}
+        ORDER BY created_at DESC
+        LIMIT $${params.length + 1}
+        OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+    return rows as Task[];
+  }
+
+  /** count tasks for pagination */
+  static async countByFilter(userId: string, filter: CountFilter): Promise<number> {
+    const baseParams: any[] = [userId];
+    const { whereSql, params } = TaskService.buildFilterClause(baseParams, filter);
+
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) AS total
+         FROM memory.tasks
+        WHERE user_id = $1${whereSql}`,
+      params
+    );
+    return Number(rows[0]?.total || 0);
   }
 }

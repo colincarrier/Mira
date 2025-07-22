@@ -13,7 +13,8 @@
     "test:memory": "tsx tests/v3/memory/memory.test.tsx",
     "test:context": "tsx tests/v3/context/context-engine.test.ts",
     "test:reasoning": "tsx tests/v3/reasoning/reasoning-engine.test.ts",
-    "test:tasks": "tsx tests/v3/tasks/task-service.test.ts"
+    "test:tasks": "tsx tests/v3/tasks/task-service.test.ts",
+    "test:api": "tsx tests/v3/api/tasks-api.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -53,6 +54,7 @@
     "@types/memoizee": "^0.4.12",
     "@types/multer": "^1.4.12",
     "@types/redis": "^4.0.10",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "chrono-node": "^2.8.3",
     "class-variance-authority": "^0.7.1",
@@ -101,6 +103,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "string-strip-html": "^13.4.13",
+    "supertest": "^7.1.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.2.5",

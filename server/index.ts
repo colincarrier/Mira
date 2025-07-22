@@ -67,6 +67,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // Stage-3B Task Retrieval API
+  const tasksRouter = await import('./api/v3/tasks/router.js');
+  app.use('/api/v3/tasks', tasksRouter.default);
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
