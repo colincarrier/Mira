@@ -46,6 +46,7 @@ export interface ExtractedTask {
   title: string;
   priority?: string;
   confidence: number;
+  timing_hint?: string;                // NEW: "later", "tomorrow", etc.
   [k: string]: unknown;
 }
 

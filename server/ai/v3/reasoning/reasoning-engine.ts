@@ -111,10 +111,19 @@ export class ReasoningEngine {
       throw err;
     }
 
-    /* ----- assemble response ----- */
+    /* ----- assemble response with timing follow-up ----- */
     const task = this.pb.extractTask(llm.content) as ExtractedTask | null;
+    
+    /* ----- build answer with timing follow-up if needed ----- */
+    let answerText = this.pb.sanit(llm.content.replace(/TASK_JSON:.*/g, ''));
+    if (task?.timing_hint && !task.dueDate) {
+      // ensure we end with a question to clarify timing
+      if (!/[.?!]\s*$/.test(answerText)) answerText += '.';
+      answerText += ' When should I remind you?';
+    }
+
     const resp: ReasoningResponse = {
-      answer: this.pb.sanit(llm.content.replace(/TASK_JSON:.*/g, '')),
+      answer: answerText,
       task: task ?? undefined,
       meta: {
         cached: false,

@@ -163,7 +163,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Stage-3B Task Retrieval API Implementation Complete (July 22, 2025)
+### Stage-3B Task Retrieval API + Timing Intelligence Complete (July 22, 2025)
 - **Production REST API**: Complete HTTP endpoint `/api/v3/tasks` with filtering, pagination, and validation
 - **Performance Optimized**: Parallel queries for <50ms response times, uses existing database indices
 - **Comprehensive Filtering**: Support for status (pending/completed/archived) and priority (low/medium/high) filters
@@ -172,6 +172,8 @@ Preferred communication style: Simple, everyday language.
 - **Zero Breaking Changes**: Purely additive implementation reusing existing auth and database patterns
 - **Full Test Coverage**: 6 integration test cases covering happy path, filtering, pagination, and edge cases
 - **Production Ready**: Type-safe implementation with proper SQL parameterization and error handling
+- **Timing Intelligence**: Added timing_hint support for vague time words ("later", "soon", "tomorrow") with follow-up questions
+- **Surgical Implementation**: 55 LOC across 3 files, maintains Stage-3B stability while capturing user timing intent
 
 ### Stage-3A Task Persistence System Implementation Complete (July 22, 2025)
 - **Production-Grade Task Database**: Complete tasks table with comprehensive validation constraints, soft deduplication, and proper indexing
