@@ -3,8 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { contextPool as pool } from '../context/db-pool.js';
 import { Task } from './types.js';
 
-// Stage-3B Types
-export type TaskStatus = 'pending' | 'completed' | 'archived';
+// Stage-3C Types (extend Stage-3B types for scheduler support)
+export type TaskStatus = 'pending' | 'scheduled' | 'completed' | 'archived';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
 export interface TaskFilter {
@@ -72,6 +72,33 @@ export class TaskService {
       [taskId]
     );
     return rows[0] ?? null;
+  }
+
+  // ---- Stage-3C Scheduler Methods ----
+
+  /** fetch up to <limit> pending tasks that have *no* parsed_due_date yet */
+  static async fetchUnscheduled(limit = 200): Promise<Task[]> {
+    const { rows } = await pool.query(
+      `SELECT * FROM memory.tasks
+         WHERE status = 'pending'
+           AND parsed_due_date IS NULL
+         ORDER BY created_at
+         LIMIT $1`,
+      [limit]
+    );
+    return rows as Task[];
+  }
+
+  /** mark a task scheduled + persist its parsed date */
+  static async markScheduled(taskId: string, dt: Date, conf = 0.9): Promise<void> {
+    await pool.query(
+      `UPDATE memory.tasks
+         SET parsed_due_date = $1,
+             due_date_confidence = $2,
+             status = 'scheduled'
+         WHERE id = $3`,
+      [dt, conf, taskId]
+    );
   }
 
   static async list(userId: string, limit = 20): Promise<Task[]> {

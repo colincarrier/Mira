@@ -14,7 +14,8 @@
     "test:context": "tsx tests/v3/context/context-engine.test.ts",
     "test:reasoning": "tsx tests/v3/reasoning/reasoning-engine.test.ts",
     "test:tasks": "tsx tests/v3/tasks/task-service.test.ts",
-    "test:api": "tsx tests/v3/api/tasks-api.test.ts"
+    "test:api": "tsx tests/v3/api/tasks-api.test.ts",
+    "test:scheduler": "tsx tests/v3/scheduler/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",

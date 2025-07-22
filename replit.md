@@ -163,6 +163,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Stage-3C Smart Scheduler Implementation Complete (July 22, 2025)
+- **Production-Grade Scheduler**: Complete chrono-node integration with binary heap queue for O(log n) performance
+- **Natural Language Date Parsing**: Advanced parsing of timing phrases ("later", "tomorrow at 2pm", "next Friday")  
+- **Database Schema Extensions**: Added parsed_due_date, due_date_confidence, and scheduled status to tasks table
+- **Circuit Breaker Protection**: Configurable failure thresholds with automatic back-off and recovery
+- **Memory-Safe Operations**: Binary heap queue with configurable size limits, graceful resource management
+- **Environmental Configuration**: Configurable scan intervals, bootstrap limits, and failure thresholds
+- **Graceful Lifecycle Management**: Proper startup/shutdown handlers with .unref() for clean exits
+- **Comprehensive Test Suite**: Parser unit tests and scheduler smoke tests with <10s execution time
+- **Production Deployment**: Auto-starts in production environment, manual control for development/testing
+- **Task Status Pipeline**: Seamless progression from pending → scheduled → completed → archived
+
 ### Stage-3B Task Retrieval API + Timing Intelligence Complete (July 22, 2025)
 - **Production REST API**: Complete HTTP endpoint `/api/v3/tasks` with filtering, pagination, and validation
 - **Performance Optimized**: Parallel queries for <50ms response times, uses existing database indices

@@ -15,6 +15,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
+import { startScheduler, stopScheduler } from "./ai/v3/scheduler/scheduler.js";
 
 
 const app = express();
@@ -94,5 +95,25 @@ app.use((req, res, next) => {
     } catch (error) {
       console.error("Failed to initialize notification system:", error);
     }
+
+    // Start Stage-3C Scheduler
+    try {
+      await startScheduler();
+      console.log('Stage-3C Scheduler initialized successfully');
+    } catch (error) {
+      console.error('Failed to start scheduler:', error);
+    }
+  });
+
+  // Graceful shutdown handlers
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, stopping scheduler...');
+    stopScheduler();
+  });
+  
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, stopping scheduler...');
+    stopScheduler();
+    process.exit(0);
   });
 })();

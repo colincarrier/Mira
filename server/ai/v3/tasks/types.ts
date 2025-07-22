@@ -6,7 +6,7 @@ export interface Task {
   title: string;
   natural_text: string | null;
   priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'completed' | 'archived';
+  status: 'pending' | 'scheduled' | 'completed' | 'archived';
   parsed_due_date: Date | null;
   due_date_confidence: number;
   confidence: number;
