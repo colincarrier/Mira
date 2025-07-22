@@ -10,6 +10,7 @@ import { useEffect } from "react";
 
 // Import pages
 import Notes from "@/pages/notes";
+import DebugNotes from "@/pages/debug-notes";
 import Remind from "@/pages/remind";
 
 import Profile from "@/pages/profile";
@@ -46,6 +47,7 @@ export default function App() {
         <Router>
           <div className="min-h-screen bg-[#f1efe8]">
             <Switch>
+              <Route path="/debug" component={DebugNotes} />
               <Route path="/" component={Notes} />
               <Route path="/remind" component={Remind} />
               <Route path="/profile" component={Profile} />

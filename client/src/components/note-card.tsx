@@ -314,6 +314,8 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   // Safe parsing with error handling
   const richContextData = React.useMemo(() => {
+    if (!note.richContext) return null;
+    
     try {
       return parseRichContext(note.richContext);
     } catch (error) {

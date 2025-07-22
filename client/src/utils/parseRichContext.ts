@@ -59,11 +59,19 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
           .trim()
       : '';
 
-    const taskTitle =
-      parsed.task?.task ||
-      cleanAnswer.match(/"task"\s*:\s*"([^"]+)"/)?.[1] ||
-      cleanAnswer.split(/[.!?]/)[0]?.slice(0, 60) ||
-      'Enhanced Note';
+    const taskTitle = (() => {
+      try {
+        return (
+          parsed.task?.task ||
+          (cleanAnswer.includes('"task"') ? cleanAnswer.match(/"task"\s*:\s*"([^"]+)"/)?.[1] : null) ||
+          (cleanAnswer ? cleanAnswer.split(/[.!?]/)[0]?.slice(0, 60) : null) ||
+          'Enhanced Note'
+        );
+      } catch (err) {
+        console.warn('Task title extraction failed:', err);
+        return 'Enhanced Note';
+      }
+    })();
 
     return {
       title: taskTitle,
