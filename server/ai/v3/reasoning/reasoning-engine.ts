@@ -7,6 +7,7 @@ import { PromptBuilder } from './prompt-builder.js';
 import { ContextMemory } from '../context/context-memory.js';
 import { Memory } from '../memory/simple-memory.js';
 import { contextPool } from '../context/db-pool.js';
+import { TaskService } from '../tasks/task-service.js';
 import {
   ReasoningConfig,
   ReasoningRequest,
@@ -126,13 +127,16 @@ export class ReasoningEngine {
 
     this.cache.set(k, resp);
 
-    /* ----- async DB log (fire‑and‑forget) ----- */
+    /* ----- async DB log with task persistence ----- */
     const hash = this.noteHash(note);
-    contextPool
-      .query(
+    let reasoningLogId: string | null = null;
+    try {
+      const { rows } = await contextPool.query(
         `INSERT INTO memory.reasoning_logs
-         (user_id,note_excerpt,note_hash,model,latency_ms,token_usage,answer,task_json,success,error_message)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+         (user_id,note_excerpt,note_hash,model,latency_ms,token_usage,
+          answer,task_json,success,error_message)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,null)
+         RETURNING id`,
         [
           uid,
           note.slice(0, 120),
@@ -141,12 +145,33 @@ export class ReasoningEngine {
           resp.meta.latencyMs,
           llm.usage ? JSON.stringify(llm.usage) : null,
           resp.answer,
-          task ? JSON.stringify(task) : null,
-          true,
-          null
+          task ? JSON.stringify(task) : null
         ]
-      )
-      .catch((e) => console.warn('[Reasoning log]', e.message));
+      );
+      reasoningLogId = rows[0].id as string;
+    } catch (e) {
+      console.warn('[Reasoning log]', (e as Error).message);
+    }
+
+    /* ---- async task persistence (confidence ≥0.6) ---- */
+    if (task && task.confidence >= 0.6) {
+      const priorityMap: Record<string, 'low' | 'medium' | 'high'> = { 
+        high: 'high', medium: 'medium', low: 'low' 
+      };
+      TaskService.create({
+        user_id: uid,
+        title: task.title,
+        natural_text: JSON.stringify(task),
+        priority: priorityMap[task.priority as string] ?? 'medium',
+        parsed_due_date: null,
+        due_date_confidence: 0,
+        confidence: task.confidence,
+        source_reasoning_log_id: reasoningLogId
+      }).catch(e =>
+        console.error('[ReasoningEngine] Task insert failed:',
+          {userId: uid, task: task.title, err: (e as Error).message})
+      );
+    }
 
     this.stats.ms += resp.meta.latencyMs;
     return resp;

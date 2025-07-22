@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "test:memory": "tsx tests/v3/memory/memory.test.tsx",
     "test:context": "tsx tests/v3/context/context-engine.test.ts",
-    "test:reasoning": "tsx tests/v3/reasoning/reasoning-engine.test.ts"
+    "test:reasoning": "tsx tests/v3/reasoning/reasoning-engine.test.ts",
+    "test:tasks": "tsx tests/v3/tasks/task-service.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
