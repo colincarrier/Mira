@@ -3,6 +3,10 @@ import { Task } from '../tasks/types.js';
 import { SCHEDULER_CFG }   from './config.js';
 import { parse as chronoParse } from 'chrono-node';
 import { v4 as uuid } from 'uuid';
+import { notify } from '../notifications/notifier.js';
+import { computeLeadMinutes } from '../notifications/leadtime.js';
+import { requestClarification } from '../notifications/clarifier.js';
+import { detectCategory } from '../notifications/category.js';
 
 /* ---------- internal job model & queue (binary heap) ---------- */
 interface Job { id: string; taskId: string; when: number; }
@@ -57,12 +61,27 @@ async function bootstrap(): Promise<void> {
 function tryParseAndQueue(task: Task): void {
   if (heap.size() >= SCHEDULER_CFG.maxQueueSize) return;
   const parsed = chronoParse(task.natural_text ?? '', new Date(), { forwardDate: true })[0];
-  if (!parsed) return;
+  
+  if (!parsed) {
+    requestClarification(task).catch(console.error);
+    return;
+  }
 
   const due = parsed.date();
   const confidence = parsed.tags ? 0.9 : 0.8;
+  const leadMinutes = computeLeadMinutes(task);
+  const fireAt = new Date(due.getTime() - leadMinutes * 60000);
+  const explanation = `priority ${task.priority}, category ${detectCategory(task.title)}, lead ${leadMinutes}m`;
 
-  heap.push({ id: uuid(), taskId: task.id, when: due.getTime() });
+  if (fireAt <= new Date()) {
+    // Fire immediately if lead time already passed
+    notify(task, due, explanation + ' (escalated)')
+      .catch(e => console.error('[Scheduler] immediate notification failed', e));
+  } else {
+    // Schedule for lead time
+    heap.push({ id: uuid(), taskId: task.id, when: fireAt.getTime() });
+  }
+
   TaskService.markScheduled(task.id, due, confidence)
     .catch(e => console.error('[Scheduler] markScheduled failed', e));
 }
@@ -89,8 +108,17 @@ function tick(): void {
   let job: Job | null;
   while ((job = heap.peek()) && job.when <= now) {
     heap.pop();
-    console.log(`[Scheduler] 🔔 Task ${job.taskId} is due – emit event here`);
-    // Stage‑3D will emit actual notifications
+    
+    // Get task and send notification
+    TaskService.getById(job!.taskId)
+      .then(task => {
+        if (task && task.status === 'scheduled') {
+          const leadMinutes = computeLeadMinutes(task);
+          const explanation = `priority ${task.priority}, category ${detectCategory(task.title)}, lead ${leadMinutes}m`;
+          return notify(task, task.parsed_due_date!, explanation);
+        }
+      })
+      .catch(e => console.error(`[Scheduler] notification failed for task ${job!.taskId}:`, e));
   }
 }
 

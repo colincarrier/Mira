@@ -15,7 +15,8 @@
     "test:reasoning": "tsx tests/v3/reasoning/reasoning-engine.test.ts",
     "test:tasks": "tsx tests/v3/tasks/task-service.test.ts",
     "test:api": "tsx tests/v3/api/tasks-api.test.ts",
-    "test:scheduler": "tsx tests/v3/scheduler/*.test.ts"
+    "test:scheduler": "tsx tests/v3/scheduler/*.test.ts",
+    "test:notifications": "tsx tests/v3/notifications/leadtime.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -108,10 +109,12 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.2.5",
+    "twilio": "^4.23.0",
     "typeorm": "^0.3.25",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
     "vitest": "^3.2.3",
+    "web-push": "^3.6.7",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.24.2",

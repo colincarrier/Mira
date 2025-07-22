@@ -101,6 +101,14 @@ export class TaskService {
     );
   }
 
+  /** mark a task as requiring clarification */
+  static async markClarifying(taskId: string): Promise<void> {
+    await pool.query(
+      `UPDATE memory.tasks SET status = 'clarifying' WHERE id = $1`,
+      [taskId]
+    );
+  }
+
   static async list(userId: string, limit = 20): Promise<Task[]> {
     const { rows } = await pool.query(
       `SELECT * FROM memory.tasks
