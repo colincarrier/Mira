@@ -71,7 +71,8 @@ async function applyEnhancement(noteId: number, aiResult: any): Promise<void> {
   await pool.query(
     `UPDATE notes
      SET ai_enhanced = true,
-         rich_context = $2
+         rich_context = $2,
+         is_processing = false
      WHERE id = $1`,
     [noteId, JSON.stringify(aiResult)]
   );
