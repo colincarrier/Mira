@@ -631,14 +631,21 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       {richContextData?.quickInsights && richContextData.quickInsights.length > 0 && (
         <div className="mb-3">
           <div className="space-y-1">
-            {richContextData.quickInsights.map((insight: string, index: number) => (
-              <div
-                key={index}
-                className="text-xs px-2 py-1 bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] rounded-md italic"
-              >
-                💡 {insight}
-              </div>
-            ))}
+            {richContextData.quickInsights.map((insight: string, index: number) => {
+              // Clean up code-like text and display as natural language
+              const cleanInsight = typeof insight === 'string' 
+                ? insight.replace(/^[{}"]+|[{}"]+$/g, '').replace(/\\"/g, '"').trim()
+                : String(insight || '');
+              
+              return (
+                <div
+                  key={index}
+                  className="text-xs px-2 py-1 bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] rounded-md italic"
+                >
+                  💡 {cleanInsight}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

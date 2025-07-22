@@ -23,14 +23,13 @@ export default function NoteDetailSimple() {
     gcTime: 300000, // Keep in cache for 5 minutes
   });
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
-  // Parse richContext with robust fallbacks and error handling
+  // Parse richContext with robust fallbacks and error handling (moved before early returns)
   const rc = React.useMemo(() => {
     if (!note) return null;
     try {
       return parseRichContext(note.richContext);
     } catch (error) {
-      console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note?.id);
+      console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note.id);
       return null;
     }
   }, [note?.richContext, note?.id]);
@@ -38,14 +37,13 @@ export default function NoteDetailSimple() {
   const safe = React.useMemo(() => {
     if (!note) return { title: '', original: '', aiBody: '', perspective: '' };
     return {
-      title: rc?.title ?? note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
+      title: rc?.title ?? note.aiGeneratedTitle ?? note.content.split('\n')[0] ?? 'Untitled',
       original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
       aiBody: rc?.aiBody ?? '',
       perspective: rc?.perspective ?? ''
     };
   }, [note, rc]);
 
-  // NOW EARLY RETURNS ARE SAFE AFTER ALL HOOKS
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f1efe8] pb-20">
@@ -79,6 +77,8 @@ export default function NoteDetailSimple() {
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-[#f1efe8] pb-20">
@@ -122,11 +122,6 @@ export default function NoteDetailSimple() {
         {safe.perspective && (
           <p className="text-xs text-gray-500 whitespace-pre-wrap">{safe.perspective}</p>
         )}
-      </div>
-
-      {/* Input bar at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <InputBar />
       </div>
     </div>
   );
