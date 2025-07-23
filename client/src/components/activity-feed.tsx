@@ -18,8 +18,8 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     queryKey: ["/api/notes"],
     staleTime: 120000, // Cache for 2 minutes for faster navigation
     gcTime: 600000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Prevent excessive refetching
-    refetchOnMount: false, // Don't refetch when component mounts if data is fresh
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Debug logging to see what data we're getting

@@ -42,12 +42,14 @@ export interface ReasoningRequest {
 }
 
 export interface ExtractedTask {
-  type: string;
-  title: string;
-  priority?: string;
+  task: string;
+  details?: string;
+  dueDate?: string;        // ISO-8601 when concrete
+  /**  Original ambiguous word ("later", "tomorrow", "soon") when we could
+   *   not compute a concrete date.  never present together with dueDate.
+   */
+  timing_hint?: string;
   confidence: number;
-  timing_hint?: string;                // NEW: "later", "tomorrow", etc.
-  [k: string]: unknown;
 }
 
 export interface ReasoningResponse {

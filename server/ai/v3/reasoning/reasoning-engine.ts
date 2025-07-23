@@ -112,14 +112,13 @@ export class ReasoningEngine {
     }
 
     /* ----- assemble response with timing follow-up ----- */
-    const task = this.pb.extractTask(llm.content) as ExtractedTask | null;
-    
-    /* ----- build answer with timing follow-up if needed ----- */
-    let answerText = this.pb.sanit(llm.content.replace(/TASK_JSON:.*/g, ''));
+    const { task, answerClean } = this.pb.extractTaskAndCleanAnswer(llm.content);
+    let answerText = this.pb.sanit(answerClean);
+
+    // Only add follow-up when timing is ambiguous
     if (task?.timing_hint && !task.dueDate) {
-      // ensure we end with a question to clarify timing
       if (!/[.?!]\s*$/.test(answerText)) answerText += '.';
-      answerText += ' When should I remind you?';
+      answerText += ' Sure – when should I remind you?';
     }
 
     const resp: ReasoningResponse = {

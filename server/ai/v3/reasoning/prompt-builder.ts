@@ -1,7 +1,7 @@
 // Stage‑2C · prompt builder & sanitisation
 
 import { stripHtml } from 'string-strip-html';
-import { ValidationError } from './types.js';
+import { ValidationError, ExtractedTask } from './types.js';
 
 // recognise explicit but vague time words
 const TIMING_HINT_REGEX = /\b(?:later|soon|tomorrow|tonight|this\s+(?:afternoon|evening|morning)|next\s+week|next\s+month|in\s+a\s+(?:few|couple\s+of)\s+(?:hours|days))\b/i;
@@ -13,8 +13,7 @@ Analyse the note and offer insights (≤200 words).
 • If the user uses an explicit but ambiguous time word (e.g. "later", "soon", "tomorrow") 
   and you cannot determine a concrete date, put that literal word into a field 
   "timing_hint" inside the JSON instead of "dueDate", **do not drop it**.
-• In that situation, end your answer with a short clarifying question 
-  ("Sure – when should I remind you?").`;
+• Do **not** add any follow-up questions; the system will handle clarifications.`;
 
   validate(uid: string, note: string) {
     const errs: string[] = [];
@@ -60,5 +59,28 @@ Analyse the note and offer insights (≤200 words).
       task.timing_hint = match[0];
       task.confidence = Math.max(task.confidence ?? 0.6, 0.65);
     }
+  }
+
+  /**
+   * Returns both the parsed task (if present) **and** the answer string
+   * with the TASK_JSON line stripped out.
+   */
+  extractTaskAndCleanAnswer(
+    ans: string,
+  ): { task: ExtractedTask | null; answerClean: string } {
+    // locate the TASK_JSON line first – safest against nested braces
+    const lines = ans.split('\n');
+    const idx = lines.findIndex(l => l.trimStart().startsWith('TASK_JSON:'));
+    if (idx === -1) return { task: null, answerClean: ans.trim() };
+
+    const jsonStart = lines[idx].indexOf('{');
+    let task: ExtractedTask | null = null;
+
+    if (jsonStart !== -1) {
+      try { task = JSON.parse(lines[idx].slice(jsonStart)); } catch { /* ignore */ }
+    }
+
+    lines.splice(idx, 1); // remove the TASK_JSON line
+    return { task, answerClean: lines.join('\n').trim() };
   }
 }

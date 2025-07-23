@@ -112,10 +112,11 @@ export default function NoteDetailSimple() {
           </div>
         )}
 
-        {/* AI body */}
+        {/* AI Enhanced Content */}
         {safe.aiBody && (
-          <div className="prose whitespace-pre-wrap" 
-               dangerouslySetInnerHTML={{__html: mdToHtml(safe.aiBody)}} />
+          <div className="text-sm text-gray-700 whitespace-pre-wrap">
+            {safe.aiBody}
+          </div>
         )}
 
         {/* Perspective */}

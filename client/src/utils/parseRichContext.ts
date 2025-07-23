@@ -52,19 +52,19 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
 
   /* ----- Stage‑4A format ----- */
   if ('answer' in parsed || 'task' in parsed) {
-    const cleanAnswer = typeof parsed.answer === 'string'
-      ? parsed.answer
-          .replace(/^"+|"+$/g, '')                 // strip stray quotes
-          .replace(/\\"/g, '"')                    // unescape
-          .trim()
-      : '';
+    // Safer cleaning - only remove obvious double-wrapping
+    let cleaned = parsed.answer;
+    if (typeof cleaned === 'string' &&
+        cleaned.startsWith('"') && cleaned.endsWith('"') &&
+        !cleaned.slice(1, -1).includes('"')) {
+      cleaned = cleaned.slice(1, -1).replace(/\\"/g, '"');
+    }
 
     const taskTitle = (() => {
       try {
         return (
           parsed.task?.task ||
-          (cleanAnswer.includes('"task"') ? cleanAnswer.match(/"task"\s*:\s*"([^"]+)"/)?.[1] : null) ||
-          (cleanAnswer ? cleanAnswer.split(/[.!?]/)[0]?.slice(0, 60) : null) ||
+          (cleaned && cleaned.split(/[.!?]/)[0]?.slice(0, 60)) ||
           'Enhanced Note'
         );
       } catch (err) {
@@ -75,15 +75,15 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
 
     return {
       title: taskTitle,
-      aiBody: cleanAnswer,
+      aiBody: cleaned,
       perspective: parsed.meta?.latencyMs
         ? `Processed in ${parsed.meta.latencyMs} ms`
         : 'AI‑enhanced',
-      quickInsights: cleanAnswer ? [cleanAnswer] : [],
+      quickInsights: cleaned ? [cleaned.split('\n')[0]] : [],
       recommendedActions: parsed.task ? [`Create task: ${parsed.task.task}`] : [],
       nextSteps: parsed.task ? [parsed.task.task] : [],
       /* keep verbatim Stage‑4A fields */
-      answer: cleanAnswer,
+      answer: cleaned,
       task: parsed.task,
       meta: parsed.meta,
     };

@@ -105,6 +105,12 @@ export class MinimalEnhancementWorker {
         includeReasoning: true
       });
 
+      // Defensive guard - validate result structure
+      if (!result || typeof result.answer !== 'string') {
+        console.error('[Enhancer] Invalid reasoning result:', { noteId: job.note_id, result });
+        throw new Error('Reasoning engine returned invalid structure');
+      }
+
       await this.applyEnhancement(job.note_id, result);
 
       // Mark completed
