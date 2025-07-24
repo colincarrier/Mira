@@ -7,13 +7,22 @@ import { ValidationError, ExtractedTask } from './types.js';
 const TIMING_HINT_REGEX = /\b(?:later|soon|tomorrow|tonight|this\s+(?:afternoon|evening|morning)|next\s+week|next\s+month|in\s+a\s+(?:few|couple\s+of)\s+(?:hours|days))\b/i;
 
 export class PromptBuilder {
-  private sys = `You are Mira, a concise, helpful assistant. 
-Analyse the note and offer insights (≤200 words).
-• If there is a clear task, output exactly one line starting with TASK_JSON: followed by valid JSON describing it.
-• If the user uses an explicit but ambiguous time word (e.g. "later", "soon", "tomorrow") 
-  and you cannot determine a concrete date, put that literal word into a field 
-  "timing_hint" inside the JSON instead of "dueDate", **do not drop it**.
-• Do **not** add any follow-up questions; the system will handle clarifications.`;
+  private sys = `You are Mira, a superhuman AI assistant with access to user context and memory.
+
+**CORE INTELLIGENCE RULES:**
+• If the user's request is ambiguous, ask exactly ONE clarifying question before proceeding
+• Use provided memory facts and user context to personalize your response
+• Generate actionable, specific insights (≤250 words)
+• If there is a clear task, output exactly one line starting with TASK_JSON: followed by valid JSON describing it
+• For timing words like "later", "soon", "tomorrow" without concrete dates, use "timing_hint" field
+
+**CLARIFICATION EXAMPLES:**
+- "Find airpods" → "Are you looking for lost AirPods or shopping for new ones?"
+- "Book flight" → "Where are you traveling from and to?"
+- "Schedule meeting" → "Who should attend and what's the topic?"
+
+**RESPONSE FORMAT:**
+Always provide meaningful analysis even when creating tasks. Never output empty answers.`;
 
   validate(uid: string, note: string) {
     const errs: string[] = [];
@@ -28,11 +37,21 @@ Analyse the note and offer insights (≤200 words).
       .trim();
   }
 
-  build(uid: string, note: string, ctx: string[] = []) {
+  build(uid: string, note: string, ctx: string[] = [], userBio?: string) {
     this.validate(uid, note);
     const clean = this.sanit(note);
-    const ctxStr = ctx.length ? `Context:\n- ${ctx.slice(0, 5).join('\n- ')}\n` : '';
-    return `${this.sys}\n${ctxStr}User note:\n${clean}`;
+    
+    // Memory facts section
+    const memoryFacts = ctx.length > 0 ? 
+      `**MEMORY FACTS:**\n${ctx.slice(0, 5).map(fact => `• ${fact}`).join('\n')}\n` : 
+      '**MEMORY FACTS:** None available\n';
+    
+    // User context section  
+    const userContext = userBio ? 
+      `**USER CONTEXT:**\n${userBio.substring(0, 500)}\n` : 
+      '**USER CONTEXT:** Limited profile information\n';
+    
+    return `${this.sys}\n\n${memoryFacts}\n${userContext}\n**USER NOTE:**\n${clean}`;
   }
 
   extractTask(ans: string) {

@@ -1,5 +1,6 @@
 import { contextPool as pool } from '../context/db-pool.js';
 import { ReasoningEngine } from '../reasoning/reasoning-engine.js';
+import { Stage4AValidator } from '../reasoning/stage4a-validator.js';
 
 // Enhanced configuration with environment variable support
 const POLL_INTERVAL_MS = Number(process.env.ENHANCE_POLL_MS) || 3000;
@@ -101,8 +102,7 @@ export class MinimalEnhancementWorker {
       // Run full Intelligence V2 pipeline
       const result = await this.engine.processNote(job.user_id, job.text, {
         includeContext: true,
-        includeMemory: true,
-        includeReasoning: true
+        skipCache: false
       });
 
       // Defensive guard - validate result structure
@@ -130,6 +130,30 @@ export class MinimalEnhancementWorker {
   }
 
   private async applyEnhancement(noteId: number, rc: unknown): Promise<void> {
+    // Stage-4A validation before database storage
+    const rawResponse = JSON.stringify(rc);
+    const validation = Stage4AValidator.validate(rawResponse);
+    
+    if (!validation.isValid) {
+      console.error(`[Enhancer] Stage-4A validation failed for note ${noteId}:`, validation.errors);
+      
+      // Store validation failure in queue for investigation
+      try {
+        await pool.query(
+          `INSERT INTO memory.failures (note_id, user_id, error_type, error_details, raw_response, created_at)
+           VALUES ($1, 'unknown', 'stage4a_validation', $2, $3, NOW())`,
+          [noteId, JSON.stringify(validation.errors), rawResponse.substring(0, 10000)]
+        );
+      } catch (insertErr) {
+        console.warn('[Enhancer] Failed to log validation failure:', insertErr);
+      }
+      
+      throw new Error(`Stage-4A validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    // Use sanitized response if provided
+    const finalResponse = validation.sanitized || rawResponse;
+    
     // Check schema before starting transaction if guard is enabled
     if (GUARD_SCHEMA) {
       const { rows } = await pool.query(`
@@ -151,9 +175,15 @@ export class MinimalEnhancementWorker {
                 rich_context = $2,
                 is_processing = false
           WHERE id = $1`,
-        [noteId, JSON.stringify(rc)]
+        [noteId, finalResponse]
       );
       await client.query('COMMIT');
+      
+      if (validation.errors.length > 0) {
+        console.warn(`[Enhancer] Note ${noteId} enhanced with warnings:`, validation.errors);
+      } else {
+        console.log(`[Enhancer] Note ${noteId} validated and enhanced successfully`);
+      }
     } catch (e) {
       await client.query('ROLLBACK');
       throw e;

@@ -8,6 +8,7 @@ import { ContextMemory } from '../context/context-memory.js';
 import { Memory } from '../memory/simple-memory.js';
 import { contextPool } from '../context/db-pool.js';
 import { TaskService } from '../tasks/task-service.js';
+import { Stage4AValidator } from './stage4a-validator.js';
 import {
   ReasoningConfig,
   ReasoningRequest,
@@ -90,8 +91,19 @@ export class ReasoningEngine {
       }
     }
 
+    /* ----- get user profile for context ----- */
+    let userBio: string | undefined;
+    try {
+      const { rows } = await contextPool.query(`SELECT personal_bio FROM users WHERE id = $1`, [uid]);
+      userBio = rows[0]?.personal_bio;
+    } catch (err) {
+      console.warn('[Reasoning] User profile fetch failed:', (err as Error).message);
+    }
+
     /* ----- build prompt & call LLM ----- */
-    const prompt = this.pb.build(uid, note, [...facts, ...ents]);
+    const prompt = this.pb.build(uid, note, [...facts, ...ents], userBio);
+    console.log(`[Reasoning] Prompt length: ${prompt.length} chars, facts: ${facts.length}, entities: ${ents.length}`);
+    
     let llm;
     try {
       llm = await this.ai.generate(prompt);
@@ -161,24 +173,39 @@ export class ReasoningEngine {
       console.warn('[Reasoning log]', (e as Error).message);
     }
 
-    /* ---- async task persistence (confidence ≥0.6) ---- */
+    /* ---- async task persistence (confidence ≥0.6) with upsert ---- */
     if (task && task.confidence >= 0.6) {
       const priorityMap: Record<string, 'low' | 'medium' | 'high'> = { 
         high: 'high', medium: 'medium', low: 'low' 
       };
-      TaskService.create({
-        user_id: uid,
-        title: task.title,
-        natural_text: JSON.stringify(task),
-        priority: priorityMap[task.priority as string] ?? 'medium',
-        parsed_due_date: null,
-        due_date_confidence: 0,
-        confidence: task.confidence,
-        source_reasoning_log_id: reasoningLogId
-      }).catch(e =>
-        console.error('[ReasoningEngine] Task insert failed:',
-          {userId: uid, task: task.title, err: (e as Error).message})
-      );
+      
+      try {
+        // Use upsert to handle duplicates gracefully
+        const taskTitle = task.task || task.title || 'Untitled task';
+        await contextPool.query(
+          `INSERT INTO todos (user_id, note_id, title, natural_text, priority, confidence, source_reasoning_log_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (note_id, title) 
+           DO UPDATE SET 
+             confidence = EXCLUDED.confidence,
+             priority = EXCLUDED.priority,
+             natural_text = EXCLUDED.natural_text,
+             updated_at = NOW()`,
+          [
+            uid,
+            null, // note_id will be set by enhancement worker
+            taskTitle,
+            JSON.stringify(task),
+            priorityMap[task.priority as string] ?? 'medium',
+            task.confidence,
+            reasoningLogId
+          ]
+        );
+        console.log(`[ReasoningEngine] Task upserted: "${taskTitle}" (confidence: ${task.confidence})`);
+      } catch (e) {
+        console.error('[ReasoningEngine] Task upsert failed:',
+          {userId: uid, task: task.task || task.title, err: (e as Error).message});
+      }
     }
 
     this.stats.ms += resp.meta.latencyMs;
