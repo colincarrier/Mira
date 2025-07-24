@@ -51,13 +51,29 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
   if (!parsed || typeof parsed !== 'object') return null;
 
   /* ----- Stage‑4A format ----- */
-  if ('answer' in parsed || 'task' in parsed) {
+  if ('answer' in parsed || 'task' in parsed || 'meta' in parsed) {
     // Safer cleaning - only remove obvious double-wrapping
     let cleaned = parsed.answer;
     if (typeof cleaned === 'string' &&
         cleaned.startsWith('"') && cleaned.endsWith('"') &&
         !cleaned.slice(1, -1).includes('"')) {
       cleaned = cleaned.slice(1, -1).replace(/\\"/g, '"');
+    }
+
+    // Generate meaningful aiBody when answer is empty but task exists
+    if ((!cleaned || cleaned.trim() === '') && parsed.task) {
+      const taskName = parsed.task.task || 'task';
+      const timing = parsed.task.timing_hint || parsed.task.dueDate;
+      
+      if (timing && !parsed.task.dueDate) {
+        cleaned = `I'll help you with "${taskName}". When would you like to be reminded?`;
+      } else if (parsed.task.dueDate) {
+        cleaned = `Task scheduled: ${taskName} (due: ${new Date(parsed.task.dueDate).toLocaleDateString()})`;
+      } else if (parsed.task.details) {
+        cleaned = `Task identified: ${taskName}\n\n${parsed.task.details}`;
+      } else {
+        cleaned = `I've captured "${taskName}" as a task.`;
+      }
     }
 
     const taskTitle = (() => {

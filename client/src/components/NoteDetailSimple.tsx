@@ -6,6 +6,7 @@ import { NoteWithTodos } from '@shared/schema';
 import { marked } from 'marked';
 import InputBar from '@/components/input-bar';
 import { parseRichContext } from '@/utils/parseRichContext';
+import { TaskBadge } from './TaskBadge';
 
 // Helper function to convert markdown to HTML
 function mdToHtml(markdown: string): string {
@@ -114,8 +115,35 @@ export default function NoteDetailSimple() {
 
         {/* AI Enhanced Content */}
         {safe.aiBody && (
-          <div className="text-sm text-gray-700 whitespace-pre-wrap">
-            {safe.aiBody}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-600 mb-2">💡 AI Analysis</h3>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              {safe.aiBody}
+            </div>
+          </div>
+        )}
+
+        {/* AI Quick Insights */}
+        {rc?.quickInsights && rc.quickInsights.length > 0 && (
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-600 mb-2">🔍 Quick Insights</h3>
+            <ul className="space-y-1 list-disc list-inside">
+              {rc.quickInsights.map((insight: string, index: number) => (
+                <li key={index} className="text-sm text-gray-700">{insight}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* AI-Generated Tasks */}
+        {note.todos && note.todos.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-600 mb-3">✅ Related Tasks</h3>
+            <div className="space-y-2">
+              {note.todos.map((todo: any) => (
+                <TaskBadge key={todo.id} task={todo} />
+              ))}
+            </div>
           </div>
         )}
 

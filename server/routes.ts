@@ -355,12 +355,27 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
-  // Notes endpoints
+  // Notes endpoints with todos
   app.get("/api/notes", async (req, res) => {
     try {
       const notes = await storage.getNotes();
-      res.json(notes);
+      
+      // Fetch todos for each note and attach them
+      const notesWithTodos = await Promise.all(
+        notes.map(async (note) => {
+          try {
+            const todos = await storage.getTodosByNoteId(note.id);
+            return { ...note, todos: todos.filter(t => !t.archived) };
+          } catch (error) {
+            console.warn(`Failed to fetch todos for note ${note.id}:`, error);
+            return { ...note, todos: [] };
+          }
+        })
+      );
+      
+      res.json(notesWithTodos);
     } catch (error) {
+      console.error("Error fetching notes with todos:", error);
       res.status(500).json({ message: "Failed to fetch notes" });
     }
   });
@@ -372,8 +387,18 @@ This profile was generated from your input and will help provide more personaliz
       if (!note) {
         return res.status(404).json({ message: "Note not found" });
       }
-      res.json(note);
+      
+      // Fetch todos for this note
+      try {
+        const todos = await storage.getTodosByNoteId(id);
+        const noteWithTodos = { ...note, todos: todos.filter(t => !t.archived) };
+        res.json(noteWithTodos);
+      } catch (error) {
+        console.warn(`Failed to fetch todos for note ${id}:`, error);
+        res.json({ ...note, todos: [] });
+      }
     } catch (error) {
+      console.error("Error fetching note:", error);
       res.status(500).json({ message: "Failed to fetch note" });
     }
   });
