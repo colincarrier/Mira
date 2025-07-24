@@ -1,0 +1,16 @@
+# Replit Git Configuration for Automatic GitHub Sync
+# This configures git to use the stored GitHub token for authentication
+
+[credential]
+    helper = store
+
+[user]
+    name = colincarrier
+    email = 43347114-colincarrier@users.noreply.replit.com
+
+[push]
+    default = simple
+    autoSetupRemote = true
+
+[pull]
+    rebase = false
