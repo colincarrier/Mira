@@ -16,10 +16,11 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   
   const { data: notes, isLoading } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
-    staleTime: 120000, // Cache for 2 minutes for faster navigation
-    gcTime: 600000, // Keep in cache for 10 minutes
+    staleTime: 0, // Always fresh data for real-time updates
+    gcTime: 300000, // Keep in cache for 5 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time experience
   });
 
   // Debug logging to see what data we're getting

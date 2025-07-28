@@ -17,13 +17,14 @@ export default function Notes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check for any notes currently being processed with optimized caching
+  // Check for any notes currently being processed with real-time updates
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
-    staleTime: 120000, // Cache for 2 minutes for faster navigation
-    gcTime: 600000, // Keep in cache for 10 minutes
+    staleTime: 0, // Always fresh data for real-time updates
+    gcTime: 300000, // Keep in cache for 5 minutes
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time experience
   });
   
   const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
