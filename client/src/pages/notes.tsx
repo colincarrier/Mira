@@ -34,7 +34,7 @@ export default function Notes() {
   
   const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
 
-  // Text note creation mutation
+  // Text note creation mutation with optimistic updates
   const createTextNoteMutation = useMutation({
     mutationFn: async (text: string) => {
       const response = await fetch("/api/notes", {
@@ -54,17 +54,84 @@ export default function Notes() {
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+    onMutate: async (text: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/notes"] });
+
+      // Snapshot the previous value
+      const previousNotes = queryClient.getQueryData(["/api/notes"]);
+
+      // Optimistically update with processing preview
+      const tempNote = {
+        id: `temp-${Date.now()}`,
+        content: text,
+        isProcessing: true,
+        aiEnhanced: false,
+        createdAt: new Date().toISOString(),
+        mode: "text" as const,
+        userId: null,
+        isShared: false,
+        shareId: null,
+        privacyLevel: "private" as const,
+        audioUrl: null,
+        mediaUrl: null,
+        transcription: null,
+        imageData: null,
+        aiSuggestion: null,
+        aiContext: null,
+        aiGeneratedTitle: null,
+        collectionId: null,
+        vectorDense: null,
+        vectorSparse: null,
+        intentVector: null,
+        version: 1,
+        originalContent: null,
+        lastUserEdit: new Date().toISOString(),
+        protectedContent: null,
+        processingPath: null,
+        classificationScores: null,
+        // Processing preview rich context
+        richContext: JSON.stringify({
+          title: "Processing...",
+          aiBody: "AI is analyzing your note and generating strategic insights...",
+          perspective: "Intelligence processing in progress",
+          todos: []
+        })
+      };
+
+      // Add to top of notes list immediately
+      queryClient.setQueryData(["/api/notes"], (old: any) => 
+        [tempNote, ...(old || [])]
+      );
+
+      // Return context for potential rollback
+      return { previousNotes, tempNote };
+    },
+    onError: (err, text, context: any) => {
+      // Rollback optimistic update on error
+      if (context?.previousNotes) {
+        queryClient.setQueryData(["/api/notes"], context.previousNotes);
+      }
+    },
+    onSuccess: (newNote, text, context: any) => {
+      // Replace temporary note with real note
+      queryClient.setQueryData(["/api/notes"], (old: any) => {
+        if (!old) return [newNote];
+        // Remove temp note and add real note at the top
+        const filtered = old.filter((note: any) => note.id !== context?.tempNote?.id);
+        return [newNote, ...filtered];
+      });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       toast({
         title: "Note saved",
-        description: "Your note has been created successfully.",
+        description: "Your note has been created and AI analysis is in progress.",
         duration: 3000,
       });
     },
-    onError: (error) => {
+    onError: (error, text, context: any) => {
       console.error("Text note error:", error);
+      // Rollback handled in onError above
       toast({
         title: "Error",
         description: "Failed to save note. Please try again.",
