@@ -627,10 +627,21 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
         </div>
       )}
 
-      {/* AI Body Content */}
+      {/* Intelligence V2 AI Analysis - Enhanced Display */}
       {richContextData?.aiBody && (
-        <div className="text-sm text-gray-700 mb-2 whitespace-pre-wrap">
-          {richContextData.aiBody}
+        <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+          <div className="flex items-center space-x-1 mb-2">
+            <Brain className="w-4 h-4 text-blue-600" />
+            <span className="text-xs font-semibold text-blue-700">AI Analysis</span>
+            {richContextData.perspective && (
+              <span className="text-xs text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full">
+                {richContextData.perspective}
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {richContextData.aiBody}
+          </div>
         </div>
       )}
 

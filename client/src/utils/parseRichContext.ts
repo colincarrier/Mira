@@ -105,11 +105,29 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
     };
   }
 
+  /* ----- Intelligence V2 format ----- */
+  if ('title' in parsed && 'aiBody' in parsed && 'perspective' in parsed) {
+    // This is the Intelligence V2 three-layer format
+    return {
+      title: parsed.title,
+      aiBody: parsed.aiBody,
+      perspective: parsed.perspective,
+      quickInsights: parsed.aiBody ? [parsed.aiBody.split('\n')[0]] : [],
+      recommendedActions: parsed.todos ? parsed.todos.map((todo: any) => `${todo.title}`) : [],
+      nextSteps: parsed.todos ? parsed.todos.map((todo: any) => todo.title) : [],
+      todos: parsed.todos || [],
+      original: parsed.original || '',
+      // Keep original Intelligence V2 fields
+      ...parsed
+    };
+  }
+
   /* ----- legacy format ----- */
   if ('title' in parsed || 'aiBody' in parsed) {
     return parsed as ParsedRichContext;
   }
 
   /* unknown structure ‑ return null so UI can fall back */
+  console.log('🚨 Unknown rich context structure:', Object.keys(parsed));
   return null;
 }

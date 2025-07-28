@@ -28,7 +28,7 @@ export default function Notes() {
     gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 2000, // Refresh every 2 seconds for immediate updates
+    refetchInterval: 1000, // Refresh every 1 second for immediate updates
     refetchIntervalInBackground: true, // Continue refetching even when tab not focused
   });
   
