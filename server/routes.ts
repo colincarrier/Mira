@@ -429,6 +429,25 @@ This profile was generated from your input and will help provide more personaliz
     }
   });
 
+  // SSE endpoint for enhancement progress
+  app.get('/api/notes/:id/enhancement-stream', (req, res) => {
+    const { id } = req.params;
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    // Import SSE manager and add connection
+    import('./ai/v3/enhance/sse-manager.js').then(({ sseManager }) => {
+      sseManager.add(id, res);
+    }).catch(err => {
+      console.error('Failed to setup SSE connection:', err);
+      res.end();
+    });
+  });
+
   // Reprocess existing note endpoint
   app.post("/api/reprocess-note", async (req, res) => {
     try {
