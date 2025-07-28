@@ -115,11 +115,21 @@ export default function NoteDetailSimple() {
           </div>
         )}
 
-        {/* AI Enhanced Content */}
+        {/* Intelligence V2 Enhanced Analysis */}
         {safe.aiBody && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">💡 AI Analysis</h3>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm font-semibold">AI</span>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-blue-900">Strategic Intelligence</h3>
+                {safe.perspective && (
+                  <p className="text-sm text-blue-600">{safe.perspective}</p>
+                )}
+              </div>
+            </div>
+            <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap bg-white p-3 rounded-lg shadow-sm">
               {safe.aiBody}
             </div>
           </div>

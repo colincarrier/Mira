@@ -105,15 +105,22 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
     };
   }
 
-  /* ----- Intelligence V2 format ----- */
+  /* ----- Intelligence V2 format (PRIORITY - check first) ----- */
   if ('title' in parsed && 'aiBody' in parsed && 'perspective' in parsed) {
-    // This is the Intelligence V2 three-layer format
+    // This is the Intelligence V2 strategic analysis format
+    console.log('🧠 Intelligence V2 content detected:', {
+      title: parsed.title,
+      aiBodyLength: parsed.aiBody?.length || 0,
+      perspective: parsed.perspective,
+      todosCount: parsed.todos?.length || 0
+    });
+    
     return {
       title: parsed.title,
       aiBody: parsed.aiBody,
       perspective: parsed.perspective,
-      quickInsights: parsed.aiBody ? [parsed.aiBody.split('\n')[0]] : [],
-      recommendedActions: parsed.todos ? parsed.todos.map((todo: any) => `${todo.title}`) : [],
+      quickInsights: parsed.aiBody ? [parsed.aiBody] : [], // Show full aiBody as main insight
+      recommendedActions: parsed.todos ? parsed.todos.map((todo: any) => todo.title) : [],
       nextSteps: parsed.todos ? parsed.todos.map((todo: any) => todo.title) : [],
       todos: parsed.todos || [],
       original: parsed.original || '',
