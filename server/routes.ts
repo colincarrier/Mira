@@ -625,7 +625,7 @@ This profile was generated from your input and will help provide more personaliz
         miraModule.processNote(miraInput)
         .then(async (analysis: any) => {
           console.log("=== FULL AI PROCESSING DEBUG (FALLBACK) ===");
-          console.log("1. INPUT TO AI:", JSON.stringify(miraInput, null, 2));
+          console.log("1. INPUT TO AI (content only):", { id: miraInput.id, content: miraInput.content, mode: miraInput.mode });
           console.log("2. FULL ANALYSIS OUTPUT:", JSON.stringify(analysis, null, 2));
           console.log("3. ANALYSIS.RICHCONTEXT:", JSON.stringify(analysis.richContext, null, 2));
           
