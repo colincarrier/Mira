@@ -8,6 +8,7 @@ import BottomNavigation from "@/components/bottom-navigation";
 import InputBar from "@/components/input-bar";
 import FullScreenCapture from "@/components/full-screen-capture";
 import AIProcessingIndicator from "@/components/ai-processing-indicator";
+import { useRealTimeUpdates } from "@/hooks/use-realtime-updates";
 import type { NoteWithTodos } from "@shared/schema";
 
 export default function Notes() {
@@ -16,15 +17,19 @@ export default function Notes() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Enable real-time updates for immediate note visibility
+  useRealTimeUpdates();
 
   // Check for any notes currently being processed with real-time updates
   const { data: notes } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
     staleTime: 0, // Always fresh data for real-time updates
-    gcTime: 300000, // Keep in cache for 5 minutes
+    gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 5000, // Refresh every 5 seconds for real-time experience
+    refetchInterval: 2000, // Refresh every 2 seconds for immediate updates
+    refetchIntervalInBackground: true, // Continue refetching even when tab not focused
   });
   
   const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;

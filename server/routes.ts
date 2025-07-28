@@ -448,6 +448,35 @@ This profile was generated from your input and will help provide more personaliz
     });
   });
 
+  // SSE endpoint for real-time note updates
+  app.get('/api/realtime-updates', (req, res) => {
+    const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+
+    // Send initial connection message
+    res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
+
+    // Add client to notification system
+    import('./utils/real-time-notifications').then(({ realTimeNotifications }) => {
+      realTimeNotifications.addClient(clientId, res);
+      
+      // Clean up on client disconnect
+      req.on('close', () => {
+        realTimeNotifications.removeClient(clientId);
+      });
+    }).catch(err => {
+      console.error('Failed to setup real-time connection:', err);
+      res.end();
+    });
+  });
+
   // Reprocess existing note endpoint
   app.post("/api/reprocess-note", async (req, res) => {
     try {
@@ -540,6 +569,14 @@ This profile was generated from your input and will help provide more personaliz
         ...noteData,
         isProcessing: noteData.content ? true : false
       });
+
+      // Broadcast note creation for immediate UI updates
+      try {
+        const { realTimeNotifications } = await import('./utils/real-time-notifications');
+        realTimeNotifications.broadcastNoteCreated(note.id, note);
+      } catch (error) {
+        console.warn('Failed to broadcast note creation:', error);
+      }
 
       // Stage‑4A: enqueue for Intelligence V2 background enhancement
       if (noteData.content) {

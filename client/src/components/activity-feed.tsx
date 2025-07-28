@@ -4,6 +4,7 @@ import { Search, List, Grid } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
+import { useRealTimeUpdates } from "@/hooks/use-realtime-updates";
 
 interface ActivityFeedProps {
   onTodoModalClose?: () => void;
@@ -14,13 +15,17 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const [showSearch, setShowSearch] = useState(false);
   const [isCondensedView, setIsCondensedView] = useState(false);
   
-  const { data: notes, isLoading } = useQuery<NoteWithTodos[]>({
+  // Enable real-time updates for immediate note visibility
+  useRealTimeUpdates();
+  
+  const { data: notes, isLoading, refetch } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
     staleTime: 0, // Always fresh data for real-time updates
-    gcTime: 300000, // Keep in cache for 5 minutes
+    gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refresh every 5 seconds for real-time experience
+    refetchInterval: 2000, // Refresh every 2 seconds for immediate updates
+    refetchIntervalInBackground: true, // Continue refetching even when tab not focused
   });
 
   // Debug logging to see what data we're getting
