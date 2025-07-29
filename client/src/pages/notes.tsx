@@ -124,6 +124,7 @@ export default function Notes() {
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       toast({
         title: "Note saved",
         description: "Your note has been created and AI analysis is in progress.",
@@ -132,6 +133,10 @@ export default function Notes() {
     },
     onError: (error, text, context: any) => {
       console.error("Text note error:", error);
+      // Rollback optimistic update on error
+      if (context?.previousNotes) {
+        queryClient.setQueryData(["/api/notes"], context.previousNotes);
+      }
       toast({
         title: "Error",
         description: "Failed to save note. Please try again.",
