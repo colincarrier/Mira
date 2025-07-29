@@ -5,6 +5,7 @@ import { pool } from '../../../db';
 import { classifyIntent } from '../intent-classifier';
 import { buildHelpFirstPrompt } from '../help-first-prompt';
 import { callOpenAIV3 } from '../vendor/openai-client';
+import { enrichLinks, extractUrls } from '../../link-enrichment';
 import type { MiraResponse } from '../../../../shared/mira-response';
 
 interface UserContext {
@@ -44,9 +45,13 @@ export async function processNoteV3(noteId: number): Promise<void> {
     // Build Help-First prompt
     const prompt = buildHelpFirstPrompt(note.content, context, intent);
     
-    // Call OpenAI with recursive thinking capability
+    // Extract URLs and enrich links in parallel with AI processing
+    const urls = extractUrls(note.content);
     const startTime = Date.now();
-    let response = await callOpenAIV3(prompt, intent);
+    const [response, enrichedLinks] = await Promise.all([
+      callOpenAIV3(prompt, intent),
+      enrichLinks(urls)
+    ]);
     
     // Simple recursion for high-value intents (full engine in Phase 1)
     if (intent.primary === 'IMMEDIATE_PROBLEM' || intent.primary === 'RESEARCH') {
@@ -67,6 +72,9 @@ Enhance the response with this additional information. Return the complete enhan
       // Merge responses (simple strategy for now)
       response = mergeResponses(response, enhancedResponse);
     }
+    
+    // Add enriched links from parallel processing
+    response.links = [...(response.links || []), ...enrichedLinks];
     
     // Add processing metadata
     response.meta = {

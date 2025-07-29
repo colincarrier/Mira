@@ -335,14 +335,30 @@ export default function InputBar({
 
   const handleSendMessage = () => {
     if (inputText.trim()) {
-      if (onTextSubmit) {
+      if (noteId) {
+        // Automatic clarification vs evolution detection
+        const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(inputText);
+        const endpoint = clarification ? 'clarify' : 'evolve';
+        
+        fetch(`/api/notes/${noteId}/${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instruction: inputText.trim() }),
+          credentials: "include",
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
+          setInputText("");
+          setIsTyping(false);
+          closeAllModes();
+        });
+      } else if (onTextSubmit) {
         onTextSubmit(inputText.trim());
+        setInputText("");
+        setIsTyping(false);
+        closeAllModes();
       } else {
         createTextNoteMutation.mutate(inputText.trim());
       }
-      setInputText("");
-      setIsTyping(false);
-      closeAllModes();
     } else {
       onNewNote?.();
     }
