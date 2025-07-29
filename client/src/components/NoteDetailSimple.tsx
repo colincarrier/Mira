@@ -245,7 +245,7 @@ export default function NoteDetailSimple() {
         {rc?.links && rc.links.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-600">🔗 Resources</h3>
-            {rc.links.slice(0, 3).map((link, index) => (
+            {rc.links.slice(0, 3).map((link: any, index: number) => (
               <a 
                 key={index}
                 href={link.url} 

@@ -29,6 +29,9 @@ export interface ParsedRichContext {
     confidence?: number;
     model?: string;
   };
+  
+  /* Image analysis additions */
+  imageAnalysis?: any;
 }
 
 export function parseRichContext(raw: string | null | undefined): ParsedRichContext | null {
@@ -136,7 +139,8 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
       hasItemRelationships: !!parsed.itemRelationships,
       recommendedActionsCount: parsed.recommendedActions?.length || 0,
       researchResultsCount: parsed.researchResults?.length || 0,
-      quickInsightsCount: parsed.quickInsights?.length || 0
+      quickInsightsCount: parsed.quickInsights?.length || 0,
+      fullData: parsed
     });
 
     // Build comprehensive AI body from image analysis
