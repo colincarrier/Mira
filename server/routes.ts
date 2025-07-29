@@ -475,7 +475,7 @@ Respond in JSON format:
             version: '3.0'
           };
         }
-        miraResponse.metadata.tokenUsage = prompt.length + responseText.length; // Approximate
+        miraResponse.metadata.tokenUsage = prompt.length + (typeof response === 'string' ? response.length : JSON.stringify(response).length); // Approximate
       } catch (error) {
         console.error('Failed to parse V3 response:', error, 'Response:', response);
         return res.status(500).json({ error: 'Invalid AI response format' });
