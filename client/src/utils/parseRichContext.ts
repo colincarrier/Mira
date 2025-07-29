@@ -35,6 +35,7 @@ export interface ParsedRichContext {
 }
 
 export function parseRichContext(raw: string | null | undefined): ParsedRichContext | null {
+  console.log('🔍 parseRichContext called with:', raw ? 'data present' : 'no data');
   if (!raw) return null;
 
   /** util: parse JSON safely, falling back to second‑pass decode */
@@ -51,7 +52,12 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
   };
 
   const parsed = tryParse(raw);
-  if (!parsed || typeof parsed !== 'object') return null;
+  if (!parsed || typeof parsed !== 'object') {
+    console.log('❌ Failed to parse or not an object:', parsed);
+    return null;
+  }
+  
+  console.log('✅ Parsed object keys:', Object.keys(parsed));
 
   /* ----- Stage‑4A format ----- */
   if ('answer' in parsed || 'task' in parsed || 'meta' in parsed) {
