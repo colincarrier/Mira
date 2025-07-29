@@ -94,6 +94,7 @@ export interface MiraAIInput {
   mode: 'text' | 'image' | 'voice';
   imageData?: string;
   userContext?: string;
+  userProfile?: any; // Add missing userProfile field
   location?: {
     latitude: number;
     longitude: number;

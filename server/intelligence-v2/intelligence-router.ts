@@ -15,7 +15,15 @@ export interface IntelligenceV2Input {
   userId?: string;
   userProfile?: any;
 }
-export interface IntelligenceV2Result { id:string; title:string; original:string; aiBody:string; perspective:string; timestamp:string; }
+export interface IntelligenceV2Result { 
+  id: string; 
+  title: string; 
+  original: string; 
+  aiBody: string; 
+  perspective: string; 
+  timestamp: string;
+  richContext?: any; // Add missing richContext field to match usage
+}
 
 export class IntelligenceV2Router {
   private vector:VectorEngine; private reason:RecursiveReasoningEngine; private openai:OpenAI;
@@ -159,11 +167,11 @@ export class IntelligenceV2Router {
     try {
       parsed = JSON.parse(cleanResponse);
       console.log("=== JSON PARSING SUCCESS ===");
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("=== JSON PARSING FAILED ===");
-      console.error("Parse error:", parseError.message);
+      console.error("Parse error:", parseError?.message || 'Unknown parse error');
       console.error("Problematic content:", cleanResponse.substring(0, 200));
-      throw new Error(`JSON parsing failed: ${parseError.message}`);
+      throw new Error(`JSON parsing failed: ${parseError?.message || 'Unknown error'}`);
     }
 
     console.log("=== PARSED JSON RESULT ===");
@@ -179,8 +187,8 @@ export class IntelligenceV2Router {
         richContext: parsed,
         ...parsed
       };
-    } catch (err) {
-      console.error('❌ [V2] threw:', err && err.stack || err);
+    } catch (err: any) {
+      console.error('❌ [V2] threw:', err?.stack || err);
       throw err;           // re‑throw so outer try/catch logs as well
     } finally {
       console.timeEnd(`v2-${input.id}`);
