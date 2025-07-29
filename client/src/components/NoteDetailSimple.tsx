@@ -32,13 +32,34 @@ export default function NoteDetailSimple() {
   // Parse V3 MiraResponse with legacy fallback
   const rc = React.useMemo(() => {
     if (!note) return null;
+    
+    console.log('🔍 NoteDetailSimple parsing note:', {
+      id: note.id,
+      hasMiraResponse: !!note.miraResponse,
+      hasRichContext: !!note.richContext,
+      miraResponseType: typeof note.miraResponse
+    });
+    
     try {
       // Try V3 MiraResponse first
       if (note.miraResponse) {
-        return parseMiraResponse(note.miraResponse);
+        console.log('🔍 Attempting V3 MiraResponse parsing...');
+        const v3Result = parseMiraResponse(note.miraResponse);
+        if (v3Result) {
+          console.log('✅ Successfully parsed V3 MiraResponse:', {
+            hasContent: !!v3Result.content,
+            contentPreview: v3Result.content?.substring(0, 50)
+          });
+          return v3Result;
+        }
+        console.log('❌ V3 parsing failed, falling back to legacy');
       }
+      
       // Fall back to legacy richContext
-      return parseRichContext(note.richContext);
+      console.log('🔍 Attempting legacy richContext parsing...');
+      const legacyResult = parseRichContext(note.richContext);
+      console.log('Legacy parse result:', legacyResult ? 'success' : 'failed');
+      return legacyResult;
     } catch (error) {
       console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note?.id);
       return null;
@@ -47,20 +68,42 @@ export default function NoteDetailSimple() {
   
   const safe = React.useMemo(() => {
     if (!note) return { title: '', original: '', content: '' };
+    
+    console.log('🔍 Building safe object:', {
+      noteId: note.id,
+      hasRc: !!rc,
+      rcContent: !!rc?.content,
+      rcContentLength: rc?.content?.length,
+      rcType: typeof rc
+    });
+    
     // V3 format uses 'content' instead of separate title/aiBody/perspective
     if (rc?.content) {
-      return {
+      const result = {
         title: note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
         original: note.content !== rc.content ? note.content : '',
         content: rc.content
       };
+      console.log('✅ Using V3 content format:', {
+        title: result.title,
+        hasOriginal: !!result.original,
+        contentLength: result.content.length
+      });
+      return result;
     }
+    
     // Legacy format fallback
-    return {
+    const result = {
       title: rc?.title ?? note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
       original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
       content: rc?.aiBody ?? ''
     };
+    console.log('📄 Using legacy format:', {
+      title: result.title,
+      hasOriginal: !!result.original,
+      contentLength: result.content.length
+    });
+    return result;
   }, [note, rc]);
 
   // NOW EARLY RETURNS ARE SAFE AFTER ALL HOOKS

@@ -2,7 +2,10 @@
 import type { MiraResponse } from '../../../shared/mira-response';
 
 export function parseMira(raw: any): MiraResponse | null {
-  if (!raw) return null;
+  if (!raw) {
+    console.log('🔍 parseMira: No raw data provided');
+    return null;
+  }
   
   try {
     let parsed = raw;
@@ -10,14 +13,23 @@ export function parseMira(raw: any): MiraResponse | null {
       parsed = JSON.parse(raw);
     }
     
+    console.log('🔍 parseMira: Parsed data structure:', {
+      hasMeta: !!parsed.meta,
+      version: parsed.meta?.v,
+      hasContent: !!parsed.content,
+      contentLength: parsed.content?.length
+    });
+    
     // Check if this is a V3 MiraResponse
     if (parsed.meta?.v === 3) {
+      console.log('✅ parseMira: Successfully identified V3 MiraResponse');
       return parsed as MiraResponse;
     }
     
+    console.log('❌ parseMira: Not a V3 MiraResponse - meta.v =', parsed.meta?.v);
     return null;
   } catch (error) {
-    console.warn('Failed to parse MiraResponse:', error);
+    console.error('❌ parseMira: Failed to parse MiraResponse:', error);
     return null;
   }
 }
