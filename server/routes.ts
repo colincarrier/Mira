@@ -723,19 +723,14 @@ Respond in JSON format:
         console.warn('Failed to broadcast note creation:', error);
       }
 
-      // Stage‑4A: enqueue for Intelligence V2 background enhancement
+      // V3: enqueue for MiraResponse processing
       if (noteData.content) {
         try {
-          const { contextPool } = await import('./ai/v3/context/db-pool');
-          await contextPool.query(
-            `INSERT INTO memory.enhance_queue (note_id, user_id, text)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (note_id) DO NOTHING`,
-            [note.id, "demo", noteData.content] // Using "demo" as user_id for consistency
-          );
-          console.log(`[Stage-4A] Note ${note.id} queued for AI enhancement`);
+          const { queueMiraV3 } = await import('./ai/v3/queue-worker');
+          await queueMiraV3({ noteId: note.id, retryCount: 0 });
+          console.log(`🎯 [V3] Note ${note.id} queued for MiraResponse processing`);
         } catch (queueError) {
-          console.error('[Stage-4A] Failed to enqueue note for enhancement:', queueError);
+          console.error('❌ [V3] Failed to enqueue note for enhancement:', queueError);
           // Continue - don't fail note creation if queue fails
         }
       }

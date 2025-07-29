@@ -21,7 +21,9 @@ export const notes = pgTable("notes", {
   aiSuggestion: text("ai_suggestion"),
   aiContext: text("ai_context"),
   richContext: text("rich_context"), // JSON string containing Google-style organized information
-  miraResponse: text("mira_response"), // JSONB containing V3 unified response
+  miraResponse: json("mira_response").$type<any>(), // JSONB containing V3 unified response
+  richContextBackup: json("rich_context_backup").$type<any>(), // Backup of legacy format
+  migratedAt: timestamp("migrated_at"), // V3 migration timestamp
   miraResponseCreatedAt: timestamp("mira_response_created_at"),
   isProcessing: boolean("is_processing").default(false), // True while AI is processing
   collectionId: integer("collection_id").references(() => collections.id),

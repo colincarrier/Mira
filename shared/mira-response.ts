@@ -1,80 +1,99 @@
-/**
- * V3 MiraResponse Types - Shared between client and server
- * Unified schema replacing Intelligence V2 fragmented formats
- */
-
-export interface MiraResponseSchema {
-  content: string;
-  summary?: string;
-  tasks?: Array<{
-    title: string;
-    priority: 'low' | 'medium' | 'high';
-    confidence: number;
-    timing?: string;
-    dueDate?: string; // ISO date string
-  }>;
-  entities?: Array<{
-    type: 'person' | 'company' | 'location' | 'product' | 'concept';
-    value: string;
-    confidence: number;
-    context?: string;
-  }>;
-  links?: Array<{
-    url: string;
-    title?: string;
-    description?: string;
-    type?: 'reference' | 'research' | 'purchase' | 'documentation';
-  }>;
-  reminders?: Array<{
-    text: string;
-    timing: string;
-    confidence: number;
-    category?: 'meeting' | 'deadline' | 'followup' | 'personal';
-  }>;
-  metadata: {
-    intent: string;
-    confidence: number;
-    processingPath: 'clarify' | 'evolve';
-    tokenUsage: number;
-    model: 'gpt-4o' | 'claude-sonnet';
-    timestamp: string; // ISO timestamp
-    version: '3.0';
-  };
+// ---------- shared/mira-response.ts ------------
+export interface MiraTask {
+  id?: string;            // filled server-side
+  title: string;
+  priority?: 'low' | 'normal' | 'high';
+  completed?: boolean;
 }
 
-/**
- * Intent Classification for V3 routing
- */
-export type IntentType = 
-  | 'clarify'       // User needs clarification, ambiguous request
-  | 'evolve'        // User wants content enhancement/evolution
-  | 'task'          // Task/todo creation focused
-  | 'research'      // Information gathering request
-  | 'reminder'      // Time-based reminder creation
-  | 'organization'; // Collection/categorization request
+export interface EnrichedLink {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  domain?: string;
+}
 
-/**
- * Processing path determines AI behavior
- */
+export interface MiraResponseMeta {
+  model: string;
+  confidence: number;
+  processingTimeMs: number;
+  intent: 'research' | 'reminder' | 'shopping' | 'general';
+  v: 3;
+}
+
+export interface MiraResponse {
+  /* Living-document markdown – unlimited length */
+  content: string;
+
+  /* Structured data, optional */
+  tasks?: MiraTask[];
+  reminders?: { timeISO: string; leadMins?: number }[];
+  entities?: { value: string; type?: string; confidence?: number }[];
+  links?: EnrichedLink[];
+  media?: { url: string; type: 'image'|'video' }[];
+
+  /* Metadata */
+  meta: MiraResponseMeta;
+
+  /* Thread for future recursion */
+  thread?: { role:'user'|'mira'; content:string; ts:number }[];
+}
+
+// Legacy exports for compatibility
+export type IntentType = MiraResponseMeta['intent'];
 export type ProcessingPath = 'clarify' | 'evolve';
 
-/**
- * Token budget allocation for cost control
- */
-export interface TokenBudget {
-  maxInput: number;
-  maxOutput: number;
-  priority: 'low' | 'medium' | 'high';
-}
+export const TOKEN_BUDGETS = {
+  clarify: 3000,
+  evolve: 6000,
+  shopping: 8000,
+  research: 8000
+} as const;
 
-/**
- * Standard token budgets for different intents
- */
-export const TOKEN_BUDGETS: Record<IntentType, TokenBudget> = {
-  clarify: { maxInput: 2000, maxOutput: 1000, priority: 'medium' },
-  evolve: { maxInput: 4000, maxOutput: 2000, priority: 'high' },
-  task: { maxInput: 1500, maxOutput: 800, priority: 'medium' },
-  research: { maxInput: 3000, maxOutput: 1500, priority: 'high' },
-  reminder: { maxInput: 1000, maxOutput: 500, priority: 'low' },
-  organization: { maxInput: 2000, maxOutput: 1000, priority: 'medium' }
-};
+// Zod schema for validation
+import { z } from 'zod';
+
+export const MiraResponseSchema = z.object({
+  content: z.string(),
+  tasks: z.array(z.object({
+    id: z.string().optional(),
+    title: z.string(),
+    priority: z.enum(['low', 'normal', 'high']).optional(),
+    completed: z.boolean().optional()
+  })).optional(),
+  reminders: z.array(z.object({
+    timeISO: z.string(),
+    leadMins: z.number().optional()
+  })).optional(),
+  entities: z.array(z.object({
+    value: z.string(),
+    type: z.string().optional(),
+    confidence: z.number().optional()
+  })).optional(),
+  links: z.array(z.object({
+    url: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    image: z.string().optional(),
+    favicon: z.string().optional(),
+    domain: z.string().optional()
+  })).optional(),
+  media: z.array(z.object({
+    url: z.string(),
+    type: z.enum(['image', 'video'])
+  })).optional(),
+  meta: z.object({
+    model: z.string(),
+    confidence: z.number(),
+    processingTimeMs: z.number(),
+    intent: z.enum(['research', 'reminder', 'shopping', 'general']),
+    v: z.literal(3)
+  }),
+  thread: z.array(z.object({
+    role: z.enum(['user', 'mira']),
+    content: z.string(),
+    ts: z.number()
+  })).optional()
+});
