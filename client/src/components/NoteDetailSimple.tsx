@@ -182,10 +182,37 @@ export default function NoteDetailSimple() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-blue-900">Strategic Intelligence</h3>
+                {rc?.miraV3 && (
+                  <span className="text-xs text-blue-600">V3 Enhanced • {rc.miraV3.meta?.intent}</span>
+                )}
               </div>
             </div>
             <div className="text-base text-gray-800 leading-relaxed bg-white p-3 rounded-lg shadow-sm">
               <MarkdownRenderer content={safe.content} />
+            </div>
+          </div>
+        )}
+
+        {/* V3 Tasks Section */}
+        {rc?.tasks && rc.tasks.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-gray-600 mb-3">📋 Generated Tasks</h3>
+            <div className="space-y-2">
+              {rc.tasks.map((task: any, index: number) => (
+                <div key={index} className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-green-600">✓</span>
+                  <span className="text-gray-700">{task.title}</span>
+                  {task.priority && (
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      task.priority === 'normal' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {task.priority}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
