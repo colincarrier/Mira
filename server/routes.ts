@@ -725,17 +725,24 @@ Respond in JSON format:
 
       // V3: enqueue for MiraResponse processing
       if (noteData.content) {
+        console.log(`🎯 [V3] Starting MiraResponse processing for note ${note.id}`);
         try {
           const { queueMiraV3 } = await import('./ai/v3/queue-worker');
-          await queueMiraV3({ noteId: note.id, retryCount: 0 });
+          console.log(`🎯 [V3] Successfully imported queueMiraV3`);
+          await queueMiraV3({ noteId: note.id.toString(), retryCount: 0 });
           console.log(`🎯 [V3] Note ${note.id} queued for MiraResponse processing`);
+          
+          // Return immediately - V3 handles all processing
+          res.json(note);
+          return;
         } catch (queueError) {
           console.error('❌ [V3] Failed to enqueue note for enhancement:', queueError);
-          // Continue - don't fail note creation if queue fails
+          console.error('❌ [V3] Error stack:', queueError.stack);
+          // Fall back to legacy V2 processing
         }
       }
 
-      // Process with available AI (single analysis for speed)
+      // Legacy V2 Process (fallback only)
       if (noteData.content) {
         console.log("Starting AI analysis for note:", note.id, "content length:", noteData.content.length);
 

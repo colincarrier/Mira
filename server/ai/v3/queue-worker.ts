@@ -1,6 +1,6 @@
 // ---------- server/ai/v3/queue-worker.ts ------------
 import { pool } from '../../db';
-import { sseManager } from '../enhance/sse-manager';
+import { sseManager } from './enhance/sse-manager';
 import type { MiraResponse } from '../../../shared/mira-response';
 import { detectIntent } from './intent';
 import { buildPrompt } from './prompt';
@@ -10,8 +10,14 @@ import { enrichLinks } from './link-enricher';
 interface Job { noteId: string; retryCount: number }
 
 export async function queueMiraV3(job: Job) { 
+  console.log(`🎯 [V3] queueMiraV3 called for note ${job.noteId}`);
   // Process immediately for now - can add actual queue later
-  process(job);
+  try {
+    await process(job);
+  } catch (error) {
+    console.error(`❌ [V3] queueMiraV3 failed for note ${job.noteId}:`, error);
+    throw error;
+  }
 }
 
 async function process({ noteId, retryCount }: Job) {
