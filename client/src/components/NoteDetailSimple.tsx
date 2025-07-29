@@ -65,7 +65,7 @@ export default function NoteDetailSimple() {
           title: legacyResult.title,
           hasAiBody: !!legacyResult.aiBody,
           aiBodyLength: legacyResult.aiBody?.length,
-          perspective: legacyResult.perspective
+
         });
       }
       return legacyResult;

@@ -1,117 +1,95 @@
-// ---------- client/src/utils/parseMiraResponse.ts ----------
+// ---------- client/src/utils/parseMiraResponse.ts ------------
+// V3 MiraResponse parser - replaces legacy parseRichContext
+
 import type { MiraResponse } from '../../../shared/mira-response';
 
-export function parseMira(raw: any): any | null {
-  if (!raw) {
-    console.log('🔍 parseMira: No raw data provided');
-    return null;
-  }
-  
+/**
+ * Parse note's mira_response column (V3 format) with graceful fallback for legacy notes
+ */
+export function parseMiraResponse(json: unknown): MiraResponse | null {
   try {
-    let parsed = raw;
-    if (typeof raw === 'string') {
-      parsed = JSON.parse(raw);
-    }
+    // Handle null/undefined
+    if (!json) return null;
     
-    console.log('🔍 parseMira: Parsed data structure:', {
-      hasMeta: !!parsed.meta,
-      version: parsed.meta?.v,
-      hasContent: !!parsed.content,
-      contentLength: parsed.content?.length
-    });
+    // Parse JSON string if needed
+    const data = typeof json === 'string' ? JSON.parse(json) : json;
     
-    // Check if this is a V3 MiraResponse
-    if (parsed.meta?.v === 3) {
-      console.log('✅ parseMira: Successfully identified V3 MiraResponse');
-      
-      // Convert V3 format to frontend-compatible format
-      const frontendFormat = {
-        content: parsed.content,
-        title: parsed.content?.split('\n')[0]?.replace(/^#+\s*/, '') || 'AI Enhanced',
-        aiBody: parsed.content,
-        perspective: `AI Analysis (${parsed.meta.processingTimeMs}ms)`,
-        tasks: parsed.tasks || [],
-        links: parsed.links || [],
-        reminders: parsed.reminders || [],
-        entities: parsed.entities || [],
-        media: parsed.media || [],
-        quickInsights: parsed.content ? [parsed.content.split('\n')[0]] : [],
-        recommendedActions: (parsed.tasks || []).map((task: any) => task.title),
-        nextSteps: (parsed.tasks || []).map((task: any) => task.title),
-        // Keep original V3 data
-        miraV3: parsed
+    // Validate it's a V3 MiraResponse
+    if (data && typeof data === 'object' && data.meta?.v === 3) {
+      return {
+        content: data.content || '',
+        tasks: Array.isArray(data.tasks) ? data.tasks.slice(0, 3) : [], // Max 3 tasks
+        links: Array.isArray(data.links) ? data.links : [],
+        reminders: Array.isArray(data.reminders) ? data.reminders : [],
+        entities: Array.isArray(data.entities) ? data.entities : [],
+        media: Array.isArray(data.media) ? data.media : [],
+        meta: {
+          model: data.meta?.model || 'unknown',
+          confidence: data.meta?.confidence || 0.5,
+          processingTimeMs: data.meta?.processingTimeMs || 0,
+          intent: data.meta?.intent || 'general',
+          v: 3
+        },
+        thread: Array.isArray(data.thread) ? data.thread : []
       };
-      
-      console.log('✅ parseMira: Converted V3 to frontend format:', {
-        hasContent: !!frontendFormat.content,
-        hasAiBody: !!frontendFormat.aiBody,
-        contentLength: frontendFormat.content?.length,
-        tasksCount: frontendFormat.tasks?.length
-      });
-      
-      return frontendFormat;
     }
     
-    console.log('❌ parseMira: Not a V3 MiraResponse - meta.v =', parsed.meta?.v);
-    return null;
+    return null; // Not V3 format
+    
   } catch (error) {
-    console.error('❌ parseMira: Failed to parse MiraResponse:', error);
+    console.warn('Failed to parse MiraResponse:', error);
     return null;
   }
 }
 
-// Helper to check if we should use MiraResponse vs legacy parsing
-export function shouldUseMiraResponse(note: any): boolean {
-  if (!note) return false;
-  
-  // Check if mira_response field exists and has V3 data
-  if (note.miraResponse || note.mira_response) {
-    const mira = parseMira(note.miraResponse || note.mira_response);
-    return mira?.meta?.v === 3;
+/**
+ * Check if a note has V3 MiraResponse data
+ */
+export function hasV3Response(note: any): boolean {
+  try {
+    const parsed = parseMiraResponse(note.miraResponse || note.mira_response);
+    return parsed !== null;
+  } catch {
+    return false;
   }
-  
-  return false;
 }
 
-// Unified parser that handles both V3 and legacy formats
-export function parseNoteContent(note: any): { 
-  title: string; 
-  content: string; 
-  mira?: MiraResponse | null;
-  legacy?: any;
+/**
+ * Extract display content from either V3 or legacy format
+ */
+export function getDisplayContent(note: any): {
+  content: string;
+  tasks: any[];
+  hasV3: boolean;
 } {
-  if (!note) {
-    return { title: '', content: '' };
-  }
-  
   // Try V3 first
-  const mira = parseMira(note.miraResponse || note.mira_response);
-  if (mira) {
+  const v3Response = parseMiraResponse(note.miraResponse || note.mira_response);
+  if (v3Response) {
     return {
-      title: mira.content.split('\n')[0]?.replace(/^#+\s*/, '') || note.content.split('\n')[0] || 'Untitled',
-      content: mira.content,
-      mira
+      content: v3Response.content,
+      tasks: v3Response.tasks || [],
+      hasV3: true
     };
   }
   
-  // Fall back to legacy rich context
-  let legacy = null;
-  if (note.richContext) {
-    try {
-      legacy = typeof note.richContext === 'string' 
-        ? JSON.parse(note.richContext) 
-        : note.richContext;
-    } catch (error) {
-      console.warn('Failed to parse legacy richContext:', error);
+  // Fallback to legacy richContext
+  try {
+    const legacy = note.richContext ? JSON.parse(note.richContext) : null;
+    if (legacy) {
+      return {
+        content: legacy.enhancedContent || legacy.context || '',
+        tasks: legacy.todos || [],
+        hasV3: false
+      };
     }
+  } catch (error) {
+    console.warn('Failed to parse legacy richContext:', error);
   }
   
+  // Final fallback to original content
   return {
-    title: note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled',
-    content: note.content,
-    legacy
+    content: note.content || '',
+    tasks: [],
+    hasV3: false
   };
 }
-
-// Legacy export name for compatibility
-export const parseMiraResponse = parseMira;

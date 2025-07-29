@@ -723,24 +723,31 @@ Respond in JSON format:
         console.warn('Failed to broadcast note creation:', error);
       }
 
-      // V3: enqueue for MiraResponse processing
+      // --- BEGIN: V3 Help-First pipeline ------------------
       if (noteData.content) {
-        console.log(`🎯 [V3] Starting MiraResponse processing for note ${note.id}`);
-        try {
-          const { queueMiraV3 } = await import('./ai/v3/queue-worker');
-          console.log(`🎯 [V3] Successfully imported queueMiraV3`);
-          await queueMiraV3({ noteId: note.id.toString(), retryCount: 0 });
-          console.log(`🎯 [V3] Note ${note.id} queued for MiraResponse processing`);
-          
-          // Return immediately - V3 handles all processing
-          res.json(note);
-          return;
-        } catch (queueError) {
-          console.error('❌ [V3] Failed to enqueue note for enhancement:', queueError);
-          console.error('❌ [V3] Error stack:', queueError.stack);
-          // Fall back to legacy V2 processing
+        const useV3 = process.env.MIRA_V3_ENABLED?.toLowerCase() === 'true';
+        console.log(`🎯 [V3] Feature flag MIRA_V3_ENABLED: ${useV3}`);
+        
+        if (useV3) {
+          console.log(`🎯 [V3] Starting Help-First processing for note ${note.id}`);
+          try {
+            const { queueEnhancementV3 } = await import('./queue/enhance-v3');
+            await queueEnhancementV3(note.id);
+            console.log(`✅ [V3] Note ${note.id} queued for Help-First processing`);
+            
+            // Return immediately - V3 handles all processing
+            res.json(note);
+            return;
+          } catch (queueError) {
+            console.error('❌ [V3] Failed to enqueue note for V3 enhancement:', queueError);
+            console.error('❌ [V3] Error stack:', queueError.stack);
+            // Fall back to legacy V2 processing
+          }
+        } else {
+          console.log(`🔄 [V2] Using legacy processing (V3 disabled)`);
         }
       }
+      // --- END: V3 Help-First pipeline --------------------
 
       // Legacy V2 Process (fallback only)
       if (noteData.content) {
