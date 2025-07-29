@@ -129,6 +129,60 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
     };
   }
 
+  /* ----- Image Analysis Format ----- */
+  if ('environmentalContext' in parsed || 'itemRelationships' in parsed || 'recommendedActions' in parsed) {
+    console.log('🖼️ Image analysis content detected:', {
+      hasEnvironmentalContext: !!parsed.environmentalContext,
+      hasItemRelationships: !!parsed.itemRelationships,
+      recommendedActionsCount: parsed.recommendedActions?.length || 0,
+      researchResultsCount: parsed.researchResults?.length || 0,
+      quickInsightsCount: parsed.quickInsights?.length || 0
+    });
+
+    // Build comprehensive AI body from image analysis
+    let aiBody = '';
+    
+    if (parsed.environmentalContext) {
+      aiBody += `**Environmental Context:**\n${parsed.environmentalContext}\n\n`;
+    }
+    
+    if (parsed.itemRelationships) {
+      aiBody += `**Item Analysis:**\n${parsed.itemRelationships}\n\n`;
+    }
+    
+    if (parsed.organizationalInsights) {
+      aiBody += `**Organizational Insights:**\n${parsed.organizationalInsights}\n\n`;
+    }
+    
+    if (parsed.researchResults && parsed.researchResults.length > 0) {
+      aiBody += `**Research Results:**\n`;
+      parsed.researchResults.forEach((result: any) => {
+        aiBody += `• **${result.title}**: ${result.description}\n`;
+        if (result.keyPoints && result.keyPoints.length > 0) {
+          result.keyPoints.forEach((point: string) => {
+            aiBody += `  - ${point}\n`;
+          });
+        }
+      });
+      aiBody += '\n';
+    }
+
+    const title = parsed.recommendedActions?.[0]?.title || 'Image Analysis';
+    const recommendedActions = parsed.recommendedActions?.map((action: any) => action.title) || [];
+    const quickInsights = parsed.quickInsights || [];
+
+    return {
+      title,
+      aiBody: aiBody.trim(),
+      perspective: 'AI Image Analysis',
+      quickInsights,
+      recommendedActions,
+      nextSteps: recommendedActions,
+      // Keep original image analysis data
+      imageAnalysis: parsed
+    };
+  }
+
   /* ----- legacy format ----- */
   if ('title' in parsed || 'aiBody' in parsed) {
     return parsed as ParsedRichContext;
