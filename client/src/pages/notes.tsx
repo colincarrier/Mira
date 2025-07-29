@@ -131,18 +131,6 @@ export default function Notes() {
         duration: 3000,
       });
     },
-    onError: (error, text, context: any) => {
-      console.error("Text note error:", error);
-      // Rollback optimistic update on error
-      if (context?.previousNotes) {
-        queryClient.setQueryData(["/api/notes"], context.previousNotes);
-      }
-      toast({
-        title: "Error",
-        description: "Failed to save note. Please try again.",
-        variant: "destructive",
-      });
-    },
   });
 
   const handleTextSubmit = (text: string) => {
