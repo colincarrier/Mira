@@ -107,6 +107,7 @@ export default function Notes() {
       // Return context for potential rollback
       return { previousNotes, tempNote };
     },
+
     onError: (err, text, context: any) => {
       // Rollback optimistic update on error
       if (context?.previousNotes) {
@@ -131,7 +132,6 @@ export default function Notes() {
     },
     onError: (error, text, context: any) => {
       console.error("Text note error:", error);
-      // Rollback handled in onError above
       toast({
         title: "Error",
         description: "Failed to save note. Please try again.",

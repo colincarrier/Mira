@@ -452,10 +452,32 @@ Respond in JSON format:
       // Parse and validate response
       let miraResponse: MiraResponseSchema;
       try {
-        miraResponse = JSON.parse(response);
-        miraResponse.metadata.tokenUsage = prompt.length + response.length; // Approximate
+        // Handle response format - OpenAI returns object, we need JSON string for parsing
+        if (typeof response === 'object' && response !== null) {
+          // Direct object response from OpenAI - use as-is
+          miraResponse = response as MiraResponseSchema;
+        } else if (typeof response === 'string') {
+          // String response - parse JSON
+          miraResponse = JSON.parse(response);
+        } else {
+          throw new Error('Invalid response format from AI');
+        }
+        
+        // Ensure metadata exists and update token usage
+        if (!miraResponse.metadata) {
+          miraResponse.metadata = {
+            intent: classification.intent,
+            confidence: classification.confidence,
+            processingPath: classification.processingPath,
+            tokenUsage: 0,
+            model: 'gpt-4o',
+            timestamp: new Date().toISOString(),
+            version: '3.0'
+          };
+        }
+        miraResponse.metadata.tokenUsage = prompt.length + responseText.length; // Approximate
       } catch (error) {
-        console.error('Failed to parse V3 response:', error);
+        console.error('Failed to parse V3 response:', error, 'Response:', response);
         return res.status(500).json({ error: 'Invalid AI response format' });
       }
 

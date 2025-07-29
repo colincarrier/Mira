@@ -163,6 +163,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### V3 MiraResponse Architecture Implementation Complete (July 29, 2025) ✅
+- **Unified Schema Architecture**: Replaced fragmented Intelligence V2 format with single `miraResponse` JSONB column in database
+- **Perspective Field Elimination**: Removed problematic 80-character perspective truncation that was cutting off strategic analysis
+- **Intent Classification System**: Implemented automatic routing between 'clarify' vs 'evolve' processing paths based on user input analysis
+- **Token Budget Control**: Added cost management with intent-based token allocation (clarify: 3K tokens, evolve: 6K tokens, etc.)
+- **Backward Compatibility**: Legacy `richContext` parsing maintained for existing notes with seamless fallback mechanism
+- **V3 Processing Endpoint**: New `/api/notes/:id/v3-process` endpoint for unified AI processing with structured MiraResponseSchema
+- **Frontend Architecture**: Updated NoteDetailSimple.tsx and components to use `parseMiraResponse()` with MarkdownRenderer support
+- **Shared Type System**: Created `shared/mira-response.ts` with comprehensive TypeScript interfaces for client-server consistency
+- **Strategic Content Display**: Enhanced display components now support full-length strategic analysis without artificial character limits
+- **Production Ready**: Zero-risk deployment with parallel column approach and feature flag capability for gradual rollout
+
 ### Seamless UX & Intelligence V2 Display Enhancement Complete (July 28, 2025) ✅
 - **Root Cause Analysis**: Intelligence V2 system working correctly, generating 600+ character strategic analysis but display components not parsing properly
 - **Critical Bug Fixes**: Fixed Brain icon import error causing app crashes, resolved circular JSON structure error in rich context storage
