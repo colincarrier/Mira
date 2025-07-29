@@ -1231,10 +1231,8 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
             analyzeImageContent(imageBase64, analysisPrompt)
             .then(async (analysis: any) => {
               const updates: any = {
-                // Preserve user instructions in final content, enhance with AI insights
-                content: userInstructions ? 
-                  `${userInstructions}${analysis.enhancedContent ? `\n\n[AI Analysis: ${analysis.enhancedContent}]` : ''}` : 
-                  (analysis.enhancedContent || noteContent),
+                // Preserve original user content - AI insights go in richContext, not content
+                content: userInstructions || noteContent,
                 aiEnhanced: true,
                 aiSuggestion: analysis.suggestion,
                 aiContext: analysis.context,
