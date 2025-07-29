@@ -57,8 +57,17 @@ export default function NoteDetailSimple() {
       
       // Fall back to legacy richContext
       console.log('🔍 Attempting legacy richContext parsing...');
+      console.log('🔍 Raw richContext data preview:', note.richContext?.substring(0, 100));
       const legacyResult = parseRichContext(note.richContext);
       console.log('Legacy parse result:', legacyResult ? 'success' : 'failed');
+      if (legacyResult) {
+        console.log('✅ Parsed result:', {
+          title: legacyResult.title,
+          hasAiBody: !!legacyResult.aiBody,
+          aiBodyLength: legacyResult.aiBody?.length,
+          perspective: legacyResult.perspective
+        });
+      }
       return legacyResult;
     } catch (error) {
       console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note?.id);
