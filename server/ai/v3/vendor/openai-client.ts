@@ -18,11 +18,11 @@ export async function callOpenAIV3(prompt: string, intent: IntentMeta): Promise<
     console.log(`🤖 [V3] Calling OpenAI GPT-4 Turbo with ${intent.primary} intent`);
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview', // Upgraded from gpt-3.5 for better reasoning
+      model: 'gpt-4-turbo-preview', // UPDATE from gpt-3.5 per requirements
       messages: [
         { 
           role: 'system', 
-          content: 'You are Mira. Return ONLY valid JSON conforming to MiraResponse schema. No markdown formatting.' 
+          content: 'Return only valid JSON conforming to MiraResponse schema.' 
         },
         { 
           role: 'user', 
@@ -30,8 +30,8 @@ export async function callOpenAIV3(prompt: string, intent: IntentMeta): Promise<
         }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.3, // Lower temperature for more focused responses
-      max_tokens: getTokenBudgetForIntent(intent), // Dynamic token limits
+      temperature: 0.3, // Lower = more focused responses
+      max_tokens: 2000  // No hard limit, let it be thorough
     });
 
     const result = completion.choices[0].message.content;
@@ -56,7 +56,7 @@ export async function callOpenAIV3(prompt: string, intent: IntentMeta): Promise<
         model: 'gpt-4-turbo-preview',
         confidence: intent.confidence,
         processingTimeMs: 0, // Will be set by worker
-        intent: intent.primary.toLowerCase() as any,
+        intentType: intent.primary.toLowerCase() as any,
         v: 3
       },
       thread: parsed.thread || []
@@ -77,7 +77,7 @@ export async function callOpenAIV3(prompt: string, intent: IntentMeta): Promise<
         model: 'fallback',
         confidence: 0.1,
         processingTimeMs: 0,
-        intent: intent.primary.toLowerCase() as any,
+        intentType: intent.primary.toLowerCase() as any,
         v: 3
       },
       thread: []

@@ -19,7 +19,7 @@ export interface MiraResponseMeta {
   model: string;
   confidence: number;
   processingTimeMs: number;
-  intent: 'research' | 'reminder' | 'shopping' | 'general';
+  intentType: 'research' | 'reminder' | 'shopping' | 'general';
   v: 3;
 }
 
