@@ -48,10 +48,12 @@ export async function processNoteV3(noteId: number): Promise<void> {
     // Extract URLs and enrich links in parallel with AI processing
     const urls = extractUrls(note.content);
     const startTime = Date.now();
-    const [response, enrichedLinks] = await Promise.all([
+    const [initialResponse, enrichedLinks] = await Promise.all([
       callOpenAIV3(prompt, intent),
       enrichLinks(urls)
     ]);
+    
+    let response = initialResponse;
     
     // Simple recursion for high-value intents (full engine in Phase 1)
     if (intent.primary === 'IMMEDIATE_PROBLEM' || intent.primary === 'RESEARCH') {
@@ -70,17 +72,24 @@ Enhance the response with this additional information. Return the complete enhan
       const enhancedResponse = await callOpenAIV3(followUpPrompt, intent);
       
       // Merge responses (simple strategy for now)
-      response = mergeResponses(response, enhancedResponse);
+      const mergedResponse = mergeResponses(response, enhancedResponse);
+      response = mergedResponse;
     }
     
-    // Add enriched links from parallel processing
-    response.links = [...(response.links || []), ...enrichedLinks];
+    // Add enriched links from parallel processing (with proper typing)
+    const allLinks = [...(response.links || []), ...enrichedLinks.map(link => ({
+      url: link.url,
+      title: link.title,
+      description: link.description,
+      image: link.image || undefined
+    }))];
+    response.links = allLinks;
     
     // Add processing metadata
     response.meta = {
       ...response.meta,
       processingTimeMs: Date.now() - startTime,
-      intent: intent.primary.toLowerCase() as any,
+      intentType: intent.primary.toLowerCase() as any,
       v: 3
     };
     
