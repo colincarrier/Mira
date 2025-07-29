@@ -6,6 +6,8 @@ import { NoteWithTodos } from '@shared/schema';
 import { marked } from 'marked';
 import InputBar from '@/components/input-bar';
 import { parseRichContext } from '@/utils/parseRichContext';
+import { parseMiraResponse } from '@/utils/parseMiraResponse';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { TaskBadge } from './TaskBadge';
 
 // Helper function to convert markdown to HTML
@@ -27,24 +29,37 @@ export default function NoteDetailSimple() {
   });
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
-  // Parse richContext with robust fallbacks and error handling
+  // Parse V3 MiraResponse with legacy fallback
   const rc = React.useMemo(() => {
     if (!note) return null;
     try {
+      // Try V3 MiraResponse first
+      if (note.miraResponse) {
+        return parseMiraResponse(note.miraResponse);
+      }
+      // Fall back to legacy richContext
       return parseRichContext(note.richContext);
     } catch (error) {
       console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note?.id);
       return null;
     }
-  }, [note?.richContext, note?.id]);
+  }, [note?.miraResponse, note?.richContext, note?.id]);
   
   const safe = React.useMemo(() => {
-    if (!note) return { title: '', original: '', aiBody: '', perspective: '' };
+    if (!note) return { title: '', original: '', content: '' };
+    // V3 format uses 'content' instead of separate title/aiBody/perspective
+    if (rc?.content) {
+      return {
+        title: note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
+        original: note.content !== rc.content ? note.content : '',
+        content: rc.content
+      };
+    }
+    // Legacy format fallback
     return {
       title: rc?.title ?? note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
       original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
-      aiBody: rc?.aiBody ?? '',
-      perspective: rc?.perspective ?? ''
+      content: rc?.aiBody ?? ''
     };
   }, [note, rc]);
 
@@ -115,8 +130,8 @@ export default function NoteDetailSimple() {
           </div>
         )}
 
-        {/* Intelligence V2 Enhanced Analysis */}
-        {safe.aiBody && (
+        {/* V3 Enhanced Analysis - Living Document */}
+        {safe.content && (
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -124,13 +139,10 @@ export default function NoteDetailSimple() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-blue-900">Strategic Intelligence</h3>
-                {safe.perspective && (
-                  <p className="text-sm text-blue-600">{safe.perspective}</p>
-                )}
               </div>
             </div>
-            <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap bg-white p-3 rounded-lg shadow-sm">
-              {safe.aiBody}
+            <div className="text-base text-gray-800 leading-relaxed bg-white p-3 rounded-lg shadow-sm">
+              <MarkdownRenderer content={safe.content} />
             </div>
           </div>
         )}
@@ -159,9 +171,25 @@ export default function NoteDetailSimple() {
           </div>
         )}
 
-        {/* Perspective */}
-        {safe.perspective && (
-          <p className="text-xs text-gray-500 whitespace-pre-wrap">{safe.perspective}</p>
+        {/* V3 Links Section */}
+        {rc?.links && rc.links.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-600">🔗 Resources</h3>
+            {rc.links.slice(0, 3).map((link, index) => (
+              <a 
+                key={index}
+                href={link.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+              >
+                <div className="text-sm font-medium text-blue-600">{link.title || link.url}</div>
+                {link.description && (
+                  <div className="text-xs text-gray-500 mt-1">{link.description}</div>
+                )}
+              </a>
+            ))}
+          </div>
         )}
       </div>
 

@@ -14,6 +14,7 @@ import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { ReminderDialog } from "@/components/reminder-dialog";
 import { parseRichContext } from "@/utils/parseRichContext";
+import { parseMiraResponse } from "@/utils/parseMiraResponse";
 
 // Voice Note Player Component
 interface VoiceNotePlayerProps {

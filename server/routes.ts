@@ -87,6 +87,7 @@ async function getImageAsBase64(mediaUrl: string): Promise<string | null> {
 import multer from "multer";
 import rateLimit from "express-rate-limit";
 import { getUserTier, checkAIRequestLimit } from "./subscription-tiers";
+import { MiraResponseSchema, IntentType, ProcessingPath, TOKEN_BUDGETS } from "@shared/mira-response";
 
 const upload = multer();
 
@@ -352,6 +353,128 @@ This profile was generated from your input and will help provide more personaliz
       res.json({ message: `Cleaned ${cleaned} notes with problematic AI suggestions` });
     } catch (error) {
       res.status(500).json({ error: "Failed to clean suggestions" });
+    }
+  });
+
+  // V3 Intent Classification and Processing
+  async function classifyIntent(content: string): Promise<{ intent: IntentType; confidence: number; processingPath: ProcessingPath }> {
+    // Simple keyword-based classification with confidence scoring
+    const keywords = content.toLowerCase();
+    
+    // Clarification indicators
+    if (keywords.includes('what') || keywords.includes('how') || keywords.includes('why') || 
+        keywords.includes('explain') || keywords.includes('help') || keywords.includes('?')) {
+      return { intent: 'clarify', confidence: 0.8, processingPath: 'clarify' };
+    }
+    
+    // Task creation indicators  
+    if (keywords.includes('todo') || keywords.includes('task') || keywords.includes('need to') ||
+        keywords.includes('remind') || keywords.includes('schedule')) {
+      return { intent: 'task', confidence: 0.9, processingPath: 'evolve' };
+    }
+    
+    // Research indicators
+    if (keywords.includes('research') || keywords.includes('find') || keywords.includes('look up') ||
+        keywords.includes('investigate') || keywords.includes('analyze')) {
+      return { intent: 'research', confidence: 0.8, processingPath: 'evolve' };
+    }
+    
+    // Default to evolve for content enhancement
+    return { intent: 'evolve', confidence: 0.6, processingPath: 'evolve' };
+  }
+
+  // V3 MiraResponse Processing Endpoint
+  app.post("/api/notes/:id/v3-process", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { instruction, existingContent } = req.body;
+      
+      if (!isOpenAIAvailable()) {
+        return res.status(503).json({ error: "AI processing unavailable" });
+      }
+
+      // Get the note
+      const note = await storage.getNote(parseInt(id));
+      if (!note) {
+        return res.status(404).json({ error: "Note not found" });
+      }
+
+      // Classify intent and determine processing path
+      const classification = await classifyIntent(instruction || existingContent);
+      const tokenBudget = TOKEN_BUDGETS[classification.intent];
+
+      // Build V3 prompt based on processing path
+      const prompt = classification.processingPath === 'clarify' 
+        ? `You are Mira, an AI assistant. The user needs clarification about: "${instruction || existingContent}"
+
+Provide a helpful, clear response that asks follow-up questions or clarifies ambiguous points. 
+
+Respond in JSON format:
+{
+  "content": "Your clarifying response with questions",
+  "metadata": {
+    "intent": "${classification.intent}",
+    "confidence": ${classification.confidence},
+    "processingPath": "clarify",
+    "tokenUsage": 0,
+    "model": "gpt-4o",
+    "timestamp": "${new Date().toISOString()}",
+    "version": "3.0"
+  }
+}`
+        : `You are Mira, an AI assistant. Enhance and evolve this content: "${existingContent}"
+
+User instruction: "${instruction || 'Enhance this content'}"
+
+Create a comprehensive, strategic analysis that transforms the content into actionable intelligence.
+
+Respond in JSON format:
+{
+  "content": "Enhanced markdown content with strategic analysis",
+  "summary": "Brief summary of key points",
+  "tasks": [{"title": "Task title", "priority": "medium", "confidence": 0.8}],
+  "entities": [{"type": "person", "value": "Entity name", "confidence": 0.9}],
+  "links": [{"url": "https://example.com", "title": "Link title", "description": "Description"}],
+  "metadata": {
+    "intent": "${classification.intent}",
+    "confidence": ${classification.confidence},
+    "processingPath": "evolve",
+    "tokenUsage": 0,
+    "model": "gpt-4o", 
+    "timestamp": "${new Date().toISOString()}",
+    "version": "3.0"
+  }
+}`;
+
+      // Process with OpenAI
+      const response = await analyzeWithOpenAI(prompt, 'v3-processing');
+      
+      // Parse and validate response
+      let miraResponse: MiraResponseSchema;
+      try {
+        miraResponse = JSON.parse(response);
+        miraResponse.metadata.tokenUsage = prompt.length + response.length; // Approximate
+      } catch (error) {
+        console.error('Failed to parse V3 response:', error);
+        return res.status(500).json({ error: 'Invalid AI response format' });
+      }
+
+      // Update note with V3 response
+      await storage.updateNote(parseInt(id), {
+        miraResponse: JSON.stringify(miraResponse),
+        miraResponseCreatedAt: new Date(),
+        aiEnhanced: true
+      });
+
+      res.json({ 
+        success: true, 
+        miraResponse,
+        classification 
+      });
+
+    } catch (error) {
+      console.error('V3 processing error:', error);
+      res.status(500).json({ error: 'Failed to process with V3 pipeline' });
     }
   });
 

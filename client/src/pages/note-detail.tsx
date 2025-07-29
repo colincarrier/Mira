@@ -166,6 +166,14 @@ export default function NoteDetail() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
+    queryKey: [`/api/notes/${id}`],
+    enabled: !!id,
+    refetchInterval: (data) => {
+      return data && !data.aiEnhanced ? 2000 : false;
+    },
+  });
+
   // Parse rich context data if available
   let richContextData = null;
   try {
@@ -178,14 +186,6 @@ export default function NoteDetail() {
 
   // Use critical info hook
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
-
-  const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
-    queryKey: [`/api/notes/${id}`],
-    enabled: !!id,
-    refetchInterval: (data) => {
-      return data && !data.aiEnhanced ? 2000 : false;
-    },
-  });
 
   // Get version history
   const { data: versionHistory } = useQuery({
@@ -218,9 +218,7 @@ export default function NoteDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       // Only show success toast for AI updates, not direct edits
-      if (arguments[1]?.updateInstruction) {
-        toast({ description: "Note updated successfully" });
-      }
+      toast({ description: "Note updated successfully" });
       setIsEditing(false);
       setShowContextDialog(false);
     },
@@ -347,8 +345,8 @@ export default function NoteDetail() {
   }, [editedContent]);
 
   const handleQuestionClick = (question: string) => {
-    setInputValue(question);
-    setIsTyping(true);
+    // Question click handler - functionality to be implemented
+    console.log('Question clicked:', question);
   };
 
   const handleShare = async () => {
@@ -356,13 +354,13 @@ export default function NoteDetail() {
       try {
         await navigator.share({
           title: 'Mira Note',
-          text: formatNoteForSharing(note),
+          text: formatNoteForSharing(note!),
         });
       } catch (err) {
         console.log('Error sharing:', err);
       }
     } else {
-      navigator.clipboard.writeText(formatNoteForSharing(note));
+      navigator.clipboard.writeText(formatNoteForSharing(note!));
       toast({ title: "Note copied to clipboard" });
     }
   };
@@ -1034,7 +1032,7 @@ export default function NoteDetail() {
                 </div>
               </div>
 
-              {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version: any, index: number) => (
+              {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version: any) => (
                 <div key={version.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                   <div className="flex-1">
