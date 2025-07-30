@@ -1,9 +1,9 @@
-// Part 1: Clean iOS-style note detail component with optimistic updates
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import type { NoteWithTodos, Todo } from '../../shared/schema';
+import type { NoteWithTodos, Todo } from '@shared/schema';
 
 // Use proper types from shared schema
 interface Task {
@@ -17,6 +17,7 @@ interface NoteDetailSimpleProps {
 
 function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const { id } = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState('');
   const [optimisticNote, setOptimisticNote] = useState<NoteWithTodos | null>(null);
@@ -95,9 +96,17 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
     <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h1 className="text-lg font-medium text-gray-900 dark:text-white">
-          Note #{currentNote?.id}
-        </h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setLocation('/')}
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <h1 className="text-lg font-medium text-gray-900 dark:text-white">
+            Note #{currentNote?.id}
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           {!isEditing ? (
             <button
@@ -160,13 +169,7 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
           </div>
         )}
 
-        {/* Token Usage Debug Info */}
-        {tokenUsage && process.env.NODE_ENV === 'development' && (
-          <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-            <div>Tokens: {tokenUsage.inputTokens}in / {tokenUsage.outputTokens}out / {tokenUsage.totalTokens}total</div>
-            <div>Model: {tokenUsage.model} | Time: {tokenUsage.processingTimeMs}ms</div>
-          </div>
-        )}
+
       </div>
     </div>
   );
