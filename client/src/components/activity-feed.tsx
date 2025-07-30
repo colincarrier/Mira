@@ -31,10 +31,17 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   // Debug logging to see what data we're getting
   console.log("ActivityFeed - notes data:", notes);
   console.log("ActivityFeed - isLoading:", isLoading);
+  console.log("ActivityFeed - notes length:", notes?.length);
+  console.log("ActivityFeed - first note:", notes?.[0]);
 
   const filteredNotes = notes?.filter(note => {
     return note.content.toLowerCase().includes(searchTerm.toLowerCase());
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
+  }).sort((a, b) => {
+    // Handle both created_at and createdAt field names
+    const aDate = new Date(a.createdAt || a.created_at);
+    const bDate = new Date(b.createdAt || b.created_at);
+    return bDate.getTime() - aDate.getTime();
+  }) || [];
 
   if (isLoading) {
     return (

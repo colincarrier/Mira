@@ -34,7 +34,27 @@ export const storage = {
       const client = await pool.connect();
       const result = await client.query('SELECT * FROM notes ORDER BY created_at DESC');
       client.release();
-      return result.rows;
+      // Transform field names to match frontend expectations
+      return result.rows.map(note => ({
+        ...note,
+        createdAt: note.created_at, // Add camelCase version
+        aiGeneratedTitle: note.ai_generated_title,
+        isProcessing: note.is_processing,
+        audioUrl: note.audio_url,
+        mediaUrl: note.media_url,
+        aiEnhanced: note.ai_enhanced,
+        aiSuggestion: note.ai_suggestion,
+        aiContext: note.ai_context,
+        richContext: note.rich_context,
+        miraResponse: note.mira_response,
+        collectionId: note.collection_id,
+        isShared: note.is_shared,
+        shareId: note.share_id,
+        privacyLevel: note.privacy_level,
+        userId: note.user_id,
+        imageData: note.image_data,
+        tokenUsage: note.token_usage,
+      }));
     } catch (error) {
       console.error('Error fetching notes:', error);
       return [];
@@ -47,7 +67,29 @@ export const storage = {
       const client = await pool.connect();
       const result = await client.query('SELECT * FROM notes WHERE id = $1', [id]);
       client.release();
-      return result.rows[0] || null;
+      const note = result.rows[0];
+      if (!note) return null;
+      // Transform field names to match frontend expectations
+      return {
+        ...note,
+        createdAt: note.created_at,
+        aiGeneratedTitle: note.ai_generated_title,
+        isProcessing: note.is_processing,
+        audioUrl: note.audio_url,
+        mediaUrl: note.media_url,
+        aiEnhanced: note.ai_enhanced,
+        aiSuggestion: note.ai_suggestion,
+        aiContext: note.ai_context,
+        richContext: note.rich_context,
+        miraResponse: note.mira_response,
+        collectionId: note.collection_id,
+        isShared: note.is_shared,
+        shareId: note.share_id,
+        privacyLevel: note.privacy_level,
+        userId: note.user_id,
+        imageData: note.image_data,
+        tokenUsage: note.token_usage,
+      };
     } catch (error) {
       console.error('Error fetching note:', error);
       return null;
