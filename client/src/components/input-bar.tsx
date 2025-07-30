@@ -10,6 +10,7 @@ interface InputBarProps {
   onNewNote?: () => void;
   isHidden?: boolean;
   className?: string;
+  noteId?: number; // Add noteId prop for existing note updates
 }
 
 export default function InputBar({
@@ -17,7 +18,8 @@ export default function InputBar({
   onCameraCapture,
   onNewNote,
   isHidden = false,
-  className = ""
+  className = "",
+  noteId
 }: InputBarProps) {
   // Get current page context
   const [location] = useLocation();

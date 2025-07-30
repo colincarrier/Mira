@@ -998,6 +998,7 @@ export default function NoteDetail() {
       </div>
       {/* Input Bar - Context Aware */}
       <InputBar
+        noteId={noteId}
         onTextSubmit={handleSendMessage}
         onCameraCapture={() => {
           console.log('Camera capture triggered from note detail');

@@ -274,7 +274,7 @@ export default function NoteDetailSimple() {
 
       {/* Input bar at bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <InputBar />
+        <InputBar noteId={note.id} />
       </div>
     </div>
   );
