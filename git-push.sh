@@ -1,30 +1,21 @@
 #!/bin/bash
+# Reliable GitHub Push Script for Mira Project
+# Usage: ./git-push.sh "commit message"
 
-# Remove git locks if they exist
+set -e
+
+# Clear any git locks
 rm -f .git/index.lock .git/config.lock
 
-# Configure git credentials (replace YOUR_TOKEN with actual token)
-git config --global user.email "colincarrier@gmail.com"
-git config --global user.name "Colin Carrier"
+# Stage all changes
+git add -A
 
-# Add all modified files
-git add client/src/components/input-bar.tsx
-git add replit.md
+# Commit with provided message or default
+COMMIT_MSG=${1:-"Auto-commit: Update Mira codebase"}
+git commit -m "$COMMIT_MSG" || echo "No changes to commit"
 
-# Commit with comprehensive message covering all today's changes
-git commit -m "Fix InputBar evolution endpoint and document recent changes
+# Push using correct authentication
+export GIT_ASKPASS=echo
+echo $GITHUB_PERSONAL_ACCESS_TOKEN | git push https://colincarrier:$GITHUB_PERSONAL_ACCESS_TOKEN@github.com/colincarrier/Mira.git main
 
-- Fixed 400 error in evolution endpoint by adding missing existingContent parameter
-- Enhanced error handling and user feedback with toast notifications  
-- Successfully corrected AI misclassification (nixie tubes → sparkling water)
-- Removed outdated character limits from note display
-- Updated documentation with latest changes
-
-Files modified:
-- client/src/components/input-bar.tsx: Evolution endpoint fix
-- replit.md: Documentation updates"
-
-# Push to repository with authentication
-git push https://YOUR_TOKEN@github.com/colincarrier/Mira.git main
-
-echo "✅ Changes pushed to repository"
+echo "✅ Successfully pushed to GitHub"

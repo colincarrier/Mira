@@ -165,8 +165,10 @@ Preferred communication style: Simple, everyday language.
 
 **GitHub Integration**: 
 - Repository: https://github.com/colincarrier/Mira.git
-- Token stored as GITHUB_PERSONAL_ACCESS_TOKEN environment variable
-- Automatic git operations enabled for seamless code pushes
+- Token stored as GITHUB_PERSONAL_ACCESS_TOKEN environment variable (NOT GITHUB_TOKEN)
+- **Standard Push Command**: `export GIT_ASKPASS=echo && echo $GITHUB_PERSONAL_ACCESS_TOKEN | git push https://colincarrier:$GITHUB_PERSONAL_ACCESS_TOKEN@github.com/colincarrier/Mira.git main`
+- **Handle Git Locks**: Always run `rm -f .git/index.lock .git/config.lock` if git operations fail
+- **Agent Note**: Use GITHUB_PERSONAL_ACCESS_TOKEN secret, never claim token doesn't exist
 
 ## Recent Changes
 
@@ -351,12 +353,14 @@ Preferred communication style: Simple, everyday language.
 - **GPT-4o Exclusive**: All enrichment through advanced prompting, no external API dependencies
 - **V2 Preservation**: Maintains sophisticated V2 capabilities while adding contextual awareness
 
-### GitHub Repository Integration (June 24, 2025)
+### GitHub Repository Integration & Push Process Fixed (July 30, 2025)
 - **Repository Connected**: Successfully linked to https://github.com/colincarrier/Mira.git
+- **Authentication Fixed**: Uses GITHUB_PERSONAL_ACCESS_TOKEN (not GITHUB_TOKEN)
+- **Reliable Push Script**: Created git-push.sh for consistent GitHub operations
+- **Process Documented**: GIT_PUSH_PROCESS.md prevents future authentication issues
+- **Agent Guidelines Updated**: replit.md contains correct push commands for future sessions
 - **Comprehensive Export**: Generated complete codebase archives (157,295 lines of code)
 - **Clean .gitignore**: Created to exclude uploads, node_modules, and temporary files
-- **Ready for Sync**: All source code prepared for GitHub synchronization
-- **Export Archives**: Multiple formats available (source-only: 319KB, complete: 102MB)
 
 ### Complete Voice Recording System Implementation (June 20, 2025)
 - **Audio File Storage**: Fixed saveAudioFile integration to properly store and serve voice recordings
