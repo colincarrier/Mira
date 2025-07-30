@@ -49,6 +49,11 @@ export interface IStorage {
   getNotesWithVectors(): Promise<Note[]>;
   updateNoteVectors(id: number, vectorDense: string, vectorSparse: string): Promise<void>;
   storeRelationships?(noteId: string, relationships: any[]): Promise<void>;
+  
+  // V3 Recursive Context Helper Functions
+  getUserPatterns(userId: string): Promise<any>;
+  getCollectionHints(text: string): Promise<any[]>;
+  getRecentNotes(userId: string, limit: number): Promise<Note[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -150,10 +155,11 @@ export class DatabaseStorage implements IStorage {
       ...note,
       todos: todosByNoteId[note.id] || [],
       collection: note.collectionId ? collectionsById[note.collectionId] : undefined,
-      // Add missing fields with defaults
-      vectorDense: null,
-      vectorSparse: null,
-      intentVector: null
+      // Add missing V3 fields with defaults
+      miraResponse: note.miraResponse || null,
+      richContextBackup: note.richContextBackup || null,
+      migratedAt: note.migratedAt || null,
+      miraResponseCreatedAt: note.miraResponseCreatedAt || null
     }));
 
     return notesWithTodos;
