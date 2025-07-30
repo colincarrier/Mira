@@ -7,6 +7,8 @@ import { buildHelpFirstPrompt } from '../help-first-prompt';
 import { callOpenAIV3 } from '../vendor/openai-client';
 import { enrichLinks, extractUrls } from '../../link-enrichment';
 import { RecursiveEngine } from '../recursive-engine';
+import { broadcastToNote } from '../../../realtime/sse-manager';
+import { extractTasks } from '../utils/task-extractor';
 import type { MiraResponse } from '../../../../shared/mira-response';
 
 interface UserContext {
@@ -71,7 +73,29 @@ export async function processNoteV3(noteId: number): Promise<void> {
       
       // Use existing fast pipeline for time-sensitive cases
       const prompt = buildHelpFirstPrompt(note.content, context, intent);
-      response = await callOpenAIV3(prompt, intent);
+      
+      try {
+        response = await callOpenAIV3(prompt, intent);
+      } catch (err) {
+        console.error('[AI] fast-path failed', err);
+        // Graceful fallback
+        response = {
+          content: note.content,
+          tasks: [],
+          links: [],
+          reminders: [],
+          entities: [],
+          media: [],
+          meta: {
+            confidence: 0.3,
+            processingTimeMs: Date.now() - startTime,
+            model: 'fallback',
+            intentType: 'general',
+            v: 3
+          },
+          thread: []
+        };
+      }
       
       // Simple enhancement for immediate problems
       if (intent.primary === 'IMMEDIATE_PROBLEM') {
@@ -129,6 +153,13 @@ Enhance the response with this additional information. Return the complete enhan
     );
     
     console.log(`✅ [V3] Note ${noteId} processed successfully in ${response.meta.processingTimeMs}ms`);
+    
+    // Real-time broadcast to client
+    broadcastToNote(noteId, {
+      type: 'enhancement_complete',
+      content: response.content,
+      tasks: response.tasks
+    });
     
   } catch (error) {
     console.error(`❌ [V3] Failed to process note ${noteId}:`, error);

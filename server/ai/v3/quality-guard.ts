@@ -4,15 +4,15 @@
 /**
  * Enhanced quality detection for AI responses
  */
+// Stronger regex with grouped patterns
+export const GENERIC_REGEX = /(visit (?:the )?official)|(check (?:their|the) website)|(various options)|(prices may vary)|(consult with)|(explore different)|(research available)/i;
+
 export function isGenericResponse(content: string): boolean {
   const genericPhrases = [
-    /visit official website/i,
-    /check their website/i,
+    GENERIC_REGEX,
     /contact.*directly/i,
     /subject to availability/i,
-    /various options available/i,
     /consult.*professional/i,
-    /may vary/i,
     /please refer to/i,
     /for more information/i,
     /terms and conditions apply/i
