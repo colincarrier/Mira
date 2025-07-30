@@ -60,24 +60,61 @@ export async function processNoteV3(noteId: number): Promise<void> {
     const startTime = Date.now();
     const model = process.env.MIRA_AI_MODEL || 'gpt-4o';
     
-    // Enhanced error handling with retry logic
+    // Part 1: Enhanced error handling with token tracking
+    const noCap = process.env.MIRA_DISABLE_TOKEN_CAPS === 'true';
+    const maxTokens = noCap ? 8000 : 1900;
     const maxRetries = 3;
-    let checked = '';
+    
+    let response: any;
+    let tokenUsage = {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      model: model,
+      processingTimeMs: 0,
+      timestamp: new Date().toISOString()
+    };
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        checked = await callOpenAI(prompt, { model, maxTokens: 1900 });
+        response = await callOpenAI(prompt, { model, maxTokens, returnUsage: true });
+        
+        if (typeof response === 'object' && response.usage) {
+          tokenUsage = {
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            totalTokens: response.usage.total_tokens,
+            model: model,
+            processingTimeMs: Date.now() - startTime,
+            timestamp: new Date().toISOString()
+          };
+        }
+        
         break;
       } catch (err) {
         if (attempt === maxRetries) {
           console.error('[AI] all retries failed', err);
-          checked = note.content;
+          response = { content: note.content };
           break;
         }
+        console.warn(`[AI] attempt ${attempt} failed, retrying in ${attempt}s`, (err as Error).message);
         await new Promise(r => setTimeout(r, 1000 * attempt));
       }
     }
     
+    const checked = typeof response === 'string' ? response : response.content;
+    
     const enrichedLinks = await enrichLinks(urls);
+    
+    // Part 1: Log token usage and cost alerts
+    if (process.env.MIRA_LOG_TOKEN_USAGE === 'true') {
+      console.log(`[AI] note ${noteId} | in ${tokenUsage.inputTokens} / out ${tokenUsage.outputTokens} tokens`);
+    }
+    
+    // Cost protection alert
+    if (tokenUsage.totalTokens > 10000) {
+      console.error(`[COST ALERT] Note ${noteId} used ${tokenUsage.totalTokens} tokens`);
+    }
     
     // Parse JSON if LLM wrapped it in ```json```
     let parsedContent = checked;
@@ -92,10 +129,23 @@ export async function processNoteV3(noteId: number): Promise<void> {
       } catch { /* best-effort only */ }
     }
 
+    // Part 1: Ensure tasks are Task objects, not strings
+    const taskObjects = extractedTasks.map((task: any) => {
+      if (typeof task === 'string') {
+        return { title: task, priority: 'normal' as const };
+      }
+      return {
+        title: task.title || task,
+        priority: task.priority || 'normal' as const
+      };
+    });
+
     const processingTime = Date.now() - startTime;
+    tokenUsage.processingTimeMs = processingTime;
+    
     const miraResponse: MiraResponse = {
       content: parsedContent,
-      tasks: extractedTasks,
+      tasks: taskObjects.slice(0, 3), // Enforce max 3 tasks
       links: [],
       reminders: [],
       entities: [],
@@ -106,27 +156,34 @@ export async function processNoteV3(noteId: number): Promise<void> {
         confidence: 0.8,
         processingTimeMs: processingTime,
         intent: intent.primary,
-        v: 3
+        v: 3,
+        // Part 1: Expert system placeholders for Part 2
+        expertsActivated: [],
+        recursionDepth: 0,
+        recursionPath: []
       },
       thread: []
     };
     
     console.log(`✅ [V3] Generated response with ${miraResponse.content?.length || 0} chars, ${miraResponse.tasks?.length || 0} tasks`);
     
-    // Store in mira_response column (V3 format)
+    // Part 1: Store with token usage tracking
     await client.query(
       `UPDATE notes 
        SET mira_response = $1::jsonb,
-           ai_enhanced = true
-       WHERE id = $2`,
-      [miraResponse, noteId]
+           ai_enhanced = true,
+           token_usage = $2::jsonb,
+           is_processing = false
+       WHERE id = $3`,
+      [miraResponse, tokenUsage, noteId]
     );
 
-    // Broadcast real-time update to client
+    // Part 1: Enhanced SSE broadcast with token data
     broadcastToNote(noteId, {
       type: 'enhancement_complete',
       content: miraResponse.content,
       tasks: miraResponse.tasks,
+      tokenUsage,
       timestamp: Date.now(),
       processingTime
     });

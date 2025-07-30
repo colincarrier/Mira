@@ -50,6 +50,16 @@ export const notes = pgTable("notes", {
   // Orthogonal AI upgrade metadata
   processingPath: text("processing_path"), // 'commerce' | 'memory'
   classificationScores: json("classification_scores").$type<Record<string, number>>(),
+  
+  // Part 1: Token usage tracking
+  tokenUsage: json("token_usage").$type<{
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    model: string;
+    processingTimeMs: number;
+    timestamp: string;
+  }>(),
 });
 
 // Note versions for complete changelog and rollback capability

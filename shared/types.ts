@@ -22,7 +22,7 @@ export interface EnrichedLink {
 
 export interface MiraResponse {
   content: string;
-  tasks: MiraTask[];
+  tasks: Task[];
   links: string[];
   reminders: any[];
   entities: any[];
@@ -34,6 +34,10 @@ export interface MiraResponse {
     processingTimeMs: number;
     intent: string;
     v: 3;
+    // Part 1: Expert system placeholders for Part 2
+    expertsActivated?: string[];
+    recursionDepth?: number;
+    recursionPath?: string[];
   };
   thread: any[];
 }

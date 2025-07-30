@@ -8,13 +8,24 @@ interface CallOptions {
   model?: string;
   maxTokens?: number;
   temperature?: number;
+  returnUsage?: boolean;
 }
 
-export async function callOpenAI(prompt: string, options: CallOptions = {}): Promise<string> {
+interface OpenAIResponse {
+  content: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export async function callOpenAI(prompt: string, options: CallOptions = {}): Promise<string | OpenAIResponse> {
   const {
     model = 'gpt-4o',
     maxTokens = 1900,
-    temperature = 0.7
+    temperature = 0.7,
+    returnUsage = false
   } = options;
 
   const response = await openai.chat.completions.create({
@@ -24,5 +35,18 @@ export async function callOpenAI(prompt: string, options: CallOptions = {}): Pro
     temperature,
   });
 
-  return response.choices[0]?.message?.content || '';
+  const content = response.choices[0]?.message?.content || '';
+  
+  if (returnUsage) {
+    return {
+      content,
+      usage: {
+        prompt_tokens: response.usage?.prompt_tokens || 0,
+        completion_tokens: response.usage?.completion_tokens || 0,
+        total_tokens: response.usage?.total_tokens || 0,
+      }
+    };
+  }
+
+  return content;
 }

@@ -1,281 +1,195 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams, useLocation } from 'wouter';
-import { ArrowLeft } from 'lucide-react';
-import { NoteWithTodos } from '@shared/schema';
-import { marked } from 'marked';
-import InputBar from '@/components/input-bar';
-import { parseRichContext } from '@/utils/parseRichContext';
-import { parseMiraResponse } from '@/utils/parseMiraResponse';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import { TaskBadge } from './TaskBadge';
+// Part 1: Clean iOS-style note detail component with optimistic updates
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'wouter';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { generateTempId } from '../utils/id';
+import type { Task } from '../../../shared/types';
+import { queueOffline } from '../db/offlineQueue';
 
-// Helper function to convert markdown to HTML
-function mdToHtml(markdown: string): string {
-  return marked(markdown) as string;
+// Define Note type since it's not exported from shared/types
+interface Note {
+  id: number;
+  content: string;
+  aiGeneratedTitle?: string;
+  isProcessing?: boolean;
+  miraResponse?: {
+    tasks: Task[];
+  };
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    model: string;
+    processingTimeMs: number;
+  };
 }
 
-export default function NoteDetailSimple() {
-  const { id } = useParams<{ id: string }>();
-  const [, setLocation] = useLocation();
+interface NoteDetailSimpleProps {
+  note?: Note;
+}
 
-  const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
-    queryKey: [`/api/notes/${id}`],
-    enabled: !!id,
-    staleTime: 0, // Always fresh data for real-time enhancement updates
-    gcTime: 300000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: true,
-    refetchInterval: 3000, // Refresh every 3 seconds to show AI enhancement progress
+function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
+  const { id } = useParams<{ id: string }>();
+  const [isEditing, setIsEditing] = useState(false);
+  const [content, setContent] = useState('');
+  const [optimisticNote, setOptimisticNote] = useState<Note | null>(null);
+  
+  const { data: note, isLoading } = useQuery({
+    queryKey: ['/api/notes', id],
+    enabled: !!id && !propNote,
   });
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
-  // Parse V3 MiraResponse with legacy fallback
-  const rc = React.useMemo(() => {
-    if (!note) return null;
-    
-    console.log('🔍 NoteDetailSimple parsing note:', {
-      id: note.id,
-      hasMiraResponse: !!note.miraResponse,
-      hasRichContext: !!note.richContext,
-      miraResponseType: typeof note.miraResponse
-    });
-    
-    try {
-      // Try V3 MiraResponse first
-      if (note.miraResponse) {
-        console.log('🔍 Attempting V3 MiraResponse parsing...');
-        const v3Result = parseMiraResponse(note.miraResponse);
-        if (v3Result) {
-          console.log('✅ Successfully parsed V3 MiraResponse:', {
-            hasContent: !!v3Result.content,
-            contentPreview: v3Result.content?.substring(0, 50)
-          });
-          return v3Result;
-        }
-        console.log('❌ V3 parsing failed, falling back to legacy');
-      }
-      
-      // Fall back to legacy richContext
-      console.log('🔍 Attempting legacy richContext parsing...');
-      console.log('🔍 Raw richContext data preview:', note.richContext?.substring(0, 100));
-      const legacyResult = parseRichContext(note.richContext);
-      console.log('Legacy parse result:', legacyResult ? 'success' : 'failed');
-      if (legacyResult) {
-        console.log('✅ Parsed result:', {
-          title: legacyResult.title,
-          hasAiBody: !!legacyResult.aiBody,
-          aiBodyLength: legacyResult.aiBody?.length,
+  const currentNote = propNote || note || optimisticNote;
 
+  useEffect(() => {
+    if (currentNote) {
+      setContent(currentNote.content);
+    }
+  }, [currentNote]);
+
+  const updateMutation = useMutation({
+    mutationFn: async (newContent: string) => {
+      // Optimistic update
+      const optimistic = {
+        ...currentNote,
+        content: newContent,
+        isProcessing: true,
+      } as Note;
+      setOptimisticNote(optimistic);
+
+      try {
+        const response = await fetch(`/api/notes/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newContent }),
         });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update');
+        }
+        
+        return response.json();
+      } catch (error) {
+        // Queue for offline sync
+        await queueOffline({
+          id: generateTempId(),
+          kind: 'note',
+          payload: { id, content: newContent, action: 'update' },
+        });
+        throw error;
       }
-      return legacyResult;
-    } catch (error) {
-      console.error('🚨 parseRichContext error in detail page:', error, 'for note:', note?.id);
-      return null;
-    }
-  }, [note?.miraResponse, note?.richContext, note?.id]);
-  
-  const safe = React.useMemo(() => {
-    if (!note) return { title: '', original: '', content: '' };
-    
-    console.log('🔍 Building safe object:', {
-      noteId: note.id,
-      hasRc: !!rc,
-      rcType: typeof rc
-    });
-    
-    // Check if this is V3 MiraResponse format
-    if (rc && 'meta' in rc && rc.meta?.v === 3) {
-      const v3Response = rc as MiraResponse;
-      const result = {
-        title: note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
-        original: note.content !== v3Response.content ? note.content : '',
-        content: v3Response.content
-      };
-      console.log('✅ Using V3 content format:', {
-        title: result.title,
-        hasOriginal: !!result.original,
-        contentLength: result.content.length
-      });
-      return result;
-    }
-    
-    // Legacy format fallback
-    const legacyRc = rc as ParsedRichContext;
-    const result = {
-      title: rc?.title ?? note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
-      original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
-      content: rc?.aiBody ?? ''
-    };
-    console.log('📄 Using legacy format:', {
-      title: result.title,
-      hasOriginal: !!result.original,
-      contentLength: result.content.length
-    });
-    return result;
-  }, [note, rc]);
+    },
+    onSuccess: () => {
+      setIsEditing(false);
+      setOptimisticNote(null);
+    },
+    onError: (error) => {
+      console.warn('Note update failed, queued for offline sync:', error);
+      setIsEditing(false);
+    },
+  });
 
-  // NOW EARLY RETURNS ARE SAFE AFTER ALL HOOKS
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#f1efe8] pb-20">
-        <div className="p-4">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-    );
+  const handleSave = () => {
+    if (content !== currentNote?.content) {
+      updateMutation.mutate(content);
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  if (isLoading && !propNote) {
+    return <div className="p-4 animate-pulse">Loading...</div>;
   }
 
-  if (error || !note) {
-    return (
-      <div className="min-h-screen bg-[#f1efe8] pb-20">
-        <div className="p-4">
-          <button
-            onClick={() => setLocation('/')}
-            className="flex items-center gap-2 mb-4 text-gray-600 hover:text-gray-800"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Notes
-          </button>
-          <div className="text-center py-8">
-            <h1 className="text-xl font-semibold mb-2">Note not found</h1>
-            <p className="text-gray-600">This note may have been deleted or moved.</p>
-          </div>
-        </div>
-      </div>
-    );
+  if (!currentNote) {
+    return <div className="p-4 text-gray-500">Note not found</div>;
   }
+
+  const tasks = currentNote.miraResponse?.tasks || [];
+  const tokenUsage = currentNote.tokenUsage;
 
   return (
-    <div className="min-h-screen bg-[#f1efe8] pb-20">
+    <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setLocation('/')}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900">{safe.title}</h1>
-            {note.isProcessing && (
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-500">AI processing...</span>
-              </div>
-            )}
-          </div>
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <h1 className="text-lg font-medium text-gray-900 dark:text-white">
+          {currentNote.aiGeneratedTitle || 'Note'}
+        </h1>
+        <div className="flex items-center gap-2">
+          {currentNote.isProcessing && (
+            <span className="text-blue-500 text-sm">AI analyzing...</span>
+          )}
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-3 py-1 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+            >
+              Edit
+            </button>
+          ) : (
+            <button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {updateMutation.isPending ? 'Saving...' : 'Save'}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="space-y-6 px-4 py-6">
-        {/* Original content if different from title */}
-        {safe.original && (
-          <div className="bg-blue-50 rounded p-4 text-sm whitespace-pre-wrap">
-            {safe.original}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {isEditing ? (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none
+                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Write your note..."
+            autoFocus
+          />
+        ) : (
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <p className="whitespace-pre-wrap">{currentNote.content}</p>
           </div>
         )}
 
-        {/* V3 Enhanced Analysis - Living Document */}
-        {safe.content && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-            <div className="flex items-center space-x-2 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-sm font-semibold">AI</span>
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-blue-900">Strategic Intelligence</h3>
-                {rc && 'meta' in rc && rc.meta?.v === 3 && (
-                  <span className="text-xs text-blue-600">V3 Enhanced • {rc.meta?.intent}</span>
-                )}
-              </div>
-            </div>
-            <div className="text-base text-gray-800 leading-relaxed bg-white p-3 rounded-lg shadow-sm">
-              <MarkdownRenderer content={safe.content} />
-            </div>
-          </div>
-        )}
-
-        {/* V3 Tasks Section */}
-        {rc && 'meta' in rc && rc.meta?.v === 3 && (rc as MiraResponse).tasks && (rc as MiraResponse).tasks.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-3">📋 Generated Tasks</h3>
+        {/* Tasks */}
+        {tasks.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Extracted Tasks
+            </h3>
             <div className="space-y-2">
-              {(rc as MiraResponse).tasks.map((task: any, index: number) => (
-                <div key={index} className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-green-600">✓</span>
-                  <span className="text-gray-700">{task.title}</span>
-                  {task.priority && (
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                      task.priority === 'normal' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {task.priority}
-                    </span>
-                  )}
+              {tasks.map((task: Task, index: number) => (
+                <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <input type="checkbox" className="rounded" />
+                  <span className="text-sm text-gray-900 dark:text-white">{task.title}</span>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                    task.priority === 'low' ? 'bg-gray-100 text-gray-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>
+                    {task.priority}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* AI Quick Insights */}
-        {rc && 'quickInsights' in rc && (rc as ParsedRichContext).quickInsights && (rc as ParsedRichContext).quickInsights.length > 0 && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">🔍 Quick Insights</h3>
-            <ul className="space-y-1 list-disc list-inside">
-              {(rc as ParsedRichContext).quickInsights.map((insight: string, index: number) => (
-                <li key={index} className="text-sm text-gray-700">{insight}</li>
-              ))}
-            </ul>
+        {/* Token Usage Debug Info */}
+        {tokenUsage && process.env.NODE_ENV === 'development' && (
+          <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+            <div>Tokens: {tokenUsage.inputTokens}in / {tokenUsage.outputTokens}out / {tokenUsage.totalTokens}total</div>
+            <div>Model: {tokenUsage.model} | Time: {tokenUsage.processingTimeMs}ms</div>
           </div>
         )}
-
-        {/* AI-Generated Tasks */}
-        {note.todos && note.todos.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-600 mb-3">✅ Related Tasks</h3>
-            <div className="space-y-2">
-              {note.todos.map((todo: any) => (
-                <TaskBadge key={todo.id} task={todo} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* V3 Links Section */}
-        {rc && 'meta' in rc && rc.meta?.v === 3 && (rc as MiraResponse).links && (rc as MiraResponse).links.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-gray-600">🔗 Resources</h3>
-            {(rc as MiraResponse).links.slice(0, 3).map((link: any, index: number) => (
-              <a 
-                key={index}
-                href={link.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="block p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-              >
-                <div className="text-sm font-medium text-blue-600">{link.title || link.url}</div>
-                {link.description && (
-                  <div className="text-xs text-gray-500 mt-1">{link.description}</div>
-                )}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Input bar at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <InputBar noteId={note.id} />
       </div>
     </div>
   );
 }
+
+export default NoteDetailSimple;
