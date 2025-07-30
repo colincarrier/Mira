@@ -989,8 +989,8 @@ export default function NoteDetail() {
 
         {/* Document Metadata - Bottom of page */}
         <div className="px-4 py-4 pb-28 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
-          <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
-          <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
+          <div>Last modified {note.createdAt || note.created_at ? formatDistanceToNow(new Date(note.createdAt || note.created_at)) + ' ago' : 'Unknown'}</div>
+          <div>Created {note.createdAt || note.created_at ? format(new Date(note.createdAt || note.created_at), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
           <div className="text-gray-400">Note ID: #{note.id}</div>
         </div>
 
@@ -998,7 +998,7 @@ export default function NoteDetail() {
       </div>
       {/* Input Bar - Context Aware */}
       <InputBar
-        noteId={noteId}
+        noteId={note?.id}
         onTextSubmit={handleSendMessage}
         onCameraCapture={() => {
           console.log('Camera capture triggered from note detail');
@@ -1055,7 +1055,7 @@ export default function NoteDetail() {
                     </button>
                   </div>
                 </div>
-              ))}
+              )) as React.ReactNode}
             </div>
           </div>
         </div>
