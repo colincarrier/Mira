@@ -19,12 +19,17 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const [content, setContent] = useState('');
   const [optimisticNote, setOptimisticNote] = useState<NoteWithTodos | null>(null);
   
+  console.log('NoteDetailSimple mounting with id:', id);
+  
   const { data: note, isLoading } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id && !propNote,
   });
 
+  console.log('Query data:', { note, isLoading, id });
   const currentNote = propNote || note || optimisticNote;
+  
+  console.log('Current note:', currentNote);
   
   const mira = React.useMemo(
     () =>
@@ -33,6 +38,8 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
         : null,
     [currentNote?.miraResponse]
   );
+  
+  console.log('Mira response:', mira);
 
   useEffect(() => {
     if (currentNote?.content) {
@@ -87,18 +94,28 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   };
 
   if (isLoading && !propNote) {
-    return <div className="p-4 animate-pulse">Loading...</div>;
+    console.log('Loading note...');
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-4">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
   }
 
   if (!currentNote) {
-    return <div className="p-4 text-gray-500">Note not found</div>;
+    console.log('No current note found');
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-4">
+        <div className="text-gray-500">Note not found</div>
+      </div>
+    );
   }
 
   const tasks: Task[] = [];
   const tokenUsage = null;
 
   return (
-    <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <div className="flex items-center gap-3">
