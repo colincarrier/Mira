@@ -171,7 +171,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   const followUpQuestions = getAIFollowUpQuestions(note.richContext);
 
-  // Helper to format content with proper title length limits
+  // Helper to format content for display (no artificial length limits)
   const formatContent = (content: string) => {
     const lines = content.split('\n').filter(line => line.trim().length > 0);
     const bullets = lines.filter(line => line.trim().match(/^[-•*]\s+/));
@@ -181,13 +181,8 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     // Remove AI partner indicators from title
     firstLine = firstLine.replace(/^\[claude\]\s*/i, '').replace(/^\[openai\]\s*/i, '').replace(/^\[gpt\]\s*/i, '');
 
-    const hasDescription = lines.length > 1 || bullets.length >= 2;
-
-    // Title character limits: 1 line (~50 chars) with description, 3 lines (~150 chars) without
-    const maxTitleLength = hasDescription ? 50 : 150;
-    const title = firstLine.length > maxTitleLength 
-      ? firstLine.substring(0, maxTitleLength).trim()
-      : firstLine;
+    // Show content naturally without artificial truncation
+    const title = firstLine;
 
     if (bullets.length >= 2) {
       const displayBullets = bullets.slice(0, 3).map(b => b.replace(/^[-•*]\s+/, '').trim());
@@ -199,13 +194,13 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       };
     }
 
-    // For longer content, split into title and description
+    // For longer content, split into title and description naturally
     if (lines.length > 1) {
-      const description = lines.slice(1).join(' ').substring(0, 120);
+      const description = lines.slice(1).join(' ');
       return {
         hasStructure: false,
         title,
-        description: description.length >= 120 ? description.trim() : description,
+        description,
         bullets: []
       };
     }
