@@ -236,10 +236,10 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   // Calculate todo progress
   const todoProgress = () => {
-    if (note.todos.length === 0) return null;
+    if (!note.todos || note.todos.length === 0) return null;
 
-    const completed = note.todos.filter(todo => todo.completed).length;
-    const total = note.todos.length;
+    const completed = (note.todos || []).filter(todo => todo.completed).length;
+    const total = (note.todos || []).length;
     const percentage = (completed / total) * 100;
 
     let color = '';
@@ -457,7 +457,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
     if (note.todos && note.todos.length > 0) {
       shareText += `✅ Action Items:\n`;
-      note.todos.forEach((todo, index) => {
+      (note.todos || []).forEach((todo, index) => {
         const status = todo.completed ? '✓' : '○';
         shareText += `${status} ${todo.title}\n`;
       });

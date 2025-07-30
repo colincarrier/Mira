@@ -146,3 +146,51 @@ export async function getV3QueueStats() {
     client.release();
   }
 }
+
+// V3 Worker instance
+let v3WorkerInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Initialize and start the V3 worker
+ */
+export async function initializeV3Worker(): Promise<void> {
+  if (v3WorkerInterval) {
+    console.log('🎯 [V3] Worker already running');
+    return;
+  }
+
+  console.log('🎯 [V3] Starting Help-First enhancement worker...');
+  
+  // Initial processing
+  await processBatchV3(5);
+  
+  // Set up polling every 5 seconds
+  v3WorkerInterval = setInterval(async () => {
+    try {
+      const processed = await processBatchV3(5);
+      if (processed > 0) {
+        console.log(`🎯 [V3] Processed ${processed} notes`);
+      }
+    } catch (error) {
+      console.error('❌ [V3] Worker batch processing failed:', error);
+    }
+  }, 5000);
+
+  // Cleanup old jobs every hour
+  setInterval(async () => {
+    await cleanupV3Queue();
+  }, 60 * 60 * 1000);
+
+  console.log('✅ [V3] Worker started, polling every 5 seconds');
+}
+
+/**
+ * Stop the V3 worker
+ */
+export function stopV3Worker(): void {
+  if (v3WorkerInterval) {
+    clearInterval(v3WorkerInterval);
+    v3WorkerInterval = null;
+    console.log('🛑 [V3] Worker stopped');
+  }
+}

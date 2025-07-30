@@ -81,6 +81,15 @@ app.use((req, res, next) => {
     console.error('❌ [Stage-4A] Failed to start enhancement worker:', error);
   }
 
+  // V3: Start Help-First enhancement worker
+  try {
+    const { initializeV3Worker } = await import('./queue/enhance-v3.js');
+    await initializeV3Worker();
+    console.log('✅ [V3] Help-First enhancement worker started');
+  } catch (error) {
+    console.error('❌ [V3] Failed to start Help-First worker:', error);
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
