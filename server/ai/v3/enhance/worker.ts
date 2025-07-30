@@ -6,7 +6,6 @@ import { classifyIntent } from '../intent-classifier';
 import { buildHelpFirstPrompt } from '../help-first-prompt';
 import { callOpenAIV3 } from '../vendor/openai-client';
 import { enrichLinks, extractUrls } from '../../link-enrichment';
-import { RecursiveEngine } from '../recursive-engine';
 import { broadcastToNote } from '../../../realtime/sse-manager';
 import { extractTasks } from '../utils/task-extractor';
 import type { MiraResponse } from '../../../../shared/mira-response';
@@ -17,12 +16,6 @@ interface UserContext {
   preferences?: Record<string, any>;
   recentNotes?: string[];
 }
-
-// Initialize recursive engine with feature flag
-const RECURSIVE_ENGINE_ENABLED = process.env.MIRA_RECURSIVE_ENGINE === 'true' || true; // TEMPORARY: Force enable for testing
-const recursiveEngine = RECURSIVE_ENGINE_ENABLED ? new RecursiveEngine() : null;
-
-console.log(`🔧 [V3] Recursive Engine: ${RECURSIVE_ENGINE_ENABLED ? 'ENABLED' : 'DISABLED'}`);
 
 /**
  * Process a note with V3 Help-First intelligence
@@ -51,85 +44,52 @@ export async function processNoteV3(noteId: number): Promise<void> {
     const intent = classifyIntent(note.content);
     console.log(`🧠 [V3] Intent classified as: ${intent.primary} (${intent.depth}, ${intent.urgency})`);
     
-    // HYBRID ROUTING: Use RecursiveEngine for GENERAL, fast pipeline for IMMEDIATE_PROBLEM
-    let response: MiraResponse;
-    const startTime = Date.now();
+    // Build Help-First prompt
+    const prompt = buildHelpFirstPrompt(note.content, context, intent);
     
-    if ((intent.primary === 'GENERAL' || intent.primary === 'RESEARCH') && recursiveEngine) {
-      console.log(`🔄 [V3] Using RecursiveEngine for ${intent.primary}`);
-      
-      // Use full recursive reasoning engine
-      response = await recursiveEngine.processWithRecursion({
-        userId: note.user_id,
-        originalInput: note.content,
-        intent,
-        userContext: context,
-        recursionDepth: 0,
-        maxDepth: 3
-      });
-      
-    } else {
-      console.log(`⚡ [V3] Using fast pipeline for ${intent.primary}`);
-      
-      // Use existing fast pipeline for time-sensitive cases
-      const prompt = buildHelpFirstPrompt(note.content, context, intent);
-      
-      try {
-        response = await callOpenAIV3(prompt, intent);
-      } catch (err) {
-        console.error('[AI] fast-path failed', err);
-        // Graceful fallback
-        response = {
-          content: note.content,
-          tasks: [],
-          links: [],
-          reminders: [],
-          entities: [],
-          media: [],
-          meta: {
-            confidence: 0.3,
-            processingTimeMs: Date.now() - startTime,
-            model: 'fallback',
-            intentType: 'general',
-            v: 3
-          },
-          thread: []
-        };
-      }
-      
-      // Simple enhancement for immediate problems
-      if (intent.primary === 'IMMEDIATE_PROBLEM') {
-        console.log(`🔄 [V3] Applying single enhancement pass for immediate problem`);
-        
-        const followUpPrompt = `
-Given this initial response: ${JSON.stringify(response, null, 2)}
-
-What additional specific, actionable help would the user need? Focus on:
-- Missing practical solutions
-- Specific prices, locations, or contact information  
-- Immediate next steps they should take
-
-Enhance the response with this additional information. Return the complete enhanced MiraResponse.`;
-
-        const enhancedResponse = await callOpenAIV3(followUpPrompt, intent);
-        
-        // Merge responses (simple strategy)
-        response = mergeResponses(response, enhancedResponse);
-      }
-    }
-    
-    // Extract URLs and enrich links in parallel
+    // Extract URLs and enrich links in parallel with AI processing
     const urls = extractUrls(note.content);
-    const enrichedLinks = await enrichLinks(urls);
+    const startTime = Date.now();
+    const model = process.env.MIRA_AI_MODEL || 'gpt-4o-mini';
     
-    // Add enriched links from parallel processing (with proper typing)
-    const allLinks = [...(response.links || []), ...enrichedLinks.map(link => ({
+    let response: MiraResponse;
+    const [initialResponse, enrichedLinks] = await Promise.all([
+      (async () => {
+        try {
+          return await callOpenAIV3(prompt, intent);
+        } catch (err) {
+          console.error('[AI] fast-path failed', err);
+          // Graceful fallback
+          return {
+            content: note.content,
+            tasks: extractTasks(note.content),
+            links: [],
+            reminders: [],
+            entities: [],
+            media: [],
+            meta: {
+              confidence: 0.3,
+              processingTimeMs: Date.now() - startTime,
+              model: 'fallback',
+              intentType: 'general',
+              v: 3
+            },
+            thread: []
+          };
+        }
+      })(),
+      enrichLinks(urls)
+    ]);
+    
+    response = initialResponse;
+    
+    // Add enriched links from parallel processing
+    response.links = [...(response.links || []), ...enrichedLinks.map(link => ({
       url: link.url,
       title: link.title,
       description: link.description,
       image: link.image || undefined
     }))];
-    response.links = allLinks;
     
     // Add processing metadata
     response.meta = {
