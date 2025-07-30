@@ -201,10 +201,6 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
         <div className="border-t border-gray-200 dark:border-gray-700">
           <InputBar
             noteId={currentNote.id}
-            existingContent={currentNote.content}
-            existingContext={currentNote.aiContext}
-            existingTodos={currentNote.todos}
-            existingRichContext={currentNote.richContext}
           />
         </div>
       )}
