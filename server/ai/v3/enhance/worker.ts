@@ -4,8 +4,13 @@
 import { pool } from '../../../db';
 import { classifyIntent } from '../intent-classifier';
 import { buildHelpFirstPrompt } from '../help-first-prompt';
-import { callOpenAIV3 } from '../vendor/openai-client';
+import { callOpenAI } from '../openai';
+import { RecursiveEngine } from '../reasoning/recursive-engine';
+import { broadcastToNote } from '../realtime/sse-manager';
+import { extractTasks } from '../utils/task-extractor';
+import { extractLinks } from '../utils/link-extractor';
 import { enrichLinks, extractUrls } from '../../link-enrichment';
+import { getUserPatterns, getCollectionHints, getRecentNotes } from '../../../storage';
 import type { MiraResponse } from '../../../../shared/mira-response';
 
 interface UserContext {
@@ -36,7 +41,12 @@ export async function processNoteV3(noteId: number): Promise<void> {
     console.log(`🎯 [V3] Processing note ${noteId}: "${note.content.substring(0, 50)}..."`);
     
     // Get user context (simplified for now)
-    const context: UserContext = await getUserContext(note.user_id);
+    const context: UserContext = {
+      recentNotes: await getRecentNotes(note.user_id || 'demo', 5),
+      userPatterns: await getUserPatterns(note.user_id || 'demo'),
+      preferences: {},
+      bio: undefined
+    };
     
     // Classify intent using V3 classifier
     const intent = classifyIntent(note.content);
@@ -48,65 +58,62 @@ export async function processNoteV3(noteId: number): Promise<void> {
     // Extract URLs and enrich links in parallel with AI processing
     const urls = extractUrls(note.content);
     const startTime = Date.now();
-    const [initialResponse, enrichedLinks] = await Promise.all([
-      callOpenAIV3(prompt, intent),
-      enrichLinks(urls)
-    ]);
+    const model = process.env.MIRA_AI_MODEL || 'gpt-4o';
     
-    let response = initialResponse;
-    
-    // Simple recursion for high-value intents (full engine in Phase 1)
-    if (intent.primary === 'IMMEDIATE_PROBLEM' || intent.primary === 'RESEARCH') {
-      console.log(`🔄 [V3] Applying recursive enhancement for ${intent.primary}`);
-      
-      const followUpPrompt = `
-Given this initial response: ${JSON.stringify(response, null, 2)}
-
-What additional specific, actionable help would the user need? Focus on:
-- Missing practical solutions
-- Specific prices, locations, or contact information  
-- Immediate next steps they should take
-
-Enhance the response with this additional information. Return the complete enhanced MiraResponse.`;
-
-      const enhancedResponse = await callOpenAIV3(followUpPrompt, intent);
-      
-      // Merge responses (simple strategy for now)
-      const mergedResponse = mergeResponses(response, enhancedResponse);
-      response = mergedResponse;
+    // Enhanced error handling with retry logic
+    const maxRetries = 3;
+    let checked = '';
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        checked = await callOpenAI(prompt, { model, maxTokens: 1900 });
+        break;
+      } catch (err) {
+        if (attempt === maxRetries) {
+          console.error('[AI] all retries failed', err);
+          checked = note.content;
+          break;
+        }
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
     }
     
-    // Add enriched links from parallel processing (with proper typing)
-    const allLinks = [...(response.links || []), ...enrichedLinks.map(link => ({
-      url: link.url,
-      title: link.title,
-      description: link.description,
-      image: link.image || undefined
-    }))];
-    response.links = allLinks;
+    const enrichedLinks = await enrichLinks(urls);
     
-    // Add processing metadata
-    response.meta = {
-      ...response.meta,
-      processingTimeMs: Date.now() - startTime,
-      intentType: intent.primary.toLowerCase() as any,
-      v: 3
+    // Create MiraResponse object with extracted tasks and links
+    const processingTime = Date.now() - startTime;
+    const miraResponse: MiraResponse = {
+      content: checked,
+      tasks: extractTasks(checked).map(task => ({
+        ...task,
+        priority: task.priority || 'normal'
+      })),
+      links: [],
+      enrichedLinks,
+      intent: intent.primary,
+      confidence: 0.8
     };
     
-    console.log(`✅ [V3] Generated response with ${response.content?.length || 0} chars, ${response.tasks?.length || 0} tasks`);
+    console.log(`✅ [V3] Generated response with ${miraResponse.content?.length || 0} chars, ${miraResponse.tasks?.length || 0} tasks`);
     
     // Store in mira_response column (V3 format)
     await client.query(
       `UPDATE notes 
        SET mira_response = $1::jsonb,
-           ai_enhanced = true,
-           is_processing = false,
-           ai_context = 'V3 Help-First processing'
+           ai_enhanced = true
        WHERE id = $2`,
-      [response, noteId]
+      [miraResponse, noteId]
     );
+
+    // Broadcast real-time update to client
+    broadcastToNote(noteId, {
+      type: 'enhancement_complete',
+      content: miraResponse.content,
+      tasks: miraResponse.tasks,
+      timestamp: Date.now(),
+      processingTime
+    });
     
-    console.log(`✅ [V3] Note ${noteId} processed successfully in ${response.meta.processingTimeMs}ms`);
+    console.log(`✅ [V3] Note ${noteId} processed successfully in ${processingTime}ms`);
     
   } catch (error) {
     console.error(`❌ [V3] Failed to process note ${noteId}:`, error);

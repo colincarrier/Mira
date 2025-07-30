@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { registerClient } from "./ai/v3/realtime/sse-manager";
 import { insertNoteSchema, insertTodoSchema, insertCollectionSchema, insertItemSchema } from "@shared/schema";
 import { saveAudioFile } from "./file-storage";
 import * as fs from "fs";
@@ -574,8 +575,8 @@ Respond in JSON format:
     }
   });
 
-  // SSE endpoint for enhancement progress
-  app.get('/api/notes/:id/enhancement-stream', (req, res) => {
+  // SSE endpoint for note events
+  app.get('/api/notes/:id/events', (req, res) => {
     const { id } = req.params;
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -583,14 +584,12 @@ Respond in JSON format:
       'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': '*'
     });
-
-    // Import SSE manager and add connection
-    import('./ai/v3/enhance/sse-manager.js').then(({ sseManager }) => {
-      sseManager.add(id, res);
-    }).catch(err => {
-      console.error('Failed to setup SSE connection:', err);
-      res.end();
-    });
+    
+    // Register client for real-time updates
+    registerClient(parseInt(id), res);
+    
+    // Send initial connection confirmation
+    res.write(`data: ${JSON.stringify({ type: 'connected', noteId: id })}\n\n`);
   });
 
   // SSE endpoint for real-time note updates

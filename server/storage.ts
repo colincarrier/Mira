@@ -461,3 +461,24 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+// V3 Helper Functions
+export async function getUserPatterns(userId: string) {
+  return { summary: 'No pattern data yet' };
+}
+
+export async function getCollectionHints(text: string) {
+  // naïve keyword mapping – upgrade later
+  if (/ticket|game/.test(text))   return [{ name: 'events' }];
+  if (/flight|trip|hotel/.test(text)) return [{ name: 'travel' }];
+  return [{ name: 'general' }];
+}
+
+export async function getRecentNotes(userId: string, limit = 5) {
+  const result = await db.select({ content: notes.content })
+    .from(notes)
+    .where(eq(notes.userId, userId))
+    .orderBy(desc(notes.createdAt))
+    .limit(limit);
+  return result.map(r => r.content);
+}
