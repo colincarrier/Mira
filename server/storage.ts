@@ -49,16 +49,6 @@ export interface IStorage {
   getNotesWithVectors(): Promise<Note[]>;
   updateNoteVectors(id: number, vectorDense: string, vectorSparse: string): Promise<void>;
   storeRelationships?(noteId: string, relationships: any[]): Promise<void>;
-  
-  // V3 Recursive Engine helpers
-  getUserPatterns(userId: string): Promise<any>;
-  getCollectionHints(text: string): Promise<any[]>;
-  getRecentNotes(userId: string, limit: number): Promise<Note[]>;
-  
-  // V3 Recursive Context Helper Functions
-  getUserPatterns(userId: string): Promise<any>;
-  getCollectionHints(text: string): Promise<any[]>;
-  getRecentNotes(userId: string, limit: number): Promise<Note[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -128,16 +118,9 @@ export class DatabaseStorage implements IStorage {
         aiSuggestion: notes.aiSuggestion,
         aiContext: notes.aiContext,
         richContext: notes.richContext,
-        miraResponse: notes.miraResponse,
-        richContextBackup: notes.richContextBackup,
-        migratedAt: notes.migratedAt,
-        miraResponseCreatedAt: notes.miraResponseCreatedAt,
         isProcessing: notes.isProcessing,
         collectionId: notes.collectionId,
         // Exclude heavy vector data from list view
-        vectorDense: notes.vectorDense,
-        vectorSparse: notes.vectorSparse,
-        intentVector: notes.intentVector,
         version: notes.version,
         originalContent: notes.originalContent,
         lastUserEdit: notes.lastUserEdit,
@@ -166,7 +149,11 @@ export class DatabaseStorage implements IStorage {
     const notesWithTodos = allNotes.map(note => ({
       ...note,
       todos: todosByNoteId[note.id] || [],
-      collection: note.collectionId ? collectionsById[note.collectionId] : undefined
+      collection: note.collectionId ? collectionsById[note.collectionId] : undefined,
+      // Add missing fields with defaults
+      vectorDense: null,
+      vectorSparse: null,
+      intentVector: null
     }));
 
     return notesWithTodos;
@@ -470,58 +457,6 @@ export class DatabaseStorage implements IStorage {
         richContext: JSON.stringify(relationshipData)
       })
       .where(eq(notes.id, id));
-  }
-
-  // V3 Recursive Engine helper implementations
-  async getUserPatterns(userId: string): Promise<any> {
-    // Get user's recent note patterns for context
-    const recentNotes = await db
-      .select({
-        content: notes.content,
-        mode: notes.mode,
-        createdAt: notes.createdAt,
-        collectionId: notes.collectionId
-      })
-      .from(notes)
-      .where(eq(notes.userId, userId))
-      .orderBy(desc(notes.createdAt))
-      .limit(10);
-
-    return {
-      recentTopics: recentNotes.map(n => n.content.substring(0, 50)),
-      preferredModes: recentNotes.reduce((acc, n) => {
-        acc[n.mode] = (acc[n.mode] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      activityLevel: recentNotes.length
-    };
-  }
-
-  async getCollectionHints(text: string): Promise<any[]> {
-    // Get existing collections for smart assignment
-    const collections = await this.getCollections();
-    
-    // Simple keyword matching for collection hints
-    const hints = collections.map(collection => {
-      const relevance = text.toLowerCase().includes(collection.name.toLowerCase()) ? 1.0 : 0.0;
-      return {
-        collectionId: collection.id,
-        name: collection.name,
-        icon: collection.icon,
-        relevance
-      };
-    }).filter(hint => hint.relevance > 0);
-
-    return hints;
-  }
-
-  async getRecentNotes(userId: string, limit: number): Promise<Note[]> {
-    return await db
-      .select()
-      .from(notes)
-      .where(eq(notes.userId, userId))
-      .orderBy(desc(notes.createdAt))
-      .limit(limit);
   }
 }
 
