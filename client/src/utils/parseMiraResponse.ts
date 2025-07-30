@@ -1,43 +1,34 @@
 // ---------- client/src/utils/parseMiraResponse.ts ------------
 // V3 MiraResponse parser - replaces legacy parseRichContext
 
-import type { MiraResponse } from '../../../shared/mira-response';
+import type { MiraResponse } from '../../../shared/types';
 
 /**
  * Parse note's mira_response column (V3 format) with graceful fallback for legacy notes
  */
-export function parseMiraResponse(json: unknown): MiraResponse | null {
+export function parseMiraResponse(raw: unknown): MiraResponse | null {
   try {
-    // Handle null/undefined
-    if (!json) return null;
-    
-    // Parse JSON string if needed
-    const data = typeof json === 'string' ? JSON.parse(json) : json;
-    
-    // Validate it's a V3 MiraResponse
-    if (data && typeof data === 'object' && data.meta?.v === 3) {
-      return {
-        content: data.content || '',
-        tasks: Array.isArray(data.tasks) ? data.tasks.slice(0, 3) : [], // Max 3 tasks
-        links: Array.isArray(data.links) ? data.links : [],
-        reminders: Array.isArray(data.reminders) ? data.reminders : [],
-        entities: Array.isArray(data.entities) ? data.entities : [],
-        media: Array.isArray(data.media) ? data.media : [],
-        meta: {
-          model: data.meta?.model || 'unknown',
-          confidence: data.meta?.confidence || 0.5,
-          processingTimeMs: data.meta?.processingTimeMs || 0,
-          intent: data.meta?.intent || 'general',
-          v: 3
-        },
-        thread: Array.isArray(data.thread) ? data.thread : []
-      };
-    }
-    
-    return null; // Not V3 format
-    
-  } catch (error) {
-    console.warn('Failed to parse MiraResponse:', error);
+    if (!raw) return null;
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+    const looksV3 = data?.meta?.v === 3
+      || (data.content && data.meta && data.meta.intent);
+
+    if (!looksV3) return null;
+
+    return {
+      content: data.content ?? '',
+      tasks: data.tasks ?? [],
+      links: data.links ?? [],
+      reminders: data.reminders ?? [],
+      entities: data.entities ?? [],
+      media: data.media ?? [],
+      enrichedLinks: data.enrichedLinks ?? [],
+      meta: { ...data.meta, v: 3 },
+      thread: data.thread ?? []
+    };
+  } catch (e) {
+    console.warn('[parseMiraResponse] failed:', e);
     return null;
   }
 }

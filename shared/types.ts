@@ -5,11 +5,37 @@ export interface Task {
   completed?: boolean;
 }
 
+export interface MiraTask {
+  id?: string;
+  title: string;
+  priority: 'low' | 'normal' | 'high';
+  completed?: boolean;
+  action?: string;
+  details?: string;
+}
+
 export interface EnrichedLink {
   url: string;
   title?: string;
-  description?: string;
-  image?: string;
+  favicon?: string;
+}
+
+export interface MiraResponse {
+  content: string;
+  tasks: MiraTask[];
+  links: string[];
+  reminders: any[];
+  entities: any[];
+  media: any[];
+  enrichedLinks: EnrichedLink[];
+  meta: {
+    model: string;
+    confidence: number;
+    processingTimeMs: number;
+    intent: string;
+    v: 3;
+  };
+  thread: any[];
 }
 
 export interface NoteEvent {

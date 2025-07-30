@@ -81,17 +81,16 @@ export default function NoteDetailSimple() {
     console.log('🔍 Building safe object:', {
       noteId: note.id,
       hasRc: !!rc,
-      rcContent: !!rc?.content,
-      rcContentLength: rc?.content?.length,
       rcType: typeof rc
     });
     
-    // V3 format uses 'content' instead of separate title/aiBody/perspective
-    if (rc?.content) {
+    // Check if this is V3 MiraResponse format
+    if (rc && 'meta' in rc && rc.meta?.v === 3) {
+      const v3Response = rc as MiraResponse;
       const result = {
         title: note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
-        original: note.content !== rc.content ? note.content : '',
-        content: rc.content
+        original: note.content !== v3Response.content ? note.content : '',
+        content: v3Response.content
       };
       console.log('✅ Using V3 content format:', {
         title: result.title,
@@ -102,6 +101,7 @@ export default function NoteDetailSimple() {
     }
     
     // Legacy format fallback
+    const legacyRc = rc as ParsedRichContext;
     const result = {
       title: rc?.title ?? note.aiGeneratedTitle ?? note.content?.split('\n')[0] ?? 'Untitled',
       original: rc?.original ?? ((rc?.title || '') !== note.content ? note.content : ''),
@@ -191,8 +191,8 @@ export default function NoteDetailSimple() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-blue-900">Strategic Intelligence</h3>
-                {rc?.miraV3 && (
-                  <span className="text-xs text-blue-600">V3 Enhanced • {rc.miraV3.meta?.intent}</span>
+                {rc && 'meta' in rc && rc.meta?.v === 3 && (
+                  <span className="text-xs text-blue-600">V3 Enhanced • {rc.meta?.intent}</span>
                 )}
               </div>
             </div>
@@ -203,11 +203,11 @@ export default function NoteDetailSimple() {
         )}
 
         {/* V3 Tasks Section */}
-        {rc?.tasks && rc.tasks.length > 0 && (
+        {rc && 'meta' in rc && rc.meta?.v === 3 && (rc as MiraResponse).tasks && (rc as MiraResponse).tasks.length > 0 && (
           <div className="mb-4">
             <h3 className="text-sm font-medium text-gray-600 mb-3">📋 Generated Tasks</h3>
             <div className="space-y-2">
-              {rc.tasks.map((task: any, index: number) => (
+              {(rc as MiraResponse).tasks.map((task: any, index: number) => (
                 <div key={index} className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg border border-green-200">
                   <span className="text-green-600">✓</span>
                   <span className="text-gray-700">{task.title}</span>
@@ -227,11 +227,11 @@ export default function NoteDetailSimple() {
         )}
 
         {/* AI Quick Insights */}
-        {rc?.quickInsights && rc.quickInsights.length > 0 && (
+        {rc && 'quickInsights' in rc && (rc as ParsedRichContext).quickInsights && (rc as ParsedRichContext).quickInsights.length > 0 && (
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-sm font-medium text-gray-600 mb-2">🔍 Quick Insights</h3>
             <ul className="space-y-1 list-disc list-inside">
-              {rc.quickInsights.map((insight: string, index: number) => (
+              {(rc as ParsedRichContext).quickInsights.map((insight: string, index: number) => (
                 <li key={index} className="text-sm text-gray-700">{insight}</li>
               ))}
             </ul>
@@ -251,10 +251,10 @@ export default function NoteDetailSimple() {
         )}
 
         {/* V3 Links Section */}
-        {rc?.links && rc.links.length > 0 && (
+        {rc && 'meta' in rc && rc.meta?.v === 3 && (rc as MiraResponse).links && (rc as MiraResponse).links.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-600">🔗 Resources</h3>
-            {rc.links.slice(0, 3).map((link: any, index: number) => (
+            {(rc as MiraResponse).links.slice(0, 3).map((link: any, index: number) => (
               <a 
                 key={index}
                 href={link.url} 

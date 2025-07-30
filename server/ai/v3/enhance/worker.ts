@@ -7,11 +7,11 @@ import { buildHelpFirstPrompt } from '../help-first-prompt';
 import { callOpenAI } from '../openai';
 import { RecursiveEngine } from '../reasoning/recursive-engine';
 import { broadcastToNote } from '../realtime/sse-manager';
-import { extractTasks } from '../utils/task-extractor';
-import { extractLinks } from '../utils/link-extractor';
+import { extractTasks } from '../utils/extract-tasks';
+import { extractLinks } from '../utils/extract-links';
 import { enrichLinks, extractUrls } from '../../link-enrichment';
 import { getUserPatterns, getCollectionHints, getRecentNotes } from '../../../storage';
-import type { MiraResponse } from '../../../../shared/mira-response';
+import type { MiraResponse } from '../../../../shared/types';
 
 interface UserContext {
   bio?: string;
@@ -79,18 +79,36 @@ export async function processNoteV3(noteId: number): Promise<void> {
     
     const enrichedLinks = await enrichLinks(urls);
     
-    // Create MiraResponse object with extracted tasks and links
+    // Parse JSON if LLM wrapped it in ```json```
+    let parsedContent = checked;
+    let extractedTasks = extractTasks(checked);
+
+    const match = checked.match(/```json\s*\n([\s\S]*?)\n```/);
+    if (match) {
+      try {
+        const j = JSON.parse(match[1]);
+        parsedContent = j.content ?? parsedContent;
+        extractedTasks = Array.isArray(j.tasks) ? j.tasks : extractedTasks;
+      } catch { /* best-effort only */ }
+    }
+
     const processingTime = Date.now() - startTime;
     const miraResponse: MiraResponse = {
-      content: checked,
-      tasks: extractTasks(checked).map(task => ({
-        ...task,
-        priority: task.priority || 'normal'
-      })),
+      content: parsedContent,
+      tasks: extractedTasks,
       links: [],
-      enrichedLinks,
-      intent: intent.primary,
-      confidence: 0.8
+      reminders: [],
+      entities: [],
+      media: [],
+      enrichedLinks: extractLinks(parsedContent),
+      meta: {
+        model: 'gpt-4o',
+        confidence: 0.8,
+        processingTimeMs: processingTime,
+        intent: intent.primary,
+        v: 3
+      },
+      thread: []
     };
     
     console.log(`✅ [V3] Generated response with ${miraResponse.content?.length || 0} chars, ${miraResponse.tasks?.length || 0} tasks`);

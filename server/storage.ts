@@ -464,13 +464,13 @@ export const storage = new DatabaseStorage();
 
 // V3 Helper Functions
 export async function getUserPatterns(userId: string) {
-  return { summary: 'No pattern data yet' };
+  return { summary: 'No pattern data yet', preferences: {} };
 }
 
 export async function getCollectionHints(text: string) {
-  // naïve keyword mapping – upgrade later
-  if (/ticket|game/.test(text))   return [{ name: 'events' }];
-  if (/flight|trip|hotel/.test(text)) return [{ name: 'travel' }];
+  // Naive keyword demo - refine later
+  if (/ticket|game|show/i.test(text)) return [{ name: 'events' }];
+  if (/flight|trip|hotel/i.test(text)) return [{ name: 'travel' }];
   return [{ name: 'general' }];
 }
 
