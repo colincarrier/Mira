@@ -33,6 +33,8 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   console.log("ActivityFeed - isLoading:", isLoading);
   console.log("ActivityFeed - notes length:", notes?.length);
   console.log("ActivityFeed - first note:", notes?.[0]);
+  console.log("ActivityFeed - first note has createdAt:", notes?.[0]?.createdAt);
+  console.log("ActivityFeed - first note has created_at:", notes?.[0]?.created_at);
 
   const filteredNotes = notes?.filter(note => {
     return note.content.toLowerCase().includes(searchTerm.toLowerCase());
@@ -81,6 +83,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
         </div>
         <div className="text-center py-8">
           <p className="text-[hsl(var(--muted-foreground))]">No notes yet. Start by capturing your first thought!</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">Debug: isLoading={isLoading ? 'true' : 'false'}, notesLength={notes?.length || 0}</p>
         </div>
       </div>
     );
@@ -136,7 +139,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
+                    {formatDistanceToNow(new Date(note.createdAt || note.created_at), { addSuffix: true })
                       .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
                       .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
                       .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')

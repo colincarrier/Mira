@@ -157,7 +157,7 @@ const getAIFollowUpQuestions = (richContext: any) => {
 };
 
 export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
+  const timeAgo = formatDistanceToNow(new Date(note.createdAt || note.created_at), { addSuffix: true })
     .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
     .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
     .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')
@@ -231,10 +231,11 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
 
   // Calculate todo progress
   const todoProgress = () => {
-    if (!note.todos || note.todos.length === 0) return null;
+    const todos = Array.isArray(note.todos) ? note.todos : [];
+    if (todos.length === 0) return null;
 
-    const completed = (note.todos || []).filter(todo => todo.completed).length;
-    const total = (note.todos || []).length;
+    const completed = todos.filter(todo => todo.completed).length;
+    const total = todos.length;
     const percentage = (completed / total) * 100;
 
     let color = '';
