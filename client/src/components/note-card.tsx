@@ -725,7 +725,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
             <DialogTitle>To-Dos from this note</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {note.todos.map((todo, index) => (
+            {(note.todos || []).map((todo, index) => (
               <div key={index} className="flex items-start space-x-3 p-2 bg-[hsl(var(--muted))] rounded-lg">
                 <button
                   onClick={(e) => {

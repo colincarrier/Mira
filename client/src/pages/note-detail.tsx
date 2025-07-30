@@ -769,7 +769,7 @@ export default function NoteDetail() {
         )}
 
         {/* Consolidated Todos with Optional Additions */}
-        {note.todos && note.todos.length > 0 && (
+        {note.todos && Array.isArray(note.todos) && note.todos.length > 0 && (
           <div className="bg-yellow-50 mx-4 mb-4 rounded-lg border border-yellow-200">
             <div className="p-4">
               <h4 className="font-medium text-gray-900 mb-3 text-base">Action Items</h4>
@@ -821,7 +821,7 @@ export default function NoteDetail() {
                   const nextSteps = richData.nextSteps || [];
 
                   // Show next steps as optional todos if they exist and aren't already todos
-                  const existingTodoTitles = note.todos.map((t: Todo) => t.title.toLowerCase());
+                  const existingTodoTitles = (note.todos || []).map((t: Todo) => t.title.toLowerCase());
                   const optionalTodos = nextSteps.filter((step: string) => 
                     !existingTodoTitles.some((todoTitle: string) => 
                       todoTitle.includes(step.toLowerCase().slice(0, 15)) ||

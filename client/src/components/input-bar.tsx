@@ -831,20 +831,6 @@ export default function InputBar({
             )}
           </div>
         </div>
-        
-        {/* Debug button for testing */}
-        <button 
-          onClick={() => {
-            console.log('🧪 Debug button clicked - direct test');
-            const testText = 'debug test from button click';
-            console.log('🧪 Creating note with:', testText);
-            createTextNoteMutation.mutate(testText);
-          }}
-          className="absolute top-[-50px] right-0 bg-red-500 text-white px-2 py-1 text-xs rounded"
-          style={{ zIndex: 9999 }}
-        >
-          DEBUG TEST
-        </button>
       </div>
       
       {/* Media Context Dialog - temporarily disabled */}

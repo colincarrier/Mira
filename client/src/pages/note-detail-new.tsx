@@ -227,7 +227,7 @@ export default function NoteDetailNew() {
           )}
 
           {/* Todos Section - Clean & Minimal */}
-          {note.todos && note.todos.length > 0 && (
+          {note.todos && Array.isArray(note.todos) && note.todos.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
                 <CheckSquare className="w-5 h-5 text-blue-600" />

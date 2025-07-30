@@ -300,7 +300,7 @@ export default function CollectionDetail() {
                     </div>
 
                     <div className="flex items-center space-x-3 ml-3 flex-shrink-0">
-                      {note.todos && note.todos.length > 0 && (
+                      {note.todos && Array.isArray(note.todos) && note.todos.length > 0 && (
                         <div className="flex items-center space-x-1">
                           <Icons.CheckSquare className="w-3 h-3 text-blue-500" />
                           <span className="text-xs text-gray-600">

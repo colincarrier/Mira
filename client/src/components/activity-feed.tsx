@@ -138,7 +138,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
                   </span>
                   {note.todos && note.todos.length > 0 && (
                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                      {note.todos.length} todos
+                      {(note.todos || []).length} todos
                     </span>
                   )}
                 </div>
