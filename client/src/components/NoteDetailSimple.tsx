@@ -2,47 +2,34 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { generateTempId } from '../utils/id';
-import type { Task } from '../../../shared/types';
-import { queueOffline } from '../db/offlineQueue';
+import { v4 as uuidv4 } from 'uuid';
+import type { NoteWithTodos, Todo } from '../../shared/schema';
 
-// Define Note type since it's not exported from shared/types
-interface Note {
-  id: number;
-  content: string;
-  aiGeneratedTitle?: string;
-  isProcessing?: boolean;
-  miraResponse?: {
-    tasks: Task[];
-  };
-  tokenUsage?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    model: string;
-    processingTimeMs: number;
-  };
+// Use proper types from shared schema
+interface Task {
+  title: string;
+  priority: 'low' | 'medium' | 'high';
 }
 
 interface NoteDetailSimpleProps {
-  note?: Note;
+  note?: NoteWithTodos;
 }
 
 function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const { id } = useParams<{ id: string }>();
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState('');
-  const [optimisticNote, setOptimisticNote] = useState<Note | null>(null);
+  const [optimisticNote, setOptimisticNote] = useState<NoteWithTodos | null>(null);
   
-  const { data: note, isLoading } = useQuery({
-    queryKey: ['/api/notes', id],
+  const { data: note, isLoading } = useQuery<NoteWithTodos>({
+    queryKey: [`/api/notes/${id}`],
     enabled: !!id && !propNote,
   });
 
   const currentNote = propNote || note || optimisticNote;
 
   useEffect(() => {
-    if (currentNote && 'content' in currentNote) {
+    if (currentNote?.content) {
       setContent(currentNote.content);
     }
   }, [currentNote]);
@@ -50,11 +37,12 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const updateMutation = useMutation({
     mutationFn: async (newContent: string) => {
       // Optimistic update
-      const optimistic: Note = {
+      const optimistic: NoteWithTodos = {
+        ...currentNote,
         id: currentNote?.id || 0,
         content: newContent,
-        isProcessing: true,
-      } as Note;
+        todos: currentNote?.todos || [],
+      } as NoteWithTodos;
       setOptimisticNote(optimistic);
 
       try {
@@ -70,12 +58,7 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
         
         return response.json();
       } catch (error) {
-        // Queue for offline sync
-        await queueOffline({
-          id: generateTempId(),
-          kind: 'note',
-          payload: { id, content: newContent, action: 'update' },
-        });
+        console.warn('Note update failed:', error);
         throw error;
       }
     },
@@ -84,7 +67,7 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
       setOptimisticNote(null);
     },
     onError: (error) => {
-      console.warn('Note update failed, queued for offline sync:', error);
+      console.warn('Note update failed:', error);
       setIsEditing(false);
     },
   });
@@ -105,20 +88,17 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
     return <div className="p-4 text-gray-500">Note not found</div>;
   }
 
-  const tasks = currentNote.miraResponse?.tasks || [];
-  const tokenUsage = currentNote.tokenUsage;
+  const tasks: Task[] = [];
+  const tokenUsage = null;
 
   return (
     <div className="h-full bg-white dark:bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h1 className="text-lg font-medium text-gray-900 dark:text-white">
-          {currentNote.aiGeneratedTitle || 'Note'}
+          Note #{currentNote?.id}
         </h1>
         <div className="flex items-center gap-2">
-          {currentNote.isProcessing && (
-            <span className="text-blue-500 text-sm">AI analyzing...</span>
-          )}
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -152,7 +132,7 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
           />
         ) : (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="whitespace-pre-wrap">{currentNote.content}</p>
+            <p className="whitespace-pre-wrap">{currentNote?.content}</p>
           </div>
         )}
 
