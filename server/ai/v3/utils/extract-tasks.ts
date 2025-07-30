@@ -12,7 +12,10 @@ export function extractTasks(markdown: string): Task[] {
   for (const pattern of patterns) {
     let match;
     while ((match = pattern.exec(markdown)) && tasks.length < 3) {
-      const title = match[1].trim().slice(0, 80); // Reasonable limit
+      const rawTitle = match[1].trim();
+      
+      // Extract just the text from links: [text](url) -> text
+      const title = rawTitle.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').slice(0, 80);
       
       // Skip if already have this task
       if (tasks.some(t => t.title === title)) continue;

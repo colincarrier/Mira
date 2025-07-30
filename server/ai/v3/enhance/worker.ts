@@ -11,7 +11,7 @@ import { extractTasks } from '../utils/extract-tasks';
 import { extractLinks } from '../utils/extract-links';
 import { enrichLinks, extractUrls } from '../../link-enrichment';
 import { getUserPatterns, getCollectionHints, getRecentNotes } from '../../../storage';
-import type { MiraResponse } from '../../../../shared/types';
+import type { MiraResponse, TokenUsage } from '../../../../shared/types';
 
 interface UserContext {
   bio?: string;
@@ -43,7 +43,7 @@ export async function processNoteV3(noteId: number): Promise<void> {
     // Get user context (simplified for now)
     const context: UserContext = {
       recentNotes: await getRecentNotes(note.user_id || 'demo', 5),
-      userPatterns: await getUserPatterns(note.user_id || 'demo'),
+      relevantFacts: await getUserPatterns(note.user_id || 'demo'),
       preferences: {},
       bio: undefined
     };
@@ -150,17 +150,14 @@ export async function processNoteV3(noteId: number): Promise<void> {
       reminders: [],
       entities: [],
       media: [],
-      enrichedLinks: extractLinks(parsedContent),
+      enrichedLinks: extractLinks(parsedContent).map((url) => ({ url })),
       meta: {
-        model: 'gpt-4o',
+        ...tokenUsage,
         confidence: 0.8,
-        processingTimeMs: processingTime,
         intent: intent.primary,
         v: 3,
-        // Part 1: Expert system placeholders for Part 2
         expertsActivated: [],
-        recursionDepth: 0,
-        recursionPath: []
+        recursionDepth: 0
       },
       thread: []
     };
@@ -232,6 +229,7 @@ function mergeResponses(original: MiraResponse, enhanced: MiraResponse): MiraRes
     reminders: [...(original.reminders || []), ...(enhanced.reminders || [])],
     entities: [...(original.entities || []), ...(enhanced.entities || [])],
     media: [...(original.media || []), ...(enhanced.media || [])],
+    enrichedLinks: [...(original.enrichedLinks || []), ...(enhanced.enrichedLinks || [])],
     meta: enhanced.meta || original.meta,
     thread: [...(original.thread || []), ...(enhanced.thread || [])]
   };

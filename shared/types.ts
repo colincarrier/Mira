@@ -1,23 +1,25 @@
+/* Minimal superset of the shapes already emitted in worker.ts */
+
 export interface Task {
-  id?: string;
   title: string;
-  priority: 'low' | 'normal' | 'high';
-  completed?: boolean;
+  /** must match extract-tasks.ts and existing UI chips */
+  priority?: 'low' | 'normal' | 'high';
+  done?: boolean;
 }
 
-export interface MiraTask {
-  id?: string;
-  title: string;
-  priority: 'low' | 'normal' | 'high';
-  completed?: boolean;
-  action?: string;
-  details?: string;
+export interface EnrichedLink { 
+  url: string; 
+  title?: string; 
+  description?: string; 
 }
 
-export interface EnrichedLink {
-  url: string;
-  title?: string;
-  favicon?: string;
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  model: string;
+  processingTimeMs: number;
+  timestamp: string;
 }
 
 export interface MiraResponse {
@@ -29,24 +31,22 @@ export interface MiraResponse {
   media: any[];
   enrichedLinks: EnrichedLink[];
   meta: {
-    model: string;
-    confidence: number;
-    processingTimeMs: number;
     intent: string;
+    confidence: number;
     v: 3;
-    // Part 1: Expert system placeholders for Part 2
     expertsActivated?: string[];
     recursionDepth?: number;
-    recursionPath?: string[];
-  };
+  } & TokenUsage;
   thread: any[];
 }
 
 export interface NoteEvent {
-  type: 'enhancement_complete' | 'ai_error' | 'processing_start';
+  type: 'enhancement_complete';
   content?: string;
   tasks?: Task[];
-  timestamp: number;
+  tokenUsage?: TokenUsage;
+  timestamp?: number;
   processingTime?: number;
-  error?: string;
+  links?: string[];
+  meta?: MiraResponse['meta'];
 }

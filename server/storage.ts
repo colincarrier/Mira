@@ -13,8 +13,22 @@ export const pool = new Pool({
 export const storage = {
   pool,
   // Add placeholder methods that other modules expect
-  createNote: async () => ({}),
-  updateNote: async () => ({}),
+  createNote: async (noteData: any) => {
+    try {
+      const client = await pool.connect();
+      const result = await client.query(
+        `INSERT INTO notes (content, user_id, collection_id, mode, is_processing) 
+         VALUES ($1, $2, $3, $4, $5) 
+         RETURNING *`,
+        [noteData.content, noteData.userId || 'demo', noteData.collectionId, noteData.mode || 'text', noteData.isProcessing || true]
+      );
+      client.release();
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating note:', error);
+      throw error;
+    }
+  },
   createTodo: async () => ({}),
   createReminder: async () => ({}),
   getCollections: async () => [],

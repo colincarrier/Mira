@@ -300,6 +300,8 @@ export type User = typeof users.$inferSelect;
 export type InsertNoteVersion = typeof noteVersions.$inferInsert;
 export type NoteVersion = typeof noteVersions.$inferSelect;
 
+export type { Task, EnrichedLink, MiraResponse, NoteEvent, TokenUsage } from './types';
+
 // Relations
 export const notesRelations = relations(notes, ({ one, many }) => ({
   collection: one(collections, {

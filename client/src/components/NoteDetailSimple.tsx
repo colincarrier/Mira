@@ -3,13 +3,10 @@ import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import type { NoteWithTodos, Todo } from '@shared/schema';
-
-// Use proper types from shared schema
-interface Task {
-  title: string;
-  priority: 'low' | 'medium' | 'high';
-}
+import type { NoteWithTodos, Todo, Task } from '@shared/schema';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { parseMiraResponse } from '../utils/parseMiraResponse';
+import InputBar from './input-bar';
 
 interface NoteDetailSimpleProps {
   note?: NoteWithTodos;
@@ -28,6 +25,14 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   });
 
   const currentNote = propNote || note || optimisticNote;
+  
+  const mira = React.useMemo(
+    () =>
+      currentNote?.miraResponse
+        ? parseMiraResponse(currentNote.miraResponse)
+        : null,
+    [currentNote?.miraResponse]
+  );
 
   useEffect(() => {
     if (currentNote?.content) {
@@ -144,33 +149,65 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
             <p className="whitespace-pre-wrap">{currentNote?.content}</p>
           </div>
         )}
+        
+        {/* AI-generated content */}
+        {mira && mira.meta?.v === 3 && (
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+              Strategic Intelligence
+            </h3>
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <MarkdownRenderer content={mira.content || ''} />
+            </div>
+          </div>
+        )}
 
-        {/* Tasks */}
-        {tasks.length > 0 && (
+        {/* AI-extracted Tasks from V3 */}
+        {mira?.tasks && mira.tasks.length > 0 && (
           <div className="mt-6">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Extracted Tasks
+              AI-Extracted Tasks
             </h3>
             <div className="space-y-2">
-              {tasks.map((task: Task, index: number) => (
-                <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                  <input type="checkbox" className="rounded" />
-                  <span className="text-sm text-gray-900 dark:text-white">{task.title}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                    task.priority === 'low' ? 'bg-gray-100 text-gray-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                    {task.priority}
-                  </span>
-                </div>
-              ))}
+              {mira.tasks.map((task: any, index: number) => {
+                // Handle both string and object title formats
+                const title = typeof task.title === 'string' 
+                  ? task.title 
+                  : task.title?.description || task.title?.link || 'Untitled task';
+                  
+                return (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <input type="checkbox" className="rounded" />
+                    <span className="text-sm text-gray-900 dark:text-white">{title}</span>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      task.priority === 'low' ? 'bg-gray-100 text-gray-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
 
       </div>
+      
+      {/* InputBar at bottom */}
+      {currentNote && (
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <InputBar
+            noteId={currentNote.id}
+            existingContent={currentNote.content}
+            existingContext={currentNote.aiContext}
+            existingTodos={currentNote.todos}
+            existingRichContext={currentNote.richContext}
+          />
+        </div>
+      )}
     </div>
   );
 }
