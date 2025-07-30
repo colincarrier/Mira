@@ -335,6 +335,7 @@ export default function InputBar({
   // Text input handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
+    console.log('📝 Input changed:', { value, length: value.length });
     setInputText(value);
     setIsTyping(value.length > 0);
   };
@@ -794,7 +795,15 @@ export default function InputBar({
 
             {inputText.trim() ? (
               <button 
-                onClick={handleSendMessage}
+                onClick={(e) => {
+                  console.log('🎯 Send button clicked!', e);
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSendMessage();
+                }}
+                onMouseDown={(e) => {
+                  console.log('🎯 Send button mouse down!', e);
+                }}
                 className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
               >
                 <Send className="w-4 h-4" />
@@ -822,6 +831,20 @@ export default function InputBar({
             )}
           </div>
         </div>
+        
+        {/* Debug button for testing */}
+        <button 
+          onClick={() => {
+            console.log('🧪 Debug button clicked - direct test');
+            const testText = 'debug test from button click';
+            console.log('🧪 Creating note with:', testText);
+            createTextNoteMutation.mutate(testText);
+          }}
+          className="absolute top-[-50px] right-0 bg-red-500 text-white px-2 py-1 text-xs rounded"
+          style={{ zIndex: 9999 }}
+        >
+          DEBUG TEST
+        </button>
       </div>
       
       {/* Media Context Dialog - temporarily disabled */}
