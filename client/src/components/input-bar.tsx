@@ -92,6 +92,7 @@ export default function InputBar({
   // Text note mutation
   const createTextNoteMutation = useMutation({
     mutationFn: async (text: string) => {
+      console.log('📡 createTextNoteMutation called with:', { text, currentPage, endpoint: currentPage === 'remind' ? "/api/reminders" : "/api/notes" });
       const endpoint = currentPage === 'remind' ? "/api/reminders" : "/api/notes";
       const response = await fetch(endpoint, {
         method: "POST",
@@ -104,11 +105,14 @@ export default function InputBar({
         credentials: "include",
       });
 
+      console.log('📡 API Response status:', response.status, response.ok);
       if (!response.ok) {
         throw new Error(`Failed to create ${currentPage === 'remind' ? 'reminder' : 'note'}`);
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('📡 API Response data:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
@@ -336,8 +340,11 @@ export default function InputBar({
   };
 
   const handleSendMessage = () => {
+    console.log('🔍 handleSendMessage triggered with:', { inputText: inputText.trim(), noteId, hasOnTextSubmit: !!onTextSubmit });
+    
     if (inputText.trim()) {
       if (noteId) {
+        console.log('📝 Updating existing note:', noteId);
         // Automatic clarification vs evolution detection
         const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(inputText);
         const endpoint = clarification ? 'clarify' : 'evolve';
@@ -352,16 +359,26 @@ export default function InputBar({
           setInputText("");
           setIsTyping(false);
           closeAllModes();
+        }).catch(error => {
+          console.error('❌ Note update failed:', error);
         });
       } else if (onTextSubmit) {
+        console.log('📤 Using onTextSubmit callback');
         onTextSubmit(inputText.trim());
         setInputText("");
         setIsTyping(false);
         closeAllModes();
       } else {
+        console.log('🆕 Creating new note via mutation');
+        console.log('🚀 About to call createTextNoteMutation.mutate with:', inputText.trim());
         createTextNoteMutation.mutate(inputText.trim());
+        console.log('✅ createTextNoteMutation.mutate called');
+        setInputText("");
+        setIsTyping(false);
+        closeAllModes();
       }
     } else {
+      console.log('🔘 Empty input, triggering onNewNote');
       onNewNote?.();
     }
   };
