@@ -42,7 +42,7 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const currentNote = propNote || note || optimisticNote;
 
   useEffect(() => {
-    if (currentNote) {
+    if (currentNote && 'content' in currentNote) {
       setContent(currentNote.content);
     }
   }, [currentNote]);
@@ -50,8 +50,8 @@ function NoteDetailSimple({ note: propNote }: NoteDetailSimpleProps) {
   const updateMutation = useMutation({
     mutationFn: async (newContent: string) => {
       // Optimistic update
-      const optimistic = {
-        ...currentNote,
+      const optimistic: Note = {
+        id: currentNote?.id || 0,
         content: newContent,
         isProcessing: true,
       } as Note;

@@ -18,10 +18,65 @@ export const storage = {
   createTodo: async () => ({}),
   createReminder: async () => ({}),
   getCollections: async () => [],
-  getTodos: async () => [],
-  getNotes: async () => [],
+  getTodos: async () => {
+    try {
+      const client = await pool.connect();
+      const result = await client.query('SELECT * FROM todos ORDER BY created_at DESC');
+      client.release();
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching todos:', error);
+      return [];
+    }
+  },
+  getNotes: async () => {
+    try {
+      const client = await pool.connect();
+      const result = await client.query('SELECT * FROM notes ORDER BY created_at DESC');
+      client.release();
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      return [];
+    }
+  },
   getUsers: async () => [],
   createCollection: async () => ({}),
+  getNote: async (id: number) => {
+    try {
+      const client = await pool.connect();
+      const result = await client.query('SELECT * FROM notes WHERE id = $1', [id]);
+      client.release();
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error fetching note:', error);
+      return null;
+    }
+  },
+  getTodosByNoteId: async (noteId: number) => {
+    try {
+      const client = await pool.connect();
+      const result = await client.query('SELECT * FROM todos WHERE note_id = $1 ORDER BY created_at DESC', [noteId]);
+      client.release();
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching todos for note:', error);
+      return [];
+    }
+  },
+  updateNote: async (id: number, updates: any) => {
+    try {
+      const client = await pool.connect();
+      const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+      const values = [id, ...Object.values(updates)];
+      const result = await client.query(`UPDATE notes SET ${setClause} WHERE id = $1 RETURNING *`, values);
+      client.release();
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating note:', error);
+      return null;
+    }
+  },
 };
 
 export async function getUserPatterns(userId: string): Promise<any> {
