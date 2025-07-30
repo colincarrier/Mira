@@ -163,6 +163,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### InputBar Evolution Endpoint Bug Fix & AI Misclassification Correction (July 30, 2025) ✅
+- **Critical Evolution Bug Fixed**: Resolved 400 error in `/api/notes/:id/evolve` endpoint caused by missing `existingContent` parameter
+- **Complete Context Passing**: InputBar now fetches current note data and sends all required parameters (existingContent, existingContext, existingTodos, existingRichContext)
+- **Enhanced Error Handling**: Added proper response validation and user feedback with toast notifications for success/failure states
+- **UX Improvements**: Added loading states and error messaging to provide immediate feedback during 9+ second AI processing times
+- **AI Misclassification Fix Validated**: Successfully corrected note 620 where AI incorrectly assumed "nixie" meant electronic tubes instead of Nixie sparkling water
+- **Functional Verification**: Evolution endpoint now properly processes user clarifications and updates AI analysis accordingly
+- **Frontend Display Limits Removed**: Eliminated outdated 50/150 character truncation limits from note-card.tsx display formatting
+- **Content Loading Issue Resolved**: Fixed app rendering problems through application restart, restoring full functionality
+
 ### Critical Runtime Error Fix & InputBar Restoration (July 30, 2025) ✅
 - **Root Cause Identified**: Runtime error `undefined is not an object (evaluating 'note.todos.length')` preventing entire app functionality
 - **Comprehensive Fix Applied**: Added null safety checks across all components accessing `note.todos` property
