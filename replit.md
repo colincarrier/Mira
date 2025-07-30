@@ -161,6 +161,13 @@ Mira is a sophisticated AI-powered memory and productivity assistant that transf
 
 Preferred communication style: Simple, everyday language.
 
+## Development Environment Setup
+
+**GitHub Integration**: 
+- Repository: https://github.com/colincarrier/Mira.git
+- Token stored as GITHUB_PERSONAL_ACCESS_TOKEN environment variable
+- Automatic git operations enabled for seamless code pushes
+
 ## Recent Changes
 
 ### InputBar Evolution Endpoint Bug Fix & AI Misclassification Correction (July 30, 2025) ✅
@@ -172,6 +179,7 @@ Preferred communication style: Simple, everyday language.
 - **Functional Verification**: Evolution endpoint now properly processes user clarifications and updates AI analysis accordingly
 - **Frontend Display Limits Removed**: Eliminated outdated 50/150 character truncation limits from note-card.tsx display formatting
 - **Content Loading Issue Resolved**: Fixed app rendering problems through application restart, restoring full functionality
+- **GitHub Integration Streamlined**: Added GITHUB_TOKEN to environment vault for seamless automatic code pushes without manual token requests
 
 ### Critical Runtime Error Fix & InputBar Restoration (July 30, 2025) ✅
 - **Root Cause Identified**: Runtime error `undefined is not an object (evaluating 'note.todos.length')` preventing entire app functionality
