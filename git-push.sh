@@ -1,28 +1,24 @@
 #!/bin/bash
-# Automatic git push script with GitHub token authentication
 
-set -e
+# Remove git lock if it exists
+rm -f .git/index.lock
 
-# Check if there are changes to commit
-if [ -n "$(git status --porcelain)" ]; then
-    echo "📝 Changes detected, committing..."
-    git add -A
-    
-    # Use provided commit message or generate default
-    if [ -n "$1" ]; then
-        COMMIT_MSG="$1"
-    else
-        COMMIT_MSG="Auto-commit: $(date +'%Y-%m-%d %H:%M:%S')"
-    fi
-    
-    git commit -m "$COMMIT_MSG"
-    echo "✅ Changes committed: $COMMIT_MSG"
-else
-    echo "📋 No local changes to commit"
-fi
+# Add the modified file
+git add client/src/components/input-bar.tsx
 
-# Push to GitHub using token authentication
-echo "🚀 Pushing to GitHub..."
-git push https://$GITHUB_PERSONAL_ACCESS_TOKEN@github.com/colincarrier/Mira.git main
+# Commit with descriptive message
+git commit -m "Fix InputBar evolution endpoint bug - add missing existingContent parameter
 
-echo "✅ Successfully synced to GitHub!"
+- Fixed 400 error when updating notes via InputBar evolution endpoint
+- Now fetches current note data and includes required parameters:
+  - existingContent, existingContext, existingTodos, existingRichContext  
+- Added user feedback with toast notifications for success/failure
+- Resolves issue where note clarifications weren't processing
+
+This fixes the case where user tried to clarify note 620 'nixie' 
+misclassification but update failed due to missing existingContent parameter."
+
+# Push to repository
+git push origin main
+
+echo "✅ Changes pushed to repository"

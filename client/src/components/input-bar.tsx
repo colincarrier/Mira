@@ -350,18 +350,46 @@ export default function InputBar({
         const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(inputText);
         const endpoint = clarification ? 'clarify' : 'evolve';
         
-        fetch(`/api/notes/${noteId}/${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ instruction: inputText.trim() }),
-          credentials: "include",
+        // Get current note data first
+        fetch(`/api/notes/${noteId}`, {
+          credentials: "include"
+        }).then(response => response.json())
+        .then(currentNote => {
+          return fetch(`/api/notes/${noteId}/${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              instruction: inputText.trim(),
+              existingContent: currentNote.content,
+              existingContext: currentNote.aiContext,
+              existingTodos: currentNote.todos || [],
+              existingRichContext: currentNote.richContext
+            }),
+            credentials: "include",
+          });
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error(`Update failed: ${response.status}`);
+          }
+          return response.json();
         }).then(() => {
           queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
           setInputText("");
           setIsTyping(false);
           closeAllModes();
+          toast({
+            title: "Note updated",
+            description: "Your clarification has been processed.",
+            duration: 3000,
+          });
         }).catch(error => {
           console.error('❌ Note update failed:', error);
+          toast({
+            title: "Update failed", 
+            description: "Could not process your clarification. Please try again.",
+            variant: "destructive",
+            duration: 5000,
+          });
         });
       } else if (onTextSubmit) {
         console.log('📤 Using onTextSubmit callback');
