@@ -62,6 +62,14 @@ Preferred communication style: Simple, everyday language.
 - Enhanced rich context display with prominent sections for strategic intelligence.
 - Responsive UI design for voice recording playback.
 
+## Recent Changes (July 31, 2025)
+
+### V3 Help-First AI Implementation
+- Fixed InputBar component props issue in NoteDetailSimple
+- Implemented and tested V3 Help-First processing with notes #627 and #628
+- Enhanced intent classification system (IMMEDIATE_PROBLEM, GENERAL, etc.)
+- Improved note detail display with proper layout and debugging
+
 ## External Dependencies
 
 ### AI Services
