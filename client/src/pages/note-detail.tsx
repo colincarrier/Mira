@@ -290,6 +290,7 @@ export default function NoteDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] }); // Fix navigation issue
       // Only show success toast for AI updates, not direct edits
       toast({ description: "Note updated successfully" });
       setIsEditing(false);
@@ -665,17 +666,13 @@ export default function NoteDetail() {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="text-lg font-semibold px-2 py-1">
-                {note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled Note'}
+            {/* Title removed - will be in document body like iOS Notes */}
+            {!note.aiEnhanced && (
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-500">AI processing...</span>
               </div>
-              {!note.aiEnhanced && (
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-gray-500">AI processing...</span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
           <div className="flex items-center gap-2 pr-4">
             <DropdownMenu>

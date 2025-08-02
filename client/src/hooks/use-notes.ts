@@ -11,6 +11,7 @@ export function useNotes() {
     error,
   } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
+    placeholderData: (previousData) => previousData, // Prevent empty list flashes
   });
 
   const createNoteMutation = useMutation({

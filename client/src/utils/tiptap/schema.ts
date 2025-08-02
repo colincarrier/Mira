@@ -1,6 +1,7 @@
 import { StarterKit } from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Extension } from '@tiptap/core';
+import { featureFlags } from '@shared/featureFlags';
 
 // Author mark extension to track who wrote what
 const AuthorMark = Extension.create({
@@ -18,7 +19,8 @@ const AuthorMark = Extension.create({
               if (attributes.author === 'ai') {
                 return {
                   'data-author': 'ai',
-                  class: 'ai-content'
+                  // Only add ai-content class if SHOW_AI_DIFF flag is enabled
+                  ...(featureFlags.SHOW_AI_DIFF && { class: 'ai-content' })
                 };
               }
               return {};
@@ -31,7 +33,9 @@ const AuthorMark = Extension.create({
 });
 
 export const extensions = [
-  StarterKit,
+  StarterKit.configure({
+    // Keep default StarterKit extensions
+  }),
   Placeholder.configure({
     placeholder: ({ node }) => {
       if (node.type.name === 'heading' && node.attrs.level === 1) {
