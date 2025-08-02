@@ -60,6 +60,9 @@ export const notes = pgTable("notes", {
     processingTimeMs: number;
     timestamp: string;
   }>(),
+  
+  // TipTap editor document
+  doc_json: json("doc_json").$type<any>(),
 });
 
 // Note versions for complete changelog and rollback capability
@@ -358,6 +361,7 @@ export type NoteWithTodos = Note & {
   todos: Todo[];
   collection?: Collection;
   items?: Item[];
+  doc_json?: any; // TipTap document
 };
 
 // Additional type exports for new tables  

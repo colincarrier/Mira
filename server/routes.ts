@@ -501,6 +501,34 @@ Respond in JSON format:
     }
   });
 
+  // Document patch endpoint for TipTap editor
+  app.post("/api/notes/:id/patch", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { doc, steps } = req.body;
+      
+      if (!doc) {
+        return res.status(400).json({ error: "Document JSON required" });
+      }
+      
+      // Update the note's doc_json
+      await storage.updateNote(parseInt(id), {
+        doc_json: doc,
+        updatedAt: new Date()
+      });
+      
+      // Broadcast to SSE clients if steps provided
+      if (steps) {
+        // TODO: Broadcast patch event via SSE
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error patching document:", error);
+      res.status(500).json({ error: "Failed to patch document" });
+    }
+  });
+
   // Notes endpoints with todos
   app.get("/api/notes", async (req, res) => {
     try {

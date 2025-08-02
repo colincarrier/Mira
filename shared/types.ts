@@ -51,3 +51,16 @@ export interface NoteEvent {
   links?: string[];
   meta?: MiraResponse['meta'];
 }
+
+/* --- TipTap / queue ---------------------------------------------- */
+export type JSONContent = any; // Will be properly typed when TipTap is installed
+
+export interface QueueOp {
+  id: string;
+  noteId: string;
+  type: 'edit' | 'instruct';
+  doc?: JSONContent;
+  steps?: any[];            // Step JSON
+  prompt?: string;
+  created: number;
+}

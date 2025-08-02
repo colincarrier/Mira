@@ -1,0 +1,43 @@
+/* TipTap Editor Styles */
+.ProseMirror {
+  min-height: 400px;
+  outline: none;
+}
+
+.ProseMirror h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.ProseMirror p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+/* AI content styling */
+.ProseMirror .ai-content {
+  background-color: #f0f9ff;
+  border-left: 3px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+.ProseMirror .ai-content p {
+  color: #1e40af;
+}
+
+/* Placeholder text */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Selection */
+.ProseMirror ::selection {
+  background-color: #b4d5fe;
+}

@@ -5,10 +5,18 @@ import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
 import { useCriticalInfo } from "@/hooks/useCriticalInfo";
+import { featureFlags } from "@shared/featureFlags";
+import { NoteEditor } from "@/components/NoteEditor";
+import { useNoteStream } from "@/hooks/useNoteStream";
+import { useFlushQueue } from "@/hooks/useFlushQueue";
+import { JSONContent } from "@shared/types";
+import { Step } from "prosemirror-transform";
+import { extractTasksFromTipTap } from "@/utils/extract-tasks-tiptap";
+import { extractTitle } from "@/utils/titleExtraction";
 
 // Voice Note Detail Player Component
 interface VoiceNoteDetailPlayerProps {
@@ -166,6 +174,10 @@ export default function NoteDetail() {
   const [showReminderDialog, setShowReminderDialog] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [pendingAI, setPendingAI] = useState<Step[] | null>(null);
+  
+  // Enable offline queue flushing
+  useFlushQueue();
 
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
@@ -193,6 +205,60 @@ export default function NoteDetail() {
 
   // Use critical info hook
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
+  
+  // Editor commit callback
+  const commitFromEditor = useCallback(
+    async (doc: JSONContent, steps: Step[]) => {
+      try {
+        // 1) Patch document JSON
+        await fetch(`/api/notes/${id}/patch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ doc, steps }),
+        });
+
+        // 2) Extract & persist tasks
+        try {
+          const tasks = extractTasksFromTipTap(doc);
+          if (tasks.length) {
+            await fetch(`/api/notes/${id}/tasks`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tasks }),
+            });
+          }
+        } catch (err) { 
+          console.error('[tasks]', err);
+        }
+
+        // 3) Title sync
+        const newTitle = extractTitle(doc);
+        if (newTitle && newTitle !== note?.aiGeneratedTitle) {
+          await fetch(`/api/notes/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aiGeneratedTitle: newTitle }),
+          });
+        }
+        
+        // Refresh the note data
+        queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      } catch (error) {
+        console.error('Failed to save document:', error);
+        toast({
+          title: "Save Failed",
+          description: "Could not save changes. They'll be synced when you're back online.",
+          variant: "destructive"
+        });
+      }
+    },
+    [id, note?.aiGeneratedTitle, toast]
+  );
+
+  // Subscribe to SSE updates
+  useNoteStream(id!, (steps) => {
+    setPendingAI(steps);
+  });
 
   // Get version history
   const { data: versionHistory } = useQuery({
@@ -684,71 +750,103 @@ export default function NoteDetail() {
               <VoiceNoteDetailPlayer note={note} />
             )}
 
-            {/* What You Wrote Section - only show if AI generated a different title */}
-            {note.aiGeneratedTitle && note.aiGeneratedTitle !== note.content && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-gray-900 mb-2 text-sm">What you wrote:</h4>
-                <div className="text-gray-700 text-sm leading-relaxed">{note.content}</div>
-              </div>
-            )}
-
-            <textarea
-              ref={textareaRef}
-              data-note-id={note.id}
-              value={editedContent}
-              onChange={(e) => {
-                setEditedContent(e.target.value);
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-              onBlur={async () => {
-                if (editedContent !== note.content) {
-                  // Save content
-                  await updateNoteMutation.mutateAsync({ content: editedContent });
-                  
-                  // Extract and save tasks
-                  try {
-                    const tasks = extractTasks(editedContent);
-                    if (tasks.length > 0) {
-                      await fetch(`/api/notes/${note.id}/tasks`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tasks }),
-                      });
-                    }
-                  } catch (err) {
-                    console.error('Failed to save tasks:', err);
-                    toast({
-                      title: "Warning",
-                      description: "Could not save extracted tasks",
-                      variant: "destructive"
-                    });
+            {/* Unified Document Editor */}
+            {featureFlags.NOTE_EDITOR_V4 ? (
+              <NoteEditor
+                note={{ 
+                  id: note.id.toString(), 
+                  doc_json: note.doc_json || {
+                    type: 'doc',
+                    content: [
+                      {
+                        type: 'heading',
+                        attrs: { level: 1 },
+                        content: [{ type: 'text', text: note.aiGeneratedTitle || note.content.split('\n')[0] || 'Untitled' }]
+                      },
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: note.content }]
+                      },
+                      ...(mira?.content ? [{
+                        type: 'paragraph',
+                        attrs: { author: 'ai' },
+                        content: [{ type: 'text', text: mira.content }]
+                      }] : [])
+                    ]
                   }
-                }
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-              className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
-              placeholder={note.aiGeneratedTitle ? "AI analysis and enhanced content..." : "Start writing..."}
-              style={{ 
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                overflow: 'hidden'
-              }}
-            />
+                }}
+                onCommit={commitFromEditor}
+                pendingAI={pendingAI}
+              />
+            ) : (
+              <>
+                {/* Legacy textarea implementation */}
+                {note.aiGeneratedTitle && note.aiGeneratedTitle !== note.content && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">What you wrote:</h4>
+                    <div className="text-gray-700 text-sm leading-relaxed">{note.content}</div>
+                  </div>
+                )}
 
-            {/* AI Enhanced Content - ChatGPT Style with Rich Formatting */}
-            {mira?.content && (
-              <div className="border-t border-gray-200 pt-4 mb-4">
-                <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
-                <MarkdownRenderer 
-                  content={mira.content}
-                  className="text-gray-800"
+                <textarea
+                  ref={textareaRef}
+                  data-note-id={note.id}
+                  value={editedContent}
+                  onChange={(e) => {
+                    setEditedContent(e.target.value);
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                  onBlur={async () => {
+                    if (editedContent !== note.content) {
+                      // Save content
+                      await updateNoteMutation.mutateAsync({ content: editedContent });
+                      
+                      // Extract and save tasks
+                      try {
+                        const tasks = extractTasks(editedContent);
+                        if (tasks.length > 0) {
+                          await fetch(`/api/notes/${note.id}/tasks`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tasks }),
+                          });
+                        }
+                      } catch (err) {
+                        console.error('Failed to save tasks:', err);
+                        toast({
+                          title: "Warning",
+                          description: "Could not save extracted tasks",
+                          variant: "destructive"
+                        });
+                      }
+                    }
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                  className="w-full min-h-[120px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal text-gray-800 placeholder-gray-400 mb-4"
+                  placeholder={note.aiGeneratedTitle ? "AI analysis and enhanced content..." : "Start writing..."}
+                  style={{ 
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    overflow: 'hidden'
+                  }}
                 />
-              </div>
+
+                {/* AI Enhanced Content - ChatGPT Style with Rich Formatting */}
+                {mira?.content && (
+                  <div className="border-t border-gray-200 pt-4 mb-4">
+                    <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
+                    <MarkdownRenderer 
+                      content={mira.content}
+                      className="text-gray-800"
+                    />
+                  </div>
+                )}
+              </>
             )}
 
             {/* V3 Tasks with Priority Styling */}

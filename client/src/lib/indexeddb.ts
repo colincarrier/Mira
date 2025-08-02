@@ -191,6 +191,11 @@ class IndexedDBManager {
     await this.db!.delete('syncQueue', id);
   }
 
+  async processSyncItem(item: any): Promise<void> {
+    // Process a sync item and remove it from the queue
+    await this.removeSyncQueueItem(item.id);
+  }
+
   async markAsSynced(table: 'notes' | 'todos' | 'collections', id: number): Promise<void> {
     if (!this.db) await this.initialize();
     
