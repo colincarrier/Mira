@@ -114,10 +114,27 @@ export default function InputBar({
       console.log('📡 API Response data:', result);
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/reminders"] });
+    onMutate: async (text) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/notes", undefined] });
+      const previous = queryClient.getQueryData<any[]>(["/api/notes", undefined]) ?? [];
+      const tempId = `temp-${crypto.randomUUID()}`;
+      queryClient.setQueryData(["/api/notes", undefined], [
+        { 
+          id: tempId,
+          content: text,
+          createdAt: new Date().toISOString(),
+          aiEnhanced: false 
+        },
+        ...previous,
+      ]);
+      return { previous, tempId };
+    },
+    onSuccess: (saved, _vars, ctx) => {
+      // Replace temp note with server note
+      queryClient.setQueryData(["/api/notes", undefined], (old?: any[]) =>
+        (old ?? []).map(n => (n.id === ctx?.tempId ? saved : n)),
+      );
+      // Defer todos/reminders refresh
       toast({
         title: `${currentPage === 'remind' ? 'Reminder' : 'Note'} saved`,
         description: `Your ${currentPage === 'remind' ? 'reminder' : 'note'} has been created successfully.`,
@@ -172,7 +189,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       toast({
         title: "Voice note saved",
@@ -209,7 +226,7 @@ export default function InputBar({
       }
 
       const placeholderNote = await placeholderResponse.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
 
       const formData = new FormData();
       formData.append("image", file);
@@ -228,7 +245,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
       toast({
@@ -266,7 +283,7 @@ export default function InputBar({
       }
 
       const placeholderNote = await placeholderResponse.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
 
       const formData = new FormData();
       formData.append("file", file);
@@ -285,7 +302,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
       toast({

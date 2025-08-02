@@ -290,7 +290,7 @@ export default function NoteDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] }); // Fix navigation issue
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] }); // Fix navigation issue
       // Only show success toast for AI updates, not direct edits
       toast({ description: "Note updated successfully" });
       setIsEditing(false);
@@ -475,7 +475,7 @@ export default function NoteDetail() {
 
       // Refresh the note data
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
       toast({

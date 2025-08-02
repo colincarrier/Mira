@@ -1,13 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { extensions } from '../utils/tiptap/schema';
 import { JSONContent } from '@tiptap/core';
 import { Step } from 'prosemirror-transform';
 import { TextSelection } from 'prosemirror-state';
-import { useDebouncedCallback } from 'use-debounce';
+import debounce from 'lodash/debounce';
 import { queueOp } from '../offline/queueAdapter';
 import type { QueueOp } from '@shared/types';
 import { Bold, Italic, Heading1 } from 'lucide-react';
+import { featureFlags } from '@shared/featureFlags';
 
 interface Props {
   note: { id: string; doc_json: JSONContent };
@@ -15,8 +17,11 @@ interface Props {
   pendingAI: Step[] | null;
 }
 
+const SAVE_DEBOUNCE_MS = 3000;
+
 export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
   const offline = !navigator.onLine;
+  const pendingSteps = useRef<Step[]>([]);
   
   const editor = useEditor({
     extensions,
@@ -40,35 +45,38 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
           if ($from.pos === $from.parent.nodeSize - 1) {
             // Create a new paragraph after the title
             const tr = view.state.tr;
-            const pos = $from.pos + 1;
-            tr.insert(pos, view.state.schema.nodes.paragraph.create());
-            const resolvedPos = tr.doc.resolve(pos + 1);
-            tr.setSelection(TextSelection.create(tr.doc, resolvedPos.pos));
+            tr.insert($from.end(), view.state.schema.nodes.paragraph.create());
             view.dispatch(tr);
             return true;
-          }
-        }
-        
-        // Handle Backspace at start of paragraph (promote to title)
-        if (event.key === 'Backspace' && $from.parent.type.name === 'paragraph' && $from.pos === 1) {
-          const nodeBefore = view.state.doc.resolve($from.pos - 1).parent;
-          if (nodeBefore.type.name === 'heading' && nodeBefore.attrs.level === 1) {
-            // Merge paragraph into heading
-            return false;
           }
         }
         
         return false;
       }
     },
-    onUpdate: ({ editor, transaction }) => {
+    onUpdate: debounce(({ editor, transaction }) => {
       if (!transaction.docChanged) return;
-      debouncedCommit(editor.getJSON(), transaction.steps);
-    },
+      pendingSteps.current.push(...(transaction.steps as Step[]));
+      void saveDoc();
+    }, SAVE_DEBOUNCE_MS),
   });
 
+  // Immediate saver used on blur & beforeunload
+  const saveDoc = useCallback(async () => {
+    if (!pendingSteps.current.length || !editor) return;
+    const steps = [...pendingSteps.current];
+    pendingSteps.current = [];
+    try {
+      await Promise.resolve(onCommit(editor.getJSON(), steps));
+    } catch (e) {
+      console.error("[NoteEditor] failed to save", e);
+      // Re-queue steps so they are not lost
+      pendingSteps.current.unshift(...steps);
+    }
+  }, [editor, onCommit]);
+
   // Queue push when offline
-  const debouncedCommit = useDebouncedCallback(
+  const debouncedCommit = useCallback(
     (doc: JSONContent, steps: Step[]) => {
       if (offline) {
         const op: QueueOp = {
@@ -77,15 +85,29 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
           noteId: note.id,
           created: Date.now(),
           doc,
-          steps: JSON.stringify(steps.map(s => s.toJSON())),
+          steps: JSON.stringify(steps.map(s => s.toJSON())) as any,
         };
         queueOp(op);
       } else {
         onCommit(doc, steps);
       }
     },
-    1000,
+    [offline, note.id, onCommit],
   );
+
+  // Flush on blur
+  useEffect(() => {
+    if (!editor) return;
+    const el = editor.view.dom as HTMLElement;
+    el.addEventListener("blur", saveDoc, true);
+    return () => el.removeEventListener("blur", saveDoc, true);
+  }, [editor, saveDoc]);
+
+  // Flush when navigating away
+  useEffect(() => {
+    window.addEventListener("beforeunload", saveDoc);
+    return () => window.removeEventListener("beforeunload", saveDoc);
+  }, [saveDoc]);
 
   // Apply pending AI patch from SSE after blur
   useEffect(() => {
@@ -110,36 +132,62 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
 
   return (
     <div className="relative">
-      {/* Inline toolbar - simplified version without BubbleMenu for now */}
-      <div className="sticky top-0 z-10 flex items-center gap-1 p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-            editor.isActive('bold') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-          }`}
-          title="Bold (⌘B)"
-        >
-          <Bold size={16} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-            editor.isActive('italic') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-          }`}
-          title="Italic (⌘I)"
-        >
-          <Italic size={16} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-            editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-          }`}
-          title="Heading (⌘⌥1)"
-        >
-          <Heading1 size={16} />
-        </button>
-      </div>
+      {/* Persistent toolbar - only shown when feature flag is on */}
+      {featureFlags.SHOW_PERSISTENT_TOOLBAR && (
+        <div className="sticky top-0 z-10 flex items-center gap-1 p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('bold') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
+            title="Bold (⌘B)"
+          >
+            <Bold size={16} />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('italic') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
+            title="Italic (⌘I)"
+          >
+            <Italic size={16} />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
+            title="Heading (⌘⌥1)"
+          >
+            <Heading1 size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* iOS-style Bubble menu appears only on selection */}
+      <BubbleMenu editor={editor} tippyOptions={{ placement: "top" }}>
+        <div className="bubble-menu">
+          <button
+            data-active={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <Bold size={16} />
+          </button>
+          <button
+            data-active={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <Italic size={16} />
+          </button>
+          <button
+            data-active={editor.isActive("heading", { level: 1 })}
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          >
+            <Heading1 size={16} />
+          </button>
+        </div>
+      </BubbleMenu>
       
       <EditorContent 
         editor={editor} 

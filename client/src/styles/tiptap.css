@@ -23,9 +23,21 @@
 /* AI content styling - only visible when SHOW_AI_DIFF feature flag is enabled */
 .ProseMirror .ai-content {
   background-color: #f0f9ff;
-  border-left: 3px solid #3b82f6;
   padding-left: 1rem;
   margin: 1rem 0;
+}
+
+/* Bubble menu styling */
+.bubble-menu {
+  @apply rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-1 flex gap-1;
+}
+
+.bubble-menu button {
+  @apply w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.bubble-menu [data-active="true"] { 
+  @apply text-blue-600 bg-blue-50 dark:bg-blue-900 dark:text-blue-300; 
 }
 
 /* Placeholder text */

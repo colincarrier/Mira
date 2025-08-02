@@ -22,17 +22,16 @@ export default function Notes() {
   useRealTimeUpdates();
 
   // Check for any notes currently being processed with real-time updates
-  const { data: notes } = useQuery<NoteWithTodos[]>({
+  const { data: notes, isFetching } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
-    staleTime: 0, // Always fresh data for real-time updates
+    staleTime: 30_000, // 30 seconds stale time
     gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 1000, // Refresh every 1 second for immediate updates
-    refetchIntervalInBackground: true, // Continue refetching even when tab not focused
+    placeholderData: (prev) => prev, // Never flash empty
   });
   
-  const hasProcessingNotes = notes?.some(note => note.isProcessing) || false;
+  const hasProcessingNotes = notes?.some((note: NoteWithTodos) => note.isProcessing) || false;
 
   // Text note creation mutation with optimistic updates
   const createTextNoteMutation = useMutation({
@@ -62,8 +61,9 @@ export default function Notes() {
       const previousNotes = queryClient.getQueryData(["/api/notes"]);
 
       // Optimistically update with processing preview
+      const tempId = `temp-${crypto.randomUUID()}`;
       const tempNote = {
-        id: `temp-${Date.now()}`,
+        id: tempId,
         content: text,
         isProcessing: true,
         aiEnhanced: false,
@@ -124,7 +124,7 @@ export default function Notes() {
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"], exact: false });
       toast({
         title: "Note saved",
         description: "Your note has been created and AI analysis is in progress.",
