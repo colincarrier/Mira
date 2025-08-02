@@ -5,7 +5,7 @@ import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
 import { useCriticalInfo } from "@/hooks/useCriticalInfo";
@@ -148,6 +148,7 @@ import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { ReminderDialog } from "@/components/reminder-dialog";
+import { parseMiraResponse } from "@/utils/parseMiraResponse";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -183,6 +184,12 @@ export default function NoteDetail() {
   } catch (e) {
     console.error("Failed to parse richContext:", e);
   }
+
+  // ---- V3 AI payload -------------------------------------------------
+  const mira = React.useMemo(() => {
+    if (!note?.miraResponse) return null;
+    return parseMiraResponse(note.miraResponse);
+  }, [note?.miraResponse]);
 
   // Use critical info hook
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
@@ -714,13 +721,35 @@ export default function NoteDetail() {
             />
 
             {/* AI Enhanced Content - ChatGPT Style with Rich Formatting */}
-            {note.aiEnhanced && note.aiContext && note.aiContext !== "Note processed" && (
+            {mira?.content && (
               <div className="border-t border-gray-200 pt-4 mb-4">
                 <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
                 <MarkdownRenderer 
-                  content={note.aiContext}
+                  content={mira.content}
                   className="text-gray-800"
                 />
+              </div>
+            )}
+
+            {/* V3 Tasks with Priority Styling */}
+            {mira?.tasks && mira.tasks.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm text-gray-500 mb-3 font-medium">AI-Extracted Tasks:</h4>
+                <div className="space-y-2">
+                  {mira.tasks.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                      <span className="text-sm text-gray-800">{typeof t === 'string' ? t : t.title}</span>
+                      {t.priority && t.priority !== 'normal' && (
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          t.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {t.priority}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
