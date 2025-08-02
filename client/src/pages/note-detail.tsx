@@ -148,7 +148,7 @@ import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { ReminderDialog } from "@/components/reminder-dialog";
-import { parseMiraResponse } from "@/utils/parseMiraResponse";
+import { parseMiraResponse, extractTasks, normalizeNote } from "@/utils";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -170,8 +170,8 @@ export default function NoteDetail() {
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: [`/api/notes/${id}`],
     enabled: !!id,
-    refetchInterval: (data) => {
-      return data && !data.aiEnhanced ? 2000 : false;
+    refetchInterval: (query) => {
+      return query.state.data && !query.state.data.aiEnhanced ? 2000 : false;
     },
   });
 
@@ -667,7 +667,7 @@ export default function NoteDetail() {
 
         {/* Document Body - Editable like iOS Notes */}
         <div className="flex-1 bg-white">
-          <div className="px-4 py-3 space-y-2">
+          <div className="px-4 py-3 space-y-2 pb-[80px]">
             {/* Media Display - Full functionality with sharing and download */}
             {note.mediaUrl && (
               <div className="mb-6">
@@ -702,9 +702,29 @@ export default function NoteDetail() {
                 target.style.height = 'auto';
                 target.style.height = target.scrollHeight + 'px';
               }}
-              onBlur={() => {
+              onBlur={async () => {
                 if (editedContent !== note.content) {
-                  updateNoteMutation.mutate({ content: editedContent });
+                  // Save content
+                  await updateNoteMutation.mutateAsync({ content: editedContent });
+                  
+                  // Extract and save tasks
+                  try {
+                    const tasks = extractTasks(editedContent);
+                    if (tasks.length > 0) {
+                      await fetch(`/api/notes/${note.id}/tasks`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tasks }),
+                      });
+                    }
+                  } catch (err) {
+                    console.error('Failed to save tasks:', err);
+                    toast({
+                      title: "Warning",
+                      description: "Could not save extracted tasks",
+                      variant: "destructive"
+                    });
+                  }
                 }
               }}
               onInput={(e) => {
@@ -1019,8 +1039,8 @@ export default function NoteDetail() {
 
         {/* Document Metadata - Bottom of page */}
         <div className="px-4 py-4 pb-28 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-1">
-          <div>Last modified {note.createdAt || note.created_at ? formatDistanceToNow(new Date(note.createdAt || note.created_at)) + ' ago' : 'Unknown'}</div>
-          <div>Created {note.createdAt || note.created_at ? format(new Date(note.createdAt || note.created_at), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
+          <div>Last modified {note.createdAt ? formatDistanceToNow(new Date(note.createdAt)) + ' ago' : 'Unknown'}</div>
+          <div>Created {note.createdAt ? format(new Date(note.createdAt), "MMM d, yyyy 'at' h:mm a") : 'Unknown date'}</div>
           <div className="text-gray-400">Note ID: #{note.id}</div>
         </div>
 
@@ -1085,7 +1105,7 @@ export default function NoteDetail() {
                     </button>
                   </div>
                 </div>
-              )) as React.ReactNode}
+              ))}
             </div>
           </div>
         </div>

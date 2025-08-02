@@ -62,9 +62,19 @@ Preferred communication style: Simple, everyday language.
 - Enhanced rich context display with prominent sections for strategic intelligence.
 - Responsive UI design for voice recording playback.
 
-## Recent Changes (July 31, 2025)
+## Recent Changes (August 2, 2025)
 
-### V3 Help-First AI Implementation
+### Note Detail Editing Fix
+- Resolved all 6 TypeScript errors in note-detail.tsx
+- Fixed textarea overlap issue by setting pb-[80px] padding
+- Implemented client-side task extraction utility (extractTasks.ts)
+- Created API normalizer for camelCase property names (normalizeNote.ts)
+- Added data-note-id attribute to InputBar for focus guard protection
+- Enhanced blur handler with automatic task extraction and saving
+- Added PUT /api/notes/:id/tasks endpoint for saving extracted tasks
+- Fixed refetchInterval TypeScript error with proper query destructuring
+
+### V3 Help-First AI Implementation (July 31, 2025)
 - Fixed InputBar component props issue in NoteDetailSimple
 - Implemented and tested V3 Help-First processing with notes #627 and #628
 - Enhanced intent classification system (IMMEDIATE_PROBLEM, GENERAL, etc.)

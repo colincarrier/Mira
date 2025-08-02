@@ -2791,6 +2791,50 @@ Respond with a JSON object containing:
     }
   });
 
+  // Extract and save tasks from note content
+  app.put("/api/notes/:id/tasks", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.id);
+      const { tasks } = req.body;
+
+      if (!Array.isArray(tasks)) {
+        return res.status(400).json({ message: "Tasks must be an array" });
+      }
+
+      // Get existing todos for this note
+      const existingTodos = await storage.getTodos();
+      const noteTodos = existingTodos.filter(t => t.noteId === noteId);
+
+      // Create new tasks that don't already exist
+      const createdTasks = [];
+      for (const task of tasks) {
+        // Check if task already exists
+        const exists = noteTodos.some(t => 
+          t.title.toLowerCase() === task.title.toLowerCase()
+        );
+
+        if (!exists && task.title && task.title.length > 5) {
+          const newTodo = await storage.createTodo({
+            noteId,
+            title: task.title,
+            priority: task.priority || 'normal',
+            completed: false
+          });
+          createdTasks.push(newTodo);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        created: createdTasks.length,
+        tasks: createdTasks 
+      });
+    } catch (error) {
+      console.error("Failed to save tasks:", error);
+      res.status(500).json({ message: "Failed to save tasks" });
+    }
+  });
+
   app.get("/api/todos/:id/context", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

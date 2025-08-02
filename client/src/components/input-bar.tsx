@@ -783,6 +783,7 @@ export default function InputBar({
             value={inputText}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
+            data-note-id={noteId}
             placeholder={isVoiceRecording ? "Recording voice note..." : config.placeholder}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 text-gray-900 resize-none overflow-hidden"
             rows={1}
