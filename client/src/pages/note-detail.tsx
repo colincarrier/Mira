@@ -687,6 +687,7 @@ export default function NoteDetail() {
 
             <textarea
               ref={textareaRef}
+              data-note-id={note.id}
               value={editedContent}
               onChange={(e) => {
                 setEditedContent(e.target.value);

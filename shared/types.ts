@@ -41,7 +41,8 @@ export interface MiraResponse {
 }
 
 export interface NoteEvent {
-  type: 'enhancement_complete';
+  type: 'enhancement_complete' | 'note_created' | 'note_updated';
+  noteId?: number;
   content?: string;
   tasks?: Task[];
   tokenUsage?: TokenUsage;
