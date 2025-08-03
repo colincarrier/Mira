@@ -1,5 +1,6 @@
 import { StarterKit } from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
+import { Link } from '@tiptap/extension-link';
 import { Extension } from '@tiptap/core';
 import { featureFlags } from '@shared/featureFlags';
 
@@ -34,7 +35,16 @@ const AuthorMark = Extension.create({
 
 export const extensions = [
   StarterKit.configure({
-    // Keep default StarterKit extensions
+    paragraph: { HTMLAttributes: { class: 'mb-4' } },
+    bulletList: { HTMLAttributes: { class: 'list-disc pl-6 mb-4' } },
+    listItem: { HTMLAttributes: { class: 'mb-1' } },
+  }),
+  Link.configure({
+    autolink: true,
+    openOnClick: false,
+    HTMLAttributes: {
+      class: 'text-blue-600 underline hover:text-blue-800 dark:text-blue-400',
+    },
   }),
   Placeholder.configure({
     placeholder: ({ node }) => {

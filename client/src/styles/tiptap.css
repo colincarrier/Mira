@@ -20,6 +20,16 @@
   white-space: pre-wrap; /* Preserve line breaks */
 }
 
+/* Prevent paragraph collapse during typing */
+.ProseMirror p:not(:last-child) { 
+  margin-bottom: 1rem; 
+}
+
+.ProseMirror.ProseMirror-focused p {
+  /* Prevent collapse during typing */
+  min-height: 1.5em;
+}
+
 /* AI content styling - only visible when SHOW_AI_DIFF feature flag is enabled */
 .ProseMirror .ai-content {
   background-color: #f0f9ff;
@@ -63,4 +73,16 @@
 
 .ProseMirror li {
   margin-bottom: 0.25rem;
+  display: list-item;
+}
+
+/* Link styles */
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #1d4ed8;
 }

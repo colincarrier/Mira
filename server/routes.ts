@@ -10,6 +10,7 @@ import { DataProtectionService } from "./data-protection";
 import { fastPromptTemplate, type FastAIResult } from "./utils/fastAIProcessing";
 import { processNote, processWithIntelligenceV2, type MiraAIInput, type MiraAIResult } from "./brain/miraAIProcessing";
 import { composeRichContext } from "./ai/presentation-composer";
+import { normalizeNote } from "./utils/normalizeNote";
 // Safe AI module loading - never crash the server if AI modules fail
 let analyzeWithOpenAI: any = null;
 let transcribeAudio: any = null;
@@ -539,10 +540,12 @@ Respond in JSON format:
         notes.map(async (note) => {
           try {
             const todos = await storage.getTodosByNoteId(note.id);
-            return { ...note, todos: todos.filter(t => !t.archived) };
+            const normalizedNote = normalizeNote(note);
+            return { ...normalizedNote, todos: todos.filter(t => !t.archived) };
           } catch (error) {
             console.warn(`Failed to fetch todos for note ${note.id}:`, error);
-            return { ...note, todos: [] };
+            const normalizedNote = normalizeNote(note);
+            return { ...normalizedNote, todos: [] };
           }
         })
       );
@@ -565,11 +568,13 @@ Respond in JSON format:
       // Fetch todos for this note
       try {
         const todos = await storage.getTodosByNoteId(id);
-        const noteWithTodos = { ...note, todos: todos.filter(t => !t.archived) };
+        const normalizedNote = normalizeNote(note);
+        const noteWithTodos = { ...normalizedNote, todos: todos.filter(t => !t.archived) };
         res.json(noteWithTodos);
       } catch (error) {
         console.warn(`Failed to fetch todos for note ${id}:`, error);
-        res.json({ ...note, todos: [] });
+        const normalizedNote = normalizeNote(note);
+        res.json({ ...normalizedNote, todos: [] });
       }
     } catch (error) {
       console.error("Error fetching note:", error);

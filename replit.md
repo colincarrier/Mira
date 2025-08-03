@@ -62,9 +62,18 @@ Preferred communication style: Simple, everyday language.
 - Enhanced rich context display with prominent sections for strategic intelligence.
 - Responsive UI design for voice recording playback.
 
-## Recent Changes (August 2, 2025)
+## Recent Changes (August 3, 2025)
 
-### Note Detail Editing Fix
+### Infrastructure and Editor Enhancement
+- Comprehensive database normalization with normalizeNote utility for snake_case/camelCase consistency
+- Fixed all database column naming inconsistencies across the entire codebase
+- Enhanced TipTap editor with Link extension for better link handling
+- Implemented iOS-style BubbleMenu formatting (press-and-hold menus)
+- Added debounced saves and improved markdown parsing in the editor
+- Fixed BubbleMenu import issue by updating to use '@tiptap/react/menus'
+- Removed redundant toast notifications for better UX
+
+### Note Detail Editing Fix (August 2, 2025)
 - Resolved all 6 TypeScript errors in note-detail.tsx
 - Fixed textarea overlap issue by setting pb-[80px] padding
 - Implemented client-side task extraction utility (extractTasks.ts)

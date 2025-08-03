@@ -17,6 +17,7 @@ import { JSONContent } from "@shared/types";
 import { Step } from "prosemirror-transform";
 import { extractTasksFromTipTap } from "@/utils/extract-tasks-tiptap";
 import { extractTitle } from "@/utils/titleExtraction";
+import { parseAIContent } from "@/utils/markdownHelpers";
 
 // Voice Note Detail Player Component
 interface VoiceNoteDetailPlayerProps {
@@ -838,7 +839,7 @@ export default function NoteDetail() {
                   <div className="border-t border-gray-200 pt-4 mb-4">
                     <div className="text-sm text-gray-500 mb-3 font-medium">AI Response:</div>
                     <MarkdownRenderer 
-                      content={mira.content}
+                      content={parseAIContent(mira.content)}
                       className="text-gray-800"
                     />
                   </div>
@@ -1200,7 +1201,7 @@ export default function NoteDetail() {
                     </button>
                   </div>
                 </div>
-              ))}
+              ) as React.ReactNode)}
             </div>
           </div>
         </div>

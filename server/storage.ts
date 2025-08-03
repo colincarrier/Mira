@@ -123,14 +123,25 @@ export const storage = {
   updateNote: async (id: number, updates: any) => {
     try {
       const client = await pool.connect();
-      const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
-      const values = [id, ...Object.values(updates)];
+      
+      // Convert camelCase to snake_case for database columns
+      const snakeCaseUpdates: any = {};
+      for (const [key, value] of Object.entries(updates)) {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        snakeCaseUpdates[snakeKey] = value;
+      }
+      
+      // Always update updated_at
+      snakeCaseUpdates.updated_at = new Date();
+      
+      const setClause = Object.keys(snakeCaseUpdates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+      const values = [id, ...Object.values(snakeCaseUpdates)];
       const result = await client.query(`UPDATE notes SET ${setClause} WHERE id = $1 RETURNING *`, values);
       client.release();
       return result.rows[0];
     } catch (error) {
       console.error('Error updating note:', error);
-      return null;
+      throw error; // Re-throw to see the actual error
     }
   },
 };

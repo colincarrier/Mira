@@ -125,11 +125,7 @@ export default function Notes() {
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"], exact: false });
-      toast({
-        title: "Note saved",
-        description: "Your note has been created and AI analysis is in progress.",
-        duration: 3000,
-      });
+      // Toast removed - optimistic card is enough feedback
     },
   });
 

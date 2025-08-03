@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import { extensions } from '../utils/tiptap/schema';
@@ -22,6 +22,15 @@ const SAVE_DEBOUNCE_MS = 3000;
 export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
   const offline = !navigator.onLine;
   const pendingSteps = useRef<Step[]>([]);
+  
+  // Debounced save callback
+  const debouncedSave = useMemo(
+    () =>
+      debounce((doc: JSONContent, steps: Step[]) => {
+        onCommit(doc, steps);
+      }, 2000),
+    [onCommit]
+  );
   
   const editor = useEditor({
     extensions,
@@ -54,11 +63,11 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
         return false;
       }
     },
-    onUpdate: debounce(({ editor, transaction }) => {
+    onUpdate: ({ editor, transaction }) => {
       if (!transaction.docChanged) return;
       pendingSteps.current.push(...(transaction.steps as Step[]));
-      void saveDoc();
-    }, SAVE_DEBOUNCE_MS),
+      debouncedSave(editor.getJSON(), transaction.steps as Step[]);
+    },
   });
 
   // Immediate saver used on blur & beforeunload
@@ -166,23 +175,38 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
       )}
 
       {/* iOS-style Bubble menu appears only on selection */}
-      <BubbleMenu editor={editor} tippyOptions={{ placement: "top" }}>
-        <div className="bubble-menu">
+      <BubbleMenu 
+        editor={editor} 
+        tippyOptions={{ 
+          placement: "top",
+          duration: 100 
+        }}
+      >
+        <div className="bubble-menu shadow-md rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex gap-1 px-2 py-1">
           <button
             data-active={editor.isActive("bold")}
             onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`bubble-btn p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('bold') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
           >
             <Bold size={16} />
           </button>
           <button
             data-active={editor.isActive("italic")}
             onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`bubble-btn p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('italic') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
           >
             <Italic size={16} />
           </button>
           <button
             data-active={editor.isActive("heading", { level: 1 })}
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={`bubble-btn p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+              editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
+            }`}
           >
             <Heading1 size={16} />
           </button>
