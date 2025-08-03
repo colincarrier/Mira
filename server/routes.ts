@@ -2641,22 +2641,50 @@ Respond with JSON:
   app.patch("/api/notes/:id", async (req, res) => {
     try {
       const noteId = parseInt(req.params.id);
-      const { content, updateInstruction, contextUpdate, ...otherUpdates } = req.body;
-
-      // Get the existing note
       const existingNote = await storage.getNote(noteId);
+      
       if (!existingNote) {
         return res.status(404).json({ message: "Note not found" });
       }
 
+      // Convert camelCase to snake_case for database columns
+      const rawUpdates: Record<string, any> = req.body ?? {};
+      const updates: Record<string, any> = {};
+
+      // Extract special instruction fields before conversion
+      const { updateInstruction, contextUpdate } = rawUpdates;
+      
+      // Convert to snake_case
+      for (const [key, value] of Object.entries(rawUpdates)) {
+        if (value === undefined) continue;
+        if (key === 'updateInstruction' || key === 'contextUpdate') continue;
+        const snake = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        updates[snake] = value;
+      }
+
+      // Whitelist allowed columns to prevent SQL injection
+      const ALLOWED_FIELDS = [
+        'content', 'ai_generated_title', 'mode', 'user_id', 'is_shared', 
+        'share_id', 'privacy_level', 'audio_url', 'media_url', 'transcription',
+        'image_data', 'ai_enhanced', 'ai_suggestion', 'ai_context', 'rich_context',
+        'mira_response', 'mira_response_created_at', 'is_processing', 'collection_id',
+        'vector_dense', 'vector_sparse', 'intent_vector', 'version', 'original_content',
+        'last_user_edit', 'protected_content', 'processing_path', 'classification_scores',
+        'token_usage', 'doc_json'
+      ];
+
+      const validUpdates: Record<string, any> = {};
+      for (const [field, value] of Object.entries(updates)) {
+        if (ALLOWED_FIELDS.includes(field)) {
+          validUpdates[field] = value;
+        }
+      }
+
       // If this is just a direct content update (like iOS Notes typing), save it directly
-      if (content && !updateInstruction && !contextUpdate) {
+      if (validUpdates.content && !updateInstruction && !contextUpdate) {
         console.log("Direct content update - saving like iOS Notes");
-        const updatedNote = await storage.updateNote(noteId, { 
-          content: content.trim(),
-          last_user_edit: new Date().toISOString(),
-          ...otherUpdates 
-        });
+        validUpdates.last_user_edit = new Date().toISOString();
+        const updatedNote = await storage.updateNote(noteId, validUpdates);
         return res.json(updatedNote);
       }
 

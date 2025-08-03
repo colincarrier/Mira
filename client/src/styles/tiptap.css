@@ -50,6 +50,13 @@
   @apply text-blue-600 bg-blue-50 dark:bg-blue-900 dark:text-blue-300; 
 }
 
+.bubble-menu .bubble-btn {
+  @apply p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+.bubble-menu .bubble-btn[data-active="true"] {
+  @apply bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400;
+}
+
 /* Placeholder text */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -73,18 +80,11 @@
 
 .ProseMirror li {
   margin-bottom: 0.25rem;
-  display: list-item;
 }
 
-/* Link styles */
-.ProseMirror a {
-  color: #2563eb;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.ProseMirror a:hover {
-  color: #1d4ed8;
+/* Links */
+.ProseMirror a { 
+  @apply text-blue-600 underline hover:text-blue-800; 
 }
 
 /* ─────────────────────────────────────────── */

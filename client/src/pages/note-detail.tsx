@@ -161,7 +161,7 @@ import { parseMiraResponse, extractTasks, normalizeNote } from "@/utils";
 
 export default function NoteDetail() {
   const { id } = useParams();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
@@ -632,13 +632,13 @@ export default function NoteDetail() {
               // Check referrer to return to appropriate page
               const referrer = document.referrer;
               if (referrer && referrer.includes('/remind')) {
-                setLocation("/remind");
+                navigate("/remind");
               } else if (referrer && referrer.includes('/collections')) {
-                setLocation("/?tab=collections");
+                navigate("/?tab=collections");
               } else if (window.history.length > 1) {
                 window.history.back();
               } else {
-                setLocation("/");
+                navigate("/");
               }
             }}
             className="px-4 py-2 bg-[hsl(var(--sage-green))] text-white rounded-md"

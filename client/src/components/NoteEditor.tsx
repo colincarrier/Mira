@@ -129,40 +129,21 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
     return () => el.removeEventListener("blur", saveDoc, true);
   }, [editor, saveDoc]);
 
-  // Navigation detection with popstate
+  // Navigation detection with popstate and beforeunload
   useEffect(() => {
-    const handleNavigate = () => {
-      if (pendingSteps.current.length > 0 && editor) {
-        // Synchronously save before navigation
-        const steps = [...pendingSteps.current];
-        pendingSteps.current = [];
-        onCommit(editor.getJSON(), steps);
+    const flush = () => {
+      if (pendingSteps.current.length && editor) {
+        debouncedSave.flush();          // run debounced immediately
       }
     };
     
-    // Listen for route changes
-    window.addEventListener('popstate', handleNavigate);
-    return () => window.removeEventListener('popstate', handleNavigate);
-  }, [editor, onCommit]);
-
-  // Single beforeunload guard
-  useEffect(() => {
-    const handleUnload = (e: BeforeUnloadEvent) => {
-      if (pendingSteps.current.length && editor) {
-        try {
-          onCommit(editor.getJSON(), pendingSteps.current);
-          pendingSteps.current = [];
-        } catch (err) {
-          console.warn('[NoteEditor] save-on-unload failed', err);
-        }
-        e.preventDefault();
-        e.returnValue = '';
-      }
+    window.addEventListener("popstate", flush);
+    window.addEventListener("beforeunload", flush);
+    return () => {
+      window.removeEventListener("popstate", flush);
+      window.removeEventListener("beforeunload", flush);
     };
-
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [editor, onCommit]);
+  }, [debouncedSave, editor]);
 
   // Apply pending AI patch from SSE after blur
   useEffect(() => {

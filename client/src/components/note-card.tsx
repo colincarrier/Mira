@@ -625,18 +625,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
       {/* Intelligence V2 AI Analysis - Enhanced Display */}
-      {richContextData?.aiBody && (
-        <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-          <div className="flex items-center space-x-1 mb-2">
-            <Brain className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-semibold text-blue-700">AI Analysis</span>
 
-          </div>
-          <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-            {richContextData.aiBody}
-          </div>
-        </div>
-      )}
 
       {/* Follow-up Questions */}
       {followUpQuestions.length > 0 && (

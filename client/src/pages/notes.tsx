@@ -125,7 +125,6 @@ export default function Notes() {
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"], exact: false });
-      // Toast removed - optimistic card is enough feedback
     },
   });
 

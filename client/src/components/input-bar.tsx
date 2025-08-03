@@ -362,27 +362,26 @@ export default function InputBar({
     console.log('🔍 handleSendMessage triggered with:', { inputText: inputText.trim(), noteId, hasOnTextSubmit: !!onTextSubmit });
     
     if (!inputText.trim() || isSending) return;
-    
     setIsSending(true);
-    const messageText = inputText.trim();
-    setInputText(""); // Clear immediately for better UX
+    const plain = inputText.trim();
+    setInputText("");
     
     try {
       if (noteId && onTextSubmit) {
         // For note detail page, use the parent's handler which has access to current note data
         console.log('📤 Using onTextSubmit callback for note detail');
-        await onTextSubmit(messageText);
+        await onTextSubmit(plain);
       } else if (noteId) {
         // Fallback if no onTextSubmit provided
         console.log('📝 Updating existing note:', noteId);
-        const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(messageText);
+        const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(plain);
         const endpoint = clarification ? 'clarify' : 'evolve';
         
         const response = await fetch(`/api/notes/${noteId}/${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            instruction: messageText,
+            instruction: plain,
             // Parent should provide these via context
           }),
           credentials: "include",
@@ -401,11 +400,11 @@ export default function InputBar({
       } else {
         // Create new note
         console.log('🆕 Creating new note');
-        createTextNoteMutation.mutate(messageText);
+        createTextNoteMutation.mutate(plain);
       }
     } catch (error) {
       console.error('[InputBar] send failed:', error);
-      setInputText(messageText);              // restore text
+      setInputText(plain);              // restore text
       toast({
         title: 'Send failed',
         description: 'Could not process your message – please try again.',
@@ -840,8 +839,10 @@ export default function InputBar({
                 onMouseDown={(e) => {
                   console.log('🎯 Send button mouse down!', e);
                 }}
-                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSending}
+                disabled={!inputText.trim() || isSending}
+                className={`h-8 w-8 rounded-full flex items-center justify-center transition
+                  ${inputText.trim() && !isSending ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-400'}
+                  ${isSending ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {isSending ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
