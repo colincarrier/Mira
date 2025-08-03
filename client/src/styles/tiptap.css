@@ -86,3 +86,15 @@
 .ProseMirror a:hover {
   color: #1d4ed8;
 }
+
+/* ─────────────────────────────────────────── */
+/* BubbleMenu buttons – match Mira's design   */
+/* ─────────────────────────────────────────── */
+.bubble-btn {
+  @apply p-2 rounded transition-colors
+          hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+.bubble-btn[data-active="true"] {
+  @apply bg-blue-50  text-blue-600
+          dark:bg-blue-900 dark:text-blue-400;
+}

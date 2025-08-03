@@ -28,6 +28,7 @@ export default function InputBar({
   // Input state
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   // Mode state
   const [showSubmenu, setShowSubmenu] = useState(false);
@@ -357,75 +358,64 @@ export default function InputBar({
     setIsTyping(value.length > 0);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     console.log('🔍 handleSendMessage triggered with:', { inputText: inputText.trim(), noteId, hasOnTextSubmit: !!onTextSubmit });
     
-    if (inputText.trim()) {
-      if (noteId) {
+    if (!inputText.trim() || isSending) return;
+    
+    setIsSending(true);
+    const messageText = inputText.trim();
+    setInputText(""); // Clear immediately for better UX
+    
+    try {
+      if (noteId && onTextSubmit) {
+        // For note detail page, use the parent's handler which has access to current note data
+        console.log('📤 Using onTextSubmit callback for note detail');
+        await onTextSubmit(messageText);
+      } else if (noteId) {
+        // Fallback if no onTextSubmit provided
         console.log('📝 Updating existing note:', noteId);
-        // Automatic clarification vs evolution detection
-        const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(inputText);
+        const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(messageText);
         const endpoint = clarification ? 'clarify' : 'evolve';
         
-        // Get current note data first
-        fetch(`/api/notes/${noteId}`, {
-          credentials: "include"
-        }).then(response => response.json())
-        .then(currentNote => {
-          return fetch(`/api/notes/${noteId}/${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              instruction: inputText.trim(),
-              existingContent: currentNote.content,
-              existingContext: currentNote.aiContext,
-              existingTodos: currentNote.todos || [],
-              existingRichContext: currentNote.richContext
-            }),
-            credentials: "include",
-          });
-        }).then(response => {
-          if (!response.ok) {
-            throw new Error(`Update failed: ${response.status}`);
-          }
-          return response.json();
-        }).then(() => {
-          queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
-          setInputText("");
-          setIsTyping(false);
-          closeAllModes();
-          toast({
-            title: "Note updated",
-            description: "Your clarification has been processed.",
-            duration: 3000,
-          });
-        }).catch(error => {
-          console.error('❌ Note update failed:', error);
-          toast({
-            title: "Update failed", 
-            description: "Could not process your clarification. Please try again.",
-            variant: "destructive",
-            duration: 5000,
-          });
+        const response = await fetch(`/api/notes/${noteId}/${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            instruction: messageText,
+            // Parent should provide these via context
+          }),
+          credentials: "include",
         });
-      } else if (onTextSubmit) {
-        console.log('📤 Using onTextSubmit callback');
-        onTextSubmit(inputText.trim());
-        setInputText("");
-        setIsTyping(false);
-        closeAllModes();
+        
+        if (!response.ok) {
+          throw new Error(`Update failed: ${response.status}`);
+        }
+        
+        await queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
+        toast({
+          title: "Note updated",
+          description: "Your update has been processed.",
+          duration: 3000,
+        });
       } else {
-        console.log('🆕 Creating new note via mutation');
-        console.log('🚀 About to call createTextNoteMutation.mutate with:', inputText.trim());
-        createTextNoteMutation.mutate(inputText.trim());
-        console.log('✅ createTextNoteMutation.mutate called');
-        setInputText("");
-        setIsTyping(false);
-        closeAllModes();
+        // Create new note
+        console.log('🆕 Creating new note');
+        createTextNoteMutation.mutate(messageText);
       }
-    } else {
-      console.log('🔘 Empty input, triggering onNewNote');
-      onNewNote?.();
+    } catch (error) {
+      console.error('[InputBar] send failed:', error);
+      setInputText(messageText);              // restore text
+      toast({
+        title: 'Send failed',
+        description: 'Could not process your message – please try again.',
+        variant: 'destructive',
+        duration: 5000,
+      });
+    } finally {
+      setIsSending(false);
+      setIsTyping(false);
+      closeAllModes();
     }
   };
 
@@ -850,9 +840,14 @@ export default function InputBar({
                 onMouseDown={(e) => {
                   console.log('🎯 Send button mouse down!', e);
                 }}
-                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSending}
               >
-                <Send className="w-4 h-4" />
+                {isSending ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </button>
             ) : (
               <>

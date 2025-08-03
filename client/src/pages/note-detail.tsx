@@ -447,11 +447,16 @@ export default function NoteDetail() {
   };
 
   const handleSendMessage = async (text: string) => {
-    console.log("Sending AI instruction for note evolution:", text);
+    console.log("Processing message:", text);
 
     try {
-      // Use the evolution endpoint for AI-assisted updates that considers existing content
-      const response = await fetch(`/api/notes/${id}/evolve`, {
+      // Automatic clarification vs evolution detection
+      const clarification = /^actually[,:\s]|^sorry[,:\s]|^i meant|^correction[,:\s]|^no[,:\s]/i.test(text);
+      const endpoint = clarification ? 'clarify' : 'evolve';
+      
+      console.log(`Using ${endpoint} endpoint for:`, text);
+
+      const response = await fetch(`/api/notes/${id}/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -467,12 +472,12 @@ export default function NoteDetail() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-        console.error("Evolution endpoint error:", errorData);
+        console.error(`${endpoint} endpoint error:`, errorData);
         throw new Error(errorData.message || `Server error: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log("AI evolution result:", result);
+      console.log(`AI ${endpoint} result:`, result);
 
       // Refresh the note data
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
@@ -480,13 +485,13 @@ export default function NoteDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
       toast({
-        description: "Note enhanced with AI assistance",
+        description: clarification ? "Clarification processed" : "Note enhanced with AI assistance",
       });
     } catch (error) {
-      console.error("Failed to enhance note with AI:", error);
+      console.error("Failed to process message:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
-        title: "Failed to enhance note",
+        title: "Failed to process message",
         description: errorMessage,
         variant: "destructive"
       });
@@ -1201,7 +1206,7 @@ export default function NoteDetail() {
                     </button>
                   </div>
                 </div>
-              ) as React.ReactNode)}
+              ))}
             </div>
           </div>
         </div>
