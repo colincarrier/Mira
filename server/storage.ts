@@ -135,36 +135,25 @@ export const storage = {
       return [];
     }
   },
-  updateNote: async (id: number, updates: any) => {
-    try {
-      const client = await pool.connect();
-      
-      // Convert camelCase to snake_case for database columns
-      const ALLOWED_FIELDS = [
-        'ai_generated_title','content','ai_context','rich_context','mira_response','token_usage'
-      ];
-      const snakeCaseUpdates: any = {};
-      for (const [key, value] of Object.entries(updates)) {
-        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        if (ALLOWED_FIELDS.includes(snakeKey)) {
-          snakeCaseUpdates[snakeKey] = value;
-        }
-      }
-      if (Object.keys(snakeCaseUpdates).length === 0) {
-        throw new Error('No valid fields to update');
-      }
-      
-      // updated_at column does not exist - remove this line
-      
-      const setClause = Object.keys(snakeCaseUpdates).map((key, index) => `${key} = $${index + 2}`).join(', ');
-      const values = [id, ...Object.values(snakeCaseUpdates)];
-      const result = await client.query(`UPDATE notes SET ${setClause} WHERE id = $1 RETURNING *`, values);
-      client.release();
-      return result.rows[0];
-    } catch (error) {
-      console.error('Error updating note:', error);
-      throw error; // Re-throw to see the actual error
-    }
+  updateNote: async (
+    id: number,
+    updates: {
+      ai_generated_title?: string | null;
+      token_usage?: string | null;
+      mira_response?: string | null;
+      is_processing?: boolean;
+    },
+  ) => {
+    return pool.query(
+      `UPDATE notes
+         SET updated_at        = NOW(),
+             ai_generated_title = COALESCE($1, ai_generated_title),
+             token_usage        = COALESCE($2, token_usage),
+             mira_response      = COALESCE($3, mira_response),
+             is_processing      = COALESCE($4, is_processing)
+       WHERE id = $5`,
+      [updates.ai_generated_title, updates.token_usage, updates.mira_response, updates.is_processing, id],
+    );
   },
 };
 
