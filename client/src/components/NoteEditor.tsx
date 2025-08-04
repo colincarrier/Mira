@@ -203,11 +203,7 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
 
       {/* iOS-style Bubble menu appears only on selection */}
       <BubbleMenu 
-        editor={editor} 
-        tippyOptions={{ 
-          placement: "top",
-          duration: 100 
-        }}
+        editor={editor}
       >
         <div className="bubble-menu shadow-md rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex gap-1 px-2 py-1">
           <button

@@ -1,26 +1,12 @@
 /* TipTap Editor Styles */
-.ProseMirror {
-  min-height: 400px;
-  outline: none;
-  -webkit-overflow-scrolling: touch; /* iOS scroll-bounce */
+
+/* Paragraph & list spacing */
+.ProseMirror p { 
+  margin-bottom: 1rem; 
+  line-height: 1.6; 
+  white-space: pre-wrap; 
 }
 
-.ProseMirror h1 {
-  font-size: 1.875rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  line-height: 1.2;
-  /* iOS Notes style title */
-  letter-spacing: -0.02em;
-}
-
-.ProseMirror p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-  white-space: pre-wrap; /* Preserve line breaks */
-}
-
-/* Prevent paragraph collapse during typing */
 .ProseMirror p:not(:last-child) { 
   margin-bottom: 1rem; 
 }
@@ -30,71 +16,66 @@
   min-height: 1.5em;
 }
 
-/* AI content styling - only visible when SHOW_AI_DIFF feature flag is enabled */
-.ProseMirror .ai-content {
-  background-color: #f0f9ff;
-  padding-left: 1rem;
-  margin: 1rem 0;
+.ProseMirror ul, 
+.ProseMirror ol { 
+  list-style-type: disc; 
+  padding-left: 1.5rem; 
+  margin-bottom: 1rem; 
 }
 
-/* Bubble menu styling */
-.bubble-menu {
-  @apply rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-1 flex gap-1;
+.ProseMirror li { 
+  margin-bottom: 0.25rem; 
 }
 
-.bubble-menu button {
-  @apply w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700;
-}
-
-.bubble-menu [data-active="true"] { 
-  @apply text-blue-600 bg-blue-50 dark:bg-blue-900 dark:text-blue-300; 
-}
-
-.bubble-menu .bubble-btn {
-  @apply p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
-}
-.bubble-menu .bubble-btn[data-active="true"] {
-  @apply bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400;
-}
-
-/* Placeholder text */
-.ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: #adb5bd;
-  pointer-events: none;
-  height: 0;
-}
-
-/* Selection */
-.ProseMirror ::selection {
-  background-color: #b4d5fe;
-}
-
-/* List styles */
-.ProseMirror ul,
-.ProseMirror ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.ProseMirror li {
-  margin-bottom: 0.25rem;
-}
-
-/* Links */
 .ProseMirror a { 
-  @apply text-blue-600 underline hover:text-blue-800; 
+  color: #2563eb; 
+  text-decoration: underline; 
 }
 
-/* ─────────────────────────────────────────── */
-/* BubbleMenu buttons – match Mira's design   */
-/* ─────────────────────────────────────────── */
-.bubble-btn {
-  @apply p-2 rounded transition-colors
-          hover:bg-gray-100 dark:hover:bg-gray-700;
+.ProseMirror a:hover { 
+  color: #1d4ed8; 
 }
+
+/* Bubble menu styles */
+.bubble-menu {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.bubble-btn {
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bubble-btn:hover {
+  background: #f3f4f6;
+}
+
 .bubble-btn[data-active="true"] {
-  @apply bg-blue-50  text-blue-600
-          dark:bg-blue-900 dark:text-blue-400;
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+/* Dark mode bubble menu */
+.dark .bubble-menu {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .bubble-btn:hover {
+  background: #374151;
+}
+
+.dark .bubble-btn[data-active="true"] {
+  background: #4b5563;
+  color: #f9fafb;
 }

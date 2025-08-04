@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './styles/tiptap.css';
 
 :root {
   --background: 0 0% 96%; /* #F5F5F5 - Warm White */
