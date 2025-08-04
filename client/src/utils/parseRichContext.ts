@@ -202,3 +202,29 @@ export function parseRichContext(raw: string | null | undefined): ParsedRichCont
   console.log('🚨 Unknown rich context structure:', Object.keys(parsed));
   return null;
 }
+
+function parseTaskValue(task: unknown): string {
+  if (task == null) return "";
+  if (typeof task === "string") return task;
+  if (Array.isArray(task)) return parseTaskArray(task);
+  if (isTaskObject(task)) return (
+    task.title     ||
+    task.description ||
+    task.task      ||
+    task.name      ||
+    JSON.stringify(task)
+  );
+  return typeof task === "object"
+    ? JSON.stringify(task)
+    : String(task);
+}
+
+function parseTaskArray(arr: unknown[]): string {
+  return arr.map(parseTaskValue).filter(Boolean).join(", ");
+}
+
+function isTaskObject(v: unknown): v is {
+  title?: string; description?: string; task?: string; name?: string;
+} {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}

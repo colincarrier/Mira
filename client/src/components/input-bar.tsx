@@ -1,7 +1,7 @@
 import { Camera, Mic, Plus, Send, Square, X as CloseIcon, FileText, Image } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+
 import { useLocation } from "wouter";
 
 interface InputBarProps {
@@ -51,7 +51,6 @@ export default function InputBar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const generalFileInputRef = useRef<HTMLInputElement>(null);
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Context-aware placeholders and settings
@@ -136,19 +135,11 @@ export default function InputBar({
         (old ?? []).map(n => (n.id === ctx?.tempId ? saved : n)),
       );
       // Defer todos/reminders refresh
-      toast({
-        title: `${currentPage === 'remind' ? 'Reminder' : 'Note'} saved`,
-        description: `Your ${currentPage === 'remind' ? 'reminder' : 'note'} has been created successfully.`,
-        duration: 3000,
-      });
+      console.log(`${currentPage === 'remind' ? 'Reminder' : 'Note'} saved`);
     },
     onError: (error) => {
       console.error("Text submission error:", error);
-      toast({
-        title: "Error",
-        description: `Failed to save ${currentPage === 'remind' ? 'reminder' : 'note'}. Please try again.`,
-        variant: "destructive",
-      });
+      console.error(`Failed to save ${currentPage === 'remind' ? 'reminder' : 'note'}`);
     },
   });
 
@@ -192,11 +183,7 @@ export default function InputBar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      toast({
-        title: "Voice note saved",
-        description: "Your voice note has been transcribed and saved.",
-        duration: 3000,
-      });
+      console.log("Voice note saved and transcribed");
     },
     onError: (error) => {
       console.error("Voice note error:", error);

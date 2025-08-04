@@ -4,7 +4,7 @@ import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Se
 import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
@@ -162,7 +162,6 @@ import { parseMiraResponse, extractTasks, normalizeNote } from "@/utils";
 export default function NoteDetail() {
   const { id } = useParams();
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
@@ -246,14 +245,9 @@ export default function NoteDetail() {
         queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       } catch (error) {
         console.error('Failed to save document:', error);
-        toast({
-          title: "Save Failed",
-          description: "Could not save changes. They'll be synced when you're back online.",
-          variant: "destructive"
-        });
       }
     },
-    [id, note?.aiGeneratedTitle, toast]
+    [id, note?.aiGeneratedTitle]
   );
 
   // Subscribe to SSE updates
@@ -309,7 +303,7 @@ export default function NoteDetail() {
     },
     onSuccess: () => {
 
-      setLocation("/");
+      navigate("/");
     },
     onError: () => {
 
@@ -816,19 +810,25 @@ export default function NoteDetail() {
             )}
 
             {/* V3 Tasks with Priority Styling */}
-            {mira?.tasks && mira.tasks.length > 0 && (
+            {Array.isArray(mira?.tasks) && mira.tasks.length > 0 && (
               <div className="mt-6">
                 <h4 className="text-sm text-gray-500 mb-3 font-medium">AI-Extracted Tasks:</h4>
                 <div className="space-y-2">
-                  {mira.tasks.map((t, i) => (
-                    <div key={i} className="flex items-center gap-2">
+                  {mira.tasks.map((t, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
                       <input type="checkbox" className="rounded border-gray-300" />
-                      <span className="text-sm text-gray-800">{typeof t === 'string' ? t : t.title}</span>
-                      {t.priority && t.priority !== 'normal' && (
+                      <span className="text-sm text-gray-800">
+                        {typeof t === "string"
+                          ? t
+                          : (t && typeof t === "object" && "title" in t
+                               ? (t as any).title
+                               : JSON.stringify(t))}
+                      </span>
+                      {t && typeof t === "object" && "priority" in t && (t as any).priority && (t as any).priority !== 'normal' && (
                         <span className={`text-xs px-2 py-0.5 rounded ${
-                          t.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                          (t as any).priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
                         }`}>
-                          {t.priority}
+                          {(t as any).priority}
                         </span>
                       )}
                     </div>
