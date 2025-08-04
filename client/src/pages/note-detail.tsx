@@ -293,17 +293,13 @@ export default function NoteDetail() {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] }); // Fix navigation issue
       // Only show success toast for AI updates, not direct edits
-      toast({ description: "Note updated successfully" });
+
       setIsEditing(false);
       setShowContextDialog(false);
     },
     onError: (error) => {
       console.error("Note update error:", error);
-      toast({ 
-        title: "Failed to save note", 
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive" 
-      });
+
     }
   });
 
@@ -312,11 +308,11 @@ export default function NoteDetail() {
       await apiRequest("DELETE", `/api/notes/${id}`);
     },
     onSuccess: () => {
-      toast({ title: "Note deleted successfully" });
+
       setLocation("/");
     },
     onError: () => {
-      toast({ title: "Failed to delete note", variant: "destructive" });
+
     }
   });
 
@@ -340,17 +336,9 @@ export default function NoteDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       setShowVersionHistory(false);
-      toast({
-        title: "Rollback Successful",
-        description: "Note has been restored to the previous version",
-      });
     },
     onError: () => {
-      toast({
-        title: "Rollback Failed",
-        description: "Could not restore previous version",
-        variant: "destructive"
-      });
+      console.error("Rollback failed");
     }
   });
 
@@ -364,17 +352,10 @@ export default function NoteDetail() {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       setShowApprovalDialog(false);
       setPendingChanges(null);
-      toast({
-        title: "Changes Applied",
-        description: "AI suggestions have been applied to your note",
-      });
+
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Could not apply changes",
-        variant: "destructive"
-      });
+
     }
   });
 
@@ -387,17 +368,10 @@ export default function NoteDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
       setClarificationInput('');
-      toast({
-        title: "Clarification Applied",
-        description: "AI has updated the note based on your clarification",
-      });
+
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Could not apply clarification",
-        variant: "destructive"
-      });
+
     }
   });
 
@@ -436,7 +410,7 @@ export default function NoteDetail() {
       }
     } else {
       navigator.clipboard.writeText(formatNoteForSharing(note!));
-      toast({ title: "Note copied to clipboard" });
+
     }
   };
 
@@ -484,17 +458,10 @@ export default function NoteDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
-      toast({
-        description: clarification ? "Clarification processed" : "Note enhanced with AI assistance",
-      });
+
     } catch (error) {
       console.error("Failed to process message:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      toast({
-        title: "Failed to process message",
-        description: errorMessage,
-        variant: "destructive"
-      });
     }
   };
 
@@ -818,11 +785,7 @@ export default function NoteDetail() {
                         }
                       } catch (err) {
                         console.error('Failed to save tasks:', err);
-                        toast({
-                          title: "Warning",
-                          description: "Could not save extracted tasks",
-                          variant: "destructive"
-                        });
+
                       }
                     }
                   }}
@@ -945,15 +908,11 @@ export default function NoteDetail() {
                         const calendarEvent = createCalendarEventFromContent(todo.title, todo.title);
                         if (calendarEvent) {
                           addToGoogleCalendar(calendarEvent);
-                          toast({
-                            description: "Opening Google Calendar with event details",
-                          });
+
                         } else {
                           const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(todo.title)}&details=${encodeURIComponent(`From note: ${note.content}`)}`;
                           window.open(calendarUrl, '_blank');
-                          toast({
-                            description: "Opening Google Calendar",
-                          });
+
                         }
                       }}
                       className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
@@ -1246,7 +1205,9 @@ export default function NoteDetail() {
               <div className="border rounded-lg p-3">
                 <div className="text-sm font-medium mb-2">Suggested Changes:</div>
                 <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded max-h-32 overflow-y-auto">
-                  {pendingChanges.suggestedChanges}
+                  {typeof pendingChanges.suggestedChanges === 'string' 
+                    ? pendingChanges.suggestedChanges 
+                    : JSON.stringify(pendingChanges.suggestedChanges, null, 2)}
                 </div>
               </div>
 
@@ -1315,9 +1276,7 @@ export default function NoteDetail() {
         prePopulatedText={`Reminder: ${note?.content?.split('\n')[0] || 'Untitled Note'}`}
         onReminderUpdated={() => {
           queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-          toast({
-            description: "Reminder created successfully!",
-          });
+
         }}
       />
     </div>
