@@ -188,11 +188,7 @@ export default function InlineVoiceRecorder({
         errorMessage += `${error?.message || error?.name || 'Unknown error'}`;
       }
       
-      toast({
-        title: "Microphone Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+
       return false;
     }
   }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);

@@ -296,7 +296,7 @@ export default function TodosView() {
             {reminders.map(reminder => (
               <TodoItem
                 key={reminder.id}
-                todo={reminder}
+                todo={{...reminder, title: reminder.description ?? reminder.title}}
                 onToggle={handleToggleTodo}
                 onPin={handlePinTodo}
                 onArchive={handleArchiveTodo}
@@ -343,7 +343,7 @@ export default function TodosView() {
             {filteredTodos.map(todo => (
               <TodoItem
                 key={todo.id}
-                todo={todo}
+                todo={{...todo, title: todo.description ?? todo.title}}
                 onToggle={handleToggleTodo}
                 onPin={handlePinTodo}
                 onArchive={handleArchiveTodo}

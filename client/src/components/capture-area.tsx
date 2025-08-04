@@ -28,6 +28,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setText("");
       setIsTextDialogOpen(false);

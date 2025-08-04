@@ -125,6 +125,7 @@ export default function Notes() {
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"], exact: false });
+      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
     },
   });
 

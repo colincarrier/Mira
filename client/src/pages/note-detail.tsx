@@ -636,7 +636,7 @@ export default function NoteDetail() {
               } else if (referrer && referrer.includes('/collections')) {
                 navigate("/?tab=collections");
               } else if (window.history.length > 1) {
-                navigate(-1);
+                window.history.back();
               } else {
                 navigate("/");
               }
@@ -661,11 +661,11 @@ export default function NoteDetail() {
                 // Check if we came from a specific page
                 const referrer = document.referrer;
                 if (referrer && (referrer.includes('/remind') || referrer.includes('/collections'))) {
-                  navigate(-1);
+                  window.history.back();
                 } else if (window.history.length > 1) {
-                  navigate(-1);
+                  window.history.back();
                 } else {
-                  setLocation("/");
+                  navigate("/");
                 }
               }}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]"
@@ -1000,14 +1000,9 @@ export default function NoteDetail() {
                                     // Refresh the note to show the new todo
                                     queryClient.invalidateQueries({ queryKey: ['/api/notes', note.id] });
 
-                                    toast({
-                                      description: "Added to todos",
-                                    });
+
                                   } catch (error) {
-                                    toast({
-                                      description: "Failed to add todo",
-                                      variant: "destructive"
-                                    });
+
                                   }
                                 }}
                                 className="p-1 text-gray-400 hover:text-green-600 transition-colors"
