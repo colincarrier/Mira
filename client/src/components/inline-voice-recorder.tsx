@@ -85,25 +85,11 @@ export default function InlineVoiceRecorder({
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       handleReset();
       
-      if (note.isOffline) {
-        toast({
-          title: "Voice note saved offline",
-          description: "Recording saved locally. Will be transcribed when internet is available.",
-        });
-      } else {
-        toast({
-          title: "Voice note saved",
-          description: "Your voice note has been transcribed and enhanced by AI.",
-        });
-      }
+
     },
     onError: (error) => {
       console.error("Voice note error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save voice note. Please try again.",
-        variant: "destructive",
-      });
+
       handleReset();
     },
   });
@@ -116,13 +102,7 @@ export default function InlineVoiceRecorder({
         const granted = await requestMicrophonePermission();
         if (!granted) {
           const isDenied = permissions.microphone === 'denied';
-          toast({
-            title: isDenied ? "Microphone Access Denied" : "Microphone Permission Required",
-            description: isDenied 
-              ? "Please enable microphone access in your browser settings to record voice notes."
-              : "Microphone access is needed to record voice notes. Please allow access and try again.",
-            variant: "destructive",
-          });
+
           return false;
         }
       }
@@ -280,11 +260,7 @@ export default function InlineVoiceRecorder({
     if (recordingTime < 1.5) {
       console.log(`Voice recording too short: ${recordingTime}s, discarding`);
       handleReset();
-      toast({
-        title: "Recording too short",
-        description: "Voice notes must be at least 1.5 seconds long.",
-        variant: "destructive",
-      });
+
       return;
     }
 

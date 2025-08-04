@@ -272,15 +272,10 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      toast({
-        description: "Note deleted successfully!",
-      });
+
     },
     onError: () => {
-      toast({
-        description: "Failed to delete note",
-        variant: "destructive",
-      });
+
     },
   });
 
@@ -426,14 +421,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(shareText).then(() => {
-        toast({
-          description: "Note copied to clipboard!",
-        });
+
       }).catch(() => {
-        toast({
-          description: "Failed to copy note",
-          variant: "destructive",
-        });
+
       });
     }
   };

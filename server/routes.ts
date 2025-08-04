@@ -2810,7 +2810,7 @@ Respond with a JSON object containing:
           console.error("AI evolution failed:", aiError);
           // Fallback to simple content update if AI fails
           const updatedNote = await storage.updateNote(noteId, { 
-            content: content || existingNote.content, 
+            content: req.body.content ?? existingNote.content, 
             last_user_edit: new Date().toISOString(),
             ...otherUpdates 
           });
@@ -2819,7 +2819,7 @@ Respond with a JSON object containing:
       } else {
         // Simple update without AI for direct edits
         const updatedNote = await storage.updateNote(noteId, { 
-          content: content || existingNote.content,
+          content: req.body.content ?? existingNote.content,
           last_user_edit: new Date().toISOString(),
           ...otherUpdates 
         });

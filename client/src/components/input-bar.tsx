@@ -306,19 +306,11 @@ export default function InputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
-      toast({
-        title: "File processed",
-        description: "Your file has been analyzed and enhanced by AI.",
-        duration: 3000,
-      });
+
     },
     onError: (error) => {
       console.error("File upload error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload file. Please try again.",
-        variant: "destructive",
-      });
+
     },
   });
 
@@ -392,11 +384,7 @@ export default function InputBar({
         }
         
         await queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
-        toast({
-          title: "Note updated",
-          description: "Your update has been processed.",
-          duration: 3000,
-        });
+
       } else {
         // Create new note
         console.log('🆕 Creating new note');
@@ -405,12 +393,7 @@ export default function InputBar({
     } catch (error) {
       console.error('[InputBar] send failed:', error);
       setInputText(plain);              // restore text
-      toast({
-        title: 'Send failed',
-        description: 'Could not process your message – please try again.',
-        variant: 'destructive',
-        duration: 5000,
-      });
+
     } finally {
       setIsSending(false);
       setIsTyping(false);
@@ -602,11 +585,7 @@ export default function InputBar({
       if (file.type.startsWith('image/')) {
           handleFileSelect(file);
       } else {
-        toast({
-          title: "Unsupported file type",
-          description: "Please select an image file (JPG, PNG, GIF, etc.)",
-          variant: "destructive",
-        });
+
       }
     }
     if (fileInputRef.current) {

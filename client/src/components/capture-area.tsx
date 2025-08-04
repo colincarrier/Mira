@@ -32,17 +32,10 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
       setText("");
       setIsTextDialogOpen(false);
       setIsExpanded(false);
-      toast({
-        title: "Note captured",
-        description: "Your note has been saved and is being enhanced by AI.",
-      });
+
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create note. Please try again.",
-        variant: "destructive",
-      });
+
     },
   });
 
@@ -54,10 +47,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
   };
 
   const handleImageCapture = () => {
-    toast({
-      title: "Coming soon",
-      description: "Image capture will be available in a future update.",
-    });
+
   };
 
   const quickActions = [
@@ -77,7 +67,7 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
       icon: Camera,
       label: "Photo",
       color: "dusty-teal",
-      action: () => toast({ title: "Coming soon", description: "Photo capture will be available soon." })
+      action: () => console.log("Photo capture coming soon")
     },
     {
       icon: Upload,

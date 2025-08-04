@@ -636,7 +636,7 @@ export default function NoteDetail() {
               } else if (referrer && referrer.includes('/collections')) {
                 navigate("/?tab=collections");
               } else if (window.history.length > 1) {
-                window.history.back();
+                navigate(-1);
               } else {
                 navigate("/");
               }
@@ -661,9 +661,9 @@ export default function NoteDetail() {
                 // Check if we came from a specific page
                 const referrer = document.referrer;
                 if (referrer && (referrer.includes('/remind') || referrer.includes('/collections'))) {
-                  window.history.back();
+                  navigate(-1);
                 } else if (window.history.length > 1) {
-                  window.history.back();
+                  navigate(-1);
                 } else {
                   setLocation("/");
                 }

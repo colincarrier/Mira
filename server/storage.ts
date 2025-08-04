@@ -125,14 +125,21 @@ export const storage = {
       const client = await pool.connect();
       
       // Convert camelCase to snake_case for database columns
+      const ALLOWED_FIELDS = [
+        'ai_generated_title','content','ai_context','rich_context','mira_response','token_usage'
+      ];
       const snakeCaseUpdates: any = {};
       for (const [key, value] of Object.entries(updates)) {
         const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-        snakeCaseUpdates[snakeKey] = value;
+        if (ALLOWED_FIELDS.includes(snakeKey)) {
+          snakeCaseUpdates[snakeKey] = value;
+        }
+      }
+      if (Object.keys(snakeCaseUpdates).length === 0) {
+        throw new Error('No valid fields to update');
       }
       
-      // Always update updated_at
-      snakeCaseUpdates.updated_at = new Date();
+      // updated_at column does not exist - remove this line
       
       const setClause = Object.keys(snakeCaseUpdates).map((key, index) => `${key} = $${index + 2}`).join(', ');
       const values = [id, ...Object.values(snakeCaseUpdates)];
