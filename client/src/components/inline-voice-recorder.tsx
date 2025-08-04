@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mic, Square, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
 import { usePermissions } from "@/hooks/use-permissions";
 
 interface InlineVoiceRecorderProps {
@@ -30,7 +30,6 @@ export default function InlineVoiceRecorder({
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { 
     hasMicrophone, 
@@ -46,13 +45,42 @@ export default function InlineVoiceRecorder({
         // Store offline voice note
         const offlineNote = {
           content: `🎤 Voice recording (${Math.round(recordingTime)}s) - Pending transcription`,
-          mode: "voice",
+          mode: "voice" as const,
           audioBlob: audioBlob,
           audioUrl: URL.createObjectURL(audioBlob),
           isProcessing: true,
           isOffline: true,
           recordingDuration: recordingTime,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          version: 1,
+          aiGeneratedTitle: null,
+          userId: null,
+          isShared: false,
+          shareId: null,
+          privacyLevel: "private" as const,
+          mediaUrl: null,
+          transcription: null,
+          imageData: null,
+          aiEnhanced: false,
+          aiSuggestion: null,
+          aiContext: null,
+          richContext: null,
+          miraResponse: null,
+          richContextBackup: null,
+          migratedAt: null,
+          miraResponseCreatedAt: null,
+          collectionId: null,
+          vectorDense: null,
+          vectorSparse: null,
+          intentVector: null,
+          originalContent: null,
+          lastUserEdit: null,
+          protectedContent: null,
+          processingPath: null,
+          classificationScores: null,
+          tokenUsage: null,
+          doc_json: null,
+          todos: []
         };
         
         // Store in offline storage
@@ -191,7 +219,7 @@ export default function InlineVoiceRecorder({
 
       return false;
     }
-  }, [toast, createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
+  }, [createVoiceNoteMutation, hasMicrophone, requestMicrophonePermission, permissions.microphone]);
 
   const updateWaveform = useCallback(() => {
     if (!analyserRef.current || !dataArrayRef.current || !isRecording) return;

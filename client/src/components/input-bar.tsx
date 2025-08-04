@@ -1,7 +1,6 @@
 import { Camera, Mic, Plus, Send, Square, X as CloseIcon, FileText, Image } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { useLocation } from "wouter";
 
 interface InputBarProps {
@@ -135,11 +134,10 @@ export default function InputBar({
         (old ?? []).map(n => (n.id === ctx?.tempId ? saved : n)),
       );
       // Defer todos/reminders refresh
-      console.log(`${currentPage === 'remind' ? 'Reminder' : 'Note'} saved`);
     },
     onError: (error) => {
       console.error("Text submission error:", error);
-      console.error(`Failed to save ${currentPage === 'remind' ? 'reminder' : 'note'}`);
+
     },
   });
 
@@ -183,15 +181,10 @@ export default function InputBar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      console.log("Voice note saved and transcribed");
+
     },
     onError: (error) => {
       console.error("Voice note error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save voice note. Please try again.",
-        variant: "destructive",
-      });
     },
   });
 
@@ -236,19 +229,10 @@ export default function InputBar({
       queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
-      toast({
-        title: "Image processed",
-        description: "Your image has been analyzed and enhanced by AI.",
-        duration: 3000,
-      });
     },
     onError: (error) => {
       console.error("Image upload error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
+
     },
   });
 
@@ -467,14 +451,10 @@ export default function InputBar({
       return true;
     } catch (error) {
       console.error('Audio setup error:', error);
-      toast({
-        title: "Microphone Error",
-        description: "Could not access microphone. Please check permissions.",
-        variant: "destructive",
-      });
+
       return false;
     }
-  }, [createVoiceNoteMutation, toast]);
+  }, [createVoiceNoteMutation]);
 
   // Enhanced waveform animation with immediate feedback
   const updateWaveform = useCallback(() => {
