@@ -486,7 +486,7 @@ Respond in JSON format:
       // Update note with V3 response
       await storage.updateNote(parseInt(id), {
         mira_response: JSON.stringify(mira_response),
-        mira_responseCreatedAt: new Date(),
+        mira_response_created_at: new Date(),
         ai_enhanced: true
       });
 
@@ -514,8 +514,7 @@ Respond in JSON format:
       
       // Update the note's doc_json
       await storage.updateNote(parseInt(id), {
-        doc_json: doc,
-        updated_at: new Date()
+        doc_json: doc
       });
       
       // Broadcast to SSE clients if steps provided
@@ -2814,7 +2813,7 @@ Respond with a JSON object containing:
           const updatedNote = await storage.updateNote(noteId, { 
             content: req.body.content ?? existingNote.content, 
             last_user_edit: new Date().toISOString(),
-            ...otherUpdates 
+            ...validUpdates 
           });
           return res.json(updatedNote);
         }
@@ -2823,7 +2822,7 @@ Respond with a JSON object containing:
         const updatedNote = await storage.updateNote(noteId, { 
           content: req.body.content ?? existingNote.content,
           last_user_edit: new Date().toISOString(),
-          ...otherUpdates 
+          ...validUpdates 
         });
         return res.json(updatedNote);
       }

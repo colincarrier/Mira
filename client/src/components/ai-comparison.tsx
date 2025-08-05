@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Loader2, GraduationCap, Zap } from "lucide-react";
+import { safeText } from "@/utils/parseRichContext";
 
 interface ComparisonResult {
   original: string;
@@ -122,13 +123,13 @@ export default function AIComparison() {
                   <div>
                     <h4 className="font-medium text-sm text-gray-600 mb-2">Key Insights:</h4>
                     <div className="text-sm bg-gray-50 p-3 rounded space-y-2">
-                      <p><strong>Summary:</strong> {results.openAI.result.richContext.summary}</p>
+                      <p><strong>Summary:</strong> {safeText(results.openAI.result.richContext.summary)}</p>
                       {results.openAI.result.richContext.keyInsights && results.openAI.result.richContext.keyInsights.length > 0 && (
                         <div>
                           <strong>Insights:</strong>
                           <ul className="mt-1 space-y-1">
                             {results.openAI.result.richContext.keyInsights.map((insight: string, index: number) => (
-                              <li key={index} className="ml-4">• {insight}</li>
+                              <li key={index} className="ml-4">• {safeText(insight)}</li>
                             ))}
                           </ul>
                         </div>
@@ -187,13 +188,13 @@ export default function AIComparison() {
                   <div>
                     <h4 className="font-medium text-sm text-gray-600 mb-2">Key Insights:</h4>
                     <div className="text-sm bg-gray-50 p-3 rounded space-y-2">
-                      <p><strong>Summary:</strong> {results.claude.result.richContext.summary}</p>
+                      <p><strong>Summary:</strong> {safeText(results.claude.result.richContext.summary)}</p>
                       {results.claude.result.richContext.keyInsights && results.claude.result.richContext.keyInsights.length > 0 && (
                         <div>
                           <strong>Insights:</strong>
                           <ul className="mt-1 space-y-1">
                             {results.claude.result.richContext.keyInsights.map((insight: string, index: number) => (
-                              <li key={index} className="ml-4">• {insight}</li>
+                              <li key={index} className="ml-4">• {safeText(insight)}</li>
                             ))}
                           </ul>
                         </div>

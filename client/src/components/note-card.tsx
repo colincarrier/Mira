@@ -571,7 +571,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                   className="flex items-start space-x-2 text-xs p-2 bg-blue-50 rounded-md"
                 >
                   <span className="text-blue-600 mt-0.5 flex-shrink-0">•</span>
-                  <span className="text-gray-700">{step}</span>
+                  <span className="text-gray-700">{safeText(step)}</span>
                 </div>
               ))}
             </div>
@@ -589,8 +589,8 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
           <div className="space-y-2">
             {richContextData.recommendedActions.map((action: any, index: number) => (
               <div key={index} className="p-2 bg-[hsl(var(--muted))] rounded-md">
-                <h4 className="text-xs font-medium text-[hsl(var(--foreground))] mb-1">{action.title}</h4>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{action.description}</p>
+                <h4 className="text-xs font-medium text-[hsl(var(--foreground))] mb-1">{safeText(action.title)}</h4>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{safeText(action.description)}</p>
                 {action.links && action.links.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {action.links.map((link: any, linkIndex: number) => (
@@ -603,7 +603,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                         className="flex items-center space-x-1 px-2 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded text-xs hover:bg-[hsl(var(--primary))]/90 transition-colors"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        <span>{link.title}</span>
+                        <span>{safeText(link.title)}</span>
                       </button>
                     ))}
                   </div>
