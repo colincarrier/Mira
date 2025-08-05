@@ -99,10 +99,10 @@ export default function AIComparison() {
                   <div>
                     <h4 className="font-medium text-sm text-gray-600 mb-2">Extracted Tasks:</h4>
                     <ul className="text-sm space-y-1">
-                      {results.openAI.result.todos.map((todo: string, index: number) => (
+                      {results.openAI.result.todos.map((todo: any, index: number) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-gray-400">•</span>
-                          {todo}
+                          {typeof todo === 'string' ? todo : (todo.description || todo.title || JSON.stringify(todo))}
                         </li>
                       ))}
                     </ul>
@@ -164,10 +164,10 @@ export default function AIComparison() {
                   <div>
                     <h4 className="font-medium text-sm text-gray-600 mb-2">Extracted Tasks:</h4>
                     <ul className="text-sm space-y-1">
-                      {results.claude.result.todos.map((todo: string, index: number) => (
+                      {results.claude.result.todos.map((todo: any, index: number) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-gray-400">•</span>
-                          {todo}
+                          {typeof todo === 'string' ? todo : (todo.description || todo.title || JSON.stringify(todo))}
                         </li>
                       ))}
                     </ul>
