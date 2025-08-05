@@ -62,3 +62,18 @@ To https://github.com/colincarrier/Mira.git
 # One-liner for future pushes
 git add -A && git commit -m "commit message" && export GIT_ASKPASS=echo && echo $GITHUB_PERSONAL_ACCESS_TOKEN | git push https://colincarrier:$GITHUB_PERSONAL_ACCESS_TOKEN@github.com/colincarrier/Mira.git main
 ```
+
+## Alternative Method That Works in Replit
+```bash
+# Use the push-to-github.sh script which handles lock file issues
+chmod +x push-to-github.sh && ./push-to-github.sh
+
+# Or run with error suppression for lock files
+chmod +x push-to-github.sh && ./push-to-github.sh 2>&1 | grep -v "Avoid changing"
+```
+
+Note: The push-to-github.sh script contains:
+- git config settings
+- git add .
+- git commit with || true to handle no changes
+- Direct push with ${GITHUB_PERSONAL_ACCESS_TOKEN}
