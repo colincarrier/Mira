@@ -221,6 +221,13 @@ export default function NoteDetail() {
     [note?.id],
   );
 
+  // -------- INSTANT SAVE ON BLUR --------
+  const handleBlur = () => {
+    if (note?.id && editedContent !== note.content) {
+      updateMutation.mutate({ id: note.id, content: editedContent });
+    }
+  };
+
   // Parse rich context data if available
   let richContextData = null;
   try {
@@ -1006,7 +1013,11 @@ export default function NoteDetail() {
                         {optionalTodos.slice(0, 3).map((step: string, index: number) => (
                           <div key={`optional-${index}`} className="flex items-center gap-3 p-2 bg-yellow-25 rounded border border-yellow-100">
                             <div className="w-4 h-4 border border-gray-300 rounded opacity-50"></div>
-                            <span className="text-sm text-gray-700 flex-1">{step}</span>
+                            <span className="text-sm text-gray-700 flex-1">
+                              {typeof step === 'object'
+                                ? (step?.description || step?.task || JSON.stringify(step))
+                                : step}
+                            </span>
                             <div className="flex gap-1">
                               <button
                                 onClick={async () => {
