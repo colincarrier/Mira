@@ -156,8 +156,7 @@ export const storage = {
 
     await pool.query(
       `UPDATE notes
-         SET updated_at        = NOW(),
-             ai_generated_title = COALESCE($1, ai_generated_title),
+         SET ai_generated_title = COALESCE($1, ai_generated_title),
              token_usage        = COALESCE($2, token_usage),
              mira_response      = COALESCE($3, mira_response),
              is_processing      = COALESCE($4, is_processing),

@@ -70,6 +70,9 @@ Preferred communication style: Simple, everyday language.
   - Visual save status indicators (Unsaved/Saving/Saved)
   - beforeunload guard to prevent data loss on navigation
   - useBeforeUnload hook from react-use library
+- Fixed database column issue in updateNote function:
+  - Removed references to non-existent `updated_at` and `last_modified` columns
+  - Database uses `created_at` for creation time but has no update timestamp
 - Deprecated Claude comparison functionality per user request:
   - Marked /api/compare-ai endpoint as deprecated (returns 410 status)
   - Renamed ai-comparison.tsx to ai-comparison.deprecated.tsx
