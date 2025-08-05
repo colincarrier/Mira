@@ -168,38 +168,7 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
 
   return (
     <div className="relative">
-      {/* Persistent toolbar - only shown when feature flag is on */}
-      {featureFlags.SHOW_PERSISTENT_TOOLBAR && (
-        <div className="sticky top-0 z-10 flex items-center gap-1 p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-              editor.isActive('bold') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-            }`}
-            title="Bold (⌘B)"
-          >
-            <Bold size={16} />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-              editor.isActive('italic') ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-            }`}
-            title="Italic (⌘I)"
-          >
-            <Italic size={16} />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-              editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : ''
-            }`}
-            title="Heading (⌘⌥1)"
-          >
-            <Heading1 size={16} />
-          </button>
-        </div>
-      )}
+      {/* Persistent toolbar removed - using bubble menu only */}
 
       {/* iOS-style Bubble menu appears only on selection */}
       <BubbleMenu 

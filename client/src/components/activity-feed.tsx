@@ -44,6 +44,9 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     const bDate = new Date(b.createdAt || b.created_at);
     return bDate.getTime() - aDate.getTime();
   }) || [];
+  
+  // Cap list at 100 items for performance
+  const visibleNotes = filteredNotes.slice(0, 100);
 
   if (isLoading) {
     return (
@@ -126,7 +129,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
       )}
 
       <div className={isCondensedView ? "space-y-2" : "space-y-4"}>
-        {filteredNotes.map((note) => (
+        {visibleNotes.map((note) => (
           isCondensedView ? (
             <div 
               key={note.id}

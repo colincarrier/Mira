@@ -1,13 +1,10 @@
 import pg from 'pg';
 import { v4 as uuid } from 'uuid';
 import { Fact, Event, Pattern, EntityKind, MemResult } from './types.js';
+import { pool } from '../../../storage';
 
-export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 2_000
-});
+// Export the shared pool for compatibility
+export { pool };
 
 /* ── tiny local cache (per instance, optional) ────────────── */
 const cache = new Map<string, { expires: number; data: unknown }>();

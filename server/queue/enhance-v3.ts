@@ -1,7 +1,7 @@
 // ---------- server/queue/enhance-v3.ts ------------
 // V3 Enhancement queue system with Help-First processing
 
-import { pool } from '../db';
+import { pool } from '../storage';
 import { processNoteV3 } from '../ai/v3/enhance/worker';
 
 /**

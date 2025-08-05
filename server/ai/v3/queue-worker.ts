@@ -1,5 +1,5 @@
 // ---------- server/ai/v3/queue-worker.ts ------------
-import { pool } from '../../db';
+import { pool } from '../../storage';
 import { sseManager } from './enhance/sse-manager';
 import type { MiraResponse } from '../../../shared/mira-response';
 import { detectIntent } from './intent';

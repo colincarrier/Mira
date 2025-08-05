@@ -550,7 +550,7 @@ Respond in JSON format:
         })
       );
       
-      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
       res.json(notesWithTodos);
     } catch (error) {
       console.error("Error fetching notes with todos:", error);
@@ -571,7 +571,7 @@ Respond in JSON format:
         const todos = await storage.getTodosByNoteId(id);
         const normalizedNote = normalizeNote(note);
         const noteWithTodos = { ...normalizedNote, todos: todos.filter(t => !t.archived) };
-        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
         res.json(noteWithTodos);
       } catch (error) {
         console.warn(`Failed to fetch todos for note ${id}:`, error);

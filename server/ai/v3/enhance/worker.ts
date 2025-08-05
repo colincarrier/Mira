@@ -1,7 +1,7 @@
 // ---------- server/ai/v3/enhance/worker.ts ------------
 // V3 Help-First enhancement worker
 
-import { pool } from '../../../db';
+import { pool } from '../../../storage';
 import { classifyIntent } from '../intent-classifier';
 import { buildHelpFirstPrompt } from '../help-first-prompt';
 import { callOpenAI } from '../openai';
