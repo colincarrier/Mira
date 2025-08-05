@@ -195,7 +195,7 @@ export class MinimalEnhancementWorker {
       await client.query(`
         UPDATE notes 
         SET 
-          rich_context = $1,
+          rich_context = $1::text,
           ai_enhanced = true,
           is_processing = false
         WHERE id = $2

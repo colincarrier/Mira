@@ -1,25 +1,14 @@
+// Parse V3 "rich_context" blobs & prevent React-object crashes
+
 export interface ParsedRC {
   title: string;
   aiBody: string;
-  task?: any;
+  task?: { task: string; timing_hint?: string; confidence?: number };
   entities?: any[];
   meta?: { latencyMs?: number; model?: string; confidence?: number };
 }
 
-function parseTaskValue(task: unknown): string {
-  if (task == null) return '';
-  if (typeof task === 'string') return task;
-  if (Array.isArray(task)) {
-    return task.map(t => parseTaskValue(t)).filter(Boolean).join(', ');
-  }
-  if (typeof task === 'object') {
-    const t: any = task;
-    const str = t.title || t.description || t.task || t.name || '';
-    return str || JSON.stringify(t);
-  }
-  return String(task);
-}
-
+/* Runtime-safe JSON parse with legacy double-decode guard */
 export function parseRichContext(
   raw: string | null | undefined,
 ): ParsedRC | null {
@@ -27,23 +16,41 @@ export function parseRichContext(
   let data: any;
   try {
     data = JSON.parse(raw);
-    // legacy notes may have double-encoded JSON
+    /* 💡 legacy notes were double-stringified */
     if (typeof data === 'string') data = JSON.parse(data);
-  } catch (_) {
+  } catch {
+    console.warn('[RC] unparsable rich_context');
     return null;
   }
 
   /* Stage-4A structured format */
-  if (data.answer) {
+  if (data.answer && (data.task || data.meta)) {
     return {
-      title: parseTaskValue(data.task),
-      aiBody: data.answer,
-      task: data.task
-        ? { ...data.task, task: parseTaskValue(data.task.task) }
-        : undefined,
-      meta: data.meta,
-      entities: data.entities,
+      title   : data.task?.task ?? 'Enhanced note',
+      aiBody  : data.answer,
+      task    : data.task || undefined,
+      entities: data.entities || undefined,
+      meta    : data.meta || undefined,
     };
   }
+  /* Fallback – tolerate weird shapes */
   return data as ParsedRC;
+}
+
+/* Defensive helper – always returns render-safe text */
+export function safeText(val: unknown): string {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (Array.isArray(val)) return val.map(safeText).filter(Boolean).join(', ');
+  if (typeof val === 'object') {
+    const o: any = val;
+    return (
+      o.title        ||
+      o.description  ||
+      o.task         ||
+      o.name         ||
+      (Object.keys(o).length ? JSON.stringify(o) : '')
+    );
+  }
+  return String(val);
 }

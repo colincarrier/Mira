@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { NoteWithTodos, Todo, Task } from '@shared/schema';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { parseMiraResponse } from '../utils/parseMiraResponse';
+import { safeText } from '@/utils/parseRichContext';
 import InputBar from './input-bar';
 
 interface NoteDetailSimpleProps {
