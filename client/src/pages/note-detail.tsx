@@ -252,8 +252,9 @@ export default function NoteDetail() {
 
   // -------- INSTANT SAVE ON BLUR --------
   const handleBlur = () => {
-    if (note?.id && editedContent !== note.content) {
-      updateMutation.mutate({ id: note.id, content: editedContent });
+    if (note?.id && editedContent !== note.content && !isSaving) {
+      setIsSaving(true);
+      saveMutation.mutate({ id: note.id, content: editedContent });
     }
   };
 

@@ -144,11 +144,16 @@ export const storage = {
       'content',
       'ai_generated_title',
       'mira_response',
+      'mira_response_created_at',
       'token_usage',
       'is_processing',
       'rich_context',
       'ai_context',
-      'ai_enhanced'
+      'ai_enhanced',
+      'ai_suggestion',
+      'collection_id',
+      'doc_json',
+      'migrated_at'
     ] as const;
 
     const valid = Object.entries(updates)
