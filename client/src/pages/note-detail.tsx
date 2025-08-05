@@ -192,6 +192,7 @@ export default function NoteDetail() {
   // Auto-save state and mutations
   const queryClient = useQueryClient();
   const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'>('idle');
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateMutation = useMutation({
     mutationFn: async (payload: { id: number; content: string }) => {
@@ -211,12 +212,40 @@ export default function NoteDetail() {
     onError: () => setSaveStatus('dirty'),
   });
 
+  const saveMutation = useMutation({
+    mutationFn: async ({ id, content }: { id: number; content: string }) => {
+      const res = await fetch(`/api/notes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      return res.json();
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData([`/api/notes/${updated.id}`], updated);
+      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+      setIsSaving(false);
+    },
+    onError: (error) => {
+      console.error('[saveMutation]', error);
+      setIsSaving(false);
+      // --- toast on failure ---
+      const t = document.createElement('div');
+      t.className =
+        'fixed bottom-4 right-4 bg-red-500 text-white px-3 py-2 rounded shadow-lg z-[9999]';
+      t.textContent = 'Save failed – please retry';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+  });
+
   const debouncedSave = useMemo(
     () =>
       debounce((txt: string) => {
         if (!note || !txt.trim()) return;
         setSaveStatus('saving');
-        updateMutation.mutate({ id: note.id, content: txt });
+        saveMutation.mutate({ id: note.id, content: txt });
       }, 2000),
     [note?.id],
   );
@@ -821,13 +850,9 @@ export default function NoteDetail() {
                     target.style.height = target.scrollHeight + 'px';
                   }}
                   onBlur={async () => {
-                    if (editedContent !== note.content && note?.id) {
-                      try { 
-                        await updateMutation.mutateAsync({ id: note.id, content: editedContent }); 
-                      }
-                      catch (err) {
-                        console.error('[save-note] error →', err);
-                      }
+                    if (editedContent !== note?.content && note?.id && !isSaving) {
+                      setIsSaving(true);
+                      saveMutation.mutate({ id: note.id, content: editedContent });
                     }
                   }}
                   onInput={(e) => {

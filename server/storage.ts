@@ -135,18 +135,40 @@ export const storage = {
       return [];
     }
   },
-  /** Update helper – snake_case ONLY, returns full row */
+  /** Canonical update helper – accepts ANY allowed snake_case field */
   updateNote: async (
     id: number,
-    { content }: { content?: string }
+    updates: Record<string, any>
   ) => {
+    const ALLOWED = [
+      'content',
+      'ai_generated_title',
+      'mira_response',
+      'token_usage',
+      'is_processing',
+      'rich_context',
+      'ai_context',
+      'ai_enhanced'
+    ] as const;
+
+    const valid = Object.entries(updates)
+      .filter(([k]) => (ALLOWED as readonly string[]).includes(k));
+
+    if (valid.length === 0) {
+      throw new Error('updateNote called with no valid fields');
+    }
+
+    const setClause = valid
+      .map(([col], i) => `${col} = $${i + 2}`)
+      .join(', ');
+
+    const values = [id, ...valid.map(([, v]) => v)];
+
     const { rows } = await pool.query(
-      `UPDATE notes
-         SET content = COALESCE($1, content)
-       WHERE id = $2
-       RETURNING *`,
-      [content, id]
+      `UPDATE notes SET ${setClause} WHERE id = $1 RETURNING *`,
+      values
     );
+
     return rows[0];
   },
 };
