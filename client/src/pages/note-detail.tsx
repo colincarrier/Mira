@@ -1,11 +1,11 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Clock, MessageSquare, CheckSquare, Folder, Share2, Edit3, Send, Shell, Fish, Anchor, Ship, Eye, GraduationCap, Sparkles, Zap, Gem, Circle, MoreHorizontal, Star, Archive, Trash2, Camera, Mic, Paperclip, Image, File, Copy, ArrowUpRight, Plus, Bell, Calendar, ExternalLink, Info, ArrowRight, Undo2, AlertTriangle, CheckCircle, X, Play, Pause } from "lucide-react";
 import InputBar from "@/components/input-bar";
 import { format, formatDistanceToNow } from "date-fns";
 import { NoteWithTodos, Todo } from "@shared/schema";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
 import { useCriticalInfo } from "@/hooks/useCriticalInfo";
@@ -18,6 +18,8 @@ import { Step } from "prosemirror-transform";
 import { extractTasksFromTipTap } from "@/utils/extract-tasks-tiptap";
 import { extractTitle } from "@/utils/titleExtraction";
 import { parseAIContent } from "@/utils/markdownHelpers";
+import { useBeforeUnload } from 'react-use';
+import { debounce } from 'lodash-es';
 
 // Voice Note Detail Player Component
 interface VoiceNoteDetailPlayerProps {
@@ -186,6 +188,38 @@ export default function NoteDetail() {
       return query.state.data && !query.state.data.aiEnhanced ? 2000 : false;
     },
   });
+
+  // Auto-save state and mutations
+  const queryClient = useQueryClient();
+  const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'>('idle');
+
+  const updateMutation = useMutation({
+    mutationFn: async (payload: { id: number; content: string }) => {
+      const res = await fetch(`/api/notes/${payload.id}`, {
+        method : 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ content: payload.content }),
+      });
+      if (!res.ok) throw new Error('update failed');
+      return res.json();
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    },
+    onError: () => setSaveStatus('dirty'),
+  });
+
+  const debouncedSave = useMemo(
+    () =>
+      debounce((txt: string) => {
+        if (!note || !txt.trim()) return;
+        setSaveStatus('saving');
+        updateMutation.mutate({ id: note.id, content: txt });
+      }, 2000),
+    [note?.id],
+  );
 
   // Parse rich context data if available
   let richContextData = null;
@@ -393,6 +427,13 @@ export default function NoteDetail() {
       textarea.style.height = textarea.scrollHeight + 'px';
     }
   }, [editedContent]);
+
+  // beforeunload guard
+  useBeforeUnload(() => {
+    if (saveStatus === 'dirty' && note) {
+      updateMutation.mutateAsync({ id: note.id, content: editedContent });
+    }
+  });
 
   const handleQuestionClick = (question: string) => {
     // Question click handler - functionality to be implemented
@@ -764,7 +805,10 @@ export default function NoteDetail() {
                   data-note-id={note.id}
                   value={editedContent}
                   onChange={(e) => {
-                    setEditedContent(e.target.value);
+                    const txt = e.target.value;
+                    setEditedContent(txt);
+                    setSaveStatus('dirty');
+                    debouncedSave(txt);
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
                     target.style.height = target.scrollHeight + 'px';
@@ -802,6 +846,15 @@ export default function NoteDetail() {
                     overflow: 'hidden'
                   }}
                 />
+
+                {/* Save status indicator */}
+                {saveStatus !== 'idle' && (
+                  <div className="absolute right-3 top-2 text-xs text-gray-500">
+                    {saveStatus === 'dirty'   && '• Unsaved'}
+                    {saveStatus === 'saving'  && '• Saving…'}
+                    {saveStatus === 'saved'   && '✓ Saved'}
+                  </div>
+                )}
 
                 {/* AI Enhanced Content - ChatGPT Style with Rich Formatting */}
                 {mira?.content && (

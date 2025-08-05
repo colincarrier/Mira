@@ -64,6 +64,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 5, 2025)
 
+### Auto-Save and Claude Deprecation Implementation
+- Implemented auto-save functionality in note-detail.tsx with:
+  - 2-second debounced saves on textarea changes
+  - Visual save status indicators (Unsaved/Saving/Saved)
+  - beforeunload guard to prevent data loss on navigation
+  - useBeforeUnload hook from react-use library
+- Deprecated Claude comparison functionality per user request:
+  - Marked /api/compare-ai endpoint as deprecated (returns 410 status)
+  - Renamed ai-comparison.tsx to ai-comparison.deprecated.tsx
+  - Focus on single AI partner (OpenAI) until main app pathways are solid
+
 ### Critical P0 Fixes - React Object Rendering and Database Issues
 - Created parseRichContext.ts utility with safe JSON parsing and React-safe text rendering
 - Fixed database column name mismatch: Changed `mira_responseCreatedAt` to `mira_response_created_at` in routes.ts

@@ -43,14 +43,15 @@ export function safeText(val: unknown): string {
   if (typeof val === 'string') return val;
   if (Array.isArray(val)) return val.map(safeText).filter(Boolean).join(', ');
   if (typeof val === 'object') {
-    const o: any = val;
-    return (
-      o.title        ||
-      o.description  ||
-      o.task         ||
-      o.name         ||
-      (Object.keys(o).length ? JSON.stringify(o) : '')
-    );
+    const o = val as Record<string, unknown>;
+    /* covers both {task,title} and {due,description} variants */
+    const str =
+      o.title ??
+      o.description ??
+      o.task ??
+      o.name ??
+      (Array.isArray(o) ? (o as unknown[]).map(safeText).join(', ') : '');
+    return str || (Object.keys(o).length ? JSON.stringify(o) : '');
   }
   return String(val);
 }

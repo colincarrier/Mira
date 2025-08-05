@@ -1077,48 +1077,13 @@ Respond in JSON format:
     }
   });
 
-  // Enhanced AI comparison endpoint with Mira Brain
+  // DEPRECATED: Claude comparison endpoint disabled per user request
+  // Focus on single AI partner (OpenAI) until main app pathways are rock solid
   app.post("/api/compare-ai", async (req, res) => {
-    try {
-      const { content, mode = 'quick' } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ message: "Content required for AI comparison" });
-      }
-
-      console.log("Starting enhanced AI comparison with Mira Brain for content:", content.substring(0, 100));
-
-      // Check if any AI is available, if not return appropriate response
-      if (!isAnyAIAvailable()) {
-        return res.json({
-          original: content,
-          openAI: { success: false, result: null, error: "OpenAI not available - AI processing disabled" },
-          claude: { success: false, result: null, error: "Claude not available - AI processing disabled" }
-        });
-      }
-
-      // Process with OpenAI only per user request
-      const openAIResult = await safeAnalyzeWithOpenAI(content, mode);
-
-      const response = {
-        original: content,
-        openAI: {
-          success: true,
-          result: openAIResult,
-          error: null
-        },
-        claude: {
-          success: false,
-          result: null,
-          error: "Claude disabled per user request - OpenAI only"
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error("Enhanced AI comparison error:", error);
-      res.status(500).json({ message: "Failed to compare AI results" });
-    }
+    return res.status(410).json({ 
+      message: "AI comparison feature has been deprecated. Focus is on single AI partner (OpenAI) integration.",
+      deprecated: true 
+    });
   });
 
   app.post("/api/notes/media", upload.fields([

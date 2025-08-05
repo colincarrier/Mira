@@ -135,6 +135,7 @@ export const storage = {
       return [];
     }
   },
+  // ==== P0-FINAL START (updateNote snake_case canonical) ====
   updateNote: async (
     id: number,
     updates: {
@@ -142,19 +143,30 @@ export const storage = {
       token_usage?: string | null;
       mira_response?: string | null;
       is_processing?: boolean;
+      content?: string | null;          // ← manual-edit path
     },
   ) => {
-    return pool.query(
+    const {
+      ai_generated_title,
+      token_usage,
+      mira_response,
+      is_processing,
+      content,
+    } = updates;
+
+    await pool.query(
       `UPDATE notes
          SET updated_at        = NOW(),
              ai_generated_title = COALESCE($1, ai_generated_title),
              token_usage        = COALESCE($2, token_usage),
              mira_response      = COALESCE($3, mira_response),
-             is_processing      = COALESCE($4, is_processing)
-       WHERE id = $5`,
-      [updates.ai_generated_title, updates.token_usage, updates.mira_response, updates.is_processing, id],
+             is_processing      = COALESCE($4, is_processing),
+             content            = COALESCE($5, content)
+       WHERE id = $6`,
+      [ai_generated_title, token_usage, mira_response, is_processing, content, id],
     );
   },
+  // ==== P0-FINAL END ====
 };
 
 export async function getUserPatterns(userId: string): Promise<any> {
