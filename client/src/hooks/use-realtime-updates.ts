@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/utils';
 
 interface RealTimeEvent {
   type: 'note_created' | 'note_updated' | 'connected';
@@ -41,7 +42,7 @@ export function useRealTimeUpdates() {
             case 'note_created':
               console.log('[RealTime] Note created:', data.noteId);
               // Immediately invalidate notes query to show new note
-              queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
               break;
               
             case 'note_updated':
@@ -57,9 +58,9 @@ export function useRealTimeUpdates() {
               }
               
               // Invalidate both the notes list and the specific note
-              queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
               if (data.noteId) {
-                queryClient.invalidateQueries({ queryKey: [`/api/notes/${data.noteId}`] });
+                queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(data.noteId) });
               }
               break;
               

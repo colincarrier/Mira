@@ -159,7 +159,7 @@ import AIProcessingIndicator from "@/components/ai-processing-indicator";
 import MediaDisplay from "@/components/media-display";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { ReminderDialog } from "@/components/reminder-dialog";
-import { parseMiraResponse, extractTasks, normalizeNote } from "@/utils";
+import { parseMiraResponse, extractTasks, normalizeNote, queryKeys } from "@/utils";
 
 export default function NoteDetail() {
   const { id } = useParams();
@@ -182,7 +182,7 @@ export default function NoteDetail() {
   useFlushQueue();
 
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
-    queryKey: [`/api/notes/${id}`],
+    queryKey: queryKeys.notes.detail(Number(id)),
     enabled: !!id,
     refetchInterval: (query) => {
       return query.state.data && !query.state.data.aiEnhanced ? 2000 : false;
@@ -223,8 +223,8 @@ export default function NoteDetail() {
       return res.json();
     },
     onSuccess: (updated) => {
-      queryClient.setQueryData([`/api/notes/${updated.id}`], updated);
-      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
+      queryClient.setQueryData(queryKeys.notes.detail(updated.id), updated);
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       setIsSaving(false);
     },
     onError: (error) => {
@@ -1042,7 +1042,7 @@ export default function NoteDetail() {
                                     });
 
                                     // Refresh the note to show the new todo
-                                    queryClient.invalidateQueries({ queryKey: ['/api/notes', note.id] });
+                                    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(note.id) });
 
 
                                   } catch (error) {

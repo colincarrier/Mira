@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Camera, Mic, Upload, Send, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/utils";
 
 interface MediaContextDialogProps {
   isOpen: boolean;
@@ -198,8 +199,8 @@ export default function MediaContextDialog({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/collections'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
       toast({
         title: "Media Note Created",
         description: "Your media note with context has been saved successfully.",
