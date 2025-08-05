@@ -256,7 +256,14 @@ export default function NoteDetail() {
   });
 
   // Get version history
-  const { data: versionHistory } = useQuery({
+  const { data: versionHistory } = useQuery<Array<{
+    id: string;
+    version: number;
+    changeType: string;
+    changeDescription: string;
+    createdAt: string;
+    content: string;
+  }>>({
     queryKey: [`/api/notes/${id}/versions`],
     enabled: !!id && showVersionHistory,
   });
@@ -1138,7 +1145,7 @@ export default function NoteDetail() {
                 </div>
               </div>
 
-              {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version: any) => (
+              {versionHistory && Array.isArray(versionHistory) && versionHistory.map((version) => (
                 <div key={version.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                   <div className="flex-1">
