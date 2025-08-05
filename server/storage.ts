@@ -135,37 +135,20 @@ export const storage = {
       return [];
     }
   },
-  // ==== P0-FINAL START (updateNote snake_case canonical) ====
+  /** Update helper – snake_case ONLY, returns full row */
   updateNote: async (
     id: number,
-    updates: {
-      ai_generated_title?: string | null;
-      token_usage?: string | null;
-      mira_response?: string | null;
-      is_processing?: boolean;
-      content?: string | null;          // ← manual-edit path
-    },
+    { content }: { content?: string }
   ) => {
-    const {
-      ai_generated_title,
-      token_usage,
-      mira_response,
-      is_processing,
-      content,
-    } = updates;
-
-    await pool.query(
+    const { rows } = await pool.query(
       `UPDATE notes
-         SET ai_generated_title = COALESCE($1, ai_generated_title),
-             token_usage        = COALESCE($2, token_usage),
-             mira_response      = COALESCE($3, mira_response),
-             is_processing      = COALESCE($4, is_processing),
-             content            = COALESCE($5, content)
-       WHERE id = $6`,
-      [ai_generated_title, token_usage, mira_response, is_processing, content, id],
+         SET content = COALESCE($1, content)
+       WHERE id = $2
+       RETURNING *`,
+      [content, id]
     );
+    return rows[0];
   },
-  // ==== P0-FINAL END ====
 };
 
 export async function getUserPatterns(userId: string): Promise<any> {

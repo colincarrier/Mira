@@ -821,23 +821,12 @@ export default function NoteDetail() {
                     target.style.height = target.scrollHeight + 'px';
                   }}
                   onBlur={async () => {
-                    if (editedContent !== note.content) {
-                      // Save content
-                      await updateNoteMutation.mutateAsync({ content: editedContent });
-                      
-                      // Extract and save tasks
-                      try {
-                        const tasks = extractTasks(editedContent);
-                        if (tasks.length > 0) {
-                          await fetch(`/api/notes/${note.id}/tasks`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ tasks }),
-                          });
-                        }
-                      } catch (err) {
-                        console.error('Failed to save tasks:', err);
-
+                    if (editedContent !== note.content && note?.id) {
+                      try { 
+                        await updateMutation.mutateAsync({ id: note.id, content: editedContent }); 
+                      }
+                      catch (err) {
+                        console.error('[save-note] error →', err);
                       }
                     }
                   }}

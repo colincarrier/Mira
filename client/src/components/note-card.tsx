@@ -722,7 +722,12 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                       ? 'line-through text-[hsl(var(--muted-foreground))]' 
                       : 'text-[hsl(var(--foreground))]'
                   }`}>
-                    {todo.title}
+                    {typeof todo?.title === 'object'
+                      ? (todo.title?.description          // preferred
+                          || todo.title?.task
+                          || todo.title?.name
+                          || JSON.stringify(todo.title))  // final fallback
+                      : todo.title}
                   </p>
                   {todo.priority === 'urgent' && (
                     <span className="text-xs text-[#8B2635] font-medium">Urgent</span>

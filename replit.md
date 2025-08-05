@@ -64,6 +64,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 5, 2025)
 
+### React Object Rendering Complete Fix
+- Fixed all "Objects are not valid as a React child" errors throughout the application:
+  - note-card.tsx: Added object safety checks for todo.title which can be objects like {due, task}
+  - note-detail.tsx: Fixed blur save handler to use correct mutation (updateMutation not updateNoteMutation)
+  - activity-feed.tsx: Added null safety for note.content in filter
+- Fixed storage.updateNote to return the updated note for proper React Query cache updates
+- Simplified updateNote to only handle content updates and use RETURNING * pattern
+- All object rendering now has proper fallback chains (description → task → name → JSON.stringify)
+
 ### Auto-Save and Claude Deprecation Implementation
 - Implemented auto-save functionality in note-detail.tsx with:
   - 2-second debounced saves on textarea changes

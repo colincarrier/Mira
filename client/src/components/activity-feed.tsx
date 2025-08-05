@@ -37,7 +37,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   console.log("ActivityFeed - first note has created_at:", notes?.[0]?.created_at);
 
   const filteredNotes = notes?.filter(note => {
-    return note.content.toLowerCase().includes(searchTerm.toLowerCase());
+    return (note.content || '').toLowerCase().includes(searchTerm.toLowerCase());
   }).sort((a, b) => {
     // Handle both created_at and createdAt field names
     const aDate = new Date(a.createdAt || a.created_at);
