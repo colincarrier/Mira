@@ -39,9 +39,9 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const filteredNotes = notes?.filter(note => {
     return (note.content || '').toLowerCase().includes(searchTerm.toLowerCase());
   }).sort((a, b) => {
-    // Use createdAt field consistently
-    const aDate = new Date(a.createdAt || (a as any).created_at);
-    const bDate = new Date(b.createdAt || (b as any).created_at);
+    // Use createdAt field consistently with null safety
+    const aDate = new Date(a.createdAt ?? (a as any).created_at ?? 0);
+    const bDate = new Date(b.createdAt ?? (b as any).created_at ?? 0);
     return bDate.getTime() - aDate.getTime();
   }) || [];
   

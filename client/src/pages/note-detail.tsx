@@ -224,7 +224,9 @@ export default function NoteDetail() {
       return res.json();
     },
     onSuccess: (updated) => {
+      // Write-through cache for instant UI update
       queryClient.setQueryData(queryKeys.notes.detail(updated.id), updated);
+      // Invalidate list so it refreshes asynchronously
       queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       setIsSaving(false);
     },
@@ -527,13 +529,18 @@ export default function NoteDetail() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          instruction: text.trim(),
-          existingContent: note?.content || "",
-          existingContext: note?.aiContext || "",
-          existingTodos: note?.todos || [],
-          existingRichContext: note?.richContext
-        }),
+        body: JSON.stringify(
+          endpoint === 'clarify' ? {
+            originalInstruction: note?.content || '',
+            clarification: text.trim()
+          } : {
+            instruction: text.trim(),
+            existingContent: note?.content || "",
+            existingContext: note?.aiContext || "",
+            existingTodos: note?.todos || [],
+            existingRichContext: note?.richContext
+          }
+        ),
       });
 
       if (!response.ok) {
