@@ -231,13 +231,15 @@ export default function NoteDetail() {
     onError: (error) => {
       console.error('[saveMutation]', error);
       setIsSaving(false);
-      // --- toast on failure ---
-      const t = document.createElement('div');
-      t.className =
-        'fixed bottom-4 right-4 bg-red-500 text-white px-3 py-2 rounded shadow-lg z-[9999]';
-      t.textContent = 'Save failed – please retry';
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
+
+      // ---------- user-visible toast ----------
+      const toast = document.createElement('div');
+      toast.className =
+        'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded shadow-lg z-50';
+      toast.textContent = 'Save failed – please retry.';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3_000);
+      // ----------------------------------------
     }
   });
 
