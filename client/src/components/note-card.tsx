@@ -157,7 +157,7 @@ const getAIFollowUpQuestions = (richContext: any) => {
 };
 
 export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(note.createdAt || note.created_at), { addSuffix: true })
+  const timeAgo = formatDistanceToNow(new Date(note.createdAt || (note as any).created_at), { addSuffix: true })
     .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
     .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
     .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')
@@ -580,14 +580,14 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       )}
 
       {/* Recommended Actions with Links */}
-      {richContextData?.recommendedActions && richContextData.recommendedActions.length > 0 && (
+      {(richContextData as any)?.recommendedActions && (richContextData as any).recommendedActions.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center space-x-1 mb-2">
             <Info className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
             <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Suggestions</span>
           </div>
           <div className="space-y-2">
-            {richContextData.recommendedActions.map((action: any, index: number) => (
+            {(richContextData as any).recommendedActions.map((action: any, index: number) => (
               <div key={index} className="p-2 bg-[hsl(var(--muted))] rounded-md">
                 <h4 className="text-xs font-medium text-[hsl(var(--foreground))] mb-1">{safeText(action.title)}</h4>
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">{safeText(action.description)}</p>
@@ -723,9 +723,9 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
                       : 'text-[hsl(var(--foreground))]'
                   }`}>
                     {typeof todo?.title === 'object'
-                      ? (todo.title?.description          // preferred
-                          || todo.title?.task
-                          || todo.title?.name
+                      ? ((todo.title as any)?.description          // preferred
+                          || (todo.title as any)?.task
+                          || (todo.title as any)?.name
                           || JSON.stringify(todo.title))  // final fallback
                       : todo.title}
                   </p>

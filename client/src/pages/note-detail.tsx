@@ -191,7 +191,7 @@ export default function NoteDetail() {
 
   // Auto-save state and mutations
   const queryClient = useQueryClient();
-  const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
   const [isSaving, setIsSaving] = useState(false);
 
   const updateMutation = useMutation({
@@ -205,7 +205,7 @@ export default function NoteDetail() {
       return res.json();
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(id) });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 1500);
     },
@@ -313,7 +313,7 @@ export default function NoteDetail() {
         }
         
         // Refresh the note data
-        queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
       } catch (error) {
         console.error('Failed to save document:', error);
       }
@@ -362,8 +362,8 @@ export default function NoteDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] }); // Fix navigation issue
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all }); // Fix navigation issue
       // Only show success toast for AI updates, not direct edits
 
       setIsEditing(false);
@@ -395,7 +395,7 @@ export default function NoteDetail() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
     }
   });
 
@@ -406,7 +406,7 @@ export default function NoteDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
       setShowVersionHistory(false);
     },
     onError: () => {
@@ -421,7 +421,7 @@ export default function NoteDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
       setShowApprovalDialog(false);
       setPendingChanges(null);
 
@@ -438,7 +438,7 @@ export default function NoteDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
       setClarificationInput('');
 
     },
@@ -466,11 +466,14 @@ export default function NoteDetail() {
   }, [editedContent]);
 
   // beforeunload guard
-  useBeforeUnload(() => {
-    if (saveStatus === 'dirty' && note) {
-      updateMutation.mutateAsync({ id: note.id, content: editedContent });
-    }
-  });
+  useBeforeUnload(
+    saveStatus === 'dirty' && note ? 
+      () => {
+        updateMutation.mutateAsync({ id: note.id, content: editedContent });
+        return true;
+      } : 
+      false
+  );
 
   const handleQuestionClick = (question: string) => {
     // Question click handler - functionality to be implemented
@@ -533,8 +536,8 @@ export default function NoteDetail() {
       console.log(`AI ${endpoint} result:`, result);
 
       // Refresh the note data
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
 
@@ -1030,7 +1033,7 @@ export default function NoteDetail() {
                             <div className="w-4 h-4 border border-gray-300 rounded opacity-50"></div>
                             <span className="text-sm text-gray-700 flex-1">
                               {typeof step === 'object'
-                                ? (step?.description || step?.task || JSON.stringify(step))
+                                ? ((step as any)?.description || (step as any)?.task || JSON.stringify(step))
                                 : step}
                             </span>
                             <div className="flex gap-1">

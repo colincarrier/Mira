@@ -1,28 +1,9 @@
 // Part 1: Storage helper stubs for V3 enhancement
-import { Pool } from 'pg';
+import { pool } from './db';  // Use the shared pool from db.ts
 import crypto from "node:crypto";
 
-// Initialize pool from environment
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
-});
-
-pool.on("error", async (err) => {
-  console.error("[PG-POOL] unexpected error", err);
-  if (process.env.SENTRY_DSN) {
-    const { captureException } = await import("@sentry/node");
-    captureException(err, { tags: { subsystem: "pg-pool" } });
-  }
-});
-
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, closing pg pool…");
-  await pool.end();
-  process.exit(0);
-});
+// Re-export pool for modules that import it directly
+export { pool };
 
 // Export a storage object for compatibility with existing imports
 export const storage = {
