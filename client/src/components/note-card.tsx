@@ -356,7 +356,13 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
     
     // Priority 3: If still < 4, add todos (combined max 4)
     if (items.length < 4) {
-      const todoItems = todos.slice(0, 4 - items.length).map(todo => todo.title);
+      const todoItems = todos.slice(0, 4 - items.length).map(todo => {
+        // Handle todo.title that might be an object
+        if (typeof todo.title === 'object' && todo.title !== null) {
+          return (todo.title as any).task || (todo.title as any).description || JSON.stringify(todo.title);
+        }
+        return String(todo.title || '');
+      });
       items = [...items, ...todoItems];
     }
     

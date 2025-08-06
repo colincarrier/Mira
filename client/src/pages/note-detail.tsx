@@ -174,6 +174,7 @@ export default function NoteDetail() {
   const [pendingChanges, setPendingChanges] = useState<any>(null);
   const [clarificationInput, setClarificationInput] = useState('');
   const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [pendingAI, setPendingAI] = useState<Step[] | null>(null);
@@ -504,6 +505,13 @@ export default function NoteDetail() {
 
   const handleSendMessage = async (text: string) => {
     console.log("Processing message:", text);
+    setIsProcessing(true);
+    
+    // Show processing toast
+    const processingToast = document.createElement('div');
+    processingToast.className = 'fixed bottom-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-[9999] flex items-center gap-2';
+    processingToast.innerHTML = '<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg> Processing your request...';
+    document.body.appendChild(processingToast);
 
     try {
       // Automatic clarification vs evolution detection
@@ -536,14 +544,31 @@ export default function NoteDetail() {
       console.log(`AI ${endpoint} result:`, result);
 
       // Refresh the note data
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+      await queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      
+      // Show success toast
+      processingToast.remove();
+      const successToast = document.createElement('div');
+      successToast.className = 'fixed bottom-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-[9999]';
+      successToast.textContent = '✓ Note updated successfully';
+      document.body.appendChild(successToast);
+      setTimeout(() => successToast.remove(), 2000);
 
     } catch (error) {
       console.error("Failed to process message:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      // Show error toast
+      processingToast.remove();
+      const errorToast = document.createElement('div');
+      errorToast.className = 'fixed bottom-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-[9999]';
+      errorToast.textContent = `Error: ${errorMessage}`;
+      document.body.appendChild(errorToast);
+      setTimeout(() => errorToast.remove(), 3000);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -856,7 +881,17 @@ export default function NoteDetail() {
                   onBlur={async () => {
                     if (editedContent !== note?.content && note?.id && !isSaving) {
                       setIsSaving(true);
-                      saveMutation.mutate({ id: note.id, content: editedContent });
+                      setSaveStatus('saving');
+                      try {
+                        await saveMutation.mutateAsync({ id: note.id, content: editedContent });
+                        setSaveStatus('saved');
+                        setTimeout(() => setSaveStatus('idle'), 2000);
+                      } catch (error) {
+                        console.error('Failed to save:', error);
+                        setSaveStatus('dirty');
+                      } finally {
+                        setIsSaving(false);
+                      }
                     }
                   }}
                   onInput={(e) => {

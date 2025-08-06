@@ -34,14 +34,14 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   console.log("ActivityFeed - notes length:", notes?.length);
   console.log("ActivityFeed - first note:", notes?.[0]);
   console.log("ActivityFeed - first note has createdAt:", notes?.[0]?.createdAt);
-  console.log("ActivityFeed - first note has created_at:", notes?.[0]?.created_at);
+  console.log("ActivityFeed - first note has created_at:", (notes?.[0] as any)?.created_at);
 
   const filteredNotes = notes?.filter(note => {
     return (note.content || '').toLowerCase().includes(searchTerm.toLowerCase());
   }).sort((a, b) => {
-    // Handle both created_at and createdAt field names
-    const aDate = new Date(a.createdAt || a.created_at);
-    const bDate = new Date(b.createdAt || b.created_at);
+    // Use createdAt field consistently
+    const aDate = new Date(a.createdAt || (a as any).created_at);
+    const bDate = new Date(b.createdAt || (b as any).created_at);
     return bDate.getTime() - aDate.getTime();
   }) || [];
   
@@ -142,7 +142,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {formatDistanceToNow(new Date(note.createdAt || note.created_at), { addSuffix: true })
+                    {formatDistanceToNow(new Date(note.createdAt || (note as any).created_at), { addSuffix: true })
                       .replace('about ', '').replace(' hours', 'h').replace(' hour', 'h')
                       .replace(' minutes', 'm').replace(' minute', 'm').replace(' days', 'd')
                       .replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')
