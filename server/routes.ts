@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { registerClient } from "./ai/v3/realtime/sse-manager";
@@ -1528,7 +1528,7 @@ ${aiAnalysis ? `Additional context: ${aiAnalysis}` : ''}`;
   });
 
   // Intelligent Note Evolution Endpoint
-  app.post("/api/notes/:id/evolve", async (req, res) => {
+  app.post("/api/notes/:id/evolve", async (req: Request, res: Response): Promise<void> => {
     try {
       const noteId = parseInt(req.params.id);
       const { instruction, existingContent, existingContext, existingTodos, existingRichContext } = req.body;
@@ -1863,7 +1863,7 @@ Respond with a JSON object containing:
   });
 
   // Re-clarify instruction endpoint for when AI misunderstood
-  app.post("/api/notes/:noteId/clarify", async (req, res) => {
+  app.post("/api/notes/:noteId/clarify", async (req: Request, res: Response): Promise<void> => {
     try {
       const noteId = parseInt(req.params.noteId);
       const { originalInstruction, clarification } = req.body;

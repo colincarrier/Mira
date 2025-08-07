@@ -287,7 +287,7 @@ export default function NoteDetail() {
     async (doc: JSONContent, steps: Step[]) => {
       try {
         // 1) Patch document JSON
-        await fetch(`/api/notes/${id}/patch`, {
+        await fetch(`/api/notes/${id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ doc, steps }),
@@ -474,7 +474,7 @@ export default function NoteDetail() {
   useBeforeUnload(
     saveStatus === 'dirty' && note ? 
       () => {
-        updateMutation.mutateAsync({ id: note.id, content: editedContent });
+        saveMutation.mutateAsync({ id: note.id, content: editedContent });
         return true;
       } : 
       false
