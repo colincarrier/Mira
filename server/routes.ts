@@ -2623,199 +2623,25 @@ Respond with JSON:
     }
   });
 
-  // PATCH route for note updates (including context-aware AI modifications)
+  /**
+   * Authoritative save-endpoint.
+   * Accepts *either* plain-text `content` *or* TipTap `doc_json` (or both).
+   * Any other keys are ignored on purpose.
+   * Always returns 200 + JSON (never HTML).
+   */
   app.patch("/api/notes/:id", async (req, res) => {
-    try {
-      const noteId = parseInt(req.params.id);
-      const existingNote = await storage.getNote(noteId);
-      
-      if (!existingNote) {
-        return res.status(404).json({ message: "Note not found" });
-      }
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ error: 'Bad id' });
 
-      // Convert camelCase to snake_case for database columns
-      const rawUpdates: Record<string, any> = req.body ?? {};
-      const updates: Record<string, any> = {};
+    const { content, doc_json } = req.body ?? {};
+    if (content == null && doc_json == null)
+      return res.status(400).json({ error: 'Nothing to save' });
 
-      // Extract special instruction fields before conversion
-      const { updateInstruction, contextUpdate } = rawUpdates;
-      
-      // Convert to snake_case
-      for (const [key, value] of Object.entries(rawUpdates)) {
-        if (value === undefined) continue;
-        if (key === 'updateInstruction' || key === 'contextUpdate') continue;
-        const snake = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updates[snake] = value;
-      }
+    const updated = await storage.updateNote(id, { content, doc_json });
+    if (!updated) return res.status(404).json({ error: 'Not found' });
 
-      // Whitelist allowed columns to prevent SQL injection
-      const ALLOWED_FIELDS = [
-        'content', 'ai_generated_title', 'mode', 'user_id', 'is_shared', 
-        'share_id', 'privacy_level', 'audio_url', 'media_url', 'transcription',
-        'image_data', 'ai_enhanced', 'ai_suggestion', 'ai_context', 'rich_context',
-        'mira_response', 'mira_response_created_at', 'is_processing', 'collection_id',
-        'vector_dense', 'vector_sparse', 'intent_vector', 'version', 'original_content',
-        'last_user_edit', 'protected_content', 'processing_path', 'classification_scores',
-        'token_usage', 'doc_json'
-      ];
-
-      const validUpdates: Record<string, any> = {};
-      for (const [field, value] of Object.entries(updates)) {
-        if (ALLOWED_FIELDS.includes(field)) {
-          validUpdates[field] = value;
-        }
-      }
-
-      // If this is just a direct content update (like iOS Notes typing), save it directly
-      if (validUpdates.content && !updateInstruction && !contextUpdate) {
-        console.log("Direct content update - saving like iOS Notes");
-        validUpdates.last_user_edit = new Date().toISOString();
-        const updatedNote = await storage.updateNote(noteId, validUpdates);
-        return res.json(updatedNote);
-      }
-
-      // If there's an updateInstruction, use AI to intelligently modify the note
-      if (updateInstruction) {
-        console.log("Processing AI-assisted note update:", updateInstruction);
-
-        try {
-          // Create comprehensive context for AI
-          const fullContext = {
-            currentContent: existingNote.content,
-            todos: existingNote.todos || [],
-            rich_context: existingNote.rich_context,
-            ai_context: existingNote.ai_context,
-            userModification: updateInstruction
-          };
-
-          // Use the existing evolution endpoint logic
-          const evolutionPrompt = `You are an intelligent assistant helping to evolve and improve a user's note. Your goal is to understand the existing content deeply and apply the user's instruction to make it better, more complete, and more actionable.
-
-EXISTING NOTE CONTENT:
-${existingNote.content}
-
-EXISTING AI CONTEXT:
-${existingNote.ai_context || 'None'}
-
-EXISTING TODOS:
-${existingNote.todos && existingNote.todos.length > 0 ? existingNote.todos.map((t: any) => `• ${t.title} ${t.completed ? '(✓ completed)' : '(pending)'}`).join('\n') : 'None'}
-
-EXISTING RESEARCH/RICH CONTEXT:
-${existingNote.rich_context ? JSON.stringify(JSON.parse(existingNote.rich_context), null, 2) : 'None'}
-
-USER'S EVOLUTION INSTRUCTION:
-"${updateInstruction}"
-
-Please intelligently evolve this note by:
-1. UNDERSTANDING the current state and context
-2. APPLYING the user's instruction thoughtfully
-3. PRESERVING important existing information
-4. ENHANCING with relevant details, next steps, or improvements
-5. CHECKING OFF completed todos if the instruction indicates completion
-6. ADDING new todos if the evolution suggests additional actions
-
-Respond with a JSON object containing:
-{
-  "enhancedContent": "The improved note content",
-  "suggestion": "Brief explanation of what you evolved",
-  "context": "Any new context or insights",
-  "todos": ["Array of new todo items to add"],
-  "todoUpdates": [{"id": number, "completed": boolean}],
-  "collectionSuggestion": {"name": "string", "icon": "string", "color": "string"} or null,
-  "rich_context": {
-    "nextSteps": ["string"],
-    "entities": [{"type": "string", "value": "string"}],
-    "microQuestions": ["string"]
-  }
-}`;
-
-          // Use available AI service for evolution
-          let evolution;
-          if (isOpenAIAvailable()) {
-            evolution = await analyzeWithOpenAI(evolutionPrompt, "evolution");
-          } else if (isOpenAIAvailable()) {
-            evolution = await safeAnalyzeWithOpenAI(evolutionPrompt, "evolution");
-          } else {
-            throw new Error("No AI service available");
-          }
-
-          // Apply the evolution to the note
-          const updates: any = {
-            content: evolution.enhancedContent || existingNote.content,
-            ai_suggestion: evolution.suggestion,
-            ai_context: evolution.context,
-            ai_enhanced: true
-          };
-
-          // Add rich context if provided
-          if (evolution.rich_context) {
-            updates.rich_context = JSON.stringify(evolution.rich_context);
-          }
-
-          // Update the note
-          const updatedNote = await storage.updateNote(noteId, updates);
-
-          // Create new todos if provided
-          if (evolution.todos && evolution.todos.length > 0) {
-            for (const todoTitle of evolution.todos) {
-              await storage.createTodo({
-                title: todoTitle,
-                noteId: noteId,
-              });
-            }
-          }
-
-          // Update existing todos if specified
-          if (evolution.todoUpdates && evolution.todoUpdates.length > 0) {
-            for (const todoUpdate of evolution.todoUpdates) {
-              await storage.updateTodo(todoUpdate.id, { completed: todoUpdate.completed });
-            }
-          }
-
-          // Handle collection suggestion
-          if (evolution.collectionSuggestion) {
-            const collections = await storage.getCollections();
-            const existingCollection = collections.find(
-              c => c.name.toLowerCase() === evolution.collectionSuggestion!.name.toLowerCase()
-            );
-
-            let collection_id = existingCollection?.id;
-            if (!existingCollection) {
-              const newCollection = await storage.createCollection(evolution.collectionSuggestion);
-              collection_id = newCollection.id;
-            }
-
-            await storage.updateNote(noteId, { collection_id });
-          }
-
-          // Return the updated note with todos
-          const finalNote = await storage.getNote(noteId);
-          res.json(finalNote);
-
-        } catch (aiError) {
-          console.error("AI evolution failed:", aiError);
-          // Fallback to simple content update if AI fails
-          const updatedNote = await storage.updateNote(noteId, { 
-            content: req.body.content ?? existingNote.content, 
-            last_user_edit: new Date().toISOString(),
-            ...validUpdates 
-          });
-          return res.json(updatedNote);
-        }
-      } else {
-        // Simple update without AI for direct edits
-        const updatedNote = await storage.updateNote(noteId, { 
-          content: req.body.content ?? existingNote.content,
-          last_user_edit: new Date().toISOString(),
-          ...validUpdates 
-        });
-        return res.json(updatedNote);
-      }
-
-    } catch (error) {
-      console.error("Note update error:", error);
-      res.status(500).json({ message: "Failed to update note" });
-    }
+    res.setHeader('Content-Type', 'application/json');
+    res.json(updated);              // <-- ALWAYS JSON, never HTML
   });
 
   // Todos endpoints

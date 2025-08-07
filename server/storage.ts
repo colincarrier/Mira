@@ -116,47 +116,27 @@ export const storage = {
       return [];
     }
   },
-  /** Canonical update helper – accepts ANY allowed snake_case field */
+
+
+  // Accepts { content?, doc_json? } only.
   updateNote: async (
     id: number,
-    updates: Record<string, any>
+    { content, doc_json }: { content?: string | null; doc_json?: any }
   ) => {
-    const ALLOWED = [
-      'content',
-      'ai_generated_title',
-      'mira_response',
-      'mira_response_created_at',
-      'token_usage',
-      'is_processing',
-      'rich_context',
-      'ai_context',
-      'ai_enhanced',
-      'ai_suggestion',
-      'collection_id',
-      'doc_json',
-      'migrated_at'
-    ] as const;
+    if (content == null && doc_json == null)
+      return (await pool.query('SELECT * FROM notes WHERE id = $1', [id])).rows[0];
 
-    const valid = Object.entries(updates)
-      .filter(([k]) => (ALLOWED as readonly string[]).includes(k));
+    const fields: string[] = [];
+    const values: any[]   = [id];
 
-    if (valid.length === 0) {
-      // 🟢 no valid fields → return existing row
-      const { rows } = await pool.query("SELECT * FROM notes WHERE id = $1", [id]);
-      return rows[0];
-    }
-
-    const setClause = valid
-      .map(([col], i) => `${col} = $${i + 2}`)
-      .join(', ');
-
-    const values = [id, ...valid.map(([, v]) => v)];
+    if (content != null)   { fields.push(`content   = $${values.length + 1}`);   values.push(content); }
+    if (doc_json != null)  { fields.push(`doc_json  = $${values.length + 1}`);   values.push(doc_json); }
 
     const { rows } = await pool.query(
-      `UPDATE notes SET ${setClause} WHERE id = $1 RETURNING *`,
+      `UPDATE notes SET ${fields.join(', ')}, updated_at = NOW()
+       WHERE id = $1 RETURNING *`,
       values
     );
-
     return rows[0];
   },
 

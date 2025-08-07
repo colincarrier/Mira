@@ -7,6 +7,7 @@ import { NoteWithTodos, Todo } from "@shared/schema";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { saveNote, SavePayload } from "@/utils/saveNote";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
 import { useCriticalInfo } from "@/hooks/useCriticalInfo";
 import { useEnhancementSocket } from "@/hooks/useEnhancementSocket";
@@ -201,43 +202,20 @@ export default function NoteDetail() {
   const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
   const [isSaving, setIsSaving] = useState(false);
 
-  const updateMutation = useMutation({
-    mutationFn: async (payload: { id: number; content: string }) => {
-      const res = await fetch(`/api/notes/${payload.id}`, {
-        method : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify({ content: payload.content }),
-      });
-      if (!res.ok) throw new Error('update failed');
-      return res.json();
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(id) });
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 1500);
-    },
-    onError: () => setSaveStatus('dirty'),
-  });
+  const qc = useQueryClient();
 
   const saveMutation = useMutation({
-    mutationFn: async ({ id, content }: { id: number; content: string }) => {
-      const res = await fetch(`/api/notes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
-      });
-      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
-      return res.json();
-    },
+    mutationFn: (payload: SavePayload) => saveNote(payload),
     onSuccess: (updated) => {
-      // Write-through cache for instant UI update
-      queryClient.setQueryData(queryKeys.notes.detail(updated.id), updated);
-      // Invalidate list so it refreshes asynchronously
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+      qc.setQueryData(['/api/notes', note?.id], updated);      // detail
+      qc.invalidateQueries({ queryKey: ['/api/notes'] });     // list
+      setSaveStatus('saved');
       setIsSaving(false);
+      setTimeout(() => setSaveStatus('idle'), 1500);
     },
     onError: (error) => {
       console.error('[saveMutation]', error);
+      setSaveStatus('dirty');
       setIsSaving(false);
 
       // ---------- user-visible toast ----------
@@ -256,7 +234,7 @@ export default function NoteDetail() {
       debounce((txt: string) => {
         if (!note || !txt.trim()) return;
         setSaveStatus('saving');
-        saveMutation.mutate({ id: note.id, content: txt });
+        saveMutation.mutate({ id: note.id, content: txt, source: 'textarea' });
       }, 2000),
     [note?.id],
   );
@@ -264,8 +242,7 @@ export default function NoteDetail() {
   // -------- INSTANT SAVE ON BLUR --------
   const handleBlur = () => {
     if (note?.id && editedContent !== note.content && !isSaving) {
-      setIsSaving(true);
-      saveMutation.mutate({ id: note.id, content: editedContent });
+      saveMutation.mutate({ id: note.id, content: editedContent, source: 'textarea' });
     }
   };
 
@@ -297,45 +274,27 @@ export default function NoteDetail() {
       // Guard against empty payload to prevent HTML caching
       if (!doc && steps?.length === 0) return;
       
+      saveMutation.mutate({
+        id: note?.id || Number(id),
+        docJson: doc,
+        source: 'editor'
+      });
+
+      // 2) Extract & persist tasks
       try {
-        // 1) Patch document JSON
-        await fetch(`/api/notes/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ doc_json: doc }),
-        });
-
-        // 2) Extract & persist tasks
-        try {
-          const tasks = extractTasksFromTipTap(doc);
-          if (tasks.length) {
-            await fetch(`/api/notes/${id}/tasks`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tasks }),
-            });
-          }
-        } catch (err) { 
-          console.error('[tasks]', err);
-        }
-
-        // 3) Title sync
-        const newTitle = extractTitle(doc);
-        if (newTitle && newTitle !== note?.aiGeneratedTitle) {
-          await fetch(`/api/notes/${id}`, {
-            method: 'PATCH',
+        const tasks = extractTasksFromTipTap(doc);
+        if (tasks.length) {
+          await fetch(`/api/notes/${id}/tasks`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ aiGeneratedTitle: newTitle }),
+            body: JSON.stringify({ tasks }),
           });
         }
-        
-        // Refresh the note data
-        queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
-      } catch (error) {
-        console.error('Failed to save document:', error);
+      } catch (err) { 
+        console.error('[tasks]', err);
       }
     },
-    [id, note?.aiGeneratedTitle]
+    [id, note?.id]
   );
 
   // Subscribe to SSE updates
@@ -486,7 +445,7 @@ export default function NoteDetail() {
   useBeforeUnload(
     saveStatus === 'dirty' && note ? 
       () => {
-        saveMutation.mutateAsync({ id: note.id, content: editedContent });
+        saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
         return true;
       } : 
       false
@@ -774,7 +733,7 @@ export default function NoteDetail() {
               size="sm"
               onStop={() => {
                 // Stop AI processing
-                updateMutation.mutate({ id: note.id, content: note.content });
+                saveMutation.mutate({ id: note.id, content: note.content, source: 'ai' });
               }}
             />
           </div>
@@ -907,7 +866,7 @@ export default function NoteDetail() {
                       setIsSaving(true);
                       setSaveStatus('saving');
                       try {
-                        await saveMutation.mutateAsync({ id: note.id, content: editedContent });
+                        await saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
                         setSaveStatus('saved');
                         setTimeout(() => setSaveStatus('idle'), 2000);
                       } catch (error) {
