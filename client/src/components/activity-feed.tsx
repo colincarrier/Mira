@@ -20,7 +20,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   
   const { data: notes, isLoading, refetch } = useQuery<NoteWithTodos[]>({
     queryKey: ["/api/notes"],
-    staleTime: 15000, // 15 second cache
+    staleTime: 10000, // 10 second cache
     gcTime: 300000, // Keep in cache for 5 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
