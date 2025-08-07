@@ -32,9 +32,9 @@ export function useFlushQueue() {
 
           try {
             if (op.type === 'edit') {
-              await pushEdit(op);
+              await pushEdit(op as QueueOp & { type: 'edit' });
             } else {
-              await pushInstruct(op);
+              await pushInstruct(op as QueueOp & { type: 'instruct' });
             }
             await removeOp(op.id);
             retryRef.current.delete(op.id);
@@ -55,7 +55,7 @@ export function useFlushQueue() {
 
 async function pushEdit(op: QueueOp & { type: 'edit' }) {
   const response = await fetch(`/api/notes/${op.noteId}`, {
-    method: 'POST',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(op),
   });

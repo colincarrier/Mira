@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CriticalInfoDialog } from "@/components/CriticalInfoDialog";
 import { useCriticalInfo } from "@/hooks/useCriticalInfo";
+import { useEnhancementSocket } from "@/hooks/useEnhancementSocket";
 import { featureFlags } from "@shared/featureFlags";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useNoteStream } from "@/hooks/useNoteStream";
@@ -282,15 +283,18 @@ export default function NoteDetail() {
   // Use critical info hook
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
   
+  // Enable real-time AI enhancement updates
+  useEnhancementSocket(note?.id);
+  
   // Editor commit callback
   const commitFromEditor = useCallback(
     async (doc: JSONContent, steps: Step[]) => {
       try {
         // 1) Patch document JSON
         await fetch(`/api/notes/${id}`, {
-          method: 'POST',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ doc, steps }),
+          body: JSON.stringify({ doc_json: doc }),
         });
 
         // 2) Extract & persist tasks
