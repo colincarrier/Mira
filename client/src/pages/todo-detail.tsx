@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { ChevronLeft, CheckCircle2, Circle, Pin, Archive, Calendar, AlertCircle } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import type { Todo, NoteWithTodos } from "@shared/schema";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function TodoDetail() {
   const { id } = useParams();
@@ -13,7 +14,7 @@ export default function TodoDetail() {
   });
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
   });
 
   const todo = todos?.find(t => t.id === parseInt(id || "0"));

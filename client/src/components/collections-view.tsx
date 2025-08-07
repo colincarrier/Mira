@@ -4,6 +4,7 @@ import { Coffee, Lightbulb, Book, Folder, ChevronRight, Heart, Star, Briefcase, 
 import { getCollectionColor } from "@/lib/collection-colors";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface CollectionWithCount {
   id: number;
@@ -66,7 +67,7 @@ export default function CollectionsView({ embedded = false }: { embedded?: boole
   const queryClient = useQueryClient();
 
   const { data: collections, isLoading } = useQuery<CollectionWithCount[]>({
-    queryKey: ["/api/collections"],
+    queryKey: queryKeys.collections.all,
   });
 
   const reorderMutation = useMutation({
@@ -81,23 +82,23 @@ export default function CollectionsView({ embedded = false }: { embedded?: boole
     },
     onMutate: async (reorderedCollections) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/collections"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.collections.all });
 
       // Snapshot previous value
-      const previousCollections = queryClient.getQueryData(["/api/collections"]);
+      const previousCollections = queryClient.getQueryData(queryKeys.collections.all);
 
       // Optimistically update to new value
-      queryClient.setQueryData(["/api/collections"], reorderedCollections);
+      queryClient.setQueryData(queryKeys.collections.all, reorderedCollections);
 
       return { previousCollections };
     },
     onError: (err, newCollections, context) => {
       // Rollback on error
-      queryClient.setQueryData(["/api/collections"], context?.previousCollections);
+      queryClient.setQueryData(queryKeys.collections.all, context?.previousCollections);
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
     },
   });
 

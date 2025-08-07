@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mic, Square, Send } from "lucide-react";
-
+import { queryKeys } from "@/utils/queryKeys";
 import { usePermissions } from "@/hooks/use-permissions";
 
 interface InlineVoiceRecorderProps {
@@ -109,7 +109,7 @@ export default function InlineVoiceRecorder({
       return response.json();
     },
     onSuccess: (note) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       handleReset();
       

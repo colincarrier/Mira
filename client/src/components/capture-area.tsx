@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Camera, Mic, Type, Upload, File, Plus, X } from "lucide-react";
+import { queryKeys } from "@/utils/queryKeys";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,8 +27,8 @@ export default function CaptureArea({ onVoiceCapture }: CaptureAreaProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+      queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setText("");
       setIsTextDialogOpen(false);

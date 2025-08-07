@@ -5,6 +5,7 @@ import { Play, Pause, CheckCircle, Folder, Share2, Star, Calendar, MapPin, Phone
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { queryKeys } from "@/utils/queryKeys";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -271,7 +272,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       await apiRequest("DELETE", `/api/notes/${note.id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
 
     },
     onError: () => {
@@ -292,7 +293,7 @@ export default function NoteCard({ note, onTodoModalClose }: NoteCardProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
     },
   });

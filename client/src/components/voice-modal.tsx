@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { X, Pause, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface VoiceModalProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export default function VoiceModal({ isOpen, onClose }: VoiceModalProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setRecordingState('ready');
       setRecordingTime(0);

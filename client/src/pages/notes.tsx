@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/utils/queryKeys";
 import ActivityFeed from "@/components/activity-feed";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
@@ -23,7 +24,7 @@ export default function Notes() {
 
   // Check for any notes currently being processed with real-time updates
   const { data: notes, isFetching } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
     staleTime: 30_000, // 30 seconds stale time
     gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnMount: true,
@@ -55,10 +56,10 @@ export default function Notes() {
     },
     onMutate: async (text: string) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/notes"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.notes.all });
 
       // Snapshot the previous value
-      const previousNotes = queryClient.getQueryData(["/api/notes"]);
+      const previousNotes = queryClient.getQueryData(queryKeys.notes.all);
 
       // Optimistically update with processing preview
       const tempId = `temp-${crypto.randomUUID()}`;
@@ -100,7 +101,7 @@ export default function Notes() {
       };
 
       // Add to top of notes list immediately
-      queryClient.setQueryData(["/api/notes"], (old: any) => 
+      queryClient.setQueryData(queryKeys.notes.all, (old: any) => 
         [tempNote, ...(old || [])]
       );
 
@@ -111,12 +112,12 @@ export default function Notes() {
     onError: (err, text, context: any) => {
       // Rollback optimistic update on error
       if (context?.previousNotes) {
-        queryClient.setQueryData(["/api/notes"], context.previousNotes);
+        queryClient.setQueryData(queryKeys.notes.all, context.previousNotes);
       }
     },
     onSuccess: (newNote, text, context: any) => {
       // Replace temporary note with real note
-      queryClient.setQueryData(["/api/notes"], (old: any) => {
+      queryClient.setQueryData(queryKeys.notes.all, (old: any) => {
         if (!old) return [newNote];
         // Remove temp note and add real note at the top
         const filtered = old.filter((note: any) => note.id !== context?.tempNote?.id);
@@ -124,8 +125,8 @@ export default function Notes() {
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"], exact: false });
-      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all, exact: false });
+      queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
     },
   });
 

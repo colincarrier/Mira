@@ -3,6 +3,7 @@ import { X, Camera, Mic, Type, Upload, FileText } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface FullScreenCaptureProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export default function FullScreenCapture({ isOpen, onClose }: FullScreenCapture
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       setNoteText('');
       onClose();
       toast({

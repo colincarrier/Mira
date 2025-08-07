@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { apiRequest } from "@/lib/queryClient";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface Note {
   id: number;
@@ -44,7 +45,7 @@ export default function NoteDetailNew() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: note, isLoading } = useQuery<Note>({
-    queryKey: [`/api/notes/${id}`],
+    queryKey: queryKeys.notes.detail(parseInt(id || "0")),
     enabled: !!id,
   });
 
@@ -53,8 +54,8 @@ export default function NoteDetailNew() {
       return apiRequest(`/api/notes/${id}`, "PATCH", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(parseInt(id || "0")) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
   });
 
@@ -63,7 +64,7 @@ export default function NoteDetailNew() {
       return apiRequest(`/api/notes/${id}`, "DELETE");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       setLocation("/");
       toast({ description: "Note deleted successfully" });
     },
@@ -74,7 +75,7 @@ export default function NoteDetailNew() {
       return apiRequest(`/api/todos/${todoId}`, "PATCH", { completed });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/notes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(parseInt(id || "0")) });
     },
   });
 

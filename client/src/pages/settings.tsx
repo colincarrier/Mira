@@ -5,6 +5,7 @@ import type { NoteWithTodos } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useOfflineStore } from "@/store/offline-store";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -30,7 +31,7 @@ export default function Settings() {
   } = useOfflineStore();
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
   });
 
   const { data: apiStats } = useQuery<{

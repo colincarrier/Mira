@@ -2,6 +2,7 @@ import { Camera, Mic, Plus, Send, Square, X as CloseIcon, FileText, Image, Loade
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface InputBarProps {
   onTextSubmit?: (text: string) => void;
@@ -114,10 +115,10 @@ export default function InputBar({
       return result;
     },
     onMutate: async (text) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/notes", undefined] });
-      const previous = queryClient.getQueryData<any[]>(["/api/notes", undefined]) ?? [];
+      await queryClient.cancelQueries({ queryKey: queryKeys.notes.all });
+      const previous = queryClient.getQueryData<any[]>(queryKeys.notes.all) ?? [];
       const tempId = `temp-${crypto.randomUUID()}`;
-      queryClient.setQueryData(["/api/notes", undefined], [
+      queryClient.setQueryData(queryKeys.notes.all, [
         { 
           id: tempId,
           content: text,
@@ -130,9 +131,11 @@ export default function InputBar({
     },
     onSuccess: (saved, _vars, ctx) => {
       // Replace temp note with server note
-      queryClient.setQueryData(["/api/notes", undefined], (old?: any[]) =>
+      queryClient.setQueryData(queryKeys.notes.all, (old?: any[]) =>
         (old ?? []).map(n => (n.id === ctx?.tempId ? saved : n)),
       );
+      // Invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       // Defer todos/reminders refresh
     },
     onError: (error) => {
@@ -160,7 +163,7 @@ export default function InputBar({
       }
 
       const placeholderNote = await placeholderResponse.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
 
       const formData = new FormData();
       formData.append("audio", audioBlob);
@@ -179,7 +182,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
 
     },
@@ -207,7 +210,7 @@ export default function InputBar({
       }
 
       const placeholderNote = await placeholderResponse.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
 
       const formData = new FormData();
       formData.append("image", file);
@@ -226,7 +229,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
     },
@@ -255,7 +258,7 @@ export default function InputBar({
       }
 
       const placeholderNote = await placeholderResponse.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
 
       const formData = new FormData();
       formData.append("file", file);
@@ -274,7 +277,7 @@ export default function InputBar({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", undefined] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       closeSubmenu();
 
@@ -361,7 +364,7 @@ export default function InputBar({
           throw new Error(`Update failed: ${response.status}`);
         }
         
-        await queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(noteId) });
 
       } else {
         // Create new note

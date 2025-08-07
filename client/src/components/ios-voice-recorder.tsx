@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Mic, Square, Pause, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface IOSVoiceRecorderProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export default function IOSVoiceRecorder({ isOpen, onClose }: IOSVoiceRecorderPr
       return response.json();
     },
     onSuccess: (note) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       handleReset();
       onClose();

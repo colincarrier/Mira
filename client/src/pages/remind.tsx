@@ -9,6 +9,7 @@ import SimpleTextInput from "@/components/simple-text-input";
 import { ReminderDialog } from "@/components/reminder-dialog";
 import { formatDistanceToNow } from "date-fns";
 import type { Todo } from "@shared/schema";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
@@ -41,7 +42,7 @@ export default function Remind() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       setInputText('');
     }
   });

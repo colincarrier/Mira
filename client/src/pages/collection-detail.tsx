@@ -6,6 +6,7 @@ import { getCollectionColor } from "@/lib/collection-colors";
 import * as Icons from "lucide-react";
 import { useState } from "react";
 import type { NoteWithTodos, Collection } from "@shared/schema";
+import { queryKeys } from "@/utils/queryKeys";
 
 const getIconComponent = (iconName: string) => {
   const iconMap: Record<string, any> = {
@@ -46,13 +47,13 @@ export default function CollectionDetail() {
   const [isGeneratingSuper, setIsGeneratingSuper] = useState(false);
 
   const { data: collection } = useQuery<Collection>({
-    queryKey: ["/api/collections", id],
+    queryKey: [...queryKeys.collections.all, id],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!id,
   });
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/collections", id, "notes"],
+    queryKey: [...queryKeys.collections.all, id, "notes"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!id,
   });
@@ -64,12 +65,12 @@ export default function CollectionDetail() {
       return response.json();
     },
     onSuccess: (data: SuperNoteData) => {
-      queryClient.setQueryData(["/api/collections", id, "super-note"], data);
+      queryClient.setQueryData([...queryKeys.collections.all, id, "super-note"], data);
     },
   });
 
   const { data: superNote } = useQuery<SuperNoteData>({
-    queryKey: ["/api/collections", id, "super-note"],
+    queryKey: [...queryKeys.collections.all, id, "super-note"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!collection && !!notes && !!id,
   });

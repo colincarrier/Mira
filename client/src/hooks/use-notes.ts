@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { NoteWithTodos, InsertNote } from "@shared/schema";
+import { queryKeys } from "@/utils/queryKeys";
 
 export function useNotes() {
   const queryClient = useQueryClient();
@@ -10,7 +11,7 @@ export function useNotes() {
     isLoading,
     error,
   } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
     placeholderData: (previousData) => previousData, // Prevent empty list flashes
   });
 
@@ -21,11 +22,11 @@ export function useNotes() {
     },
     onSuccess: () => {
       // Force refresh all related data
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
       // Also refetch immediately
-      queryClient.refetchQueries({ queryKey: ["/api/notes"] });
+      queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
       queryClient.refetchQueries({ queryKey: ["/api/todos"] });
     },
     onError: (error) => {
@@ -51,9 +52,9 @@ export function useNotes() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections.all });
     },
   });
 

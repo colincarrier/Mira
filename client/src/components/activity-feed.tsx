@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
 import { useRealTimeUpdates } from "@/hooks/use-realtime-updates";
+import { queryKeys } from "@/utils/queryKeys";
 
 interface ActivityFeedProps {
   onTodoModalClose?: () => void;
@@ -19,7 +20,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   useRealTimeUpdates();
   
   const { data: notes, isLoading, refetch } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
     staleTime: 10000, // 10 second cache
     gcTime: 300000, // Keep in cache for 5 minutes
     refetchOnWindowFocus: true,

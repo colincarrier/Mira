@@ -10,6 +10,7 @@ import BottomNavigation from "@/components/bottom-navigation";
 import CollectionsView from "@/components/collections-view";
 import DevCacheDebugger from "@/components/dev-cache-debugger";
 import { ReminderSettings } from "@/components/reminder-settings";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function Profile() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -39,11 +40,11 @@ export default function Profile() {
   } = useOfflineStore();
 
   const { data: notes } = useQuery<NoteWithTodos[]>({
-    queryKey: ["/api/notes"],
+    queryKey: queryKeys.notes.all,
   });
 
   const { data: collections } = useQuery<Collection[]>({
-    queryKey: ["/api/collections"],
+    queryKey: queryKeys.collections.all,
   });
 
   const { data: apiStats } = useQuery<{
