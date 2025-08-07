@@ -67,7 +67,7 @@ async function pushEdit(op: QueueOp & { type: 'edit' }) {
 
 async function pushInstruct(op: QueueOp & { type: 'instruct' }) {
   const response = await fetch(`/api/notes/${op.noteId}/instruct`, {
-    method: 'POST',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: op.prompt }),
   });

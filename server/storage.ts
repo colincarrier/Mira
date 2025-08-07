@@ -141,7 +141,9 @@ export const storage = {
       .filter(([k]) => (ALLOWED as readonly string[]).includes(k));
 
     if (valid.length === 0) {
-      throw new Error('updateNote called with no valid fields');
+      // 🟢 no valid fields → return existing row
+      const { rows } = await pool.query("SELECT * FROM notes WHERE id = $1", [id]);
+      return rows[0];
     }
 
     const setClause = valid

@@ -761,7 +761,7 @@ export default function NoteDetail() {
             </button>
             {/* Enhanced AI processing indicator */}
             <AIProcessingIndicator 
-              isProcessing={!note.aiEnhanced || note.isProcessing}
+              isProcessing={!note.aiEnhanced || note!!.isProcessing}
               message="Updating"
               size="sm"
               onStop={() => {
