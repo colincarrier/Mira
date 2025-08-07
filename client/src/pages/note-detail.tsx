@@ -295,7 +295,7 @@ export default function NoteDetail() {
   const commitFromEditor = useCallback(
     async (doc: JSONContent, steps: Step[]) => {
       // Guard against empty payload to prevent HTML caching
-      if (!doc && (!steps || steps.length === 0)) return;
+      if (!doc && steps?.length === 0) return;
       
       try {
         // 1) Patch document JSON
