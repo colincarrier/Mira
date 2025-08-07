@@ -195,10 +195,10 @@ export default function NoteDetail() {
     },
   });
 
-  // Purge possibly-corrupted cache on mount
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
-  }, [id, queryClient]);
+  // Don't purge cache on mount - this was causing data to disappear
+  // useEffect(() => {
+  //   queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+  // }, [id, queryClient]);
   const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -207,8 +207,11 @@ export default function NoteDetail() {
   const saveMutation = useMutation({
     mutationFn: (payload: SavePayload) => saveNote(payload),
     onSuccess: (updated) => {
-      qc.setQueryData(['/api/notes', note?.id], updated);      // detail
-      qc.invalidateQueries({ queryKey: ['/api/notes'] });     // list
+      // Use consistent cache keys from queryKeys
+      if (note?.id) {
+        qc.setQueryData(queryKeys.notes.detail(note.id), updated);  // detail
+      }
+      qc.invalidateQueries({ queryKey: queryKeys.notes.all });       // list
       setSaveStatus('saved');
       setIsSaving(false);
       setTimeout(() => setSaveStatus('idle'), 1500);
@@ -1064,7 +1067,7 @@ export default function NoteDetail() {
                                     });
 
                                     // Refresh the note to show the new todo
-                                    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(note.id) });
+                                    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
 
 
                                   } catch (error) {
