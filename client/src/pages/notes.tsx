@@ -147,23 +147,6 @@ export default function Notes() {
       {/* Status Bar */}
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
       
-      {/* Debug Info */}
-      <div className="p-2 bg-gray-100 border border-gray-300 m-2 rounded text-xs">
-        <p>Notes Status: {isLoading ? 'Loading...' : error ? `Error: ${error}` : `Loaded ${notes?.length || 0} notes`}</p>
-        <p>First Note ID: {notes?.[0]?.id || 'None'}</p>
-        <p>Last Fetch: {new Date().toLocaleTimeString()}</p>
-        <button 
-          onClick={() => {
-            console.log('Manual refetch triggered');
-            qc.invalidateQueries({ queryKey: queryKeys.notes.all });
-            refetch();
-          }}
-          className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-        >
-          Manual Refresh
-        </button>
-      </div>
-      
       {/* Main Content */}
       <div className="pb-24">
         <ActivityFeed />
