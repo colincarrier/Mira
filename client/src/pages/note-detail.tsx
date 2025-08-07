@@ -183,6 +183,9 @@ export default function NoteDetail() {
   // Enable offline queue flushing
   useFlushQueue();
 
+  // Auto-save state and mutations
+  const queryClient = useQueryClient();
+
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: queryKeys.notes.detail(Number(id)),
     enabled: !!id,
@@ -191,8 +194,10 @@ export default function NoteDetail() {
     },
   });
 
-  // Auto-save state and mutations
-  const queryClient = useQueryClient();
+  // Purge possibly-corrupted cache on mount
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+  }, [id, queryClient]);
   const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -761,12 +766,12 @@ export default function NoteDetail() {
             </button>
             {/* Enhanced AI processing indicator */}
             <AIProcessingIndicator 
-              isProcessing={!note.aiEnhanced || note!!.isProcessing}
+              isProcessing={!note.aiEnhanced || note?.isProcessing === true}
               message="Updating"
               size="sm"
               onStop={() => {
                 // Stop AI processing
-                updateMutation.mutate({ is_processing: false });
+                updateMutation.mutate({ id: note.id, content: note.content });
               }}
             />
           </div>

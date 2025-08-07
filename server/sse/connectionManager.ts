@@ -13,19 +13,19 @@ export function broadcastToNote(noteId: number, payload: object): void {
   const event = JSON.stringify({ noteId, ...payload });
   const deadClients = new Set();
   
-  for (const client of clients) {
+  clients.forEach(client => {
     try {
       client.write(`data: ${event}\n\n`);
-    } catch (error) {
+    } catch (error: any) {
       console.warn('[SSE] Dead client detected, removing:', error.message);
       deadClients.add(client);
     }
-  }
+  });
   
   // Remove dead clients
-  for (const deadClient of deadClients) {
+  deadClients.forEach(deadClient => {
     clients.delete(deadClient);
-  }
+  });
   
   console.log(`[SSE] Broadcasted to ${clients.size} active clients`);
 }
