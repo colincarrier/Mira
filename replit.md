@@ -64,6 +64,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 7, 2025)
 
+### Important: Access URL Configuration
+- **Use Express URL**: https://workspace.colincarrier.repl.co
+- **Architecture**: Vite runs as middleware inside Express on port 5000 (not standalone on 5173)
+- **Preview Issue**: Replit preview expects Vite on port 5173, but we use Express middleware mode
+- **Solution**: Always use the Express URL which serves both frontend and API from port 5000
+
 ### Complete Fix for Manual Saves and Navigation
 - **Root Cause Identified:** Missing `POST /api/notes/:id` server route was causing cache corruption
 - **Critical Fix:** Added POST route handler that returns JSON instead of HTML
