@@ -1760,9 +1760,16 @@ Respond with a JSON object containing:
         await storage.updateNote(noteId, { collection_id });
       }
 
-      // Return the updated note
+      // Return the updated note with normalized fields
       const updatedNote = await storage.getNote(noteId);
-      res.json(updatedNote);
+      const normalizedUpdatedNote = normalizeNote(updatedNote);
+      
+      // Also fetch todos for the complete response
+      const todos = await storage.getTodosByNoteId(noteId);
+      const noteWithTodos = { ...normalizedUpdatedNote, todos: todos.filter(t => !t.archived) };
+      
+      console.log('Evolve endpoint returning updated note:', noteId);
+      res.json(noteWithTodos);
 
     } catch (error) {
       console.error("Note evolution error:", error);

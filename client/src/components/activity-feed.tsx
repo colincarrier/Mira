@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search, List, Grid } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useLocation } from "wouter";
 import type { NoteWithTodos } from "@shared/schema";
 import NoteCard from "./note-card";
 import { useRealTimeUpdates } from "@/hooks/use-realtime-updates";
 import { queryKeys } from "@/utils/queryKeys";
+import { queryClient } from "@/lib/queryClient";
 
 interface ActivityFeedProps {
   onTodoModalClose?: () => void;
@@ -15,26 +17,29 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [isCondensedView, setIsCondensedView] = useState(false);
+  const [, navigate] = useLocation();
   
   // Enable real-time updates for immediate note visibility
   useRealTimeUpdates();
   
-  const { data: notes, isLoading, refetch } = useQuery<NoteWithTodos[]>({
+  const { data: notes, isLoading, error, refetch, dataUpdatedAt } = useQuery<NoteWithTodos[]>({
     queryKey: queryKeys.notes.all,
-    staleTime: 10000, // 10 second cache
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 1000, // 1 second cache for immediate updates
+    gcTime: 10000, // Keep in cache for 10 seconds only
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchInterval: false,
+    networkMode: 'always', // Always attempt network request
   });
 
   // Debug logging to see what data we're getting
-  console.log("ActivityFeed - notes data:", notes);
-  console.log("ActivityFeed - isLoading:", isLoading);
-  console.log("ActivityFeed - notes length:", notes?.length);
-  console.log("ActivityFeed - first note:", notes?.[0]);
-  console.log("ActivityFeed - first note has createdAt:", notes?.[0]?.createdAt);
-  console.log("ActivityFeed - first note has created_at:", (notes?.[0] as any)?.created_at);
+  console.log('[ActivityFeed] State:', {
+    isLoading,
+    error: error ? String(error) : null,
+    notesLength: notes?.length || 0,
+    notesType: Array.isArray(notes) ? 'array' : typeof notes,
+    dataUpdatedAt: dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : 'never',
+  });
 
   const filteredNotes = notes?.filter(note => {
     return (note.content || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -72,6 +77,23 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="space-y-4 px-4">
+        <div className="flex items-center justify-between mb-4 pt-6">
+          <h2 className="text-2xl font-serif font-medium">Notes</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-red-500">Error loading notes</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">{String(error)}</p>
+          <button onClick={() => refetch()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!notes || notes.length === 0) {
     return (
       <div className="space-y-4 px-4">
@@ -86,7 +108,22 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
         </div>
         <div className="text-center py-8">
           <p className="text-[hsl(var(--muted-foreground))]">No notes yet. Start by capturing your first thought!</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">Debug: isLoading={isLoading ? 'true' : 'false'}, notesLength={notes?.length || 0}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
+            Debug: isLoading={isLoading ? 'true' : 'false'}, 
+            notesLength={notes?.length || 0}, 
+            error={error ? 'yes' : 'no'},
+            lastUpdate={dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : 'never'}
+          </p>
+          <button 
+            onClick={() => {
+              console.log('[ActivityFeed] Force refetch triggered');
+              queryClient.removeQueries({ queryKey: queryKeys.notes.all });
+              refetch();
+            }} 
+            className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+          >
+            Force Refresh (Clear Cache)
+          </button>
         </div>
       </div>
     );
@@ -95,7 +132,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4 px-4 pt-6">
-        <h2 className="text-2xl font-serif font-medium">Notes</h2>
+        <h2 className="text-2xl font-serif font-medium">Notes ({visibleNotes.length})</h2>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsCondensedView(!isCondensedView)}
@@ -134,7 +171,7 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
             <div 
               key={note.id}
               className="flex items-center justify-between p-3 bg-[hsl(var(--card))] rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] transition-colors cursor-pointer"
-              onClick={() => window.location.href = `/note/${note.id}`}
+              onClick={() => navigate(`/notes/${note.id}`)}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">

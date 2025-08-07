@@ -32,17 +32,18 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
     
+    // TEMPORARILY DISABLED: Offline storage might be causing issues
     // Try to get from offline storage first if offline
-    if (!navigator.onLine) {
-      try {
-        const cachedData = await offlineStorage.retrieve(url, 'api');
-        if (cachedData) {
-          return cachedData;
-        }
-      } catch (error) {
-        console.warn('Failed to retrieve from offline storage:', error);
-      }
-    }
+    // if (!navigator.onLine) {
+    //   try {
+    //     const cachedData = await offlineStorage.retrieve(url, 'api');
+    //     if (cachedData) {
+    //       return cachedData;
+    //     }
+    //   } catch (error) {
+    //     console.warn('Failed to retrieve from offline storage:', error);
+    //   }
+    // }
 
     try {
       const res = await fetch(url, {
@@ -55,6 +56,17 @@ export const getQueryFn: <T>(options: {
 
       await throwIfResNotOk(res);
       const data = await res.json();
+      
+      // Log API responses for debugging
+      if (url.includes('/api/notes')) {
+        console.log(`[QueryClient] API response for ${url}:`, {
+          status: res.status,
+          ok: res.ok,
+          dataType: Array.isArray(data) ? 'array' : typeof data,
+          dataLength: Array.isArray(data) ? data.length : 'not array',
+          firstItem: Array.isArray(data) && data[0] ? { id: data[0].id, hasContent: !!data[0].content } : 'no data'
+        });
+      }
       
       // Store successful API responses in offline storage
       if (res.ok && url.startsWith('/api/')) {
@@ -90,7 +102,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 5 * 1000, // 5 seconds (aggressive refetch)
       gcTime: 60 * 1000, // 1 minute retention
-      retry: false,
+      retry: 1, // Allow 1 retry
     },
     mutations: {
       retry: false,

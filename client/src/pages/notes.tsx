@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/utils/queryKeys";
+import { queryClient } from "@/lib/queryClient";
 import ActivityFeed from "@/components/activity-feed";
 import IOSVoiceRecorder from "@/components/ios-voice-recorder";
 import BottomNavigation from "@/components/bottom-navigation";
@@ -15,22 +16,28 @@ import type { NoteWithTodos } from "@shared/schema";
 export default function Notes() {
   const [isFullScreenCaptureOpen, setIsFullScreenCaptureOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [forceRefreshCount, setForceRefreshCount] = useState(0);
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   
   // Enable real-time updates for immediate note visibility
   useRealTimeUpdates();
 
   // Check for any notes currently being processed with real-time updates
-  const { data: notes, isFetching } = useQuery<NoteWithTodos[]>({
-    queryKey: queryKeys.notes.all,
-    staleTime: 30_000, // 30 seconds stale time
+  const { data: notes, isFetching, error, refetch } = useQuery<NoteWithTodos[]>({
+    queryKey: [...queryKeys.notes.all, forceRefreshCount], // Add refresh count to force new query
+    staleTime: 5000, // 5 seconds stale time for faster updates
     gcTime: 60000, // Keep in cache for 1 minute only
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     placeholderData: (prev) => prev, // Never flash empty
   });
+  
+  // Log query state
+  if (error) {
+    console.error('[Notes Page] Query error:', error);
+  }
   
   const hasProcessingNotes = notes?.some((note: NoteWithTodos) => note.isProcessing) || false;
 
@@ -56,10 +63,10 @@ export default function Notes() {
     },
     onMutate: async (text: string) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.notes.all });
+      await qc.cancelQueries({ queryKey: queryKeys.notes.all });
 
       // Snapshot the previous value
-      const previousNotes = queryClient.getQueryData(queryKeys.notes.all);
+      const previousNotes = qc.getQueryData(queryKeys.notes.all);
 
       // Optimistically update with processing preview
       const tempId = `temp-${crypto.randomUUID()}`;
@@ -101,7 +108,7 @@ export default function Notes() {
       };
 
       // Add to top of notes list immediately
-      queryClient.setQueryData(queryKeys.notes.all, (old: any) => 
+      qc.setQueryData(queryKeys.notes.all, (old: any) => 
         [tempNote, ...(old || [])]
       );
 
@@ -112,21 +119,21 @@ export default function Notes() {
     onError: (err, text, context: any) => {
       // Rollback optimistic update on error
       if (context?.previousNotes) {
-        queryClient.setQueryData(queryKeys.notes.all, context.previousNotes);
+        qc.setQueryData(queryKeys.notes.all, context.previousNotes);
       }
     },
     onSuccess: (newNote, text, context: any) => {
       // Replace temporary note with real note
-      queryClient.setQueryData(queryKeys.notes.all, (old: any) => {
+      qc.setQueryData(queryKeys.notes.all, (old: any) => {
         if (!old) return [newNote];
         // Remove temp note and add real note at the top
         const filtered = old.filter((note: any) => note.id !== context?.tempNote?.id);
         return [newNote, ...filtered];
       });
       
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all, exact: false });
-      queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
+      qc.invalidateQueries({ queryKey: ["/api/todos"] });
+      qc.invalidateQueries({ queryKey: queryKeys.notes.all, exact: false });
+      qc.refetchQueries({ queryKey: queryKeys.notes.all });
     },
   });
 
@@ -139,6 +146,23 @@ export default function Notes() {
     <div className="w-full bg-[hsl(var(--background))] min-h-screen relative">
       {/* Status Bar */}
       <div className="safe-area-top bg-[hsl(var(--background))]"></div>
+      
+      {/* Debug Info */}
+      <div className="p-2 bg-gray-100 border border-gray-300 m-2 rounded text-xs">
+        <p>Notes Status: {isLoading ? 'Loading...' : error ? `Error: ${error}` : `Loaded ${notes?.length || 0} notes`}</p>
+        <p>First Note ID: {notes?.[0]?.id || 'None'}</p>
+        <p>Last Fetch: {new Date().toLocaleTimeString()}</p>
+        <button 
+          onClick={() => {
+            console.log('Manual refetch triggered');
+            qc.invalidateQueries({ queryKey: queryKeys.notes.all });
+            refetch();
+          }}
+          className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+        >
+          Manual Refresh
+        </button>
+      </div>
       
       {/* Main Content */}
       <div className="pb-24">
