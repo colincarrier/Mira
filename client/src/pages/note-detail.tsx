@@ -319,40 +319,7 @@ export default function NoteDetail() {
   });
 
   // Mutations
-  const updateNoteMutation = useMutation({
-    mutationFn: async ({ content, newContext, updateInstruction }: { content: string; newContext?: string; updateInstruction?: string }) => {
-      const response = await fetch(`/api/notes/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content,
-          ...(newContext && { contextUpdate: newContext }),
-          ...(updateInstruction && { updateInstruction })
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Failed to update note: ${response.status} - ${errorData}`);
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all }); // Fix navigation issue
-      // Only show success toast for AI updates, not direct edits
-
-      setIsEditing(false);
-      setShowContextDialog(false);
-    },
-    onError: (error) => {
-      console.error("Note update error:", error);
-
-    }
-  });
+  // Note: updateNoteMutation removed - using saveMutation for all saves
 
   const deleteNoteMutation = useMutation({
     mutationFn: async () => {
