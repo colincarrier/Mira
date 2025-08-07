@@ -62,6 +62,25 @@ Preferred communication style: Simple, everyday language.
 - Enhanced rich context display with prominent sections for strategic intelligence.
 - Responsive UI design for voice recording playback.
 
+## Recent Changes (August 7, 2025)
+
+### Critical P0 URL Fix - Manual Save Now Working
+- **Issue:** Manual edits weren't persisting due to incorrect `/patch` URL in offline queue system
+- **Root Cause:** `client/src/hooks/useFlushQueue.ts` was calling `/api/notes/:id/patch` instead of `/api/notes/:id`
+- **Fix Applied:** Changed flush queue URL to use correct PATCH endpoint
+- **Result:** Manual saves now work correctly - content persists on blur and navigation
+- **API Tests:** Both PATCH and clarify endpoints confirmed working via curl tests
+
+### Performance Improvements - Cache Optimization  
+- **Issue:** Aggressive 2-second polling causing navigation blank screens and performance issues
+- **Fix Applied:** Disabled `refetchInterval`, increased cache times (15s staleTime, 5min retention)
+- **Result:** Reduced server load and improved navigation stability
+
+### TypeScript Handler Improvements
+- Added proper typing to Express route handlers: `async (req: Request, res: Response): Promise<void>`
+- Imported missing Request/Response types from express
+- Reduced compilation errors from 258 to manageable levels
+
 ## Recent Changes (August 5, 2025)
 
 ### React Object Rendering Complete Fix

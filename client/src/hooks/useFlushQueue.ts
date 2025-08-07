@@ -54,7 +54,7 @@ export function useFlushQueue() {
 }
 
 async function pushEdit(op: QueueOp & { type: 'edit' }) {
-  const response = await fetch(`/api/notes/${op.noteId}/patch`, {
+  const response = await fetch(`/api/notes/${op.noteId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(op),
