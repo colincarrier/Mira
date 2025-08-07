@@ -759,13 +759,16 @@ export default function NoteDetail() {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            {/* Title removed - will be in document body like iOS Notes */}
-            {!note.aiEnhanced && (
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-500">AI processing...</span>
-              </div>
-            )}
+            {/* Enhanced AI processing indicator */}
+            <AIProcessingIndicator 
+              isProcessing={!note.aiEnhanced || note.isProcessing}
+              message="Updating"
+              size="sm"
+              onStop={() => {
+                // Stop AI processing
+                updateMutation.mutate({ is_processing: false });
+              }}
+            />
           </div>
           <div className="flex items-center gap-2 pr-4">
             <DropdownMenu>

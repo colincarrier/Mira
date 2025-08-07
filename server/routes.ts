@@ -2603,6 +2603,26 @@ Respond with JSON:
     }
   });
 
+  // POST route for note updates (handles TipTap editor saves and prevents cache corruption)
+  app.post("/api/notes/:id", async (req, res) => {
+    try {
+      const noteId = parseInt(req.params.id);
+      const updates = req.body || {};
+      
+      // Update the note in database
+      const updatedNote = await storage.updateNote(noteId, updates);
+      
+      if (!updatedNote) {
+        return res.status(404).json({ error: "Note not found" });
+      }
+      
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error updating note via POST:", error);
+      res.status(500).json({ error: "Failed to update note" });
+    }
+  });
+
   // PATCH route for note updates (including context-aware AI modifications)
   app.patch("/api/notes/:id", async (req, res) => {
     try {
