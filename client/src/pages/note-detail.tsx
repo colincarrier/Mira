@@ -190,15 +190,49 @@ export default function NoteDetail() {
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: queryKeys.notes.detail(Number(id)),
     enabled: !!id,
+    retry: 2,
+    retryDelay: 1000,
     refetchInterval: (query) => {
-      return query.state.data && !query.state.data.aiEnhanced ? 2000 : false;
+      // Only refetch if note exists and is actively processing
+      const data = query.state.data;
+      if (!data) return false;
+      
+      // Don't refetch for old notes that are stuck in processing
+      // (more than 5 minutes old and still processing)
+      if (data.isProcessing) {
+        const createdAt = new Date(data.createdAt).getTime();
+        const now = Date.now();
+        const ageInMinutes = (now - createdAt) / (1000 * 60);
+        if (ageInMinutes > 5) {
+          console.warn(`Note ${data.id} stuck in processing for ${Math.round(ageInMinutes)} minutes`);
+          return false; // Stop polling for stuck notes
+        }
+      }
+      
+      // Only refetch if actively processing or not AI enhanced (and recent)
+      return data.isProcessing && !data.aiEnhanced ? 2000 : false;
     },
   });
 
-  // Don't purge cache on mount - this was causing data to disappear
-  // useEffect(() => {
-  //   queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
-  // }, [id, queryClient]);
+  // Reset state when navigating to a different note
+  useEffect(() => {
+    if (id) {
+      // Reset editing state when changing notes
+      setIsEditing(false);
+      setEditedContent('');
+      setEditedTitle('');
+      setContextInput('');
+      setShowContextDialog(false);
+      setShowVersionHistory(false);
+      setShowApprovalDialog(false);
+      setPendingChanges(null);
+      setClarificationInput('');
+      setShowReminderDialog(false);
+      setIsProcessing(false);
+      setSaveStatus('idle');
+      setIsSaving(false);
+    }
+  }, [id]);
   const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -252,21 +286,27 @@ export default function NoteDetail() {
   // Parse rich context data if available
   let richContextData = null;
   try {
-    if (note?.richContext) {
+    if (note?.richContext && typeof note.richContext === 'string' && note.richContext.trim() !== '') {
       richContextData = JSON.parse(note.richContext);
     }
   } catch (e) {
     console.error("Failed to parse richContext:", e);
+    richContextData = null; // Ensure it's null on error
   }
 
   // ---- V3 AI payload -------------------------------------------------
   const mira = React.useMemo(() => {
     if (!note?.miraResponse) return null;
-    return parseMiraResponse(note.miraResponse);
+    try {
+      return parseMiraResponse(note.miraResponse);
+    } catch (e) {
+      console.error('Failed to parse miraResponse:', e);
+      return null;
+    }
   }, [note?.miraResponse]);
 
-  // Use critical info hook
-  const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData);
+  // Use critical info hook - pass null if no valid rich context
+  const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData || null);
   
   // Enable real-time AI enhancement updates
   useEnhancementSocket(note?.id);
@@ -314,7 +354,7 @@ export default function NoteDetail() {
     createdAt: string;
     content: string;
   }>>({
-    queryKey: [`/api/notes/${id}/versions`],
+    queryKey: queryKeys.notes.versions(Number(id)),
     enabled: !!id && showVersionHistory,
   });
 
@@ -336,12 +376,20 @@ export default function NoteDetail() {
 
   const toggleTodoMutation = useMutation({
     mutationFn: async (todo: Todo) => {
+      if (!todo || !todo.id) {
+        throw new Error('Invalid todo for toggle');
+      }
       await apiRequest("PATCH", `/api/todos/${todo.id}`, {
         completed: !todo.completed
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+      }
+    },
+    onError: (error) => {
+      console.error('Toggle todo error:', error);
     }
   });
 
@@ -396,11 +444,12 @@ export default function NoteDetail() {
 
 
   useEffect(() => {
-    if (note) {
-      setEditedContent(note.content);
-      setEditedTitle(note.content.split('\n')[0] || 'Untitled Note');
+    if (note && note.id === Number(id)) {
+      // Only update if it's the current note
+      setEditedContent(note.content || '');
+      setEditedTitle(note.content?.split('\n')[0] || 'Untitled Note');
     }
-  }, [note]);
+  }, [note, id]);
 
   // Auto-resize textarea when content changes
   useEffect(() => {
@@ -496,7 +545,7 @@ export default function NoteDetail() {
       // Refresh the note data
       await queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
-      await queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
       
       // Show success toast
       processingToast.remove();
@@ -627,6 +676,27 @@ export default function NoteDetail() {
     return elements;
   };
 
+  // Handle error state
+  if (error) {
+    console.error('Note detail error:', error);
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
+        <div className="text-center py-12 px-4">
+          <h1 className="text-xl font-semibold mb-2">Error loading note</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">
+            There was an error loading this note. Please try again.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg"
+          >
+            Back to Notes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
@@ -643,7 +713,27 @@ export default function NoteDetail() {
     );
   }
 
-  if (!note) {
+  // Validate id parameter
+  if (!id || isNaN(Number(id))) {
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
+        <div className="text-center py-12 px-4">
+          <h1 className="text-xl font-semibold mb-2">Invalid Note ID</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">
+            The note ID is invalid.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg"
+          >
+            Back to Notes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!note && !isLoading && !error) {
     return (
       <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
         <div className="text-center py-12 px-4">
@@ -674,6 +764,20 @@ export default function NoteDetail() {
     );
   }
 
+  // Add comprehensive null check to prevent crashes
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
+        <div className="text-center py-12 px-4">
+          <div className="animate-pulse">
+            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
       <div className="w-full">
@@ -698,12 +802,14 @@ export default function NoteDetail() {
             </button>
             {/* Enhanced AI processing indicator */}
             <AIProcessingIndicator 
-              isProcessing={!note.aiEnhanced || note?.isProcessing === true}
+              isProcessing={!note?.aiEnhanced || note?.isProcessing === true}
               message="Updating"
               size="sm"
               onStop={() => {
                 // Stop AI processing
-                saveMutation.mutate({ id: note.id, content: note.content, source: 'ai' });
+                if (note) {
+                  saveMutation.mutate({ id: note.id, content: note.content, source: 'ai' });
+                }
               }}
             />
           </div>
@@ -964,7 +1070,7 @@ export default function NoteDetail() {
                 {note.todos.map((todo: Todo) => (
                   <div key={todo.id} className="flex items-center gap-3">
                     <button
-                      onClick={() => toggleTodoMutation.mutate(todo)}
+                      onClick={() => todo && todo.id && toggleTodoMutation.mutate(todo)}
                       className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                         todo.completed 
                           ? 'bg-green-500 border-green-500' 
@@ -1352,7 +1458,7 @@ export default function NoteDetail() {
         onOpenChange={setShowReminderDialog}
         prePopulatedText={`Reminder: ${note?.content?.split('\n')[0] || 'Untitled Note'}`}
         onReminderUpdated={() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+          queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
 
         }}
       />
