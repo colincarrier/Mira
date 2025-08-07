@@ -10,7 +10,7 @@ if not token:
 
 commands = [
     ['git', 'add', '-A'],
-    ['git', 'commit', '-m', 'Diagnostic: manual save issue - wrong endpoint URL'],
+    ['git', 'commit', '-m', 'Fix reconciliation report issues: empty payload guard, staleTime, and vite config'],
     ['git', 'push', f'https://colincarrier:{token}@github.com/colincarrier/Mira.git', 'main']
 ]
 
