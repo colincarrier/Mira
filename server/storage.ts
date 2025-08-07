@@ -159,6 +159,36 @@ export const storage = {
 
     return rows[0];
   },
+
+  /* ---------- missing CRUD helpers (todos & notes) ---------- */
+  async updateTodo(id: number, updates: Record<string, any>) {
+    const ALLOWED = ['title', 'completed', 'priority', 'due_date'] as const;
+    const pairs = Object.entries(updates).filter(([k, v]) =>
+      ALLOWED.includes(k as any) && v !== undefined && v !== null
+    );
+    if (pairs.length === 0) {
+      const { rows } = await pool.query('SELECT * FROM todos WHERE id = $1', [id]);
+      return rows[0] ?? null;
+    }
+    const set = pairs.map(([k], i) => `${k} = $${i + 2}`).join(', ');
+    const vals = [id, ...pairs.map(([, v]) => v)];
+    const { rows } = await pool.query(
+      `UPDATE todos SET ${set} WHERE id = $1 RETURNING *`,
+      vals
+    );
+    return rows[0];
+  },
+
+  async deleteTodo(id: number) {
+    const { rows } = await pool.query('DELETE FROM todos WHERE id = $1 RETURNING *', [id]);
+    return rows[0] ?? null;
+  },
+
+  async deleteNote(id: number) {
+    await pool.query('DELETE FROM todos WHERE note_id = $1', [id]);
+    const { rows } = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
+    return rows[0] ?? null;
+  }
 };
 
 export async function getUserPatterns(userId: string): Promise<any> {
