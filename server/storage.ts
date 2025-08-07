@@ -133,7 +133,7 @@ export const storage = {
     if (doc_json != null)  { fields.push(`doc_json  = $${values.length + 1}`);   values.push(doc_json); }
 
     const { rows } = await pool.query(
-      `UPDATE notes SET ${fields.join(', ')}, updated_at = NOW()
+      `UPDATE notes SET ${fields.join(', ')}
        WHERE id = $1 RETURNING *`,
       values
     );

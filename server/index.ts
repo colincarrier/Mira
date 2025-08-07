@@ -12,7 +12,7 @@ process.env.FEATURE_ADVANCED_NOTIFICATIONS = 'true';
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite-fix";
+import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./init-db";
 import { initializeStandardCollections } from "./init-collections";
 import { startScheduler, stopScheduler } from "./ai/v3/scheduler/scheduler.js";
