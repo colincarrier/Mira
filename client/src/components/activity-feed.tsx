@@ -117,7 +117,8 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
           <button 
             onClick={() => {
               console.log('[ActivityFeed] Force refetch triggered');
-              queryClient.removeQueries({ queryKey: queryKeys.notes.all });
+              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+              queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
               refetch();
             }} 
             className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"

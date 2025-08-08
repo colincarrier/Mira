@@ -2610,46 +2610,40 @@ Respond with JSON:
     }
   });
 
-  // POST route for note updates (handles TipTap editor saves and prevents cache corruption)
-  app.post("/api/notes/:id", async (req, res) => {
+  // Unified handler for POST/PATCH /api/notes/:id
+  async function saveNoteHandler(req: Request, res: Response) {
     try {
-      const noteId = parseInt(req.params.id);
-      const updates = req.body || {};
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) return res.status(400).json({ error: "Bad id" });
       
-      // Update the note in database
-      const updatedNote = await storage.updateNote(noteId, updates);
+      const body = req.body ?? {};
+      const content = Object.prototype.hasOwnProperty.call(body, "content") ? body.content : undefined;
+      const doc_json = Object.prototype.hasOwnProperty.call(body, "doc_json") ? body.doc_json : undefined;
       
-      if (!updatedNote) {
-        return res.status(404).json({ error: "Note not found" });
+      if (content == null && doc_json == null) {
+        // Return current note to avoid 500s and cache poisoning
+        const current = await storage.getNote(id);
+        if (!current) return res.status(404).json({ error: "Not found" });
+        res.setHeader("Content-Type", "application/json");
+        return res.json(current);
       }
       
-      res.json(updatedNote);
-    } catch (error) {
-      console.error("Error updating note via POST:", error);
-      res.status(500).json({ error: "Failed to update note" });
+      const updated = await storage.updateNote(id, { content, doc_json });
+      if (!updated) return res.status(404).json({ error: "Not found" });
+      
+      res.setHeader("Content-Type", "application/json");
+      return res.json(updated);
+    } catch (e) {
+      console.error("[saveNoteHandler]", e);
+      return res.status(500).json({ error: "Failed to save" });
     }
-  });
+  }
 
-  /**
-   * Authoritative save-endpoint.
-   * Accepts *either* plain-text `content` *or* TipTap `doc_json` (or both).
-   * Any other keys are ignored on purpose.
-   * Always returns 200 + JSON (never HTML).
-   */
-  app.patch("/api/notes/:id", async (req, res) => {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id)) return res.status(400).json({ error: 'Bad id' });
+  // POST route for note updates (unified handler)
+  app.post("/api/notes/:id", saveNoteHandler);
 
-    const { content, doc_json } = req.body ?? {};
-    if (content == null && doc_json == null)
-      return res.status(400).json({ error: 'Nothing to save' });
-
-    const updated = await storage.updateNote(id, { content, doc_json });
-    if (!updated) return res.status(404).json({ error: 'Not found' });
-
-    res.setHeader('Content-Type', 'application/json');
-    res.json(updated);              // <-- ALWAYS JSON, never HTML
-  });
+  // PATCH route for note updates (unified handler)
+  app.patch("/api/notes/:id", saveNoteHandler);
 
   // Todos endpoints
   app.get("/api/todos", async (req, res) => {

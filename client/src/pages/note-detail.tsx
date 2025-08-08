@@ -316,12 +316,17 @@ export default function NoteDetail() {
     async (doc: JSONContent, steps: Step[]) => {
       // Guard against empty payload to prevent HTML caching
       if (!doc && steps?.length === 0) return;
+      if (!note?.id) return;
       
-      saveMutation.mutate({
-        id: note?.id || Number(id),
-        docJson: doc,
-        source: 'editor'
-      });
+      try {
+        await saveMutation.mutateAsync({
+          id: note.id,
+          docJson: doc,
+          source: 'editor'
+        });
+      } catch (e) {
+        console.error('[editor commit]', e);
+      }
 
       // 2) Extract & persist tasks
       try {
@@ -337,7 +342,7 @@ export default function NoteDetail() {
         console.error('[tasks]', err);
       }
     },
-    [id, note?.id]
+    [id, note?.id, saveMutation]
   );
 
   // Subscribe to SSE updates
@@ -943,11 +948,8 @@ export default function NoteDetail() {
                       setSaveStatus('saving');
                       try {
                         await saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
-                        setSaveStatus('saved');
-                        setTimeout(() => setSaveStatus('idle'), 2000);
                       } catch (error) {
-                        console.error('Failed to save:', error);
-                        setSaveStatus('dirty');
+                        console.error('[onBlur save]', error);
                       } finally {
                         setIsSaving(false);
                       }
