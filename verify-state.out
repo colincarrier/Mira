@@ -1,0 +1,341 @@
+=== VITE / PREVIEW CONFIG ===
+[vite.config.ts] server block (if any):
+
+[.replit] ports and run:
+2:     2	run = "npm run dev"
+11:    11	build = ["npm", "run", "build"]
+12:    12	run = ["npm", "run", "start"]
+14:    14	[[ports]]
+15:    15	localPort = 5000
+16:    16	externalPort = 80
+19:    19	runButton = "Project"
+27:    27	task = "workflow.run"
+36:    36	args = "npm run dev"
+37:    37	waitForPort = 5000
+
+=== SERVER ROUTES (POST/PATCH) ===
+Count of handlers for /api/notes/:id
+POST: 389:  app.post("/api/notes/:id/v3-process", async (req, res) => {
+506:  app.post("/api/notes/:id/patch", async (req, res) => {
+1531:  app.post("/api/notes/:id/evolve", async (req: Request, res: Response): Promise<void> => {
+2643:  app.post("/api/notes/:id", saveNoteHandler);
+PATCH: 2646:  app.patch("/api/notes/:id", saveNoteHandler);
+
+[Context around handlers]
+--- server/routes.ts lines 381..414 ---
+   381	      return { intent: 'research', confidence: 0.8, processing_path: 'evolve' };
+   382	    }
+   383	    
+   384	    // Default to evolve for content enhancement
+   385	    return { intent: 'evolve', confidence: 0.6, processing_path: 'evolve' };
+   386	  }
+   387	
+   388	  // V3 MiraResponse Processing Endpoint
+   389	  app.post("/api/notes/:id/v3-process", async (req, res) => {
+   390	    try {
+   391	      const { id } = req.params;
+   392	      const { instruction, existingContent } = req.body;
+   393	      
+   394	      if (!isOpenAIAvailable()) {
+   395	        return res.status(503).json({ error: "AI processing unavailable" });
+   396	      }
+   397	
+   398	      // Get the note
+   399	      const note = await storage.getNote(parseInt(id));
+   400	      if (!note) {
+   401	        return res.status(404).json({ error: "Note not found" });
+   402	      }
+   403	
+   404	      // Classify intent and determine processing path
+   405	      const classification = await classifyIntent(instruction || existingContent);
+   406	      const tokenBudget = TOKEN_BUDGETS[classification.intent];
+   407	
+   408	      // Build V3 prompt based on processing path
+   409	      const prompt = classification.processing_path === 'clarify' 
+   410	        ? `You are Mira, an AI assistant. The user needs clarification about: "${instruction || existingContent}"
+   411	
+   412	Provide a helpful, clear response that asks follow-up questions or clarifies ambiguous points. 
+   413	
+   414	Respond in JSON format:
+--- server/routes.ts lines 498..531 ---
+   498	
+   499	    } catch (error) {
+   500	      console.error('V3 processing error:', error);
+   501	      res.status(500).json({ error: 'Failed to process with V3 pipeline' });
+   502	    }
+   503	  });
+   504	
+   505	  // Document patch endpoint for TipTap editor
+   506	  app.post("/api/notes/:id/patch", async (req, res) => {
+   507	    try {
+   508	      const { id } = req.params;
+   509	      const { doc, steps } = req.body;
+   510	      
+   511	      if (!doc) {
+   512	        return res.status(400).json({ error: "Document JSON required" });
+   513	      }
+   514	      
+   515	      // Update the note's doc_json
+   516	      await storage.updateNote(parseInt(id), {
+   517	        doc_json: doc
+   518	      });
+   519	      
+   520	      // Broadcast to SSE clients if steps provided
+   521	      if (steps) {
+   522	        // TODO: Broadcast patch event via SSE
+   523	      }
+   524	      
+   525	      res.json({ success: true });
+   526	    } catch (error) {
+   527	      console.error("Error patching document:", error);
+   528	      res.status(500).json({ error: "Failed to patch document" });
+   529	    }
+   530	  });
+   531	
+--- server/routes.ts lines 1523..1556 ---
+  1523	      res.json({ success: true, message: "All notes reprocessed successfully" });
+  1524	    } catch (error) {
+  1525	      console.error("Error reprocessing notes:", error);
+  1526	      res.status(500).json({ error: "Failed to reprocess notes" });
+  1527	    }
+  1528	  });
+  1529	
+  1530	  // Intelligent Note Evolution Endpoint
+  1531	  app.post("/api/notes/:id/evolve", async (req: Request, res: Response): Promise<void> => {
+  1532	    try {
+  1533	      const noteId = parseInt(req.params.id);
+  1534	      const { instruction, existingContent, existingContext, existingTodos, existingRichContext } = req.body;
+  1535	
+  1536	      if (!instruction || !existingContent) {
+  1537	        return res.status(400).json({ message: "Instruction and existing content required" });
+  1538	      }
+  1539	
+  1540	      // Get the note to ensure it exists
+  1541	      const note = await storage.getNote(noteId);
+  1542	      if (!note) {
+  1543	        return res.status(404).json({ message: "Note not found" });
+  1544	      }
+  1545	
+  1546	      // Create comprehensive evolution prompt
+  1547	      const evolutionPrompt = `You are an intelligent assistant helping to evolve and improve a user's note. Your goal is to understand the existing content deeply and apply the user's instruction to make it better, more complete, and more actionable.
+  1548	
+  1549	EXISTING NOTE CONTENT:
+  1550	${existingContent}
+  1551	
+  1552	EXISTING AI CONTEXT:
+  1553	${existingContext || 'None'}
+  1554	
+  1555	EXISTING TODOS:
+  1556	${existingTodos && existingTodos.length > 0 ? existingTodos.map((t: any) => `• ${t.title} ${t.completed ? '(✓ completed)' : '(pending)'}`).join('\n') : 'None'}
+--- server/routes.ts lines 2635..2668 ---
+  2635	      return res.json(updated);
+  2636	    } catch (e) {
+  2637	      console.error("[saveNoteHandler]", e);
+  2638	      return res.status(500).json({ error: "Failed to save" });
+  2639	    }
+  2640	  }
+  2641	
+  2642	  // POST route for note updates (unified handler)
+  2643	  app.post("/api/notes/:id", saveNoteHandler);
+  2644	
+  2645	  // PATCH route for note updates (unified handler)
+  2646	  app.patch("/api/notes/:id", saveNoteHandler);
+  2647	
+  2648	  // Todos endpoints
+  2649	  app.get("/api/todos", async (req, res) => {
+  2650	    try {
+  2651	      const todos = await storage.getTodos();
+  2652	      res.json(todos);
+  2653	    } catch (error) {
+  2654	      res.status(500).json({ message: "Failed to fetch todos" });
+  2655	    }
+  2656	  });
+  2657	
+  2658	  app.patch("/api/todos/:id", async (req, res) => {
+  2659	    try {
+  2660	      const id = parseInt(req.params.id);
+  2661	      const todo = await storage.updateTodo(id, req.body);
+  2662	      res.json(todo);
+  2663	    } catch (error) {
+  2664	      res.status(404).json({ message: "Todo not found" });
+  2665	    }
+  2666	  });
+  2667	
+  2668	  // Extract and save tasks from note content
+--- server/routes.ts lines 2638..2671 ---
+  2638	      return res.status(500).json({ error: "Failed to save" });
+  2639	    }
+  2640	  }
+  2641	
+  2642	  // POST route for note updates (unified handler)
+  2643	  app.post("/api/notes/:id", saveNoteHandler);
+  2644	
+  2645	  // PATCH route for note updates (unified handler)
+  2646	  app.patch("/api/notes/:id", saveNoteHandler);
+  2647	
+  2648	  // Todos endpoints
+  2649	  app.get("/api/todos", async (req, res) => {
+  2650	    try {
+  2651	      const todos = await storage.getTodos();
+  2652	      res.json(todos);
+  2653	    } catch (error) {
+  2654	      res.status(500).json({ message: "Failed to fetch todos" });
+  2655	    }
+  2656	  });
+  2657	
+  2658	  app.patch("/api/todos/:id", async (req, res) => {
+  2659	    try {
+  2660	      const id = parseInt(req.params.id);
+  2661	      const todo = await storage.updateTodo(id, req.body);
+  2662	      res.json(todo);
+  2663	    } catch (error) {
+  2664	      res.status(404).json({ message: "Todo not found" });
+  2665	    }
+  2666	  });
+  2667	
+  2668	  // Extract and save tasks from note content
+  2669	  app.put("/api/notes/:id/tasks", async (req, res) => {
+  2670	    try {
+  2671	      const noteId = parseInt(req.params.id);
+
+=== STORAGE: updateNote(s) present ===
+122:  updateNote: async (
+
+[updateNote bodies (first 120 lines around each)]
+--- server/storage.ts lines 102..242 ---
+   102	      };
+   103	    } catch (error) {
+   104	      console.error('Error fetching note:', error);
+   105	      return null;
+   106	    }
+   107	  },
+   108	  getTodosByNoteId: async (noteId: number) => {
+   109	    try {
+   110	      const client = await pool.connect();
+   111	      const result = await client.query('SELECT * FROM todos WHERE note_id = $1 ORDER BY created_at DESC', [noteId]);
+   112	      client.release();
+   113	      return result.rows;
+   114	    } catch (error) {
+   115	      console.error('Error fetching todos for note:', error);
+   116	      return [];
+   117	    }
+   118	  },
+   119	
+   120	
+   121	  // Accepts { content?, doc_json? } only.
+   122	  updateNote: async (
+   123	    id: number,
+   124	    { content, doc_json }: { content?: string | null; doc_json?: any }
+   125	  ) => {
+   126	    if (content == null && doc_json == null)
+   127	      return (await pool.query('SELECT * FROM notes WHERE id = $1', [id])).rows[0];
+   128	
+   129	    const fields: string[] = [];
+   130	    const values: any[]   = [id];
+   131	
+   132	    if (content != null)   { fields.push(`content   = $${values.length + 1}`);   values.push(content); }
+   133	    if (doc_json != null)  { fields.push(`doc_json  = $${values.length + 1}`);   values.push(doc_json); }
+   134	
+   135	    const { rows } = await pool.query(
+   136	      `UPDATE notes SET ${fields.join(', ')}
+   137	       WHERE id = $1 RETURNING *`,
+   138	      values
+   139	    );
+   140	    return rows[0];
+   141	  },
+   142	
+   143	  /* ---------- missing CRUD helpers (todos & notes) ---------- */
+   144	  async updateTodo(id: number, updates: Record<string, any>) {
+   145	    const ALLOWED = ['title', 'completed', 'priority', 'due_date'] as const;
+   146	    const pairs = Object.entries(updates).filter(([k, v]) =>
+   147	      ALLOWED.includes(k as any) && v !== undefined && v !== null
+   148	    );
+   149	    if (pairs.length === 0) {
+   150	      const { rows } = await pool.query('SELECT * FROM todos WHERE id = $1', [id]);
+   151	      return rows[0] ?? null;
+   152	    }
+   153	    const set = pairs.map(([k], i) => `${k} = $${i + 2}`).join(', ');
+   154	    const vals = [id, ...pairs.map(([, v]) => v)];
+   155	    const { rows } = await pool.query(
+   156	      `UPDATE todos SET ${set} WHERE id = $1 RETURNING *`,
+   157	      vals
+   158	    );
+   159	    return rows[0];
+   160	  },
+   161	
+   162	  async deleteTodo(id: number) {
+   163	    const { rows } = await pool.query('DELETE FROM todos WHERE id = $1 RETURNING *', [id]);
+   164	    return rows[0] ?? null;
+   165	  },
+   166	
+   167	  async deleteNote(id: number) {
+   168	    await pool.query('DELETE FROM todos WHERE note_id = $1', [id]);
+   169	    const { rows } = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
+   170	    return rows[0] ?? null;
+   171	  }
+   172	};
+   173	
+   174	export async function getUserPatterns(userId: string): Promise<any> {
+   175	  return { 
+   176	    summary: 'active user; prefers concise answers',
+   177	    recentTopics: [],
+   178	    preferredStyle: 'practical'
+   179	  };
+   180	}
+   181	
+   182	export async function getCollectionHints(text: string): Promise<any[]> {
+   183	  const lower = text.toLowerCase();
+   184	  
+   185	  if (/flight|hotel|trip|travel/i.test(lower)) {
+   186	    return [{ name: 'travel', icon: 'plane' }];
+   187	  }
+   188	  if (/ticket|game|concert|event/i.test(lower)) {
+   189	    return [{ name: 'events', icon: 'calendar' }];
+   190	  }
+   191	  if (/health|doctor|medicine|vitamins/i.test(lower)) {
+   192	    return [{ name: 'health', icon: 'heart' }];
+   193	  }
+   194	  if (/shopping|buy|purchase|store/i.test(lower)) {
+   195	    return [{ name: 'shopping', icon: 'shopping-bag' }];
+   196	  }
+   197	  
+   198	  return [{ name: 'general', icon: 'folder' }];
+   199	}
+   200	
+   201	export async function getRecentNotes(userId: string, limit = 5): Promise<string[]> {
+   202	  try {
+   203	    const client = await pool.connect();
+   204	    const result = await client.query(
+   205	      'SELECT content FROM notes WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+   206	      [userId, limit]
+   207	    );
+   208	    client.release();
+   209	    
+   210	    return result.rows.map(row => row.content.substring(0, 100)); // Truncate for context
+   211	  } catch (error) {
+   212	    console.warn('[Storage] Failed to fetch recent notes:', error);
+   213	    return [];
+   214	  }
+   215	}
+
+=== CLIENT: useFlushQueue.ts (/patch lingering?) ===
+✅ No /patch in useFlushQueue.ts
+
+
+=== CLIENT: note-detail.tsx save paths ===
+[saveMutation definitions]
+1:import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+241:  const saveMutation = useMutation({
+369:  const deleteNoteMutation = useMutation({
+382:  const toggleTodoMutation = useMutation({
+402:  const rollbackMutation = useMutation({
+417:  const approveChangesMutation = useMutation({
+434:  const clarifyMutation = useMutation({
+
+[editor commit function]
+315:  const commitFromEditor = useCallback(
+919:                onCommit={commitFromEditor}
+
+[onBlur handlers saving content]
+945:                  onBlur={async () => {
+

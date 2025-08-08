@@ -11,7 +11,10 @@ export async function saveNote({ id, content, docJson }: SavePayload) {
   const res = await fetch(`/api/notes/${id}`, {
     method : 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body   : JSON.stringify({ content, doc_json: docJson })
+    body   : JSON.stringify({ 
+      content: content || undefined,
+      doc_json: docJson || undefined 
+    })
   });
 
   if (!res.ok) throw new Error(`Save failed: ${res.status}`);

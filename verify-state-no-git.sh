@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== GIT ==="
-git rev-parse --short HEAD || true
-git status -s || true
-
-echo
 echo "=== VITE / PREVIEW CONFIG ==="
 if [ -f vite.config.ts ]; then
   echo "[vite.config.ts] server block (if any):"

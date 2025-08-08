@@ -41,8 +41,14 @@ export function useRealTimeUpdates() {
               
             case 'note_created':
               console.log('[RealTime] Note created:', data.noteId);
-              // Immediately invalidate notes query to show new note
-              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+              // Add note to cache optimistically without refetch
+              queryClient.setQueryData(queryKeys.notes.all, (old: any) => {
+                if (!old) return data.noteData ? [data.noteData] : [];
+                if (data.noteData && !old.find((n: any) => n.id === data.noteData.id)) {
+                  return [data.noteData, ...old];
+                }
+                return old;
+              });
               break;
               
             case 'note_updated':
