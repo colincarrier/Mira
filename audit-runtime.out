@@ -1,0 +1,19 @@
+=== RUNTIME AUDIT (GET-only, no mutations) ===
+Time: 2025-08-09T00:44:43+00:00
+
+[1] GET /api/notes (first 2 IDs, type, content-type)
+Content-Type: application/json; charset=utf-8
+[645,644]
+
+[2] GET one note: (choose first id)
+Using note id: 645
+{
+  "id": 645,
+  "has_content": "string",
+  "has_doc_json": false,
+  "is_processing": null,
+  "ai_enhanced": null
+}
+
+[3] SSE endpoints (HEAD) – check availability
+/api/notes/645/events        -> 

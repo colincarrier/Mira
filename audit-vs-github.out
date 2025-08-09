@@ -1,0 +1,373 @@
+=== AUDIT: Local vs GitHub colincarrier/Mira@main ===
+Time: 2025-08-09T00:44:34+00:00
+
+---- server/routes.ts ----
+[DIFF vs GitHub] (context 3)
+--- local:server/routes.ts
++++ github:server/routes.ts
+@@ -2610,40 +2610,46 @@
+     }
+   });
+ 
+-  // Unified handler for POST/PATCH /api/notes/:id
+-  async function saveNoteHandler(req: Request, res: Response) {
++  // POST route for note updates (handles TipTap editor saves and prevents cache corruption)
++  app.post("/api/notes/:id", async (req, res) => {
+     try {
+-      const id = Number(req.params.id);
+-      if (Number.isNaN(id)) return res.status(400).json({ error: "Bad id" });
++      const noteId = parseInt(req.params.id);
++      const updates = req.body || {};
+       
+-      const body = req.body ?? {};
+-      const content = Object.prototype.hasOwnProperty.call(body, "content") ? body.content : undefined;
+-      const doc_json = Object.prototype.hasOwnProperty.call(body, "doc_json") ? body.doc_json : undefined;
++      // Update the note in database
++      const updatedNote = await storage.updateNote(noteId, updates);
+       
+-      if (content == null && doc_json == null) {
+-        // Return current note to avoid 500s and cache poisoning
+-        const current = await storage.getNote(id);
+-        if (!current) return res.status(404).json({ error: "Not found" });
+-        res.setHeader("Content-Type", "application/json");
+-        return res.json(current);
++      if (!updatedNote) {
++        return res.status(404).json({ error: "Note not found" });
+       }
+       
+-      const updated = await storage.updateNote(id, { content, doc_json });
+-      if (!updated) return res.status(404).json({ error: "Not found" });
+-      
+-      res.setHeader("Content-Type", "application/json");
+-      return res.json(updated);
+-    } catch (e) {
+-      console.error("[saveNoteHandler]", e);
+-      return res.status(500).json({ error: "Failed to save" });
++      res.json(updatedNote);
++    } catch (error) {
++      console.error("Error updating note via POST:", error);
++      res.status(500).json({ error: "Failed to update note" });
+     }
+-  }
++  });
++
++  /**
++   * Authoritative save-endpoint.
++   * Accepts *either* plain-text `content` *or* TipTap `doc_json` (or both).
++   * Any other keys are ignored on purpose.
++   * Always returns 200 + JSON (never HTML).
++   */
++  app.patch("/api/notes/:id", async (req, res) => {
++    const id = Number(req.params.id);
++    if (Number.isNaN(id)) return res.status(400).json({ error: 'Bad id' });
+ 
+-  // POST route for note updates (unified handler)
+-  app.post("/api/notes/:id", saveNoteHandler);
++    const { content, doc_json } = req.body ?? {};
++    if (content == null && doc_json == null)
++      return res.status(400).json({ error: 'Nothing to save' });
+ 
+-  // PATCH route for note updates (unified handler)
+-  app.patch("/api/notes/:id", saveNoteHandler);
++    const updated = await storage.updateNote(id, { content, doc_json });
++    if (!updated) return res.status(404).json({ error: 'Not found' });
++
++    res.setHeader('Content-Type', 'application/json');
++    res.json(updated);              // <-- ALWAYS JSON, never HTML
++  });
+ 
+   // Todos endpoints
+   app.get("/api/todos", async (req, res) => {
+
+[LOCAL INDEX: key patterns with line numbers]
+ - updateNote declarations:
+ - /api/notes/:id handlers (POST/PATCH):
+389:   389	  app.post("/api/notes/:id/v3-process", async (req, res) => {
+506:   506	  app.post("/api/notes/:id/patch", async (req, res) => {
+1531:  1531	  app.post("/api/notes/:id/evolve", async (req: Request, res: Response): Promise<void> => {
+2643:  2643	  app.post("/api/notes/:id", saveNoteHandler);
+2646:  2646	  app.patch("/api/notes/:id", saveNoteHandler);
+ - SSE endpoints (/events or /realtime):
+613:   613	  app.get('/api/notes/:id/events', (req, res) => {
+630:   630	  app.get('/api/realtime-updates', (req, res) => {
+
+---- server/storage.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - updateNote declarations:
+122:   122	  updateNote: async (
+ - /api/notes/:id handlers (POST/PATCH):
+ - SSE endpoints (/events or /realtime):
+
+---- server/sse/connectionManager.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - updateNote declarations:
+ - /api/notes/:id handlers (POST/PATCH):
+ - SSE endpoints (/events or /realtime):
+
+---- client/src/components/activity-feed.tsx ----
+[DIFF vs GitHub] (context 3)
+--- local:client/src/components/activity-feed.tsx
++++ github:client/src/components/activity-feed.tsx
+@@ -24,10 +24,10 @@
+   
+   const { data: notes, isLoading, error, refetch, dataUpdatedAt } = useQuery<NoteWithTodos[]>({
+     queryKey: queryKeys.notes.all,
+-    staleTime: 10000, // 10 seconds
+-    gcTime: 300000, // 5 minutes
++    staleTime: 1000, // 1 second cache for immediate updates
++    gcTime: 10000, // Keep in cache for 10 seconds only
+     refetchOnWindowFocus: true,
+-    refetchOnMount: false,
++    refetchOnMount: true,
+     refetchInterval: false,
+     networkMode: 'always', // Always attempt network request
+   });
+@@ -117,8 +117,7 @@
+           <button 
+             onClick={() => {
+               console.log('[ActivityFeed] Force refetch triggered');
+-              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+-              queryClient.refetchQueries({ queryKey: queryKeys.notes.all });
++              queryClient.removeQueries({ queryKey: queryKeys.notes.all });
+               refetch();
+             }} 
+             className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+27:    27	    staleTime: 10000, // 10 seconds
+28:    28	    gcTime: 300000, // 5 minutes
+31:    31	    refetchInterval: false,
+120:   120	              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+
+---- client/src/pages/note-detail.tsx ----
+[DIFF vs GitHub] (context 3)
+--- local:client/src/pages/note-detail.tsx
++++ github:client/src/pages/note-detail.tsx
+@@ -316,17 +316,12 @@
+     async (doc: JSONContent, steps: Step[]) => {
+       // Guard against empty payload to prevent HTML caching
+       if (!doc && steps?.length === 0) return;
+-      if (!note?.id) return;
+       
+-      try {
+-        await saveMutation.mutateAsync({
+-          id: note.id,
+-          docJson: doc,
+-          source: 'editor'
+-        });
+-      } catch (e) {
+-        console.error('[editor commit]', e);
+-      }
++      saveMutation.mutate({
++        id: note?.id || Number(id),
++        docJson: doc,
++        source: 'editor'
++      });
+ 
+       // 2) Extract & persist tasks
+       try {
+@@ -342,7 +337,7 @@
+         console.error('[tasks]', err);
+       }
+     },
+-    [id, note?.id, saveMutation]
++    [id, note?.id]
+   );
+ 
+   // Subscribe to SSE updates
+@@ -948,8 +943,11 @@
+                       setSaveStatus('saving');
+                       try {
+                         await saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
++                        setSaveStatus('saved');
++                        setTimeout(() => setSaveStatus('idle'), 2000);
+                       } catch (error) {
+-                        console.error('[onBlur save]', error);
++                        console.error('Failed to save:', error);
++                        setSaveStatus('dirty');
+                       } finally {
+                         setIsSaving(false);
+                       }
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+195:   195	    refetchInterval: (query) => {
+248:   248	      qc.invalidateQueries({ queryKey: queryKeys.notes.all });       // list
+393:   393	        queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+408:   408	      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+423:   423	      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+440:   440	      queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+551:   551	      await queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+552:   552	      await queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+553:   553	      await queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+1145:  1145	                                    queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(Number(id)) });
+1463:  1463	          queryClient.invalidateQueries({ queryKey: queryKeys.todos.all });
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+ - save mutation usage:
+1:     1	import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+241:   241	  const saveMutation = useMutation({
+254:   254	      console.error('[saveMutation]', error);
+274:   274	        saveMutation.mutate({ id: note.id, content: txt, source: 'textarea' });
+282:   282	      saveMutation.mutate({ id: note.id, content: editedContent, source: 'textarea' });
+315:   315	  const commitFromEditor = useCallback(
+322:   322	        await saveMutation.mutateAsync({
+345:   345	    [id, note?.id, saveMutation]
+367:   367	  // Note: updateNoteMutation removed - using saveMutation for all saves
+369:   369	  const deleteNoteMutation = useMutation({
+382:   382	  const toggleTodoMutation = useMutation({
+402:   402	  const rollbackMutation = useMutation({
+417:   417	  const approveChangesMutation = useMutation({
+434:   434	  const clarifyMutation = useMutation({
+472:   472	        saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
+816:   816	                  saveMutation.mutate({ id: note.id, content: note.content, source: 'ai' });
+919:   919	                onCommit={commitFromEditor}
+945:   945	                  onBlur={async () => {
+950:   950	                        await saveMutation.mutateAsync({ id: note.id, content: editedContent, source: 'textarea' });
+ - isProcessing / is_processing or AI status UI:
+160:   160	import AIProcessingIndicator from "@/components/ai-processing-indicator";
+179:   179	  const [isProcessing, setIsProcessing] = useState(false);
+196:   196	      // Only refetch if note exists and is actively processing
+200:   200	      // Don't refetch for old notes that are stuck in processing
+201:   201	      // (more than 5 minutes old and still processing)
+202:   202	      if (data.isProcessing) {
+207:   207	          console.warn(`Note ${data.id} stuck in processing for ${Math.round(ageInMinutes)} minutes`);
+212:   212	      // Only refetch if actively processing or not AI enhanced (and recent)
+213:   213	      return data.isProcessing && !data.aiEnhanced ? 2000 : false;
+509:   509	    // Show processing toast
+510:   510	    const processingToast = document.createElement('div');
+511:   511	    processingToast.className = 'fixed bottom-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-[9999] flex items-center gap-2';
+512:   512	    processingToast.innerHTML = '<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg> Processing your request...';
+513:   513	    document.body.appendChild(processingToast);
+556:   556	      processingToast.remove();
+568:   568	      processingToast.remove();
+808:   808	            {/* Enhanced AI processing indicator */}
+810:   810	              isProcessing={!note?.aiEnhanced || note?.isProcessing === true}
+814:   814	                // Stop AI processing
+
+---- client/src/hooks/useFlushQueue.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+
+---- client/src/hooks/use-realtime-updates.ts ----
+[DIFF vs GitHub] (context 3)
+--- local:client/src/hooks/use-realtime-updates.ts
++++ github:client/src/hooks/use-realtime-updates.ts
+@@ -41,14 +41,8 @@
+               
+             case 'note_created':
+               console.log('[RealTime] Note created:', data.noteId);
+-              // Add note to cache optimistically without refetch
+-              queryClient.setQueryData(queryKeys.notes.all, (old: any) => {
+-                if (!old) return data.noteData ? [data.noteData] : [];
+-                if (data.noteData && !old.find((n: any) => n.id === data.noteData.id)) {
+-                  return [data.noteData, ...old];
+-                }
+-                return old;
+-              });
++              // Immediately invalidate notes query to show new note
++              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+               break;
+               
+             case 'note_updated':
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+67:    67	              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
+69:    69	                queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(data.noteId) });
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+20:    20	  const eventSourceRef = useRef<EventSource | null>(null);
+25:    25	      const eventSource = new EventSource('/api/realtime-updates');
+82:    82	        console.error('[RealTime] EventSource error:', error);
+107:   107	    isConnected: eventSourceRef.current?.readyState === EventSource.OPEN,
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+
+---- client/src/hooks/useEnhancementSocket.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+27:    27	          qc.invalidateQueries({ queryKey: queryKeys.notes.detail(noteId) });
+28:    28	          qc.invalidateQueries({ queryKey: queryKeys.notes.all });
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+12:    12	    const es = new EventSource(`/api/notes/${noteId}/events`);
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+
+---- client/src/utils/saveNote.ts ----
+[DIFF vs GitHub] (context 3)
+--- local:client/src/utils/saveNote.ts
++++ github:client/src/utils/saveNote.ts
+@@ -11,10 +11,7 @@
+   const res = await fetch(`/api/notes/${id}`, {
+     method : 'PATCH',
+     headers: { 'Content-Type': 'application/json' },
+-    body   : JSON.stringify({ 
+-      content: content || undefined,
+-      doc_json: docJson || undefined 
+-    })
++    body   : JSON.stringify({ content, doc_json: docJson })
+   });
+ 
+   if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+
+---- client/src/utils/normalizeNote.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - removeQueries / invalidateQueries / refetchInterval / staleTime / gcTime:
+ - '/patch' URL usage (should be none):
+ - real-time usage (EventSource/WebSocket):
+ - save mutation usage:
+ - isProcessing / is_processing or AI status UI:
+12:    12	    isProcessing: !!(raw.isProcessing ?? raw.is_processing),
+28:    28	    processingPath: raw.processingPath ?? raw.processing_path ?? null,
+
+---- vite.config.ts ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - server block:
+
+---- .replit ----
+[DIFF vs GitHub] (context 3)
+
+[LOCAL INDEX: key patterns with line numbers]
+ - run / ports:
+2:     2	run = "npm run dev"
+11:    11	build = ["npm", "run", "build"]
+12:    12	run = ["npm", "run", "start"]
+14:    14	[[ports]]
+15:    15	localPort = 5000
+16:    16	externalPort = 80
+19:    19	runButton = "Project"
+27:    27	task = "workflow.run"
+36:    36	args = "npm run dev"
+37:    37	waitForPort = 5000
+
+=== END AUDIT ===

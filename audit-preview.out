@@ -1,0 +1,20 @@
+=== PREVIEW / DEV SERVER AUDIT ===
+Time: 2025-08-09T00:49:49+00:00
+
+[vite.config.ts] server block:
+
+[.replit] run / ports:
+2:     2	run = "npm run dev"
+11:    11	build = ["npm", "run", "build"]
+12:    12	run = ["npm", "run", "start"]
+14:    14	[[ports]]
+15:    15	localPort = 5000
+16:    16	externalPort = 80
+19:    19	runButton = "Project"
+27:    27	task = "workflow.run"
+36:    36	args = "npm run dev"
+37:    37	waitForPort = 5000
+
+[Ports listening] (should see 5000; 5173 only if standalone Vite)
+
+=== END PREVIEW AUDIT ===
