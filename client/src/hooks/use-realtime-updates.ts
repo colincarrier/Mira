@@ -63,11 +63,12 @@ export function useRealTimeUpdates() {
                 return;
               }
               
-              // Invalidate both the notes list and the specific note
-              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
-              if (data.noteId) {
-                queryClient.invalidateQueries({ queryKey: queryKeys.notes.detail(data.noteId) });
+              // Use setQueryData for the specific note detail
+              if (data.noteId && data.noteData) {
+                queryClient.setQueryData(queryKeys.notes.detail(data.noteId), data.noteData);
               }
+              // Invalidate the list to pick up any title/snippet changes
+              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
               break;
               
             default:
