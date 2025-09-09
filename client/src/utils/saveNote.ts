@@ -12,8 +12,8 @@ export async function saveNote({ id, content, docJson }: SavePayload) {
     method : 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body   : JSON.stringify({ 
-      content: content || undefined,
-      doc_json: docJson || undefined 
+      content: content,
+      doc_json: docJson
     })
   });
 
