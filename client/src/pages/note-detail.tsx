@@ -192,26 +192,8 @@ export default function NoteDetail() {
     enabled: !!id,
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: (query) => {
-      // Only refetch if note exists and is actively processing
-      const data = query.state.data;
-      if (!data) return false;
-      
-      // Don't refetch for old notes that are stuck in processing
-      // (more than 5 minutes old and still processing)
-      if (data.isProcessing) {
-        const createdAt = new Date(data.createdAt).getTime();
-        const now = Date.now();
-        const ageInMinutes = (now - createdAt) / (1000 * 60);
-        if (ageInMinutes > 5) {
-          console.warn(`Note ${data.id} stuck in processing for ${Math.round(ageInMinutes)} minutes`);
-          return false; // Stop polling for stuck notes
-        }
-      }
-      
-      // Only refetch if actively processing or not AI enhanced (and recent)
-      return data.isProcessing && !data.aiEnhanced ? 2000 : false;
-    },
+    refetchInterval: false, // Temporarily disabled to prevent polling during render issues
+    refetchOnWindowFocus: false, // Prevent refetch on tab focus which can trigger loops
   });
 
   // Reset state when navigating to a different note
@@ -810,8 +792,30 @@ export default function NoteDetail() {
     );
   }
 
-  // Parse doc_json robustly
-  const getDocJson = () => {
+  // Normalize isProcessing to handle all formats (boolean/string/null)
+  const normalizedIsProcessing = useMemo(() => {
+    if (!note) return false;
+    const processing = note.isProcessing || (note as any).is_processing;
+    return (
+      processing === true ||
+      processing === 't' ||
+      processing === 1 ||
+      processing === '1'
+    );
+  }, [note?.isProcessing, (note as any)?.is_processing]);
+
+  // Memoize parsed doc to prevent infinite re-renders
+  const parsedDoc = useMemo(() => {
+    if (!note) {
+      // Safe fallback for new notes
+      return {
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [] }
+        ]
+      };
+    }
+
     const candidates = [
       (note as any).docJson,
       (note as any).doc_json,
@@ -834,15 +838,14 @@ export default function NoteDetail() {
     }
     
     // Fallback to plain text wrapped as ProseMirror doc
+    const text = note.content || '';
     return {
       type: 'doc',
       content: [
-        { type: 'paragraph', content: [{ type: 'text', text: note.content || '' }] }
+        { type: 'paragraph', content: text ? [{ type: 'text', text }] : [] }
       ]
     };
-  };
-
-  const parsedDoc = getDocJson();
+  }, [note?.docJson, (note as any)?.doc_json, note?.content]);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
@@ -868,7 +871,7 @@ export default function NoteDetail() {
             </button>
             {/* Enhanced AI processing indicator */}
             <AIProcessingIndicator 
-              isProcessing={!note?.aiEnhanced || note?.isProcessing === true}
+              isProcessing={!note?.aiEnhanced || normalizedIsProcessing}
               message="Updating"
               size="sm"
               onStop={() => {
