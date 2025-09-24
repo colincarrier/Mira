@@ -331,13 +331,6 @@ export default function InputBar({
     setIsSending(true);
     const plain = inputText.trim();
     setInputText("");
-
-    // optimistic UX spinner at top-right
-    const hud = document.createElement('div');
-    hud.className =
-      'fixed top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded animate-pulse z-50';
-    hud.textContent = 'Processing…';
-    document.body.appendChild(hud);
     
     try {
       if (noteId && onTextSubmit) {
@@ -379,7 +372,6 @@ export default function InputBar({
       setIsSending(false);
       setIsTyping(false);
       closeAllModes();
-      hud.remove();
     }
   };
 

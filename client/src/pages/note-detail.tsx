@@ -783,6 +783,67 @@ export default function NoteDetail() {
     );
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
+
+  // Error/empty state
+  if (error || !note) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
+        <h2 className="text-xl font-semibold mb-2">Note not found</h2>
+        <p className="text-gray-600 mb-4">
+          {error ? 'Failed to load note' : 'This note may have been deleted or is still initializing.'}
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Back to notes
+        </button>
+      </div>
+    );
+  }
+
+  // Parse doc_json robustly
+  const getDocJson = () => {
+    const candidates = [
+      (note as any).docJson,
+      (note as any).doc_json,
+      note.doc_json
+    ].filter(Boolean);
+    
+    for (const candidate of candidates) {
+      try {
+        if (typeof candidate === 'string') {
+          const parsed = JSON.parse(candidate);
+          if (parsed && parsed.type === 'doc') {
+            return parsed;
+          }
+        } else if (candidate && typeof candidate === 'object' && candidate.type === 'doc') {
+          return candidate;
+        }
+      } catch (e) {
+        console.warn('[NoteDetail] Failed to parse doc candidate:', e);
+      }
+    }
+    
+    // Fallback to plain text wrapped as ProseMirror doc
+    return {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: note.content || '' }] }
+      ]
+    };
+  };
+
+  const parsedDoc = getDocJson();
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
       <div className="w-full">
