@@ -9,7 +9,14 @@ export function normalizeNote(raw: any) {
     aiGeneratedTitle: raw.aiGeneratedTitle ?? raw.ai_generated_title ?? null,
     aiSuggestion: raw.aiSuggestion ?? raw.ai_suggestion ?? null,
     aiContext: raw.aiContext ?? raw.ai_context ?? null,
-    isProcessing: !!(raw.isProcessing ?? raw.is_processing),
+    isProcessing: (
+      raw?.isProcessing === true ||
+      raw?.is_processing === true ||
+      raw?.isProcessing === 't' ||
+      raw?.is_processing === 't' ||
+      raw?.isProcessing === 1 ||
+      raw?.is_processing === 1
+    ),
     audioUrl: raw.audioUrl ?? raw.audio_url ?? null,
     mediaUrl: raw.mediaUrl ?? raw.media_url ?? null,
     lastUserEdit: raw.lastUserEdit ?? raw.last_user_edit ?? null,

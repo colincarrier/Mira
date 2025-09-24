@@ -68,6 +68,24 @@
   color: #059669;
 }
 
+/* MIRA: preserve whitespace */
+textarea.note-textarea,
+.note-content textarea,
+.ProseMirror {
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Preserve formatting in rendered content (both prose & custom containers) */
+.prose p,
+.prose div,
+.note-detail-content,
+.note-render-block {
+  white-space: pre-line;
+  margin-bottom: 0.5em;
+}
+
 .dark {
   --background: 240 6% 10%;
   --foreground: 0 0% 98%;
