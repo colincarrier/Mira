@@ -25,9 +25,9 @@ export default function ActivityFeed({ onTodoModalClose }: ActivityFeedProps) {
   const { data: notes, isLoading, error, refetch, dataUpdatedAt } = useQuery<NoteWithTodos[]>({
     queryKey: queryKeys.notes.all,
     staleTime: 10000, // 10 seconds
-    gcTime: 300000, // 5 minutes
+    gcTime: 60000, // 1 minute - reduced from 5 minutes for fresher data
     refetchOnWindowFocus: true,
-    refetchOnMount: false,
+    refetchOnMount: 'always', // Changed from false to ensure fresh data on navigation
     refetchInterval: false,
     networkMode: 'always', // Always attempt network request
   });

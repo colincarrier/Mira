@@ -10,6 +10,7 @@ import { ReminderDialog } from "@/components/reminder-dialog";
 import { formatDistanceToNow } from "date-fns";
 import type { Todo } from "@shared/schema";
 import { queryKeys } from "@/utils/queryKeys";
+import { useLocation } from "wouter";
 
 export default function Remind() {
   const [reminderFilter, setReminderFilter] = useState<'today' | 'week' | 'month' | 'year'>('today');
@@ -19,6 +20,7 @@ export default function Remind() {
   const [editingReminder, setEditingReminder] = useState<Todo | null>(null);
 
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Fetch all todos - we'll filter client-side
   const { data: allTodos = [], isLoading } = useQuery<Todo[]>({
@@ -69,7 +71,7 @@ export default function Remind() {
   // Navigate to source note
   const handleItemClick = (todo: Todo) => {
     if (todo.noteId) {
-      window.location.href = `/notes/${todo.noteId}`;
+      setLocation(`/notes/${todo.noteId}`);
     }
   };
 

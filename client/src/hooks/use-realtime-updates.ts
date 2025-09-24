@@ -39,20 +39,57 @@ export function useRealTimeUpdates() {
               console.log('[RealTime] Client connected:', data.clientId);
               break;
               
-            case 'note_created':
+            case 'note_created': {
               console.log('[RealTime] Note created:', data.noteId);
-              // Add note to cache optimistically without refetch
-              queryClient.setQueryData(queryKeys.notes.all, (old: any) => {
-                if (!old) return data.noteData ? [data.noteData] : [];
-                if (data.noteData && !old.find((n: any) => n.id === data.noteData.id)) {
-                  return [data.noteData, ...old];
-                }
-                return old;
-              });
+              const note = data.noteData;
+              if (!note) break;
+              
+              // Debounced update to prevent rapid flickers
+              const updateTimer = setTimeout(() => {
+                queryClient.setQueryData(queryKeys.notes.all, (old: any[] | undefined) => {
+                  if (!old) return [note];
+                  
+                  // Check for duplicates by multiple identifiers
+                  const existingIndex = old.findIndex((n: any) => {
+                    // Match by ID
+                    if (n.id === note.id) return true;
+                    // Match by tempId if present
+                    if (n.tempId && note.tempId && n.tempId === note.tempId) return true;
+                    // Match by content + timestamp (within 5 seconds)
+                    if (n.content === note.content) {
+                      const timeDiff = Math.abs(
+                        new Date(n.createdAt || n.created_at).getTime() - 
+                        new Date(note.createdAt || note.created_at).getTime()
+                      );
+                      return timeDiff < 5000; // 5 second window
+                    }
+                    return false;
+                  });
+                  
+                  if (existingIndex >= 0) {
+                    // Replace the optimistic/temp note with real one
+                    const updated = [...old];
+                    updated[existingIndex] = note;
+                    return updated;
+                  } else {
+                    // Add as new note only if truly new
+                    return [note, ...old];
+                  }
+                });
+              }, 100); // 100ms debounce
+              
+              // Store timer for cleanup
+              (window as any).__noteCreateTimer = updateTimer;
               break;
+            }
               
             case 'note_updated':
               console.log('[RealTime] Note updated:', data.noteId);
+              
+              // Clear any pending create timer to prevent race
+              if ((window as any).__noteCreateTimer) {
+                clearTimeout((window as any).__noteCreateTimer);
+              }
               
               // Prevent clobber while editing - check if the specific note's textarea has focus
               const textarea = document.querySelector(
@@ -63,12 +100,16 @@ export function useRealTimeUpdates() {
                 return;
               }
               
-              // Use setQueryData for the specific note detail
+              // Use setQueryData for both detail and list
               if (data.noteId && data.noteData) {
                 queryClient.setQueryData(queryKeys.notes.detail(data.noteId), data.noteData);
+                
+                // Update in the list as well
+                queryClient.setQueryData(queryKeys.notes.all, (old: any[] | undefined) => {
+                  if (!old) return old;
+                  return old.map(n => n.id === data.noteId ? { ...n, ...data.noteData } : n);
+                });
               }
-              // Invalidate the list to pick up any title/snippet changes
-              queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });
               break;
               
             default:
