@@ -14,7 +14,7 @@ import { featureFlags } from '@shared/featureFlags';
 interface Props {
   note: { id: string; doc_json: JSONContent };
   onCommit: (doc: JSONContent, steps: Step[]) => void;
-  pendingAI: Step[] | null;
+  pendingAI: any[] | null;  // Raw JSON steps
 }
 
 const SAVE_DEBOUNCE_MS = 3000;
@@ -153,9 +153,14 @@ export const NoteEditor: React.FC<Props> = ({ note, onCommit, pendingAI }) => {
     editor.chain()
       .focus('end')
       .command(({ tr }) => {
-        // Apply steps and mark as AI authored
-        pendingAI.forEach(step => {
-          tr.step(step);
+        // Convert JSON to Steps using the editor's schema and apply
+        pendingAI.forEach(stepJson => {
+          try {
+            const step = Step.fromJSON(editor.state.schema, stepJson);
+            tr.step(step);
+          } catch (err) {
+            console.error('[NoteEditor] Failed to apply step:', err);
+          }
         });
         return true;
       })

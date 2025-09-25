@@ -179,7 +179,7 @@ export default function NoteDetail() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [pendingAI, setPendingAI] = useState<Step[] | null>(null);
+  const [pendingAI, setPendingAI] = useState<any[] | null>(null);
   
   // Enable offline queue flushing
   useFlushQueue();
@@ -290,8 +290,8 @@ export default function NoteDetail() {
   // Use critical info hook - pass null if no valid rich context
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData || null);
   
-  // Enable real-time AI enhancement updates
-  useEnhancementSocket(note?.id);
+  // Always call hooks in the same order; let the hook no-op on undefined
+  useEnhancementSocket(note?.id ?? undefined);
   
   // Editor commit callback
   const commitFromEditor = useCallback(
@@ -327,9 +327,9 @@ export default function NoteDetail() {
     [id, note?.id, saveMutation]
   );
 
-  // Subscribe to SSE updates
-  useNoteStream(id!, (steps) => {
-    setPendingAI(steps);
+  // Subscribe to SSE updates (always call hook, empty string if no id)
+  useNoteStream(id || '', (stepJsons) => {
+    setPendingAI(stepJsons);
   });
 
   // Get version history
@@ -792,20 +792,23 @@ export default function NoteDetail() {
     );
   }
 
-  // Normalize isProcessing to handle all formats (boolean/string/null)
-  const normalizedIsProcessing = useMemo(() => {
+  // Normalize isProcessing WITHOUT hooks to avoid hook-order changes
+  const normalizedIsProcessing = (() => {
     if (!note) return false;
-    const processing = note.isProcessing || (note as any).is_processing;
-    return (
-      processing === true ||
-      processing === 't' ||
-      processing === 1 ||
-      processing === '1'
-    );
-  }, [note?.isProcessing, (note as any)?.is_processing]);
+    const raw = 
+      (note as any).isProcessing ??
+      (note as any).is_processing ??
+      (note as any).processing ??
+      null;
+    if (typeof raw === 'string') {
+      const s = raw.toLowerCase();
+      return s === 'true' || s === 't' || s === '1';
+    }
+    return !!raw;
+  })();
 
-  // Memoize parsed doc to prevent infinite re-renders
-  const parsedDoc = useMemo(() => {
+  // Parse doc_json with a plain constant (no hook) to prevent re-renders
+  const parsedDoc = (() => {
     if (!note) {
       // Safe fallback for new notes
       return {
@@ -816,36 +819,28 @@ export default function NoteDetail() {
       };
     }
 
-    const candidates = [
-      (note as any).docJson,
-      (note as any).doc_json,
-      note.doc_json
-    ].filter(Boolean);
-    
-    for (const candidate of candidates) {
+    const candidate = 
+      (note as any)?.docJson ??
+      (note as any)?.doc_json ??
+      null;
+      
+    if (candidate) {
       try {
-        if (typeof candidate === 'string') {
-          const parsed = JSON.parse(candidate);
-          if (parsed && parsed.type === 'doc') {
-            return parsed;
-          }
-        } else if (candidate && typeof candidate === 'object' && candidate.type === 'doc') {
-          return candidate;
-        }
+        return typeof candidate === 'string' ? JSON.parse(candidate) : candidate;
       } catch (e) {
-        console.warn('[NoteDetail] Failed to parse doc candidate:', e);
+        console.warn('[NoteDetail] Failed to parse doc_json:', e);
       }
     }
     
-    // Fallback to plain text wrapped as ProseMirror doc
-    const text = note.content || '';
+    // Fallback to a minimal ProseMirror doc from content
+    const text = note?.content || '';
     return {
       type: 'doc',
       content: [
         { type: 'paragraph', content: text ? [{ type: 'text', text }] : [] }
       ]
     };
-  }, [note?.docJson, (note as any)?.doc_json, note?.content]);
+  })();
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
