@@ -250,6 +250,7 @@ export default function NoteDetail() {
     }
   });
 
+  // ====== 8. MEMO HOOKS (must be before conditional returns) ======
   const debouncedSave = useMemo(
     () =>
       debounce((txt: string) => {
@@ -259,26 +260,7 @@ export default function NoteDetail() {
       }, 2000),
     [note?.id],
   );
-
-  // -------- INSTANT SAVE ON BLUR --------
-  const handleBlur = () => {
-    if (note?.id && editedContent !== note.content && !isSaving) {
-      saveMutation.mutate({ id: note.id, content: editedContent, source: 'textarea' });
-    }
-  };
-
-  // Parse rich context data if available
-  let richContextData = null;
-  try {
-    if (note?.richContext && typeof note.richContext === 'string' && note.richContext.trim() !== '') {
-      richContextData = JSON.parse(note.richContext);
-    }
-  } catch (e) {
-    console.error("Failed to parse richContext:", e);
-    richContextData = null; // Ensure it's null on error
-  }
-
-  // ---- V3 AI payload -------------------------------------------------
+  
   const mira = React.useMemo(() => {
     if (!note?.miraResponse) return null;
     try {
@@ -289,13 +271,14 @@ export default function NoteDetail() {
     }
   }, [note?.miraResponse]);
 
-  // Use critical info hook - pass null if no valid rich context
-  const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData || null);
-  
-  // Always call hooks in the same order; let the hook no-op on undefined
-  useEnhancementSocket(note?.id ?? undefined);
-  
-  // Editor commit callback
+  // -------- INSTANT SAVE ON BLUR --------
+  const handleBlur = () => {
+    if (note?.id && editedContent !== note.content && !isSaving) {
+      saveMutation.mutate({ id: note.id, content: editedContent, source: 'textarea' });
+    }
+  };
+
+  // ====== 9. CALLBACK HOOKS ======
   const commitFromEditor = useCallback(
     async (doc: JSONContent, steps: Step[]) => {
       // Guard against empty payload to prevent HTML caching
@@ -329,23 +312,24 @@ export default function NoteDetail() {
     [id, note?.id, saveMutation]
   );
 
-  // Subscribe to SSE updates (always call hook, empty string if no id)
+  // ====== 10. MORE CUSTOM HOOKS (all must be before conditional returns) ======
+  // Parse rich context for critical info hook
+  let richContextData = null;
+  try {
+    if (note?.richContext && typeof note.richContext === 'string' && note.richContext.trim() !== '') {
+      richContextData = JSON.parse(note.richContext);
+    }
+  } catch (e) {
+    console.error("Failed to parse richContext:", e);
+    richContextData = null;
+  }
+  
+  const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData || null);
+  useEnhancementSocket(note?.id ?? undefined);
   useNoteStream(id || '', (stepJsons) => {
     setPendingAI(stepJsons);
   });
 
-  // Get version history
-  const { data: versionHistory } = useQuery<Array<{
-    id: string;
-    version: number;
-    changeType: string;
-    changeDescription: string;
-    createdAt: string;
-    content: string;
-  }>>({
-    queryKey: queryKeys.notes.versions(Number(id)),
-    enabled: !!id && showVersionHistory,
-  });
 
   // Mutations
   // Note: updateNoteMutation removed - using saveMutation for all saves
@@ -449,7 +433,6 @@ export default function NoteDetail() {
     }
   }, [editedContent]);
 
-  // beforeunload guard
   useBeforeUnload(
     saveStatus === 'dirty' && note ? 
       () => {
@@ -458,6 +441,8 @@ export default function NoteDetail() {
       } : 
       false
   );
+  
+  // ========== CONDITIONAL RETURNS (only AFTER all hooks) ==========
 
   const handleQuestionClick = (question: string) => {
     // Question click handler - functionality to be implemented
@@ -665,6 +650,7 @@ export default function NoteDetail() {
     return elements;
   };
 
+  // ========== CONDITIONAL RETURNS SECTION ==========
   // Handle error state
   if (error) {
     console.error('Note detail error:', error);
@@ -753,43 +739,22 @@ export default function NoteDetail() {
     );
   }
 
-  // Add comprehensive null check to prevent crashes
+  // Final null check (after all other checks)
   if (!note) {
     return (
       <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
         <div className="text-center py-12 px-4">
-          <div className="animate-pulse">
-            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
-          </div>
+          <h1 className="text-xl font-semibold mb-2">Note not found</h1>
+          <p className="text-[hsl(var(--muted-foreground))] mb-4">
+            This note may have been deleted or is still initializing.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Back to notes
+          </button>
         </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-      </div>
-    );
-  }
-
-  // Error/empty state
-  if (error || !note) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen p-6 text-center">
-        <h2 className="text-xl font-semibold mb-2">Note not found</h2>
-        <p className="text-gray-600 mb-4">
-          {error ? 'Failed to load note' : 'This note may have been deleted or is still initializing.'}
-        </p>
-        <button
-          onClick={() => navigate('/')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Back to notes
-        </button>
       </div>
     );
   }

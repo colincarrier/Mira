@@ -21,12 +21,20 @@ import TodoDetail from "@/pages/todo-detail";
 import NotFound from "@/pages/not-found";
 
 export default function App() {
-  // Initialize offline storage and service worker
+  // Initialize offline storage and service worker (conditional for production)
   useEffect(() => {
     const initializeOfflineFeatures = async () => {
       try {
+        // Always initialize offline storage (used for caching)
         await offlineStorage.init();
-        await serviceWorkerManager.init();
+        
+        // Only initialize service worker in production
+        if (import.meta.env.PROD) {
+          await serviceWorkerManager.init();
+          console.log('Service Worker initialized in production mode');
+        } else {
+          console.log('Service Worker disabled in development mode');
+        }
         
         // Clean stale cache entries periodically
         const interval = setInterval(() => {
