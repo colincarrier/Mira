@@ -612,11 +612,19 @@ Respond in JSON format:
   // SSE endpoint for note events
   app.get('/api/notes/:id/events', (req, res) => {
     const { id } = req.params;
+    
+    // Validate note ID
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ error: 'Invalid note ID' });
+    }
+    
+    // Set proper SSE headers
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'X-Accel-Buffering': 'no' // Disable proxy buffering
     });
     
     // Register client for real-time updates
@@ -624,6 +632,17 @@ Respond in JSON format:
     
     // Send initial connection confirmation
     res.write(`data: ${JSON.stringify({ type: 'connected', noteId: id })}\n\n`);
+    
+    // Keep connection alive with periodic pings (every 30 seconds)
+    const keepAlive = setInterval(() => {
+      res.write(`:keepalive ${Date.now()}\n\n`);
+    }, 30000);
+    
+    // Clean up on client disconnect
+    req.on('close', () => {
+      clearInterval(keepAlive);
+      console.log(`[SSE] Client disconnected from note ${id}`);
+    });
   });
 
   // SSE endpoint for real-time note updates

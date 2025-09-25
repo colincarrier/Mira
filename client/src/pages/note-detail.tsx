@@ -164,8 +164,11 @@ import { ReminderDialog } from "@/components/reminder-dialog";
 import { parseMiraResponse, extractTasks, normalizeNote, queryKeys } from "@/utils";
 
 export default function NoteDetail() {
+  // ====== 1. ALL ROUTER HOOKS (always first) ======
   const { id } = useParams();
   const [, navigate] = useLocation();
+  
+  // ====== 2. ALL STATE HOOKS (always called) ======
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
@@ -177,15 +180,18 @@ export default function NoteDetail() {
   const [clarificationInput, setClarificationInput] = useState('');
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
+  const [isSaving, setIsSaving] = useState(false);
   const [pendingAI, setPendingAI] = useState<any[] | null>(null);
-  
-  // Enable offline queue flushing
-  useFlushQueue();
 
-  // Auto-save state and mutations
+  // ====== 3. ALL REF HOOKS ======
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // ====== 4. QUERY CLIENT (before queries/mutations) ======
   const queryClient = useQueryClient();
+  
+  // ====== 5. CUSTOM HOOKS (always called) ======
+  useFlushQueue();
 
   const { data: note, isLoading, error } = useQuery<NoteWithTodos>({
     queryKey: queryKeys.notes.detail(Number(id)),
@@ -215,19 +221,15 @@ export default function NoteDetail() {
       setIsSaving(false);
     }
   }, [id]);
-  const [saveStatus, setSaveStatus] = useState<'idle'|'dirty'|'saving'|'saved'>('idle');
-  const [isSaving, setIsSaving] = useState(false);
-
-  const qc = useQueryClient();
 
   const saveMutation = useMutation({
     mutationFn: (payload: SavePayload) => saveNote(payload),
     onSuccess: (updated) => {
       // Use consistent cache keys from queryKeys
       if (note?.id) {
-        qc.setQueryData(queryKeys.notes.detail(note.id), updated);  // detail
+        queryClient.setQueryData(queryKeys.notes.detail(note.id), updated);  // detail
       }
-      qc.invalidateQueries({ queryKey: queryKeys.notes.all });       // list
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.all });       // list
       setSaveStatus('saved');
       setIsSaving(false);
       setTimeout(() => setSaveStatus('idle'), 1500);
