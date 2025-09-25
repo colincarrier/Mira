@@ -326,9 +326,13 @@ export default function NoteDetail() {
   
   const { criticalQuestion, isVisible, dismissDialog, handleAnswer } = useCriticalInfo(richContextData || null);
   useEnhancementSocket(note?.id ?? undefined);
-  useNoteStream(id || '', (stepJsons) => {
+  
+  // Stable callback for SSE updates to prevent reconnection loops
+  const handleSSEPatch = useCallback((stepJsons: any[]) => {
     setPendingAI(stepJsons);
-  });
+  }, []);
+  
+  useNoteStream(id || '', handleSSEPatch);
 
 
   // Mutations
