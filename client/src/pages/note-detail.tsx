@@ -163,6 +163,44 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { ReminderDialog } from "@/components/reminder-dialog";
 import { parseMiraResponse, extractTasks, normalizeNote, queryKeys } from "@/utils";
 
+// --- Pure helpers (no React hooks) ---
+function computeIsProcessing(note: any): boolean {
+  if (!note) return false;
+  const raw =
+    (note as any).isProcessing ??
+    (note as any).is_processing ??
+    (note as any).processing ??
+    null;
+  if (typeof raw === 'string') {
+    const s = raw.toLowerCase();
+    return s === 'true' || s === 't' || s === '1';
+  }
+  return !!raw;
+}
+
+// Returns a ProseMirror-like JSON doc; never throws, never returns null
+function computeDocFromNote(note: any) {
+  const fallback = { type: 'doc', content: [{ type: 'paragraph', content: [] }] };
+  if (!note) return fallback;
+
+  const candidate = (note as any)?.docJson ?? (note as any)?.doc_json ?? null;
+  if (!candidate) {
+    const text = note?.content ?? '';
+    return text
+      ? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }
+      : fallback;
+  }
+  try {
+    const parsed = typeof candidate === 'string' ? JSON.parse(candidate) : candidate;
+    return parsed?.type === 'doc' ? parsed : fallback;
+  } catch {
+    const text = note?.content ?? '';
+    return text
+      ? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }
+      : fallback;
+  }
+}
+
 export default function NoteDetail() {
   // ====== 1. ALL ROUTER HOOKS (always first) ======
   const { id } = useParams();
@@ -200,6 +238,19 @@ export default function NoteDetail() {
     retryDelay: 1000,
     refetchInterval: false, // Temporarily disabled to prevent polling during render issues
     refetchOnWindowFocus: false, // Prevent refetch on tab focus which can trigger loops
+  });
+  
+  // Version history query
+  const { data: versionHistory } = useQuery<Array<{
+    id: string;
+    version: number;
+    changeType: string;
+    changeDescription: string;
+    createdAt: string;
+    content: string;
+  }>>({
+    queryKey: queryKeys.notes.versions(Number(id)),
+    enabled: !!id && showVersionHistory,
   });
 
   // Reset state when navigating to a different note
@@ -763,55 +814,9 @@ export default function NoteDetail() {
     );
   }
 
-  // Normalize isProcessing WITHOUT hooks to avoid hook-order changes
-  const normalizedIsProcessing = (() => {
-    if (!note) return false;
-    const raw = 
-      (note as any).isProcessing ??
-      (note as any).is_processing ??
-      (note as any).processing ??
-      null;
-    if (typeof raw === 'string') {
-      const s = raw.toLowerCase();
-      return s === 'true' || s === 't' || s === '1';
-    }
-    return !!raw;
-  })();
-
-  // Parse doc_json with a plain constant (no hook) to prevent re-renders
-  const parsedDoc = (() => {
-    if (!note) {
-      // Safe fallback for new notes
-      return {
-        type: 'doc',
-        content: [
-          { type: 'paragraph', content: [] }
-        ]
-      };
-    }
-
-    const candidate = 
-      (note as any)?.docJson ??
-      (note as any)?.doc_json ??
-      null;
-      
-    if (candidate) {
-      try {
-        return typeof candidate === 'string' ? JSON.parse(candidate) : candidate;
-      } catch (e) {
-        console.warn('[NoteDetail] Failed to parse doc_json:', e);
-      }
-    }
-    
-    // Fallback to a minimal ProseMirror doc from content
-    const text = note?.content || '';
-    return {
-      type: 'doc',
-      content: [
-        { type: 'paragraph', content: text ? [{ type: 'text', text }] : [] }
-      ]
-    };
-  })();
+  // Compute derived values using pure helper functions (no hooks)
+  const normalizedIsProcessing = computeIsProcessing(note);
+  const parsedDoc = computeDocFromNote(note);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] pb-24">
