@@ -54,3 +54,6 @@ waitForPort = 5000
 
 [objectStorage]
 defaultBucketID = "replit-objstore-4a8bb232-6674-49c7-8ea5-7166ade1f334"
+
+[agent]
+integrations = ["github:1.0.0"]
