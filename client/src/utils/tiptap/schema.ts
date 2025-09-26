@@ -35,6 +35,8 @@ const AuthorMark = Extension.create({
 
 export const extensions = [
   StarterKit.configure({
+    // Exclude 'link' since we add our custom Link extension below
+    link: false,
     paragraph: { HTMLAttributes: { class: 'mb-4' } },
     bulletList: { HTMLAttributes: { class: 'list-disc pl-6 mb-4' } },
     listItem: { HTMLAttributes: { class: 'mb-1' } },
