@@ -33,7 +33,16 @@ export default function App() {
           await serviceWorkerManager.init();
           console.log('Service Worker initialized in production mode');
         } else {
+          // In development, unregister any existing service workers
+          // This prevents caching issues and improves HMR
           console.log('Service Worker disabled in development mode');
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+              await registration.unregister();
+              console.log('Unregistered service worker:', registration.scope);
+            }
+          }
         }
         
         // Clean stale cache entries periodically
